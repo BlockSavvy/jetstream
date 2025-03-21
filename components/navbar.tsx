@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
+import { UserNav } from "@/components/user-nav"
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -45,7 +46,7 @@ export default function Navbar() {
             <Link href="#testimonials" className="text-white hover:text-amber-400 transition-colors">
               Testimonials
             </Link>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black font-semibold">Book Now</Button>
+            <UserNav />
           </nav>
 
           {/* Mobile Menu Button */}
@@ -80,7 +81,9 @@ export default function Navbar() {
             >
               Testimonials
             </Link>
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black font-semibold w-full">Book Now</Button>
+            <div className="py-2">
+              <UserNav />
+            </div>
           </div>
         </div>
       )}
