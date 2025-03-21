@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "cleanUrls": true,
+  "github": {
+    "silent": true
+  }
+} 
