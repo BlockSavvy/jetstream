@@ -28,7 +28,7 @@ export default function Home() {
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/placeholder.svg?height=1080&width=1920"
+            src="/hero.png"
             alt="Private Jet"
             fill
             className="object-cover brightness-50"
@@ -45,7 +45,6 @@ export default function Home() {
             Seamless fractional jet experiences. Personalized flights, effortlessly matched.
           </p>
           <Button
-            size="lg"
             className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
           >
             Reserve Your Flight Now
@@ -173,7 +172,6 @@ export default function Home() {
 
           <div className="text-center">
             <Button
-              size="lg"
               className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
             >
               List Your Jet Today
