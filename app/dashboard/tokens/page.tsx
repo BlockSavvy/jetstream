@@ -226,20 +226,22 @@ export default function TokensPage() {
         </Card>
       </div>
       
-      {/* Search and Tabs */}
+      {/* Search and Tabs - FIX: Ensure TabsContent is within the same Tabs component */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
-        <Tabs className="w-full md:w-auto" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="tokens" className="flex gap-2 items-center">
-              <Wallet className="h-4 w-4" />
-              <span>My Tokens</span>
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex gap-2 items-center">
-              <Clock className="h-4 w-4" />
-              <span>History</span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="w-full md:w-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="tokens" className="flex gap-2 items-center">
+                <Wallet className="h-4 w-4" />
+                <span>My Tokens</span>
+              </TabsTrigger>
+              <TabsTrigger value="transactions" className="flex gap-2 items-center">
+                <Clock className="h-4 w-4" />
+                <span>History</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         
         <div className="flex items-center gap-2">
           <div className="relative w-full md:w-64">
@@ -259,167 +261,170 @@ export default function TokensPage() {
         </div>
       </div>
       
-      {/* Tokens Tab */}
-      <TabsContent value="tokens" className="m-0 space-y-4">
-        <div className="flex justify-end">
-          <Button className="bg-amber-500 hover:bg-amber-600 text-black" size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Acquire New Token
-          </Button>
-        </div>
-        
-        {filteredTokens.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {filteredTokens.map((token) => (
-              <Card key={token.id} className="overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  <div className="relative h-40 md:h-auto md:w-40 xl:w-52">
-                    <Image
-                      src={getJetImage({manufacturer: token.manufacturer, model: token.jetModel.split(' ').slice(-1)[0]}, 0, token.image)}
-                      alt={token.jetModel}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-4 md:p-6 flex-1">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-lg">{token.jetModel}</h3>
-                        <p className="text-sm text-muted-foreground">{token.manufacturer}</p>
-                      </div>
-                      <Badge className="bg-amber-50 text-amber-800 hover:bg-amber-50 border-amber-200">
-                        {token.percentage}% Ownership
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-3 my-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Current Value</p>
-                        <p className="font-medium">{formatCurrency(token.value)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Appreciation</p>
-                        <p className="font-medium flex items-center text-green-600">
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                          {token.appreciation}%
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Hours Remaining</p>
-                        <p className="font-medium">{token.remainingHours}/{token.availableHours}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Status</p>
-                        <Badge variant="outline" className="capitalize">{token.status}</Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-2">
-                      <div className="text-xs flex justify-between mb-1">
-                        <span>Hours Used</span>
-                        <span>{(token.availableHours - token.remainingHours)}/{token.availableHours}</span>
-                      </div>
-                      <Progress 
-                        value={(token.availableHours - token.remainingHours) / (token.availableHours || 1) * 100} 
-                        className="h-2"
+      {/* Main content - FIX: Create a new Tabs component for the content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {/* Tokens Tab */}
+        <TabsContent value="tokens" className="m-0 space-y-4">
+          <div className="flex justify-end">
+            <Button className="bg-amber-500 hover:bg-amber-600 text-black" size="sm">
+              <Plus className="h-4 w-4 mr-1" />
+              Acquire New Token
+            </Button>
+          </div>
+          
+          {filteredTokens.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {filteredTokens.map((token) => (
+                <Card key={token.id} className="overflow-hidden">
+                  <div className="flex flex-col md:flex-row">
+                    <div className="relative h-40 md:h-auto md:w-40 xl:w-52">
+                      <Image
+                        src={getJetImage({manufacturer: token.manufacturer, model: token.jetModel.split(' ').slice(-1)[0]}, 0, token.image)}
+                        alt={token.jetModel}
+                        fill
+                        className="object-cover"
                       />
                     </div>
-                    
-                    <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <Link href={`/dashboard/tokens/${token.id}`}>
-                          <span>Details</span>
-                        </Link>
-                      </Button>
-                      <Button size="sm" className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
-                        <Plane className="h-4 w-4 mr-1" />
-                        <span>Book Flight</span>
-                      </Button>
+                    <div className="p-4 md:p-6 flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-semibold text-lg">{token.jetModel}</h3>
+                          <p className="text-sm text-muted-foreground">{token.manufacturer}</p>
+                        </div>
+                        <Badge className="bg-amber-50 text-amber-800 hover:bg-amber-50 border-amber-200">
+                          {token.percentage}% Ownership
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3 my-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Current Value</p>
+                          <p className="font-medium">{formatCurrency(token.value)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Appreciation</p>
+                          <p className="font-medium flex items-center text-green-600">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            {token.appreciation}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Hours Remaining</p>
+                          <p className="font-medium">{token.remainingHours}/{token.availableHours}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Status</p>
+                          <Badge variant="outline" className="capitalize">{token.status}</Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-2">
+                        <div className="text-xs flex justify-between mb-1">
+                          <span>Hours Used</span>
+                          <span>{(token.availableHours - token.remainingHours)}/{token.availableHours}</span>
+                        </div>
+                        <Progress 
+                          value={(token.availableHours - token.remainingHours) / (token.availableHours || 1) * 100} 
+                          className="h-2"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2 mt-4">
+                        <Button variant="outline" size="sm" className="flex-1" asChild>
+                          <Link href={`/dashboard/tokens/${token.id}`}>
+                            <span>Details</span>
+                          </Link>
+                        </Button>
+                        <Button size="sm" className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
+                          <Plane className="h-4 w-4 mr-1" />
+                          <span>Book Flight</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Wallet className="h-8 w-8 text-muted-foreground" />
                 </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
+                <h3 className="text-lg font-medium mb-2">No tokens found</h3>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  {searchTerm ? 'No tokens match your search criteria' : 'You don\'t have any ownership tokens yet'}
+                </p>
+                <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Acquire Your First Jet Token
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        {/* Transactions Tab */}
+        <TabsContent value="transactions" className="m-0">
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Wallet className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium mb-2">No tokens found</h3>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                {searchTerm ? 'No tokens match your search criteria' : 'You don\'t have any ownership tokens yet'}
-              </p>
-              <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-                <Plus className="h-4 w-4 mr-1" />
-                Acquire Your First Jet Token
-              </Button>
+            <CardHeader>
+              <CardTitle>Token Transaction History</CardTitle>
+              <CardDescription>Your token purchases and flight usage history</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {filteredTransactions.length > 0 ? (
+                <div className="divide-y">
+                  {filteredTransactions.map((transaction) => (
+                    <div key={transaction.id} className="p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            {transaction.type === 'purchase' ? (
+                              <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">Purchase</Badge>
+                            ) : (
+                              <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200">Flight Usage</Badge>
+                            )}
+                            <h3 className="font-medium">
+                              {transaction.jetModel}
+                              {transaction.type === 'purchase' && ` - ${transaction.percentage}% ownership`}
+                            </h3>
+                          </div>
+                          {transaction.type === 'purchase' ? (
+                            <p className="text-sm text-muted-foreground">
+                              Purchased on {new Date(transaction.date).toLocaleDateString()}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              {transaction.route ?? 'Unknown route'} - Used {transaction.hoursUsed ?? 0} hours on {new Date(transaction.date).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          {transaction.type === 'purchase' ? (
+                            <div className="font-medium">{formatCurrency(transaction.amount ?? 0)}</div>
+                          ) : (
+                            <div className="font-medium">{transaction.hoursUsed} hours</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-12 text-center">
+                  <div className="rounded-full bg-muted p-3 mb-3">
+                    <Clock className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-1">No transaction history found</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    {searchTerm ? 'No transactions match your search criteria' : 'You don\'t have any token transactions yet'}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
-      </TabsContent>
-      
-      {/* Transactions Tab */}
-      <TabsContent value="transactions" className="m-0">
-        <Card>
-          <CardHeader>
-            <CardTitle>Token Transaction History</CardTitle>
-            <CardDescription>Your token purchases and flight usage history</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            {filteredTransactions.length > 0 ? (
-              <div className="divide-y">
-                {filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          {transaction.type === 'purchase' ? (
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">Purchase</Badge>
-                          ) : (
-                            <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200">Flight Usage</Badge>
-                          )}
-                          <h3 className="font-medium">
-                            {transaction.jetModel}
-                            {transaction.type === 'purchase' && ` - ${transaction.percentage}% ownership`}
-                          </h3>
-                        </div>
-                        {transaction.type === 'purchase' ? (
-                          <p className="text-sm text-muted-foreground">
-                            Purchased on {new Date(transaction.date).toLocaleDateString()}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {transaction.route ?? 'Unknown route'} - Used {transaction.hoursUsed ?? 0} hours on {new Date(transaction.date).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        {transaction.type === 'purchase' ? (
-                          <div className="font-medium">{formatCurrency(transaction.amount ?? 0)}</div>
-                        ) : (
-                          <div className="font-medium">{transaction.hoursUsed} hours</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center p-12 text-center">
-                <div className="rounded-full bg-muted p-3 mb-3">
-                  <Clock className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-medium mb-1">No transaction history found</h3>
-                <p className="text-muted-foreground max-w-md">
-                  {searchTerm ? 'No transactions match your search criteria' : 'You don\'t have any token transactions yet'}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 } 
