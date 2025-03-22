@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils/format'
 import { getJetImage } from '@/lib/utils/jet-images'
 
 // Sample data for demonstration

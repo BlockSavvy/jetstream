@@ -3,11 +3,25 @@ import { Client, resources } from 'coinbase-commerce-node';
 import { createClient } from '@/lib/supabase-server';
 
 // Initialize Coinbase Commerce client
-const coinbaseClient = Client.init(process.env.COINBASE_COMMERCE_API_KEY || '');
-const { Charge } = resources;
+let coinbaseClient;
+// TypeScript needs a type for Charge
+let Charge: any;
+
+if (process.env.COINBASE_COMMERCE_API_KEY) {
+  coinbaseClient = Client.init(process.env.COINBASE_COMMERCE_API_KEY);
+  ({ Charge } = resources);
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Coinbase Commerce is initialized
+    if (!Charge) {
+      return NextResponse.json(
+        { error: 'Coinbase Commerce is not configured' },
+        { status: 500 }
+      );
+    }
+
     const { flightId, userId, seatsBooked, totalPrice } = await request.json();
 
     if (!flightId || !userId || !seatsBooked || !totalPrice) {

@@ -30,7 +30,7 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
-import { formatDate, formatTime, formatCurrency } from '@/lib/utils'
+import { formatDate, formatTime, formatCurrency } from '@/lib/utils/format'
 import { getPrimaryJetImage } from '@/lib/utils/jet-images'
 
 // Sample data for demonstration purposes
