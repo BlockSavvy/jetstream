@@ -3,8 +3,12 @@ import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase-server';
 import { processBookingTickets } from '@/lib/services/tickets';
 
-// Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+// Initialize Stripe conditionally
+let stripe: Stripe | null = null;
+
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 // Helper for confirming a booking
 async function confirmBooking(bookingId: string, supabase: any) {
@@ -44,6 +48,15 @@ async function confirmBooking(bookingId: string, supabase: any) {
 }
 
 export async function POST(request: NextRequest) {
+  // Check if Stripe is properly initialized
+  if (!stripe) {
+    console.error('Stripe API key is not configured');
+    return NextResponse.json(
+      { error: 'Stripe is not configured' },
+      { status: 500 }
+    );
+  }
+
   const payload = await request.text();
   const signature = request.headers.get('stripe-signature') || '';
 
