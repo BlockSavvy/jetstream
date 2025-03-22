@@ -9,8 +9,8 @@ export const jetImageMap: Record<string, any> = {
     'G550': ['/images/jets/gulfstream/g550.jpg', '/images/jets/gulfstream/g550-1.jpg'],
     'G450': ['/images/jets/gulfstream/g450.jpg', '/images/jets/gulfstream/g450-2.jpg'],
     'G280': ['/images/jets/gulfstream/g280.jpg', '/images/jets/gulfstream/g280-1.jpg'],
-    'G700': ['/images/jets/gulfstream/g650.jpg'], // Using G650 as temp fallback
-    'G600': ['/images/jets/gulfstream/g650.jpg'], // Using G650 as temp fallback
+    'G700': ['/images/jets/gulfstream/g700.jpg', '/images/jets/gulfstream/g700-1.jpg'],
+    'G600': ['/images/jets/gulfstream/g600.jpg', '/images/jets/gulfstream/g600-1.jpg'],
     // Default for other Gulfstream models
     'default': ['/images/jets/gulfstream/g650.jpg']
   },
@@ -19,8 +19,8 @@ export const jetImageMap: Record<string, any> = {
     'Global 6000': ['/images/jets/bombardier/Global6000.jpg', '/images/jets/bombardier/Global6000-1.jpg'],
     'Challenger 350': ['/images/jets/bombardier/Challenger350.jpg', '/images/jets/bombardier/Challenger350-1.jpg'],
     'Learjet 75': ['/images/jets/bombardier/Learjet75.jpg', '/images/jets/bombardier/Learjet75-1.jpg'],
-    'Global 8000': ['/images/jets/bombardier/Global7500.jpg'], // Using Global 7500 as temp fallback
-    'Challenger 650': ['/images/jets/bombardier/Challenger350.jpg'], // Using Challenger 350 as temp fallback
+    'Global 8000': ['/images/jets/bombardier/Global8000.jpg', '/images/jets/bombardier/Global8000-1.jpg'],
+    'Challenger 650': ['/images/jets/bombardier/Challenger650.jpg', '/images/jets/bombardier/Challenger650-1.jpg'],
     // Default for other Bombardier models
     'default': ['/images/jets/bombardier/Global7500.jpg']
   },
@@ -37,8 +37,7 @@ export const jetImageMap: Record<string, any> = {
     'Falcon 7X': ['/images/jets/dassault/Falcon7x.jpg', '/images/jets/dassault/Falcon7x-1.jpg'],
     'Falcon 8X': ['/images/jets/dassault/Falcon8X.jpg', '/images/jets/dassault/Falcon8x-1.jpg'],
     'Falcon 2000LXS': ['/images/jets/dassault/Falcon2000.jpg', '/images/jets/dassault/Falcon2000-1.jpg'],
-    'Falcon 900LX': ['/images/jets/dassault/Falcon8X.jpg'], // Using 8X as temp fallback
-    'Falcon 6X': ['/images/jets/dassault/Falcon8X.jpg'], // Using 8X as temp fallback
+    'Falcon 900LX': ['/images/jets/dassault/Falcon 900LX.jpg', '/images/jets/dassault/Falcon 900LX-1.jpg'],
     // Default for other Dassault models
     'default': ['/images/jets/dassault/Falcon8X.jpg']
   },
