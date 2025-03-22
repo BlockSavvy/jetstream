@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Clock, Calendar, Users, DollarSign, Plane, MapPin } from 'lucide-react';
+import { getJetImage } from '@/lib/utils/jet-images';
 
 interface FlightCardProps {
   flight: Flight;
@@ -35,9 +36,7 @@ export function FlightCard({ flight, onBookNow }: FlightCardProps) {
   }).format(flight.base_price);
 
   // Get jet image or placeholder
-  const jetImage = jet.images && jet.images.length > 0 
-    ? jet.images[0] 
-    : 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D';
+  const jetImage = getJetImage(jet, 0, 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-card border-2 border-muted">
