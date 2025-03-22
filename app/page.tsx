@@ -17,13 +17,10 @@ import {
   Car,
   Ticket,
 } from "lucide-react"
-import Navbar from "@/components/navbar"
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
-
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -54,17 +51,17 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 bg-gray-50">
+      <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-gray-900">
         <div className="container px-4 md:px-6 mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">How It Works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 dark:text-white">How It Works</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center mb-6">
                 <Plane className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Choose your destination and dates</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Choose your destination and dates</h3>
+              <p className="text-gray-700 dark:text-gray-300">
                 Select where you want to go and when. Our platform handles the rest, finding the perfect flight options
                 for your journey.
               </p>
@@ -74,10 +71,10 @@ export default function Home() {
               <div className="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center mb-6">
                 <Users className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">
                 Our AI matches you with the perfect jet and fellow travelers
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-700 dark:text-gray-300">
                 Our proprietary algorithm finds compatible co-travelers and the ideal aircraft for your specific needs.
               </p>
             </div>
@@ -86,8 +83,8 @@ export default function Home() {
               <div className="w-16 h-16 rounded-full bg-amber-500 flex items-center justify-center mb-6">
                 <Calendar className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Fly effortlessly with unprecedented comfort</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Fly effortlessly with unprecedented comfort</h3>
+              <p className="text-gray-700 dark:text-gray-300">
                 Enjoy a seamless travel experience with premium service, luxurious amenities, and unparalleled
                 convenience.
               </p>
@@ -97,16 +94,16 @@ export default function Home() {
       </section>
 
       {/* Jet Owners & Operators Section */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white dark:bg-gray-900">
         <div className="container px-4 md:px-6 mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">Jet Owners & Operators</h2>
-          <h3 className="text-xl md:text-2xl text-gray-600 text-center mb-16 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 dark:text-white">Jet Owners & Operators</h2>
+          <h3 className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 text-center mb-16 max-w-3xl mx-auto">
             Maximize Your Jet's Potential—Effortlessly
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
             <div className="flex flex-col items-center text-center group">
-              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-6 group-hover:bg-amber-50 transition-colors duration-300">
+              <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/30 transition-colors duration-300">
                 <svg
                   className="h-10 w-10 text-amber-500"
                   viewBox="0 0 24 24"
@@ -119,15 +116,15 @@ export default function Home() {
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Zero-Hassle Monetization</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Zero-Hassle Monetization</h3>
+              <p className="text-gray-700 dark:text-gray-300">
                 Let JetStream manage your aircraft with total transparency and simplicity. We handle the logistics while
                 you enjoy the returns.
               </p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-6 group-hover:bg-amber-50 transition-colors duration-300">
+              <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/30 transition-colors duration-300">
                 <svg
                   className="h-10 w-10 text-amber-500"
                   viewBox="0 0 24 24"
@@ -141,15 +138,15 @@ export default function Home() {
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Blockchain-Backed Security</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Blockchain-Backed Security</h3>
+              <p className="text-gray-700 dark:text-gray-300">
                 Every transaction secured and verified, visible instantly on-chain. Complete peace of mind with
                 immutable record-keeping.
               </p>
             </div>
 
             <div className="flex flex-col items-center text-center group">
-              <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-6 group-hover:bg-amber-50 transition-colors duration-300">
+              <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/30 transition-colors duration-300">
                 <svg
                   className="h-10 w-10 text-amber-500"
                   viewBox="0 0 24 24"
@@ -162,8 +159,8 @@ export default function Home() {
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Optimized Revenue</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Optimized Revenue</h3>
+              <p className="text-gray-700 dark:text-gray-300">
                 AI-driven booking maximizes your jet's earning potential during idle periods. Turn downtime into profit
                 with intelligent scheduling.
               </p>
@@ -182,13 +179,13 @@ export default function Home() {
       </section>
 
       {/* Fractional Ownership Made Simple Section */}
-      <section className="py-24 bg-gradient-to-b from-gray-50 to-gray-100">
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container px-4 md:px-6 mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Fractional Ownership Made Simple</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 dark:text-white">Fractional Ownership Made Simple</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            <div className="bg-white p-8 rounded-xl shadow-sm flex flex-col items-center text-center h-full transform transition-transform duration-300 hover:-translate-y-2">
-              <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-6">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm flex flex-col items-center text-center h-full transform transition-transform duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-900/50 flex items-center justify-center mb-6">
                 <svg
                   className="h-8 w-8 text-amber-500"
                   viewBox="0 0 24 24"
@@ -202,17 +199,17 @@ export default function Home() {
                   <path d="M12 6v6l4 2" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Purchase Fractional Tokens</h3>
-              <p className="text-gray-600 flex-grow">
-                Purchase fractional jet tokens securely via JetStream's blockchain-powered platform. Own a share of
-                luxury without the full cost.
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Purchase Fractional Tokens</h3>
+              <p className="text-gray-700 dark:text-gray-300 flex-grow">
+                Acquire digital tokens representing ownership in a specific aircraft. Buy as many or as few as match your
+                travel needs and budget.
               </p>
               <div className="w-16 h-1 bg-amber-500 rounded-full mt-6"></div>
               <div className="text-amber-500 font-bold mt-4">01</div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-sm flex flex-col items-center text-center h-full transform transition-transform duration-300 hover:-translate-y-2">
-              <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-6">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm flex flex-col items-center text-center h-full transform transition-transform duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-900/50 flex items-center justify-center mb-6">
                 <svg
                   className="h-8 w-8 text-amber-500"
                   viewBox="0 0 24 24"
@@ -228,8 +225,8 @@ export default function Home() {
                   <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Book Flights Instantly</h3>
-              <p className="text-gray-600 flex-grow">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Book Flights Instantly</h3>
+              <p className="text-gray-700 dark:text-gray-300 flex-grow">
                 Book flights instantly or join shared journeys using your fractional tokens. Our AI matches you with
                 compatible travelers and optimal routes.
               </p>
@@ -237,8 +234,8 @@ export default function Home() {
               <div className="text-amber-500 font-bold mt-4">02</div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-sm flex flex-col items-center text-center h-full transform transition-transform duration-300 hover:-translate-y-2">
-              <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mb-6">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm flex flex-col items-center text-center h-full transform transition-transform duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-900/50 flex items-center justify-center mb-6">
                 <svg
                   className="h-8 w-8 text-amber-500"
                   viewBox="0 0 24 24"
@@ -254,8 +251,8 @@ export default function Home() {
                   <path d="M12 16v6" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Enjoy Luxury Travel</h3>
-              <p className="text-gray-600 flex-grow">
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Enjoy Luxury Travel</h3>
+              <p className="text-gray-700 dark:text-gray-300 flex-grow">
                 Enjoy seamless, flexible luxury travel on-demand. Experience premium service, exclusive amenities, and
                 unparalleled comfort on every journey.
               </p>
@@ -336,19 +333,19 @@ export default function Home() {
       </section>
 
       {/* Benefits/Features Section */}
-      <section id="features" className="py-24 bg-white text-gray-900">
+      <section id="features" className="py-24 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
         <div className="container px-4 md:px-6 mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">Premium Features</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 dark:text-white">Premium Features</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-sm">
               <div className="flex items-start mb-4">
                 <div className="mr-4 bg-amber-500 p-2 rounded-lg">
                   <Shield className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Fractional Seat Ownership</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">Fractional Seat Ownership</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
                     Enjoy the benefits of private jet ownership without the full cost. Purchase only the seats you need,
                     when you need them.
                   </p>
@@ -356,14 +353,14 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-sm">
               <div className="flex items-start mb-4">
                 <div className="mr-4 bg-amber-500 p-2 rounded-lg">
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">AI-Driven Social & Professional Matching</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">AI-Driven Social & Professional Matching</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
                     Our intelligent system pairs you with like-minded travelers, creating opportunities for networking
                     and connections.
                   </p>
@@ -371,14 +368,14 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-sm">
               <div className="flex items-start mb-4">
                 <div className="mr-4 bg-amber-500 p-2 rounded-lg">
                   <Check className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Blockchain Transparency</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">Blockchain Transparency</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
                     All transactions and ownership records are secured on blockchain, ensuring complete transparency and
                     security.
                   </p>
@@ -386,14 +383,14 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-8 rounded-xl shadow-sm">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-sm">
               <div className="flex items-start mb-4">
                 <div className="mr-4 bg-amber-500 p-2 rounded-lg">
                   <Calendar className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Effortless Booking & Management</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-xl font-semibold mb-2 dark:text-white">Effortless Booking & Management</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
                     Our intuitive platform makes scheduling, managing, and modifying your flights simple and
                     stress-free.
                   </p>
@@ -405,15 +402,15 @@ export default function Home() {
       </section>
 
       {/* What Our Users Say Section */}
-      <section id="testimonials" className="py-24 bg-gray-50">
+      <section id="testimonials" className="py-24 bg-gray-50 dark:bg-gray-900">
         <div className="container px-4 md:px-6 mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">What Our Users Say</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-16 dark:text-white">What Our Members Say</h2>
           <p className="text-xl text-gray-600 text-center mb-16 max-w-3xl mx-auto">
             Discover how JetStream is transforming the private aviation experience for our members
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-md flex flex-col h-full transform transition-all duration-300 hover:shadow-lg">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md flex flex-col h-full transform transition-all duration-300 hover:shadow-lg">
               <div className="mb-6">
                 <div className="flex text-amber-500 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -424,35 +421,35 @@ export default function Home() {
                 </div>
                 <div className="relative mb-6">
                   <svg
-                    className="absolute top-0 left-0 w-8 h-8 text-gray-200 transform -translate-x-4 -translate-y-4"
+                    className="absolute top-0 left-0 w-8 h-8 text-gray-200 dark:text-gray-700 transform -translate-x-4 -translate-y-4"
                     fill="currentColor"
                     viewBox="0 0 32 32"
                   >
                     <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                   </svg>
-                  <p className="text-gray-700 text-lg italic relative z-10 pl-2">
-                    "JetStream made private jet travel accessible and effortless—truly a game changer."
+                  <p className="text-gray-700 dark:text-gray-300 text-lg italic relative z-10 pl-2">
+                    "JetStream has transformed how I travel for business. The matching algorithm is exceptional."
                   </p>
                 </div>
               </div>
               <div className="mt-auto flex items-center">
-                <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden mr-4">
+                <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mr-4">
                   <Image
                     src="/placeholder.svg?height=56&width=56"
-                    alt="Alex T."
+                    alt="Michael D."
                     width={56}
                     height={56}
                     className="object-cover"
                   />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">Alex T.</p>
-                  <p className="text-sm text-gray-500">Tech CEO</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">Michael D.</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">CEO, Tech Innovations</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-md flex flex-col h-full transform transition-all duration-300 hover:shadow-lg">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md flex flex-col h-full transform transition-all duration-300 hover:shadow-lg">
               <div className="mb-6">
                 <div className="flex text-amber-500 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -463,19 +460,19 @@ export default function Home() {
                 </div>
                 <div className="relative mb-6">
                   <svg
-                    className="absolute top-0 left-0 w-8 h-8 text-gray-200 transform -translate-x-4 -translate-y-4"
+                    className="absolute top-0 left-0 w-8 h-8 text-gray-200 dark:text-gray-700 transform -translate-x-4 -translate-y-4"
                     fill="currentColor"
                     viewBox="0 0 32 32"
                   >
                     <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                   </svg>
-                  <p className="text-gray-700 text-lg italic relative z-10 pl-2">
+                  <p className="text-gray-700 dark:text-gray-300 text-lg italic relative z-10 pl-2">
                     "The fractional ownership model makes perfect sense for my lifestyle and budget."
                   </p>
                 </div>
               </div>
               <div className="mt-auto flex items-center">
-                <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden mr-4">
+                <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mr-4">
                   <Image
                     src="/placeholder.svg?height=56&width=56"
                     alt="Jordan R."
@@ -485,13 +482,13 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">Jordan R.</p>
-                  <p className="text-sm text-gray-500">Venture Capitalist</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">Jordan R.</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Venture Capitalist</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-md flex flex-col h-full transform transition-all duration-300 hover:shadow-lg">
+            <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-md flex flex-col h-full transform transition-all duration-300 hover:shadow-lg">
               <div className="mb-6">
                 <div className="flex text-amber-500 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -502,20 +499,20 @@ export default function Home() {
                 </div>
                 <div className="relative mb-6">
                   <svg
-                    className="absolute top-0 left-0 w-8 h-8 text-gray-200 transform -translate-x-4 -translate-y-4"
+                    className="absolute top-0 left-0 w-8 h-8 text-gray-200 dark:text-gray-700 transform -translate-x-4 -translate-y-4"
                     fill="currentColor"
                     viewBox="0 0 32 32"
                   >
                     <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                   </svg>
-                  <p className="text-gray-700 text-lg italic relative z-10 pl-2">
+                  <p className="text-gray-700 dark:text-gray-300 text-lg italic relative z-10 pl-2">
                     "The AI matching is surprisingly accurate; my flights now double as invaluable networking
                     opportunities."
                   </p>
                 </div>
               </div>
               <div className="mt-auto flex items-center">
-                <div className="w-14 h-14 bg-gray-200 rounded-full overflow-hidden mr-4">
+                <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mr-4">
                   <Image
                     src="/placeholder.svg?height=56&width=56"
                     alt="Sophia L."
@@ -525,8 +522,8 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">Sophia L.</p>
-                  <p className="text-sm text-gray-500">Marketing Director</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">Sophia L.</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Marketing Director</p>
                 </div>
               </div>
             </div>

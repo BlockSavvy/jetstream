@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function FlightsPage() {
   return (
-    <main className="flex flex-col items-center justify-between min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="container">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 mt-4 text-center">Private Jet Flights</h1>
-        <p className="text-center text-muted-foreground mb-8">
+    <div className="flex flex-col items-center justify-between min-h-screen pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+      <div className="container max-w-7xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 mt-4 text-center dark:text-white">Private Jet Flights</h1>
+        <p className="text-center text-muted-foreground mb-8 dark:text-gray-300">
           Browse available flights and book your next luxury journey
         </p>
         
@@ -21,6 +21,6 @@ export default function FlightsPage() {
           <FlightsMarketplace />
         </Suspense>
       </div>
-    </main>
+    </div>
   );
 } 

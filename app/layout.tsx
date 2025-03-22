@@ -5,6 +5,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
 import { Toaster } from "sonner"
+import Navbar from "@/components/navbar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   title: "JetStream - Private Jets On-Demand",
   description:
     "Redefine luxury travel with JetStream - the Uber of private jets. Seamless fractional jet experiences, personalized flights, effortlessly matched.",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -26,7 +27,10 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <Toaster position="top-center" />
-            {children}
+            <Navbar />
+            <main className="min-h-screen">
+              {children}
+            </main>
           </AuthProvider>
         </ThemeProvider>
       </body>
