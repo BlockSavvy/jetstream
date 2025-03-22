@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase-server';
 
-// Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+// Initialize Stripe conditionally if API key is present
+let stripe: Stripe | undefined;
+
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Stripe is properly initialized
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe API is not configured' },
+        { status: 500 }
+      );
+    }
+
     const { flightId, userId, seatsBooked, totalPrice } = await request.json();
 
     if (!flightId || !userId || !seatsBooked || !totalPrice) {
