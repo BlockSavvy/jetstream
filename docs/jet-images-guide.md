@@ -23,6 +23,7 @@ We have images for a variety of aircraft models in the following manufacturer di
 To update the existing jet records in the database to use these images:
 
 1. Run the update script:
+
    ```bash
    node db/update-jet-images.js
    ```
@@ -47,6 +48,7 @@ images TEXT[],
 We've created utility functions in `lib/utils/jet-images.ts` to make it easy to work with these images in the frontend:
 
 1. **getJetImagePaths** - Get all image paths for a specific jet model:
+
    ```tsx
    import { getJetImagePaths } from '@/lib/utils/jet-images';
    
@@ -55,6 +57,7 @@ We've created utility functions in `lib/utils/jet-images.ts` to make it easy to 
    ```
 
 2. **getPrimaryJetImage** - Get just the primary image for a jet model:
+
    ```tsx
    import { getPrimaryJetImage } from '@/lib/utils/jet-images';
    
@@ -63,6 +66,7 @@ We've created utility functions in `lib/utils/jet-images.ts` to make it easy to 
    ```
 
 3. **getJetImage** - Get an image using a jet object (useful with database records):
+
    ```tsx
    import { getJetImage } from '@/lib/utils/jet-images';
    
@@ -123,4 +127,4 @@ To add images for new aircraft models:
 If an image for a specific model isn't available, the system will:
 
 1. First try to use a default image for that manufacturer
-2. If no manufacturer default exists, use the global default (Gulfstream G650) 
+2. If no manufacturer default exists, use the global default (Gulfstream G650)

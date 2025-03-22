@@ -59,4 +59,4 @@ If you encounter errors:
 For more detailed information, see:
 
 - `docs/jet-images-guide.md` - Comprehensive guide to working with jet images
-- `db/README-update-images.md` - Technical details about the update script 
+- `db/README-update-images.md` - Technical details about the update script
