@@ -1,13 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Client, resources, Webhook } from 'coinbase-commerce-node';
+import { Client } from 'coinbase-commerce-node';
+// Add module declaration to satisfy TypeScript
+// @ts-ignore
+import Webhook from 'coinbase-commerce-node/lib/Webhook';
 import { createClient } from '@/lib/supabase-server';
 import { processBookingTickets } from '@/lib/services/tickets';
 
-// Initialize Coinbase Commerce client
-Client.init(process.env.COINBASE_COMMERCE_API_KEY || '');
+// Initialize Coinbase Commerce client conditionally
+let WebhookClass: any = null;
+
+if (process.env.COINBASE_COMMERCE_API_KEY) {
+  Client.init(process.env.COINBASE_COMMERCE_API_KEY);
+  WebhookClass = Webhook;
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Coinbase Commerce is properly initialized
+    if (!WebhookClass) {
+      return NextResponse.json(
+        { error: 'Coinbase Commerce is not configured' },
+        { status: 500 }
+      );
+    }
+
     // Get the request body and signature
     const payload = await request.text();
     const signature = request.headers.get('x-cc-webhook-signature') || '';
@@ -16,7 +32,7 @@ export async function POST(request: NextRequest) {
     // Verify the webhook signature
     let event;
     try {
-      event = Webhook.verifyEventBody(payload, signature, webhookSecret);
+      event = WebhookClass.verifyEventBody(payload, signature, webhookSecret);
     } catch (error) {
       console.error('Invalid webhook signature:', error);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
