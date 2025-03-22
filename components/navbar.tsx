@@ -40,6 +40,9 @@ export default function Navbar() {
             <Link href="#how-it-works" className="text-white hover:text-amber-400 transition-colors">
               How It Works
             </Link>
+            <Link href="/flights" className="text-white hover:text-amber-400 transition-colors">
+              Flights
+            </Link>
             <Link href="#features" className="text-white hover:text-amber-400 transition-colors">
               Features
             </Link>
@@ -66,6 +69,13 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               How It Works
+            </Link>
+            <Link
+              href="/flights"
+              className="text-white hover:text-amber-400 transition-colors py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Flights
             </Link>
             <Link
               href="#features"
