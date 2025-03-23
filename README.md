@@ -101,3 +101,20 @@ The matching service uses Cohere's embeddings to create vector representations o
 - **For companions**: Professional background, interests, travel history, and preferences
 
 Each match includes a compatibility score and specific reasons why the match was recommended, providing transparency to users.
+
+## Database Migrations
+
+If you're facing issues with missing tables or columns, you need to run the migration scripts against your Supabase database:
+
+1. Go to your Supabase dashboard and open the SQL Editor
+2. Copy the contents of the migration files:
+   - `migrations/profiles.sql` - Enhances the profiles table with missing columns
+   - `migrations/travel_preferences.sql` - Creates the travel preferences table
+3. Run each script in the SQL Editor
+4. Refresh your browser to see the changes take effect
+
+After running these migrations, the following features will work correctly:
+
+- Profile updates (company, position, etc.)
+- Travel preferences (interests, social preferences, etc.)
+- User settings and privacy controls
