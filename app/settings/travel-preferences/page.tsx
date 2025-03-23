@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 // Using the same type definitions as in the Pulse questionnaire
 type TravelInterest = "Business" | "Sports" | "Tech" | "Art" | "Luxury" | "Music" | "Fashion" | "Crypto" | "Wellness" | "Family" | "Adventure";
@@ -20,29 +21,42 @@ const urgencyPreferences: UrgencyPreference[] = ["Last-minute", "Advanced", "Exc
 
 export default function TravelPreferencesPage() {
   const { profile, loading, updateProfile } = useUserProfile();
+  const searchParams = useSearchParams();
   
   const [selectedInterests, setSelectedInterests] = useState<TravelInterest[]>([]);
   const [selectedSocialPrefs, setSelectedSocialPrefs] = useState<SocialPreference[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [selectedUrgency, setSelectedUrgency] = useState<UrgencyPreference[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [isInIframe, setIsInIframe] = useState(false);
+  const [isEmbedded, setIsEmbedded] = useState(false);
 
-  // Check if we're in an iframe
+  // Check if we're in an iframe or embedded mode
   useEffect(() => {
-    setIsInIframe(window.self !== window.top);
+    // Check for embedded parameter or if we're in an iframe
+    const isEmbed = searchParams.get('embedded') === 'true';
+    const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+    setIsEmbedded(isEmbed || isInIframe);
     
-    // Hide navbar when in an iframe by adding a class to the body
-    if (window.self !== window.top) {
-      // Create and inject a style tag to hide the navbar when in an iframe
+    // Add a class to the HTML element when embedded to style the page differently
+    if (isEmbed || isInIframe) {
+      document.documentElement.classList.add('embedded-view');
+      
+      // Create and inject a style tag to hide navigation elements
       const style = document.createElement('style');
       style.textContent = `
-        nav { display: none !important; }
-        header { display: none !important; }
+        body > nav, body > header { display: none !important; }
+        body > main { padding-top: 0 !important; margin-top: 0 !important; }
+        .embedded-view body { background: transparent !important; }
+        .embedded-view html { background: transparent !important; }
       `;
       document.head.appendChild(style);
     }
-  }, []);
+    
+    // Clean up the style and class when component unmounts
+    return () => {
+      document.documentElement.classList.remove('embedded-view');
+    };
+  }, [searchParams]);
 
   // Load existing preferences
   useEffect(() => {
@@ -122,8 +136,8 @@ export default function TravelPreferencesPage() {
   }
 
   return (
-    <div className={`space-y-6 ${isInIframe ? 'pt-0' : 'pt-4'}`}>
-      {!isInIframe && (
+    <div className={`space-y-6 ${isEmbedded ? 'pt-0' : 'pt-4'}`}>
+      {!isEmbedded && (
         <div>
           <h3 className="text-lg font-medium">Travel Preferences</h3>
           <p className="text-sm text-muted-foreground">

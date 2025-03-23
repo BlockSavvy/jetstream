@@ -74,24 +74,28 @@ export function useUserProfile() {
         
         // Create a new profile if not found
         if (profileError.code === "PGRST116") { // Row not found
+          console.log("Profile not found, creating new profile for user:", user.id);
+          
           const { data: newProfile, error: insertError } = await supabase
             .from("profiles")
             .insert({
               id: user.id,
               email: user.email,
+              full_name: user.user_metadata?.full_name || "",
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
-            .select("*")
-            .single();
+            .select();
             
           if (insertError) {
+            console.error("Error creating new profile:", insertError);
             throw insertError;
           }
           
           // Use the newly created profile
           const fullProfile: UserProfile = {
-            ...newProfile,
+            ...(newProfile?.[0] || {}),
+            id: user.id,
             email: user.email || "",
           };
           
@@ -153,11 +157,15 @@ export function useUserProfile() {
       // Update travel preferences if provided
       if (travel_preferences) {
         // Check if travel preferences exist
-        const { data: existingPrefs } = await supabase
+        const { data: existingPrefs, error: checkError } = await supabase
           .from("travel_preferences")
           .select("id")
           .eq("user_id", user.id)
           .single();
+
+        if (checkError && checkError.code !== "PGRST116") {
+          throw checkError;
+        }
 
         if (existingPrefs) {
           // Update existing preferences
