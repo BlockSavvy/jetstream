@@ -53,8 +53,8 @@ export function BookingDialog({ flight, isOpen, onClose, userId }: BookingDialog
   if (!flight) return null;
   
   // Parse the flight information
-  const originAirport = flight.airports || flight.origin || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
-  const destinationAirport = flight["airports!flights_destination_airport_fkey"] || flight.destination || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
+  const originAirport = flight.origin || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
+  const destinationAirport = flight.destination || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
   const departureDate = new Date(flight.departure_time);
   const pricePerSeat = flight.base_price;
   

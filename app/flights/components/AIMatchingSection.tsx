@@ -145,7 +145,7 @@ const AIMatchingSection = ({
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="font-semibold">
-                      {flightMatch.flight.origin_airport} → {flightMatch.flight.destination_airport}
+                      {flightMatch.flight.origin?.city || flightMatch.flight.origin_airport} → {flightMatch.flight.destination?.city || flightMatch.flight.destination_airport}
                     </h3>
                     <p className="text-sm text-gray-600">
                       {formatDate(flightMatch.flight.departure_time)} | {formatTime(flightMatch.flight.departure_time)}

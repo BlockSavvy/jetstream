@@ -1,124 +1,149 @@
 import { createClient } from '@/lib/supabase-server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+// Airport interface
+interface Airport {
+  code: string;
+  name: string;
+  city: string;
+  country: string;
+}
+
+// Fallback airport data
+const fallbackAirports: Airport[] = [
+  { code: "EDDB", name: "Berlin Brandenburg Airport", city: "Berlin", country: "Germany" },
+  { code: "OMDB", name: "Dubai International Airport", city: "Dubai", country: "UAE" },
+  { code: "VHHH", name: "Hong Kong International Airport", city: "Hong Kong", country: "China" },
+  { code: "KLAS", name: "Harry Reid International Airport", city: "Las Vegas", country: "USA" },
+  { code: "EGLL", name: "London Heathrow Airport", city: "London", country: "UK" },
+  { code: "EGGW", name: "London Luton Airport", city: "London", country: "UK" },
+  { code: "KVAN", name: "Van Nuys Airport", city: "Los Angeles", country: "USA" },
+  { code: "KLAX", name: "Los Angeles International Airport", city: "Los Angeles", country: "USA" },
+  { code: "KMIA", name: "Miami International Airport", city: "Miami", country: "USA" },
+  { code: "EDDM", name: "Munich Airport", city: "Munich", country: "Germany" },
+  { code: "VIDP", name: "Indira Gandhi International Airport", city: "New Delhi", country: "India" },
+  { code: "KJFK", name: "John F. Kennedy International Airport", city: "New York", country: "USA" },
+  { code: "KPBI", name: "Palm Beach International Airport", city: "Palm Beach", country: "USA" },
+  { code: "LFPB", name: "Paris–Le Bourget Airport", city: "Paris", country: "France" },
+  { code: "KSFO", name: "San Francisco International Airport", city: "San Francisco", country: "USA" },
+  { code: "KSDL", name: "Scottsdale Airport", city: "Scottsdale", country: "USA" },
+  { code: "YSSY", name: "Sydney Kingsford Smith Airport", city: "Sydney", country: "Australia" },
+  { code: "KTEB", name: "Teterboro Airport", city: "Teterboro", country: "USA" },
+  { code: "RJTT", name: "Tokyo Haneda Airport", city: "Tokyo", country: "Japan" },
+  { code: "KHPN", name: "Westchester County Airport", city: "White Plains", country: "USA" }
+];
+
+// Helper function to find airport by code
+function findAirportByCode(code: string): Airport | null {
+  return fallbackAirports.find(airport => airport.code === code) || null;
+}
+
+// Interface that matches the expected structure from Supabase
+interface FlightData {
+  id: string;
+  origin_airport: string;
+  destination_airport: string;
+  departure_time: string;
+  arrival_time: string;
+  available_seats: number;
+  base_price: number;
+  status: string;
+  jet_id: string;
+  jets: any;
+  origin: any;
+  destination: any;
+  [key: string]: any;
+}
+
+export async function GET() {
   try {
-    console.log('Flights API called with params:', request.nextUrl.searchParams.toString());
-    
-    const searchParams = request.nextUrl.searchParams;
-    const destination = searchParams.get('destination');
-    const origin = searchParams.get('origin');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
-    const minPrice = searchParams.get('minPrice');
-    const maxPrice = searchParams.get('maxPrice');
-    const minSeats = searchParams.get('minSeats');
-    const hasFractionalTokens = searchParams.get('hasFractionalTokens');
-
-    console.log('Creating Supabase client');
+    console.log('Fetching flights data...');
     const supabase = await createClient();
     
-    console.log('Building query');
-    let query = supabase
+    // Fetch flights with related data including complete jet details
+    const { data: flights, error } = await supabase
       .from('flights')
       .select(`
-        *,
-        jets!inner (*),
-        origin:airports!origin_airport (*),
-        destination:airports!destination_airport (*)
+        id,
+        origin_airport,
+        destination_airport,
+        departure_time,
+        arrival_time,
+        available_seats,
+        base_price,
+        status,
+        jet_id,
+        jets(
+          id,
+          manufacturer,
+          model,
+          tail_number,
+          capacity,
+          images,
+          amenities,
+          hourly_rate
+        ),
+        origin:origin_airport(
+          code,
+          name,
+          city,
+          country
+        ),
+        destination:destination_airport(
+          code,
+          name,
+          city,
+          country
+        )
       `)
-      .eq('status', 'scheduled');
-
-    // Apply filters
-    if (origin) {
-      console.log('Applying origin filter:', origin);
-      query = query.eq('origin_airport', origin);
-    }
-    
-    if (destination) {
-      console.log('Applying destination filter:', destination);
-      query = query.eq('destination_airport', destination);
-    }
-    
-    if (dateFrom) {
-      console.log('Applying dateFrom filter:', dateFrom);
-      query = query.gte('departure_time', dateFrom);
-    }
-    
-    if (dateTo) {
-      console.log('Applying dateTo filter:', dateTo);
-      query = query.lte('departure_time', dateTo);
-    }
-    
-    if (minPrice) {
-      console.log('Applying minPrice filter:', minPrice);
-      query = query.gte('base_price', minPrice);
-    }
-    
-    if (maxPrice) {
-      console.log('Applying maxPrice filter:', maxPrice);
-      query = query.lte('base_price', maxPrice);
-    }
-    
-    if (minSeats) {
-      console.log('Applying minSeats filter:', minSeats);
-      query = query.gte('available_seats', minSeats);
-    }
-    
-    console.log('Executing query');
-    const { data, error } = await query;
+      .limit(50);
     
     if (error) {
-      console.error('Supabase query error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch flights', details: error.message },
-        { status: 500 }
-      );
+      console.error('Error fetching flights:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    console.log(`Query returned ${data?.length || 0} flights`);
-
-    // Transform the data to match our expected format
-    const transformedData = data?.map(flight => ({
-      ...flight,
-      airports: flight.origin,
-      "airports!flights_destination_airport_fkey": flight.destination
-    })) || [];
-
-    // If hasFractionalTokens filter is applied, we need to check which jets have tokens available
-    let filteredData = transformedData;
     
-    if (hasFractionalTokens === 'true') {
-      console.log('Applying fractional tokens filter');
-      // Get all jets with fractional tokens available for sale
-      const { data: tokensData, error: tokensError } = await supabase
-        .from('fractional_tokens')
-        .select('jet_id')
-        .eq('status', 'for_sale');
-        
-      if (tokensError) {
-        console.error('Error fetching fractional tokens:', tokensError);
+    // Fix missing origin and destination with our fallback data
+    const enhancedFlights = flights.map((flight: FlightData) => {
+      // Create a modified flight object to avoid mutating the original
+      const enhancedFlight = { ...flight };
+      
+      // If origin is null, use fallback data
+      if (!enhancedFlight.origin && enhancedFlight.origin_airport) {
+        const airportData = findAirportByCode(enhancedFlight.origin_airport);
+        // Handle both cases: either assign the airport data or use a fallback
+        enhancedFlight.origin = airportData ? airportData : { code: enhancedFlight.origin_airport, city: 'Unknown', name: 'Unknown', country: 'Unknown' };
       }
       
-      if (tokensData && tokensData.length > 0) {
-        console.log(`Found ${tokensData.length} jets with fractional tokens`);
-        const jetIdsWithTokens = new Set(tokensData.map(token => token.jet_id));
-        filteredData = filteredData.filter(flight => jetIdsWithTokens.has(flight.jet_id));
-        console.log(`After filtering, ${filteredData.length} flights remaining`);
-      } else {
-        console.log('No jets with fractional tokens found');
+      // If destination is null, use fallback data
+      if (!enhancedFlight.destination && enhancedFlight.destination_airport) {
+        const airportData = findAirportByCode(enhancedFlight.destination_airport);
+        // Handle both cases: either assign the airport data or use a fallback
+        enhancedFlight.destination = airportData ? airportData : { code: enhancedFlight.destination_airport, city: 'Unknown', name: 'Unknown', country: 'Unknown' };
       }
+      
+      return enhancedFlight;
+    });
+    
+    // Log more detailed debug information
+    console.log(`Retrieved ${flights?.length || 0} flights`);
+    
+    // Debug: log first flight details to verify structure
+    if (enhancedFlights && enhancedFlights.length > 0) {
+      const firstFlight = enhancedFlights[0];
+      console.log('First flight enhanced structure:', {
+        id: firstFlight.id,
+        origin_airport_code: firstFlight.origin_airport,
+        destination_airport_code: firstFlight.destination_airport,
+        origin: firstFlight.origin,
+        destination: firstFlight.destination,
+        jets: firstFlight.jets
+      });
     }
-
-    return NextResponse.json(filteredData);
-  } catch (err) {
-    console.error('Unexpected error in flights API:', err);
-    return NextResponse.json(
-      { 
-        error: 'An unexpected error occurred',
-        details: err instanceof Error ? err.message : String(err)
-      },
-      { status: 500 }
-    );
+    
+    return NextResponse.json(enhancedFlights);
+  } catch (error) {
+    console.error('Error in flights API:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 } 

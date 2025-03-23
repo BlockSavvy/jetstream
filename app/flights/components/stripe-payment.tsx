@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
 
-// Load Stripe outside of component render cycle
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
+// Get the publishable key from env
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+// Only initialize Stripe if we have a valid key
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 interface StripePaymentProps {
   flightId: string;

@@ -24,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    // Only set up the auth listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
@@ -39,11 +40,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Initial session check - this is the only time we need to check the session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
       setLoading(false)
-    })
+    }
+    
+    checkSession()
 
     return () => {
       authListener.subscription.unsubscribe()

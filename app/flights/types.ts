@@ -29,12 +29,10 @@ export interface Flight {
   available_seats: number;
   base_price: number;
   status: 'scheduled' | 'boarding' | 'in_air' | 'completed' | 'cancelled';
-  created_at: string;
+  created_at?: string;
   jets: Jet;
-  airports?: Airport;  // Origin airport
-  origin?: Airport;    // Alternative origin airport property
-  "airports!flights_destination_airport_fkey"?: Airport;  // Destination airport
-  destination?: Airport;  // Alternative destination airport property
+  origin: Airport;
+  destination: Airport;
 }
 
 export interface FlightFilters {

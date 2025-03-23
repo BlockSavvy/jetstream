@@ -7,15 +7,27 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Clock, Calendar, Users, DollarSign, Plane, MapPin } from 'lucide-react';
 import { getJetImage } from '@/lib/utils/jet-images';
+import { cn } from '@/lib/utils';
+import { formatDate, formatCurrency } from '@/lib/utils/format';
 
 interface FlightCardProps {
   flight: Flight;
   onBookNow: (flight: Flight) => void;
+  className?: string;
 }
 
-export function FlightCard({ flight, onBookNow }: FlightCardProps) {
-  const originAirport = flight.airports || flight.origin || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
-  const destinationAirport = flight["airports!flights_destination_airport_fkey"] || flight.destination || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
+export function FlightCard({ flight, onBookNow, className }: FlightCardProps) {
+  // Add logging to debug the flight object structure
+  console.log('Flight data in card:', {
+    flight_id: flight.id,
+    origin: flight.origin,
+    destination: flight.destination,
+    jet: flight.jets
+  });
+  
+  // Use origin and destination from the API response
+  const originAirport = flight.origin || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
+  const destinationAirport = flight.destination || { city: 'Unknown', code: 'N/A', name: 'Unknown', country: 'Unknown' };
   const jet = flight.jets;
   
   // Format dates
@@ -39,7 +51,7 @@ export function FlightCard({ flight, onBookNow }: FlightCardProps) {
   const jetImage = getJetImage(jet, 0, 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-card border-2 border-muted">
+    <Card className={cn('overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-card border-2 border-muted', className)}>
       <div className="relative h-48">
         <Image 
           src={jetImage} 
