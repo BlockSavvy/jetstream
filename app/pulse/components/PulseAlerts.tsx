@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 // Reference to an existing jet interior image from the database
-const interiorImagePath = "/images/jets/gulfstream/g650-1.jpg";
+const interiorImagePath = "/images/jets/interior/jetinterior.jpg";
 
 export default function PulseAlerts() {
   const [email, setEmail] = useState("");

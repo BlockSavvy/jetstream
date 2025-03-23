@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function PulseHero() {
   const scrollToQuestionnaire = () => {
@@ -12,10 +13,23 @@ export default function PulseHero() {
   };
 
   return (
-    <section className="relative py-20 md:py-28 overflow-hidden">
+    <section className="relative py-20 md:py-32 overflow-hidden">
+      {/* Hero background image */}
+      <div className="absolute inset-0 w-full h-full">
+        <Image 
+          src="/pulsehero.jpg" 
+          alt="Private jet flying above clouds at sunset" 
+          fill 
+          priority
+          className="object-cover object-center" 
+        />
+        {/* Overlay gradient for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-gray-900/40" />
+      </div>
+
       {/* Abstract luxury background elements */}
-      <div className="absolute inset-0 z-0 opacity-30">
-        <div className="absolute top-20 right-20 w-64 h-64 rounded-full bg-amber-500/20 blur-3xl"></div>
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-20 right-20 w-64 h-64 rounded-full bg-amber-500/10 blur-3xl"></div>
         <div className="absolute bottom-10 left-10 w-72 h-72 rounded-full bg-purple-500/10 blur-3xl"></div>
       </div>
 

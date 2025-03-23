@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useAuth } from "@/components/auth-provider";
+import { toast } from "sonner";
 
 // Define the question types
 type TravelInterest = "Business" | "Sports" | "Tech" | "Art" | "Luxury" | "Music" | "Fashion" | "Crypto" | "Wellness" | "Family" | "Adventure";
@@ -18,6 +21,9 @@ const popularDestinations = ["Cannes", "Miami", "Dubai", "New York", "London", "
 const urgencyPreferences: UrgencyPreference[] = ["Last-minute", "Advanced", "Exclusive"];
 
 export default function PulseQuestionnaire() {
+  const { user } = useAuth();
+  const { profile, loading: profileLoading, updateProfile } = useUserProfile();
+  
   const [step, setStep] = useState(1);
   const [selectedInterests, setSelectedInterests] = useState<TravelInterest[]>([]);
   const [selectedSocialPrefs, setSelectedSocialPrefs] = useState<SocialPreference[]>([]);
@@ -25,6 +31,19 @@ export default function PulseQuestionnaire() {
   const [selectedUrgency, setSelectedUrgency] = useState<UrgencyPreference[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Load existing preferences from profile if available
+  useEffect(() => {
+    if (profile?.travel_preferences) {
+      const prefs = profile.travel_preferences;
+      
+      // Type assertion for type safety
+      setSelectedInterests(prefs.travel_interests as TravelInterest[]);
+      setSelectedSocialPrefs(prefs.social_preferences as SocialPreference[]);
+      setSelectedDestinations(prefs.preferred_destinations);
+      setSelectedUrgency(prefs.urgency_preferences as UrgencyPreference[]);
+    }
+  }, [profile]);
 
   const toggleInterest = (interest: TravelInterest) => {
     if (selectedInterests.includes(interest)) {
@@ -58,12 +77,29 @@ export default function PulseQuestionnaire() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      if (user) {
+        // Save preferences to user profile
+        await updateProfile({
+          travel_preferences: {
+            user_id: user.id,
+            travel_interests: selectedInterests,
+            social_preferences: selectedSocialPrefs,
+            preferred_destinations: selectedDestinations,
+            urgency_preferences: selectedUrgency,
+          }
+        });
+        
+        toast.success("Your Pulse preferences have been saved!");
+      } else {
+        // For non-authenticated users, just simulate a delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        toast.success("Preferences received! Sign in to save them to your profile.");
+      }
+      
       setIsComplete(true);
       
       // Scroll to results
@@ -73,7 +109,12 @@ export default function PulseQuestionnaire() {
           resultsElement.scrollIntoView({ behavior: "smooth" });
         }
       }, 500);
-    }, 1500);
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+      toast.error("There was an error saving your preferences. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
