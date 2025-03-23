@@ -22,7 +22,11 @@ import {
   MapPin,
   Star,
   Filter,
-  User
+  User,
+  Sparkles,
+  Globe,
+  MessageSquare,
+  Share2
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -50,15 +54,16 @@ const recommendedMatches = [
       origin: 'New York',
       destination: 'San Francisco',
       departureTime: '2023-06-20T09:30:00',
-      jetModel: 'Gulfstream G650',
+      jetModel: 'G650',
+      manufacturer: 'Gulfstream',
       amenities: 'Wi-Fi, Premium Dining, Meeting Facilities, Sleep Suite',
       professionals: [
-        { jobTitle: 'CEO', industry: 'Technology' },
-        { jobTitle: 'VC Partner', industry: 'Finance' },
-        { jobTitle: 'Marketing Director', industry: 'Technology' }
+        { jobTitle: 'CEO', industry: 'Technology', company: 'TechVision Inc.' },
+        { jobTitle: 'VC Partner', industry: 'Finance', company: 'Sequoia Capital' },
+        { jobTitle: 'Marketing Director', industry: 'Technology', company: 'Apple' }
       ]
     },
-    image: '/placeholder.svg?height=200&width=400'
+    image: '/images/jets/gulfstream/g650.jpg'
   },
   {
     id: '2',
@@ -79,14 +84,15 @@ const recommendedMatches = [
       origin: 'New York',
       destination: 'Miami',
       departureTime: '2023-07-05T14:15:00',
-      jetModel: 'Bombardier Global 6000',
+      jetModel: 'Global 6000',
+      manufacturer: 'Bombardier',
       amenities: 'Wi-Fi, Premium Dining, Entertainment System, Bar Service',
       professionals: [
-        { jobTitle: 'Investment Director', industry: 'Finance' },
-        { jobTitle: 'Real Estate Developer', industry: 'Real Estate' }
+        { jobTitle: 'Investment Director', industry: 'Finance', company: 'BlackRock' },
+        { jobTitle: 'Real Estate Developer', industry: 'Real Estate', company: 'Luxury Properties' }
       ]
     },
-    image: '/placeholder.svg?height=200&width=400'
+    image: '/images/jets/bombardier/Global6000.jpg'
   },
   {
     id: '3',
@@ -107,15 +113,116 @@ const recommendedMatches = [
       origin: 'New York',
       destination: 'Las Vegas',
       departureTime: '2023-07-15T11:00:00',
-      jetModel: 'Embraer Praetor 600',
+      jetModel: 'Praetor 600',
+      manufacturer: 'Embraer',
       amenities: 'Wi-Fi, Entertainment System, Premium Dining, Workspace',
       professionals: [
-        { jobTitle: 'Media Executive', industry: 'Entertainment' },
-        { jobTitle: 'Hotel Developer', industry: 'Hospitality' },
-        { jobTitle: 'Tech Entrepreneur', industry: 'Technology' }
+        { jobTitle: 'Media Executive', industry: 'Entertainment', company: 'Universal Studios' },
+        { jobTitle: 'Hotel Developer', industry: 'Hospitality', company: 'Marriott International' },
+        { jobTitle: 'Tech Entrepreneur', industry: 'Technology', company: 'NextGen Innovations' }
       ]
     },
-    image: '/placeholder.svg?height=200&width=400'
+    image: '/images/jets/embraer/Praetor600.jpg'
+  }
+];
+
+// Enhanced traveler profiles with more detailed information
+const compatibleTravelers = [
+  {
+    id: '1',
+    name: 'Alex Marshall',
+    jobTitle: 'CEO',
+    company: 'TechVision Inc.',
+    industry: 'Technology',
+    matchScore: 96,
+    bio: 'Serial entrepreneur with 3 successful exits. Passionate about AI and blockchain.',
+    interests: ['Technology', 'Investments', 'Golf', 'Wine'],
+    route: 'New York → San Francisco',
+    departure: '2023-06-20T09:30:00',
+    image: '/images/profile/alex.svg',
+    travelFrequency: 'Weekly',
+    networkSize: 'Large',
+    connectionValue: 'High'
+  },
+  {
+    id: '2',
+    name: 'Sophia Chen',
+    jobTitle: 'VC Partner',
+    company: 'Sequoia Capital',
+    industry: 'Finance',
+    matchScore: 94,
+    bio: 'Early-stage investor focused on AI, Web3, and sustainability technologies.',
+    interests: ['Venture Capital', 'Startups', 'Tennis', 'Fine Dining'],
+    route: 'New York → San Francisco',
+    departure: '2023-06-20T09:30:00',
+    image: '/images/profile/sophia.svg',
+    travelFrequency: 'Bi-weekly',
+    networkSize: 'Very Large',
+    connectionValue: 'Very High'
+  },
+  {
+    id: '3',
+    name: 'Marcus Johnson',
+    jobTitle: 'Investment Director',
+    company: 'BlackRock',
+    industry: 'Finance',
+    matchScore: 91,
+    bio: 'Experienced asset manager specializing in tech and real estate investments.',
+    interests: ['Finance', 'Real Estate', 'Sailing', 'Classical Music'],
+    route: 'New York → Miami',
+    departure: '2023-07-05T14:15:00',
+    image: '/images/profile/marcus.svg',
+    travelFrequency: 'Monthly',
+    networkSize: 'Large',
+    connectionValue: 'High'
+  },
+  {
+    id: '4',
+    name: 'Olivia Rodriguez',
+    jobTitle: 'Marketing Director',
+    company: 'Apple',
+    industry: 'Technology',
+    matchScore: 89,
+    bio: 'Creative marketing executive with expertise in luxury and tech branding.',
+    interests: ['Marketing', 'Design', 'Yoga', 'Modern Art'],
+    route: 'New York → San Francisco',
+    departure: '2023-06-20T09:30:00',
+    image: '/images/profile/olivia.svg',
+    travelFrequency: 'Bi-weekly',
+    networkSize: 'Medium',
+    connectionValue: 'Medium'
+  },
+  {
+    id: '5',
+    name: 'James Wilson',
+    jobTitle: 'Real Estate Developer',
+    company: 'Luxury Properties',
+    industry: 'Real Estate',
+    matchScore: 86,
+    bio: 'Leading luxury property developer with projects in Miami, New York, and Dubai.',
+    interests: ['Architecture', 'Investments', 'Golf', 'Boating'],
+    route: 'New York → Miami',
+    departure: '2023-07-05T14:15:00',
+    image: '/images/profile/james.svg',
+    travelFrequency: 'Weekly',
+    networkSize: 'Medium',
+    connectionValue: 'High'
+  },
+  {
+    id: '6',
+    name: 'Emma Davis',
+    jobTitle: 'Media Executive',
+    company: 'Universal Studios',
+    industry: 'Entertainment',
+    matchScore: 84,
+    bio: 'Entertainment industry veteran with extensive connections in Hollywood.',
+    interests: ['Film', 'Media', 'Skiing', 'Food & Wine'],
+    route: 'New York → Las Vegas',
+    departure: '2023-07-15T11:00:00',
+    image: '/images/profile/emma.svg',
+    travelFrequency: 'Monthly',
+    networkSize: 'Very Large',
+    connectionValue: 'Very High'
   }
 ];
 
@@ -140,11 +247,20 @@ export default function AIMatchingPage() {
   
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">AI Flight Matching</h1>
-        <p className="text-muted-foreground">
-          Discover flights and travel companions based on your profile, preferences, and professional network
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">AI Flight Matching</h1>
+          <p className="text-muted-foreground">
+            Discover flights and travel companions based on your profile, preferences, and professional network
+          </p>
+        </div>
+        <Button variant="outline" className="gap-1 mb-2" asChild>
+          <Link href="/test/ai-matching">
+            <Sparkles className="h-4 w-4 mr-1 text-amber-500" /> 
+            Advanced Matching Lab
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Link>
+        </Button>
       </div>
       
       <Card className="mb-6">
@@ -265,15 +381,6 @@ export default function AIMatchingPage() {
               </Card>
             ))}
           </div>
-          
-          <div className="flex justify-center">
-            <Button variant="outline" className="gap-1" asChild>
-              <Link href="/test/ai-matching">
-                Advanced Matching Lab
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
         </TabsContent>
         
         <TabsContent value="custom" className="space-y-4">
@@ -346,7 +453,7 @@ export default function AIMatchingPage() {
                                   <Briefcase className="h-4 w-4 mr-2 text-gray-500" />
                                   <div>
                                     <div className="text-sm font-medium">{pro.jobTitle}</div>
-                                    <div className="text-xs text-gray-500">{pro.industry}</div>
+                                    <div className="text-xs text-gray-500">{pro.industry} - {pro.company}</div>
                                   </div>
                                 </div>
                               ))}
@@ -419,55 +526,69 @@ export default function AIMatchingPage() {
               </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {recommendedMatches.flatMap(match => 
-                match.metadata.professionals?.map((pro, i) => ({
-                  id: `${match.id}-${i}`,
-                  name: `${pro.jobTitle.split(' ')[0]} ${String.fromCharCode(65 + i)}`,
-                  jobTitle: pro.jobTitle,
-                  industry: pro.industry,
-                  matchScore: Math.floor(Math.random() * 20) + 80,
-                  route: match.route,
-                  departure: match.departure,
-                  image: `/placeholder.svg?height=100&width=100`
-                })) || []
-              ).slice(0, 6).map((person) => (
-                <Card key={person.id} className="overflow-hidden">
-                  <CardContent className="p-4 pt-6">
-                    <div className="flex items-start gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {compatibleTravelers.map((person) => (
+                <Card key={person.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex items-center gap-4">
                       <div className="relative">
-                        <div className="rounded-full overflow-hidden h-14 w-14 bg-muted">
+                        <div className="rounded-full overflow-hidden h-16 w-16 bg-gradient-to-br from-amber-100 to-amber-300">
                           <Image 
                             src={person.image} 
                             alt={person.name}
-                            width={56}
-                            height={56}
+                            width={64}
+                            height={64}
                             className="object-cover"
                           />
                         </div>
                         <div className="absolute -top-1 -right-1">
-                          <Badge className="bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold h-6">
+                          <Badge className="bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs">
                             {person.matchScore}%
                           </Badge>
                         </div>
                       </div>
                       <div>
-                        <h4 className="font-semibold">{person.name}</h4>
-                        <div className="text-sm text-muted-foreground mb-1">
-                          {person.jobTitle} · {person.industry}
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Plane className="h-3 w-3 mr-1 inline" />
-                          <span>Flies {person.route}</span>
+                        <h4 className="font-semibold text-base">{person.name}</h4>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {person.jobTitle}
+                        </p>
+                        <div className="flex items-center mt-1 text-xs text-amber-600 font-medium">
+                          <Building className="h-3 w-3 mr-1 inline" />
+                          <span>{person.company}</span>
                         </div>
                       </div>
                     </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="text-xs bg-muted p-2 rounded-md">
+                        <span className="text-muted-foreground">Industry:</span>
+                        <div className="font-medium truncate">{person.industry}</div>
+                      </div>
+                      <div className="text-xs bg-muted p-2 rounded-md">
+                        <span className="text-muted-foreground">Travels:</span>
+                        <div className="font-medium truncate">{person.travelFrequency}</div>
+                      </div>
+                      <div className="text-xs bg-muted p-2 rounded-md col-span-2">
+                        <span className="text-muted-foreground">Interests:</span>
+                        <div className="font-medium truncate">{person.interests.join(', ')}</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                      {person.bio}
+                    </p>
+                    <div className="flex items-center text-xs text-muted-foreground mt-2">
+                      <Plane className="h-3 w-3 mr-1 inline" />
+                      <span className="truncate">{person.route}</span>
+                    </div>
                   </CardContent>
                   <CardFooter className="flex justify-between px-4 py-3 border-t bg-muted/50">
-                    <Button variant="ghost" size="sm" className="h-8 text-xs">
-                      View Profile
+                    <Button variant="ghost" size="sm" className="h-8 text-xs gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      Message
                     </Button>
-                    <Button size="sm" variant="outline" className="h-8 text-xs">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1">
+                      <Share2 className="h-3 w-3" />
                       Connect
                     </Button>
                   </CardFooter>
