@@ -75,6 +75,12 @@ export default function Navbar() {
               Flights
             </Link>
             <Link 
+              href="/pulse" 
+              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/pulse' ? 'font-semibold' : ''}`}
+            >
+              Pulse
+            </Link>
+            <Link 
               href="/dashboard" 
               className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/dashboard' ? 'font-semibold' : ''}`}
             >
@@ -129,6 +135,13 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Flights
+            </Link>
+            <Link
+              href="/pulse"
+              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname === '/pulse' ? 'font-semibold' : ''}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Pulse
             </Link>
             <Link
               href="/dashboard"

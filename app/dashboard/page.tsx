@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import { formatDate, formatTime, formatCurrency } from '@/lib/utils/format'
 import { getPrimaryJetImage } from '@/lib/utils/jet-images'
+import PulseRecommendations from "./components/PulseRecommendations"
 
 // Sample data for demonstration purposes
 const upcomingFlights = [
@@ -410,47 +411,7 @@ export default function DashboardPage() {
             </Card>
             
             {/* AI Recommended section preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Recommended For You</CardTitle>
-                <CardDescription>Flights matched to your profile and preferences</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="relative h-48 rounded-lg overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                    <Image 
-                      src={recommendedFlights[0].image} 
-                      alt={recommendedFlights[0].route} 
-                      fill 
-                      className="object-cover" 
-                    />
-                    <div className="absolute bottom-0 left-0 p-4 z-20 text-white">
-                      <h4 className="font-bold text-xl">{recommendedFlights[0].route}</h4>
-                      <p className="text-sm opacity-90">{recommendedFlights[0].description}</p>
-                    </div>
-                    <div className="absolute top-2 right-2 z-20">
-                      <Badge className="bg-amber-500 hover:bg-amber-600">{recommendedFlights[0].matchScore}% Match</Badge>
-                    </div>
-                    <div className="absolute bottom-4 right-4 z-20">
-                      <Button size="sm" className="bg-white text-black hover:bg-gray-100" asChild>
-                        <Link href="/dashboard/matching">
-                          View Details
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full md:w-auto" variant="outline" asChild>
-                  <Link href="/dashboard/matching">
-                    View All Recommendations
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
+            <PulseRecommendations />
           </TabsContent>
           
           {/* Flights Tab */}
