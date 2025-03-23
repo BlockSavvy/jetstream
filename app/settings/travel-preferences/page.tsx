@@ -26,6 +26,23 @@ export default function TravelPreferencesPage() {
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [selectedUrgency, setSelectedUrgency] = useState<UrgencyPreference[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
+
+  // Check if we're in an iframe
+  useEffect(() => {
+    setIsInIframe(window.self !== window.top);
+    
+    // Hide navbar when in an iframe by adding a class to the body
+    if (window.self !== window.top) {
+      // Create and inject a style tag to hide the navbar when in an iframe
+      const style = document.createElement('style');
+      style.textContent = `
+        nav { display: none !important; }
+        header { display: none !important; }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   // Load existing preferences
   useEffect(() => {
@@ -105,13 +122,15 @@ export default function TravelPreferencesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Travel Preferences</h3>
-        <p className="text-sm text-muted-foreground">
-          Customize your travel preferences for JetStream Pulse recommendations and matching
-        </p>
-      </div>
+    <div className={`space-y-6 ${isInIframe ? 'pt-0' : 'pt-4'}`}>
+      {!isInIframe && (
+        <div>
+          <h3 className="text-lg font-medium">Travel Preferences</h3>
+          <p className="text-sm text-muted-foreground">
+            Customize your travel preferences for JetStream Pulse recommendations and matching
+          </p>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
@@ -248,10 +267,10 @@ export default function TravelPreferencesPage() {
         {isSaving ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Saving Changes
+            Saving...
           </>
         ) : (
-          "Save Changes"
+          "Save Preferences"
         )}
       </Button>
     </div>

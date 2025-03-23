@@ -69,7 +69,7 @@ export default function SettingsPage() {
           </div>
           
           <iframe 
-            src="/settings/travel-preferences" 
+            src="/settings/travel-preferences?embedded=true" 
             className="w-full min-h-[800px] border-0"
             title="Travel Preferences"
           ></iframe>

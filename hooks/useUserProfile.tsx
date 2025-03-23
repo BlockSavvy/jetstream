@@ -70,6 +70,36 @@ export function useUserProfile() {
         .single();
 
       if (profileError) {
+        console.error("Error fetching profile data:", profileError);
+        
+        // Create a new profile if not found
+        if (profileError.code === "PGRST116") { // Row not found
+          const { data: newProfile, error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              email: user.email,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select("*")
+            .single();
+            
+          if (insertError) {
+            throw insertError;
+          }
+          
+          // Use the newly created profile
+          const fullProfile: UserProfile = {
+            ...newProfile,
+            email: user.email || "",
+          };
+          
+          setProfile(fullProfile);
+          setLoading(false);
+          return;
+        }
+        
         throw profileError;
       }
 
@@ -95,7 +125,8 @@ export function useUserProfile() {
       setProfile(fullProfile);
     } catch (err: any) {
       console.error("Error fetching user profile:", err);
-      setError(err.message || "Failed to load user profile");
+      // Make sure we capture the detailed error message or fallback to a generic one
+      setError(err.message || err.details || JSON.stringify(err) || "Failed to load user profile");
     } finally {
       setLoading(false);
     }
