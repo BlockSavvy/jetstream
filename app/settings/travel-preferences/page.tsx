@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ const socialPreferences: SocialPreference[] = ["Networking", "Privacy", "Family-
 const popularDestinations = ["Cannes", "Miami", "Dubai", "New York", "London", "Monaco", "Tokyo", "Singapore", "Paris", "Las Vegas"];
 const urgencyPreferences: UrgencyPreference[] = ["Last-minute", "Advanced", "Exclusive"];
 
-export default function TravelPreferencesPage() {
+function TravelPreferencesContent() {
   const { profile, loading, updateProfile } = useUserProfile();
   const searchParams = useSearchParams();
   
@@ -273,20 +273,29 @@ export default function TravelPreferencesPage() {
         </CardContent>
       </Card>
 
-      <Button 
-        onClick={handleSave} 
-        disabled={isSaving}
-        className="bg-amber-500 hover:bg-amber-600 text-white"
-      >
-        {isSaving ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Saving...
-          </>
-        ) : (
-          "Save Preferences"
-        )}
-      </Button>
+      <div className="flex justify-end">
+        <Button 
+          type="submit" 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="bg-amber-500 hover:bg-amber-600 text-white"
+        >
+          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Save Preferences
+        </Button>
+      </div>
     </div>
+  );
+}
+
+export default function TravelPreferencesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+      </div>
+    }>
+      <TravelPreferencesContent />
+    </Suspense>
   );
 } 
