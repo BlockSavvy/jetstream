@@ -8,11 +8,12 @@ export const createClient = () => {
     supabaseUrl,
     supabaseKey,
     {
-      global: {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
+      db: {
+        schema: 'public'
+      },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true
       }
     }
   )

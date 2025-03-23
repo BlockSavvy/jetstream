@@ -62,29 +62,31 @@ export function useUserProfile() {
     setError(null);
 
     try {
-      // Fetch user profile
+      // Fetch user profile - using direct match without filter
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select()
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile data:", profileError);
         
-        // Create a new profile if not found
-        if (profileError.code === "PGRST116") { // Row not found
+        // Create a new profile if not found - using upsert to avoid conflicts
+        if (profileError.code === "PGRST116" || !profileData) { // Row not found
           console.log("Profile not found, creating new profile for user:", user.id);
+          
+          const profileToCreate = {
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || "",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
           
           const { data: newProfile, error: insertError } = await supabase
             .from("profiles")
-            .insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || "",
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
+            .upsert(profileToCreate)
             .select();
             
           if (insertError) {
@@ -94,7 +96,7 @@ export function useUserProfile() {
           
           // Use the newly created profile
           const fullProfile: UserProfile = {
-            ...(newProfile?.[0] || {}),
+            ...(newProfile?.[0] || profileToCreate),
             id: user.id,
             email: user.email || "",
           };
@@ -110,9 +112,9 @@ export function useUserProfile() {
       // Fetch travel preferences
       const { data: preferencesData, error: preferencesError } = await supabase
         .from("travel_preferences")
-        .select("*")
+        .select()
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (preferencesError && preferencesError.code !== "PGRST116") {
         // PGRST116 is "not found", we can ignore this as the user might not have travel preferences yet
@@ -121,7 +123,7 @@ export function useUserProfile() {
 
       // Combine profile and preferences
       const fullProfile: UserProfile = {
-        ...profileData,
+        ...(profileData || { id: user.id }),
         email: user.email || "",
         travel_preferences: preferencesData || undefined,
       };
@@ -161,7 +163,7 @@ export function useUserProfile() {
           .from("travel_preferences")
           .select("id")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (checkError && checkError.code !== "PGRST116") {
           throw checkError;
