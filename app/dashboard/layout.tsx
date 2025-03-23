@@ -32,7 +32,7 @@ const navItems = [
 ];
 
 const secondaryNavItems = [
-  { href: '/dashboard/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
+  { href: '/dashboard/settings', label: 'Account Settings', icon: <Settings className="h-5 w-5" /> },
   { href: '/dashboard/billing', label: 'Billing', icon: <CreditCard className="h-5 w-5" /> },
   { href: '/dashboard/help', label: 'Help & Support', icon: <HelpCircle className="h-5 w-5" /> },
 ];

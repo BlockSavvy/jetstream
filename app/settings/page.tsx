@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ProfileForm from '@/components/profile/ProfileForm'
+import NotificationPreferences from '@/components/profile/NotificationPreferences'
+import PrivacySettings from '@/components/profile/PrivacySettings'
+import { Loader2 } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, loading } = useAuth()
@@ -22,7 +24,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+        <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
       </div>
     )
   }
@@ -34,57 +36,43 @@ export default function SettingsPage() {
 
   return (
     <div className="container py-10 mt-16">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Settings</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">Account Settings</h1>
       
-      <Tabs defaultValue="account" className="space-y-4" onValueChange={setActiveTab}>
+      <Tabs defaultValue="account" className="space-y-4" onValueChange={setActiveTab} value={activeTab}>
         <TabsList>
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="privacy">Privacy</TabsTrigger>
+          <TabsTrigger value="travel-preferences">Travel Preferences</TabsTrigger>
         </TabsList>
         
         <TabsContent value="account">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Email</p>
-                  <p>{user.email}</p>
-                </div>
-                
-                <div className="pt-4">
-                  <Button variant="outline">
-                    Update Profile
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ProfileForm />
         </TabsContent>
         
         <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Notification settings coming soon.</p>
-            </CardContent>
-          </Card>
+          <NotificationPreferences />
         </TabsContent>
         
-        <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Preferences</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Preference settings coming soon.</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="privacy">
+          <PrivacySettings />
+        </TabsContent>
+        
+        <TabsContent value="travel-preferences">
+          <div className="flex justify-between items-center mt-2 mb-6">
+            <div>
+              <h2 className="text-xl font-bold">Travel Preferences</h2>
+              <p className="text-muted-foreground text-sm">
+                Manage your travel interests and AI matching preferences
+              </p>
+            </div>
+          </div>
+          
+          <iframe 
+            src="/settings/travel-preferences" 
+            className="w-full min-h-[800px] border-0"
+            title="Travel Preferences"
+          ></iframe>
         </TabsContent>
       </Tabs>
     </div>
