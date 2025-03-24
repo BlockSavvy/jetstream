@@ -1,99 +1,103 @@
-# Pilots & Crew Specialization Feature
-
-This feature branch adds support for specialized crew members and unique onboard experiences to the JetStream platform.
+# JetStream Pilots & Crew Specialization Feature
 
 ## Overview
+The Pilots & Crew Specialization feature transforms JetStream flights from simple transportation into engaging experiences led by specialized pilots and crew members. This feature allows passengers to choose flights based on the unique in-flight experiences offered, such as comedy shows, TED-style talks, podcast recordings, wellness sessions, and more.
 
-The Pilots & Crew Specialization feature allows JetStream users to:
+## Implementation Status
 
-- Browse and filter pilots and crew members with specialized skills
-- View detailed profiles of crew members with their specializations and ratings
-- Book flights with specialized crew members offering unique experiences
-- Submit reviews and ratings for crew members after flights
-- Request custom flight experiences with specific crew specializations
+### ✅ Completed Components
+- **Database Schema**:
+  - Created tables: `pilots_crews`, `crew_reviews`, `specialized_flights`, `custom_itinerary_requests`
+  - Added proper indexes and security policies
+  - Created triggers for automatic rating calculations
 
-## Key Components
+- **API Routes**:
+  - Implemented CRUD endpoints for crew members
+  - Added endpoints for reviews, specialized flights, and custom itineraries
+  - Set up proper authentication and data validation
 
-1. **Crew Directory (`/crew`)**: A dedicated section to browse and search for specialized crew members.
+- **UI Components**:
+  - Built crew directory page (/crew)
+  - Created detailed crew profile pages (/crew/[id])
+  - Added custom flight request form (/crew/request)
+  - Integrated crew filters in flights marketplace
 
-2. **Crew Profiles (`/crew/[id]`)**: Detailed profile pages for individual crew members, showing their specializations, reviews, and upcoming flights.
+- **Data Integration**:
+  - Added seed data for crew members, reviews, and specialized flights
+  - Connected crew data to flight listings
 
-3. **Custom Flight Requests (`/crew/request`)**: A form for requesting custom flight experiences with specific crew specializations.
+### 📊 Feature Impact
+The Pilots & Crew Specialization feature significantly enhances JetStream by:
+1. Providing unique, memorable in-flight experiences
+2. Creating a new dimension of value for passengers
+3. Allowing crew members to build personal brands and followings
+4. Enabling new monetization opportunities through premium experiences
 
-4. **Enhanced Flights Marketplace**: Updated to show specialized events and crew information in flight listings.
+## Getting Started
 
-5. **Extended Pulse Questionnaire**: Now collects preferences for onboard experiences and crew specializations.
-
-## Database Changes
-
-This feature adds the following database tables:
-
-- `pilots_crews`: Stores crew member profiles, specializations, and ratings
-- `crew_reviews`: Stores user reviews and ratings for crew members
-- `specialized_flights`: Links flights to crew members and specialized event details
-- `custom_itinerary_requests`: Stores user requests for custom flight experiences
-
-It also adds the following columns to existing tables:
-
-- `flights.specialized_event`: Boolean flag indicating if a flight has a specialized event
-- `flights.crew_id`: Reference to the crew member assigned to a flight
-
-## Setup
-
-### Database Setup
-
-To set up the database tables and sample data, run:
+### Setting Up the Database
+To set up the database tables and seed data, run:
 
 ```bash
-node scripts/setup-crew-tables.js
+node scripts/setup-crew-data.js
 ```
 
 This script will:
+1. Create all required tables for the Pilots & Crew feature
+2. Set up proper Row Level Security policies
+3. Add test data including crew members, reviews, and specialized flights
 
-1. Create the required database tables if they don't exist
-2. Add necessary columns to existing tables
-3. Create indexes for better performance
-4. Set up row-level security policies
-5. Insert sample crew members for testing
+### Key API Endpoints
 
-### Environment Variables
+- **GET /api/crew** - List crew members with filtering options
+- **GET /api/crew/:id** - Get detailed information about a crew member
+- **POST /api/crew-reviews** - Submit a review for a crew member
+- **GET /api/specialized-flights** - List flights with specialized experiences
+- **POST /api/custom-itineraries** - Request a custom flight experience
 
-No additional environment variables are required for this feature.
+### Feature Pages
 
-## API Routes
-
-This feature adds the following API routes:
-
-- `GET /api/crew`: Lists crew members with filtering and pagination
-- `GET /api/crew/[id]`: Gets detailed information about a specific crew member
-- `PATCH /api/crew/[id]`: Updates a crew member's profile
-- `POST /api/crew-reviews`: Submits a review for a crew member
-- `GET /api/specialized-flights`: Lists specialized flights with filtering
-- `POST /api/custom-itineraries`: Submits a request for a custom flight experience
+- **/crew** - Browse all specialized pilots and crew members
+- **/crew/[id]** - View detailed profile for a specific crew member
+- **/crew/request** - Request a custom flight with specific crew specializations
+- Enhanced **Flights Marketplace** with crew specialization filters
 
 ## Integration Points
 
-This feature integrates with:
+The Pilots & Crew Specialization feature integrates with several existing JetStream features:
 
-1. **Flights Marketplace**: Updated to display crew specializations and specialized events.
-2. **Pulse Recommendations**: Extended to consider crew specializations in matching.
-3. **User Profiles**: Integrates with existing user authentication and profile data.
+1. **Flight Marketplace** - Flights now display crew information and specializations
+2. **Pulse Questionnaire** - Users can now indicate preferred crew specializations
+3. **User Profiles** - Users can save preferred crew specializations in their profiles
 
-## Design Decisions
+## Future Enhancements
 
-- **UI Consistency**: Uses JetStream's existing design system (shadcn/ui components, Tailwind CSS) for a consistent look and feel.
-- **Flexible Specializations**: Crew specializations are stored as an array to support multiple skills per crew member.
-- **Rating System**: Simple 5-star rating system with text reviews for easy user feedback.
-- **Performance Considerations**: Added indexes on frequently queried columns for better performance.
+Potential enhancements for future iterations:
+1. **Crew Dashboard** - Allow crew members to manage their profiles and specialized flights
+2. **Social Sharing** - Enable sharing of crew profiles and specialized flights
+3. **Advanced Matching** - Enhance AI matching to include crew specialization preferences
+4. **Premium Pricing** - Implement tiered pricing based on crew popularity and specializations
 
-## Future Improvements
+## Technical Details
 
-- **Advanced Matching**: Enhanced AI matching for crew specializations based on user preferences.
-- **Real-time Notifications**: Add real-time notifications for custom itinerary matches.
-- **Specialized Event Creation**: Allow crew members to create and manage their own specialized event offerings.
-- **Crew Schedules**: Add a calendar view for crew availability and scheduling.
-- **Media Gallery**: Add support for photo and video galleries of past specialized events.
+### Database Schema
+The feature uses the following tables:
 
-## Contributors
+- **pilots_crews** - Core information about crew members
+- **crew_reviews** - User reviews and ratings for crew members
+- **specialized_flights** - Flights featuring specialized experiences
+- **custom_itinerary_requests** - User requests for custom flight experiences
 
-- JetStream Development Team
+### Technology Stack
+- Next.js for frontend components and API routes
+- Supabase for database and authentication
+- Tailwind CSS and shadcn/ui for styling
+- TypeScript for type safety
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. **API Errors** - Check the console for specific error messages
+2. **Missing Data** - Ensure the setup script has been run successfully
+3. **Display Issues** - Clear browser cache and reload the application
