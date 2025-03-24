@@ -49,6 +49,7 @@ node scripts/setup-crew-tables.js
 ```
 
 This script will:
+
 1. Create the required database tables if they don't exist
 2. Add necessary columns to existing tables
 3. Create indexes for better performance
@@ -95,4 +96,4 @@ This feature integrates with:
 
 ## Contributors
 
-- JetStream Development Team 
+- JetStream Development Team

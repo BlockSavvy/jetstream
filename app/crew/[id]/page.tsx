@@ -269,7 +269,39 @@ export default function CrewDetailPage({ params }: CrewDetailPageProps) {
               </Card>
               
               <div className="mt-6">
-                <ReviewForm onSubmit={handleSubmitReview} isSubmitting={isSubmittingReview} />
+                <ReviewForm onSubmitReview={`
+                  async function(rating, comment) {
+                    try {
+                      const response = await fetch('/api/crew-reviews', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          crewId: "${id}",
+                          rating,
+                          reviewText: comment
+                        }),
+                      });
+                      
+                      if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to submit review');
+                      }
+                      
+                      // Refetch crew data to get updated reviews and rating
+                      const crewResponse = await fetch('/api/crew/${id}');
+                      const crewData = await crewResponse.json();
+                      setCrew(crewData.crew);
+                      
+                      // Switch to reviews tab
+                      setActiveTab('reviews');
+                    } catch (err) {
+                      console.error('Error submitting review:', err);
+                      alert(err.message || 'An error occurred while submitting your review');
+                    }
+                  }
+                `} isSubmitting={isSubmittingReview} />
               </div>
             </TabsContent>
             

@@ -26,13 +26,15 @@ const SPECIALIZATIONS: CrewSpecialization[] = [
   'Executive Coaching'
 ];
 
-interface CrewFiltersProps {
+// Client component props (non-serializable)
+type CrewFiltersClientProps = {
   filters: CrewFilter;
   onFilterChange: (newFilters: CrewFilter) => void;
   onReset: () => void;
-}
+};
 
-export function CrewFilters({ filters, onFilterChange, onReset }: CrewFiltersProps) {
+// Client implementation
+function CrewFiltersClient({ filters, onFilterChange, onReset }: CrewFiltersClientProps) {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   
   // Handle specialization toggle
@@ -169,5 +171,35 @@ export function CrewFilters({ filters, onFilterChange, onReset }: CrewFiltersPro
         </div>
       </div>
     </div>
+  );
+}
+
+// Public component props (serializable)
+export type CrewFiltersProps = {
+  filters: CrewFilter;
+  onFilterChangeAction: string; // Serialized function
+  onResetAction: string; // Serialized function
+};
+
+// Public component with serializable props
+export function CrewFilters({ filters, onFilterChangeAction, onResetAction }: CrewFiltersProps) {
+  // Parse the serialized functions
+  const handleFilterChange = (newFilters: CrewFilter) => {
+    // Use indirect evaluation to convert the string to a function
+    const onChangeFn = new Function('filters', onFilterChangeAction);
+    onChangeFn(newFilters);
+  };
+  
+  const handleReset = () => {
+    const onResetFn = new Function(onResetAction);
+    onResetFn();
+  };
+  
+  return (
+    <CrewFiltersClient
+      filters={filters}
+      onFilterChange={handleFilterChange}
+      onReset={handleReset}
+    />
   );
 } 

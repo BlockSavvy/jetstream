@@ -1,4 +1,6 @@
-import { Icons } from '@/components/icons';
+"use client";
+
+import { Users, CheckCircle, Calendar } from "lucide-react";
 
 export function CrewHero() {
   return (
@@ -12,7 +14,7 @@ export function CrewHero() {
       <div className="relative max-w-4xl mx-auto text-center">
         <div className="flex justify-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/20 text-amber-500">
-            <Icons.users className="h-8 w-8" />
+            <Users className="h-8 w-8" />
           </div>
         </div>
         
@@ -33,12 +35,12 @@ export function CrewHero() {
           </div>
           
           <div className="flex items-center bg-gray-800/50 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700">
-            <Icons.verified className="text-amber-400 h-4 w-4 mr-2" />
+            <CheckCircle className="text-amber-400 h-4 w-4 mr-2" />
             <span className="text-gray-300 text-sm">Verified Professionals</span>
           </div>
           
           <div className="flex items-center bg-gray-800/50 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700">
-            <Icons.calendar className="text-amber-400 h-4 w-4 mr-2" />
+            <Calendar className="text-amber-400 h-4 w-4 mr-2" />
             <span className="text-gray-300 text-sm">Specialized Events</span>
           </div>
         </div>

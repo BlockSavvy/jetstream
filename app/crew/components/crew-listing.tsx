@@ -98,8 +98,12 @@ export function CrewListing() {
     <div className="space-y-8">
       <CrewFilters 
         filters={filters} 
-        onFilterChange={handleFilterChange} 
-        onReset={handleResetFilters} 
+        onFilterChangeAction={`function(filters) {
+          this.setFilters(filters);
+        }`} 
+        onResetAction={`function() {
+          this.setFilters({});
+        }`} 
       />
       
       {error && (

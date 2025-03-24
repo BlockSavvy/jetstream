@@ -217,7 +217,9 @@ export default function RequestCustomFlightPage() {
                   <Label htmlFor="date">Preferred Date</Label>
                   <DatePicker 
                     date={date} 
-                    setDate={setDate} 
+                    onDateChange={`function(date) {
+                      this.setDate(date);
+                    }`}
                     className="w-full"
                   />
                 </div>

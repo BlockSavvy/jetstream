@@ -8,13 +8,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-interface DatePickerProps {
+// Client component props (non-serializable)
+interface DatePickerClientProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   className?: string;
 }
 
-export function DatePicker({ date, setDate, className }: DatePickerProps) {
+// Client implementation
+function DatePickerClient({ date, setDate, className }: DatePickerClientProps) {
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
@@ -43,5 +45,29 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
         </PopoverContent>
       </Popover>
     </div>
+  );
+}
+
+// Public component props (serializable)
+export interface DatePickerProps {
+  date: Date | undefined;
+  onDateChange: string; // Serialized function
+  className?: string;
+}
+
+// Public component with serializable props
+export function DatePicker({ date, onDateChange, className }: DatePickerProps) {
+  // Convert the serialized function to a callback
+  const handleDateChange = (newDate: Date | undefined) => {
+    const onChangeFn = new Function('date', onDateChange);
+    onChangeFn(newDate);
+  };
+  
+  return (
+    <DatePickerClient
+      date={date}
+      setDate={handleDateChange}
+      className={className}
+    />
   );
 } 

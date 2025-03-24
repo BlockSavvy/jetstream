@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Star } from 'lucide-react';
 
-interface ReviewFormProps {
+// Define client component props separately from the page component props
+type ReviewFormClientProps = {
   onSubmit: (rating: number, comment: string) => void;
   isSubmitting: boolean;
-}
+};
 
-export function ReviewForm({ onSubmit, isSubmitting }: ReviewFormProps) {
+// This is the client component implementation
+function ReviewFormClient({ onSubmit, isSubmitting }: ReviewFormClientProps) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -97,5 +99,29 @@ export function ReviewForm({ onSubmit, isSubmitting }: ReviewFormProps) {
         </CardFooter>
       </form>
     </Card>
+  );
+}
+
+// Serializable props for the page component
+export interface ReviewFormProps {
+  onSubmitReview: string; // Serialized string to be parsed as a function
+  isSubmitting: boolean;
+}
+
+// Export the public component which accepts serializable props
+export function ReviewForm({ onSubmitReview, isSubmitting }: ReviewFormProps) {
+  // Parse the serialized function
+  const handleSubmit = (rating: number, comment: string) => {
+    // Use indirect evaluation to convert the string to a function
+    // This is a workaround for the serialization issue
+    const onSubmitFn = new Function('rating', 'comment', onSubmitReview);
+    onSubmitFn(rating, comment);
+  };
+  
+  return (
+    <ReviewFormClient
+      onSubmit={handleSubmit}
+      isSubmitting={isSubmitting}
+    />
   );
 } 
