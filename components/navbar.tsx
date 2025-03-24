@@ -69,6 +69,12 @@ export default function Navbar() {
               </>
             )}
             <Link 
+              href="/crew" 
+              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/crew' ? 'font-semibold' : ''}`}
+            >
+              Crew
+            </Link>
+            <Link 
               href="/flights" 
               className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/flights' ? 'font-semibold' : ''}`}
             >
@@ -129,6 +135,13 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            <Link
+              href="/crew"
+              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname === '/crew' ? 'font-semibold' : ''}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Crew
+            </Link>
             <Link
               href="/flights"
               className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname === '/flights' ? 'font-semibold' : ''}`}

@@ -9,6 +9,7 @@ import { CheckCircle, Loader2 } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
+import { CrewSpecialization } from "@/lib/types/crew.types";
 
 // Define the question types
 type TravelInterest = "Business" | "Sports" | "Tech" | "Art" | "Luxury" | "Music" | "Fashion" | "Crypto" | "Wellness" | "Family" | "Adventure";
@@ -20,6 +21,18 @@ const socialPreferences: SocialPreference[] = ["Networking", "Privacy", "Family-
 const popularDestinations = ["Cannes", "Miami", "Dubai", "New York", "London", "Monaco", "Tokyo", "Singapore", "Paris", "Las Vegas"];
 const urgencyPreferences: UrgencyPreference[] = ["Last-minute", "Advanced", "Exclusive"];
 
+// Crew specializations for the questionnaire
+const crewSpecializations: CrewSpecialization[] = [
+  'Comedy',
+  'TED-talks',
+  'Live Podcasts',
+  'Wellness Sessions',
+  'Business Networking',
+  'Family-friendly Activities',
+  'Musical Performances',
+  'Interactive Mystery Events'
+];
+
 export default function PulseQuestionnaire() {
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useUserProfile();
@@ -29,6 +42,7 @@ export default function PulseQuestionnaire() {
   const [selectedSocialPrefs, setSelectedSocialPrefs] = useState<SocialPreference[]>([]);
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [selectedUrgency, setSelectedUrgency] = useState<UrgencyPreference[]>([]);
+  const [selectedCrewSpecializations, setSelectedCrewSpecializations] = useState<CrewSpecialization[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
@@ -42,6 +56,7 @@ export default function PulseQuestionnaire() {
       setSelectedSocialPrefs(prefs.social_preferences as SocialPreference[]);
       setSelectedDestinations(prefs.preferred_destinations);
       setSelectedUrgency(prefs.urgency_preferences as UrgencyPreference[]);
+      setSelectedCrewSpecializations(prefs.crew_specializations as CrewSpecialization[] || []);
     }
   }, [profile]);
 
@@ -76,6 +91,14 @@ export default function PulseQuestionnaire() {
       setSelectedUrgency([...selectedUrgency, urgency]);
     }
   };
+  
+  const toggleCrewSpecialization = (specialization: CrewSpecialization) => {
+    if (selectedCrewSpecializations.includes(specialization)) {
+      setSelectedCrewSpecializations(selectedCrewSpecializations.filter(s => s !== specialization));
+    } else {
+      setSelectedCrewSpecializations([...selectedCrewSpecializations, specialization]);
+    }
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -90,6 +113,7 @@ export default function PulseQuestionnaire() {
             social_preferences: selectedSocialPrefs,
             preferred_destinations: selectedDestinations,
             urgency_preferences: selectedUrgency,
+            crew_specializations: selectedCrewSpecializations
           }
         });
         
@@ -114,6 +138,22 @@ export default function PulseQuestionnaire() {
       toast.error("There was an error saving your preferences. Please try again.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const getTotalSteps = () => 5; // Now with 5 steps including crew specializations
+  
+  const nextStep = () => {
+    if (step < getTotalSteps()) {
+      setStep(step + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+  
+  const prevStep = () => {
+    if (step > 1) {
+      setStep(step - 1);
     }
   };
 
@@ -152,6 +192,18 @@ export default function PulseQuestionnaire() {
                 </motion.div>
               ) : (
                 <>
+                  {/* Progress indicator */}
+                  <div className="flex justify-between mb-6">
+                    {Array.from({ length: getTotalSteps() }, (_, i) => (
+                      <div 
+                        key={i} 
+                        className={`h-1 rounded-full flex-1 mx-0.5 ${
+                          i < step ? "bg-amber-500" : "bg-gray-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
                   {step === 1 && (
                     <motion.div
                       key="step1"
@@ -272,57 +324,67 @@ export default function PulseQuestionnaire() {
                       </div>
                     </motion.div>
                   )}
+                  
+                  {step === 5 && (
+                    <motion.div
+                      key="step5"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <h3 className="text-lg font-medium text-white mb-4">Select your preferred onboard experiences</h3>
+                      <p className="text-gray-400 mb-4 text-sm">
+                        Our specialized pilots and crew members offer unique experiences during your flight.
+                        What types of experiences would you like to have?
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        {crewSpecializations.map((specialization) => (
+                          <Badge
+                            key={specialization}
+                            variant={selectedCrewSpecializations.includes(specialization) ? "default" : "outline"}
+                            className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
+                              ${selectedCrewSpecializations.includes(specialization) 
+                                ? "bg-amber-500 hover:bg-amber-600 text-white" 
+                                : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"}`}
+                            onClick={() => toggleCrewSpecialization(specialization)}
+                          >
+                            {specialization}
+                          </Badge>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
                 </>
               )}
             </AnimatePresence>
           </CardContent>
-          
+
           {!isComplete && (
-            <CardFooter className="flex justify-between px-6 py-4 bg-gray-900 border-t border-gray-800">
-              <Button 
-                variant="outline" 
-                onClick={() => setStep(step - 1)}
+            <CardFooter className="px-6 py-4 bg-gray-900 border-t border-gray-800 flex justify-between">
+              <Button
+                variant="ghost"
+                onClick={prevStep}
                 disabled={step === 1 || isSubmitting}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                className="text-gray-400 hover:text-white"
               >
                 Back
               </Button>
-              
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4].map((s) => (
-                  <div 
-                    key={s}
-                    className={`w-2 h-2 rounded-full ${
-                      s === step ? "bg-amber-500" : "bg-gray-700"
-                    }`}
-                  />
-                ))}
-              </div>
-              
-              {step < 4 ? (
-                <Button 
-                  onClick={() => setStep(step + 1)}
-                  disabled={isSubmitting}
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button 
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="bg-amber-500 hover:bg-amber-600 text-white min-w-[80px]"
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin mr-2" />
-                      <span>Processing</span>
-                    </div>
-                  ) : (
-                    "Submit"
-                  )}
-                </Button>
-              )}
+              <Button
+                onClick={nextStep}
+                disabled={isSubmitting}
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : step === getTotalSteps() ? (
+                  "Save Preferences"
+                ) : (
+                  "Next"
+                )}
+              </Button>
             </CardFooter>
           )}
         </Card>

@@ -1,4 +1,5 @@
 import { Json } from '@/lib/types/database.types';
+import { CrewMember, SpecializedFlight } from '@/lib/types/crew.types';
 
 export interface Airport {
   code: string;
@@ -22,8 +23,8 @@ export interface Jet {
 export interface Flight {
   id: string;
   jet_id: string;
-  origin_airport: string | null;
-  destination_airport: string | null;
+  origin_airport?: string;
+  destination_airport?: string;
   departure_time: string;
   arrival_time: string;
   available_seats: number;
@@ -31,8 +32,12 @@ export interface Flight {
   status: 'scheduled' | 'boarding' | 'in_air' | 'completed' | 'cancelled';
   created_at?: string;
   jets: Jet;
-  origin: Airport;
-  destination: Airport;
+  origin?: Airport;
+  destination?: Airport;
+  specialized_event?: boolean;
+  crew_id?: string;
+  crew?: CrewMember;
+  specialized_details?: SpecializedFlight;
 }
 
 export interface FlightFilters {
@@ -44,6 +49,9 @@ export interface FlightFilters {
   maxPrice?: string;
   minSeats?: string;
   hasFractionalTokens?: boolean;
+  crewSpecializations?: string[];
+  minCrewRating?: string;
+  specializedEventOnly?: boolean;
 }
 
 export interface BookingFormData {
