@@ -1,11 +1,13 @@
 # JetStream Pilots & Crew Specialization Feature
 
 ## Overview
+
 The Pilots & Crew Specialization feature transforms JetStream flights from simple transportation into engaging experiences led by specialized pilots and crew members. This feature allows passengers to choose flights based on the unique in-flight experiences offered, such as comedy shows, TED-style talks, podcast recordings, wellness sessions, and more.
 
 ## Implementation Status
 
 ### ✅ Completed Components
+
 - **Database Schema**:
   - Created tables: `pilots_crews`, `crew_reviews`, `specialized_flights`, `custom_itinerary_requests`
   - Added proper indexes and security policies
@@ -27,7 +29,9 @@ The Pilots & Crew Specialization feature transforms JetStream flights from simpl
   - Connected crew data to flight listings
 
 ### 📊 Feature Impact
+
 The Pilots & Crew Specialization feature significantly enhances JetStream by:
+
 1. Providing unique, memorable in-flight experiences
 2. Creating a new dimension of value for passengers
 3. Allowing crew members to build personal brands and followings
@@ -36,6 +40,7 @@ The Pilots & Crew Specialization feature significantly enhances JetStream by:
 ## Getting Started
 
 ### Setting Up the Database
+
 To set up the database tables and seed data, run:
 
 ```bash
@@ -43,6 +48,7 @@ node scripts/setup-crew-data.js
 ```
 
 This script will:
+
 1. Create all required tables for the Pilots & Crew feature
 2. Set up proper Row Level Security policies
 3. Add test data including crew members, reviews, and specialized flights
@@ -73,6 +79,7 @@ The Pilots & Crew Specialization feature integrates with several existing JetStr
 ## Future Enhancements
 
 Potential enhancements for future iterations:
+
 1. **Crew Dashboard** - Allow crew members to manage their profiles and specialized flights
 2. **Social Sharing** - Enable sharing of crew profiles and specialized flights
 3. **Advanced Matching** - Enhance AI matching to include crew specialization preferences
@@ -81,6 +88,7 @@ Potential enhancements for future iterations:
 ## Technical Details
 
 ### Database Schema
+
 The feature uses the following tables:
 
 - **pilots_crews** - Core information about crew members
@@ -89,6 +97,7 @@ The feature uses the following tables:
 - **custom_itinerary_requests** - User requests for custom flight experiences
 
 ### Technology Stack
+
 - Next.js for frontend components and API routes
 - Supabase for database and authentication
 - Tailwind CSS and shadcn/ui for styling
