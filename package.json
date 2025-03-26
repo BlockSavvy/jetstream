@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "migrate": "node scripts/run-migrations.js"
+    "migrate": "node scripts/run-migrations.js",
+    "seed:jetshare": "node db/seeds/jetshare_seed.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
