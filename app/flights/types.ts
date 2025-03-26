@@ -52,6 +52,9 @@ export interface FlightFilters {
   crewSpecializations?: string[];
   minCrewRating?: string;
   specializedEventOnly?: boolean;
+  captainOnly?: boolean;
+  dedicatedCaptainOnly?: boolean;
+  captainSpecializations?: string[];
 }
 
 export interface BookingFormData {

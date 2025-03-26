@@ -14,6 +14,18 @@ export type CrewSpecialization =
   | 'Creative Workshops'
   | 'Executive Coaching';
 
+export type CaptainSpecialization =
+  | 'Luxury' 
+  | 'Business' 
+  | 'Family-oriented' 
+  | 'Entertainment-focused'
+  | 'Adventure'
+  | 'VIP Service'
+  | 'International Flights'
+  | 'Long-haul Expert'
+  | 'Private Events'
+  | 'Sports Team Transport';
+
 export interface CrewMember {
   id: string;
   userId: string;
@@ -21,7 +33,10 @@ export interface CrewMember {
   bio: string | null;
   profileImageUrl: string | null;
   ratingsAvg: number;
-  specializations: CrewSpecialization[];
+  specializations: CrewSpecialization[] | CaptainSpecialization[];
+  isCaptain: boolean;
+  dedicatedJetOwnerId: string | null;
+  yearsOfExperience: number | null;
   socialLinks: {
     twitter?: string;
     linkedin?: string;
@@ -78,10 +93,13 @@ export interface CustomItineraryRequest {
 }
 
 export interface CrewFilter {
-  specializations?: CrewSpecialization[];
+  specializations?: string[];
   minRating?: number;
   available?: boolean;
   searchTerm?: string;
+  isCaptain?: boolean;
+  dedicatedOnly?: boolean;
+  minYearsExperience?: number;
 }
 
 export interface SpecializedFlightFilter {
