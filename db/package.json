@@ -4,7 +4,8 @@
   "description": "Database tools for JetStream",
   "scripts": {
     "migrate": "node ./migrate.js",
-    "seed": "node ./seeds/001_seed_data.js"
+    "seed": "node ./seeds/001_seed_data.js && node ./seeds/002_crew_data.js",
+    "setup": "node ./setup-jetstream-db.js"
   },
   "dependencies": {
     "@faker-js/faker": "^8.0.2",
