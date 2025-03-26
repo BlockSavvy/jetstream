@@ -2,72 +2,79 @@ import nodemailer from 'nodemailer';
 import sgMail from '@sendgrid/mail';
 import { BoardingPass } from '@/app/flights/types';
 
-// Initialize SendGrid if API key is available
+// Configure SendGrid if API key is available
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-// Create nodemailer transporter (fallback if SendGrid is not configured)
+// Create nodemailer transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.example.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
+  host: process.env.EMAIL_SERVER_HOST || 'smtp.example.com',
+  port: parseInt(process.env.EMAIL_SERVER_PORT || '587'),
   auth: {
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASSWORD || '',
+    user: process.env.EMAIL_SERVER_USER || 'user',
+    pass: process.env.EMAIL_SERVER_PASSWORD || 'password',
   },
+  secure: process.env.EMAIL_SERVER_SECURE === 'true',
 });
 
-interface EmailOptions {
+// Email types
+export interface EmailOptions {
   to: string;
   subject: string;
   text?: string;
   html: string;
   attachments?: Array<{
     filename: string;
-    content: string | Buffer;
-    contentType?: string;
+    content: Buffer | string;
+    contentType: string;
   }>;
 }
 
 /**
- * Sends an email using either SendGrid or SMTP
+ * Send an email to a user
  */
-export async function sendEmail(options: EmailOptions): Promise<void> {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  content: string
+): Promise<void> {
+  // Implementation using nodemailer or SendGrid
   try {
-    // Use SendGrid if API key is configured
+    // Use SendGrid if API key is available
     if (process.env.SENDGRID_API_KEY) {
       await sgMail.send({
-        to: options.to,
+        to,
         from: process.env.EMAIL_FROM || 'noreply@jetstreamair.com',
-        subject: options.subject,
-        text: options.text || '',
-        html: options.html,
-        attachments: options.attachments ? options.attachments.map(attachment => ({
-          filename: attachment.filename,
-          content: typeof attachment.content === 'string' 
-            ? attachment.content 
-            : attachment.content.toString('base64'),
-          type: attachment.contentType,
-          disposition: 'attachment',
-          contentId: attachment.filename.split('.')[0],
-        })) : undefined,
+        subject,
+        text: content,
+        html: content,
       });
     } else {
-      // Fallback to nodemailer
+      // Fallback to nodemailer for local development
       await transporter.sendMail({
         from: process.env.EMAIL_FROM || 'noreply@jetstreamair.com',
-        to: options.to,
-        subject: options.subject,
-        text: options.text || '',
-        html: options.html,
-        attachments: options.attachments,
+        to,
+        subject,
+        text: content,
+        html: content,
       });
     }
   } catch (error) {
     console.error('Error sending email:', error);
     throw new Error('Failed to send email');
   }
+}
+
+/**
+ * Send a JetShare notification email
+ */
+export function jetShareNotificationEmail(
+  to: string,
+  subject: string,
+  content: string
+): Promise<void> {
+  return sendEmail(to, subject, content);
 }
 
 /**
