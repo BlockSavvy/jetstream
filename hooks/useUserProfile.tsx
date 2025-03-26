@@ -11,6 +11,10 @@ export type UserTravelPreferences = {
   social_preferences: string[];
   preferred_destinations: string[];
   urgency_preferences: string[];
+  crew_specializations?: string[];
+  captain_specializations?: string[];
+  professional_preference?: string;
+  prefer_dedicated_captain?: boolean;
   created_at?: string;
   updated_at?: string;
 };

@@ -139,6 +139,8 @@ export interface Database {
           status: 'scheduled' | 'boarding' | 'in_air' | 'completed' | 'cancelled'
           created_at: string
           updated_at: string
+          specialized_event: boolean | null
+          crew_id: string | null
         }
         Insert: {
           id?: string
@@ -152,6 +154,8 @@ export interface Database {
           status?: 'scheduled' | 'boarding' | 'in_air' | 'completed' | 'cancelled'
           created_at?: string
           updated_at?: string
+          specialized_event?: boolean | null
+          crew_id?: string | null
         }
         Update: {
           id?: string
@@ -165,6 +169,8 @@ export interface Database {
           status?: 'scheduled' | 'boarding' | 'in_air' | 'completed' | 'cancelled'
           created_at?: string
           updated_at?: string
+          specialized_event?: boolean | null
+          crew_id?: string | null
         }
       }
       bookings: {
@@ -318,6 +324,155 @@ export interface Database {
           payment_status?: 'pending' | 'completed' | 'failed' | 'refunded'
           transaction_id?: string | null
           payment_details?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      pilots_crews: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          bio: string | null
+          profile_image_url: string | null
+          ratings_avg: number
+          specializations: string[]
+          social_links: Json | null
+          availability: unknown[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          bio?: string | null
+          profile_image_url?: string | null
+          ratings_avg?: number
+          specializations: string[]
+          social_links?: Json | null
+          availability?: unknown[] | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          bio?: string | null
+          profile_image_url?: string | null
+          ratings_avg?: number
+          specializations?: string[]
+          social_links?: Json | null
+          availability?: unknown[] | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      crew_reviews: {
+        Row: {
+          id: string
+          crew_id: string
+          user_id: string
+          flight_id: string | null
+          rating: number
+          review_text: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          crew_id: string
+          user_id: string
+          flight_id?: string | null
+          rating: number
+          review_text?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          crew_id?: string
+          user_id?: string
+          flight_id?: string | null
+          rating?: number
+          review_text?: string | null
+          created_at?: string
+        }
+      }
+      specialized_flights: {
+        Row: {
+          id: string
+          flight_id: string
+          title: string
+          theme: string
+          description: string | null
+          crew_id: string | null
+          nft_ticketed: boolean | null
+          seats_available: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          flight_id: string
+          title: string
+          theme: string
+          description?: string | null
+          crew_id?: string | null
+          nft_ticketed?: boolean | null
+          seats_available: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          flight_id?: string
+          title?: string
+          theme?: string
+          description?: string | null
+          crew_id?: string | null
+          nft_ticketed?: boolean | null
+          seats_available?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      custom_itinerary_requests: {
+        Row: {
+          id: string
+          requesting_user_id: string
+          destination: string | null
+          origin: string | null
+          date_time: string | null
+          requested_specializations: string[] | null
+          description: string | null
+          status: 'pending' | 'matched' | 'completed' | 'cancelled'
+          matches_found: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          requesting_user_id: string
+          destination?: string | null
+          origin?: string | null
+          date_time?: string | null
+          requested_specializations?: string[] | null
+          description?: string | null
+          status?: 'pending' | 'matched' | 'completed' | 'cancelled'
+          matches_found?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          requesting_user_id?: string
+          destination?: string | null
+          origin?: string | null
+          date_time?: string | null
+          requested_specializations?: string[] | null
+          description?: string | null
+          status?: 'pending' | 'matched' | 'completed' | 'cancelled'
+          matches_found?: Json | null
           created_at?: string
           updated_at?: string
         }
