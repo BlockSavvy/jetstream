@@ -42,16 +42,16 @@ const generateCrewMember = (userId) => {
   
   // Generate social links
   const socialLinks = {};
-  if (faker.datatype.boolean(0.7)) { // 70% chance to have Twitter
+  if (faker.helpers.maybe(() => true, { probability: 0.7 })) { // 70% chance to have Twitter
     socialLinks.twitter = `@${faker.internet.userName()}`;
   }
-  if (faker.datatype.boolean(0.6)) { // 60% chance to have LinkedIn
+  if (faker.helpers.maybe(() => true, { probability: 0.6 })) { // 60% chance to have LinkedIn
     socialLinks.linkedin = `https://linkedin.com/in/${faker.internet.userName()}`;
   }
-  if (faker.datatype.boolean(0.5)) { // 50% chance to have Instagram
+  if (faker.helpers.maybe(() => true, { probability: 0.5 })) { // 50% chance to have Instagram
     socialLinks.instagram = `@${faker.internet.userName()}`;
   }
-  if (faker.datatype.boolean(0.3)) { // 30% chance to have Website
+  if (faker.helpers.maybe(() => true, { probability: 0.3 })) { // 30% chance to have Website
     socialLinks.website = `https://${faker.internet.domainName()}`;
   }
   
@@ -78,7 +78,7 @@ const generateCrewMember = (userId) => {
   ]);
   
   // Generate profile image URL (either placeholder or Unsplash image)
-  const useUnsplash = faker.datatype.boolean(0.7); // 70% chance for Unsplash image
+  const useUnsplash = faker.helpers.maybe(() => true, { probability: 0.7 }); // 70% chance for Unsplash image
   const profileImageUrl = useUnsplash 
     ? `https://source.unsplash.com/random/300x300/?portrait,professional,${faker.number.int({ min: 1, max: 100 })}`
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=FF9500&color=fff&size=300`;
@@ -223,7 +223,7 @@ const generateSpecializedFlight = (crewId, crewSpecializations, flightId) => {
   
   // Generate date (most in the future for better demo experience)
   let flightDate;
-  if (faker.datatype.boolean(0.8)) {
+  if (faker.helpers.maybe(() => true, { probability: 0.8 })) {
     // 80% future flights
     flightDate = faker.date.future({ years: 0.5 });
   } else {
@@ -266,15 +266,22 @@ const seedCrewData = async () => {
     }
     
     if (!users || users.length < CREW_COUNT) {
-      console.error(`Not enough users found. Need ${CREW_COUNT}, found ${users?.length || 0}`);
-      return;
+      console.warn(`Not enough users found. Need ${CREW_COUNT}, found ${users?.length || 0}. Will continue with available users.`);
     }
     
+    const availableUsers = users || [];
+    
     // 2. Create crew members
-    console.log(`Creating ${CREW_COUNT} crew members...`);
+    const crewCount = Math.min(CREW_COUNT, availableUsers.length);
+    console.log(`Creating ${crewCount} crew members...`);
     const crewMembers = [];
-    for (let i = 0; i < CREW_COUNT; i++) {
-      crewMembers.push(generateCrewMember(users[i].id));
+    for (let i = 0; i < crewCount; i++) {
+      crewMembers.push(generateCrewMember(availableUsers[i].id));
+    }
+    
+    if (crewMembers.length === 0) {
+      console.error('No crew members could be created due to lack of user profiles.');
+      return;
     }
     
     const { error: crewError } = await supabase
@@ -312,43 +319,55 @@ const seedCrewData = async () => {
     }
     
     if (!flights || flights.length < SPECIALIZED_FLIGHTS_COUNT) {
-      console.error(`Not enough flights found. Need ${SPECIALIZED_FLIGHTS_COUNT}, found ${flights?.length || 0}`);
-      return;
+      console.warn(`Not enough flights found. Need ${SPECIALIZED_FLIGHTS_COUNT}, found ${flights?.length || 0}. Will continue with available flights.`);
     }
+    
+    const availableFlights = flights || [];
     
     // 5. Create specialized flights
-    console.log(`Creating ${SPECIALIZED_FLIGHTS_COUNT} specialized flights...`);
+    const flightCount = Math.min(SPECIALIZED_FLIGHTS_COUNT, availableFlights.length);
+    console.log(`Creating ${flightCount} specialized flights...`);
     const specializedFlights = [];
-    for (let i = 0; i < SPECIALIZED_FLIGHTS_COUNT; i++) {
+    for (let i = 0; i < flightCount; i++) {
       const crew = faker.helpers.arrayElement(createdCrew);
-      specializedFlights.push(generateSpecializedFlight(crew.id, crew.specializations, flights[i].id));
+      specializedFlights.push(generateSpecializedFlight(crew.id, crew.specializations, availableFlights[i].id));
     }
     
-    const { error: flightsCreationError } = await supabase
-      .from('specialized_flights')
-      .insert(specializedFlights);
-      
-    if (flightsCreationError) {
-      console.error('Error creating specialized flights:', flightsCreationError);
-      return;
+    if (specializedFlights.length > 0) {
+      const { error: flightsCreationError } = await supabase
+        .from('specialized_flights')
+        .insert(specializedFlights);
+        
+      if (flightsCreationError) {
+        console.error('Error creating specialized flights:', flightsCreationError);
+      }
+    } else {
+      console.log('No specialized flights could be created.');
     }
     
     // 6. Create reviews for crew members
-    console.log(`Creating ${REVIEWS_COUNT} crew reviews...`);
+    console.log(`Creating crew reviews...`);
     const reviews = [];
-    for (let i = 0; i < REVIEWS_COUNT; i++) {
+    const reviewCount = Math.min(REVIEWS_COUNT, createdCrew.length * 2); // Limit reviews based on crew count
+    
+    for (let i = 0; i < reviewCount; i++) {
       const crew = faker.helpers.arrayElement(createdCrew);
-      const userId = faker.helpers.arrayElement(users).id;
+      const userId = faker.helpers.arrayElement(availableUsers).id;
       reviews.push(generateReview(crew.id, userId));
     }
     
-    const { error: reviewsError } = await supabase
-      .from('crew_reviews')
-      .insert(reviews);
-      
-    if (reviewsError) {
-      console.error('Error creating crew reviews:', reviewsError);
-      return;
+    if (reviews.length > 0) {
+      const { error: reviewsError } = await supabase
+        .from('crew_reviews')
+        .insert(reviews);
+        
+      if (reviewsError) {
+        console.error('Error creating crew reviews:', reviewsError);
+      } else {
+        console.log(`Successfully created ${reviews.length} crew reviews`);
+      }
+    } else {
+      console.log('No reviews could be created.');
     }
     
     console.log('Crew data seeding completed successfully!');
@@ -358,5 +377,6 @@ const seedCrewData = async () => {
   }
 };
 
-// Run the seeding function
-seedCrewData(); 
+// Run the seeding function and export it for use in other modules
+seedCrewData();
+module.exports = { seedCrewData }; 
