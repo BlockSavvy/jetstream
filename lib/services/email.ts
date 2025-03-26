@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import sgMail from '@sendgrid/mail';
 import { BoardingPass } from '@/app/flights/types';
+import QRCode from 'qrcode';
 
 // Configure SendGrid if API key is available
 if (process.env.SENDGRID_API_KEY) {
@@ -29,6 +30,35 @@ export interface EmailOptions {
     content: Buffer | string;
     contentType: string;
   }>;
+}
+
+// Boarding pass email options
+export interface BoardingPassEmailOptions {
+  to: string;
+  boardingPass: {
+    passengerName: string;
+    seat: string;
+    gate: string;
+    boardingTime: string;
+    qrCodeData: string;
+  };
+  flight: {
+    flightNumber: string;
+    departureCity: string;
+    arrivalCity: string;
+    departureDate: string;
+    departureTime: string;
+  };
+}
+
+// Helper function to generate QR code
+async function generateQRCode(data: string): Promise<string> {
+  try {
+    return await QRCode.toDataURL(data);
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    throw new Error('Failed to generate QR code');
+  }
 }
 
 /**
@@ -81,74 +111,45 @@ export function jetShareNotificationEmail(
  * Sends a boarding pass email with ticket details and attachments
  */
 export async function sendBoardingPassEmail(
-  email: string,
-  boardingPass: BoardingPass,
-  attachments: Array<{
-    filename: string;
-    content: string | Buffer;
-    contentType?: string;
-  }> = []
+  options: BoardingPassEmailOptions
 ): Promise<void> {
-  const { flight, ticket, passenger } = boardingPass;
+  const { to, boardingPass, flight } = options;
   
-  const departureDate = new Date(flight.departure_time).toLocaleDateString();
-  const departureTime = new Date(flight.departure_time).toLocaleTimeString();
+  // Generate a QR code for the boarding pass
+  const qrCodeDataUrl = await generateQRCode(boardingPass.qrCodeData);
   
-  const html = `
+  // Create the HTML content for the email
+  const subject = `Your Boarding Pass for Flight ${flight.flightNumber}`;
+  const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background-color: #0070f3; color: white; padding: 20px; text-align: center;">
-        <h1>Your JetStream Boarding Pass</h1>
-      </div>
+      <h2>Your Boarding Pass</h2>
+      <p>Thank you for choosing JetStream Air. Your flight is confirmed.</p>
       
-      <div style="padding: 20px; border: 1px solid #ddd; background-color: #f9f9f9;">
-        <h2>Flight Details</h2>
-        <p><strong>Flight:</strong> JS-${flight.id.substring(0, 6)}</p>
-        <p><strong>From:</strong> ${flight.origin?.city || flight.origin_airport}</p>
-        <p><strong>To:</strong> ${flight.destination?.city || flight.destination_airport}</p>
-        <p><strong>Date:</strong> ${departureDate}</p>
-        <p><strong>Departure Time:</strong> ${departureTime}</p>
-        <p><strong>Gate:</strong> ${ticket.gate}</p>
-        <p><strong>Boarding Time:</strong> ${ticket.boarding_time}</p>
+      <div style="border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px;">
+        <h3>Flight Details</h3>
+        <p><strong>Flight:</strong> ${flight.flightNumber}</p>
+        <p><strong>From:</strong> ${flight.departureCity}</p>
+        <p><strong>To:</strong> ${flight.arrivalCity}</p>
+        <p><strong>Date:</strong> ${flight.departureDate}</p>
+        <p><strong>Time:</strong> ${flight.departureTime}</p>
         
-        <h2>Passenger Information</h2>
-        <p><strong>Name:</strong> ${passenger.name}</p>
-        <p><strong>Seat:</strong> ${ticket.seat_number}</p>
-        <p><strong>Ticket Code:</strong> ${ticket.ticket_code}</p>
-        
-        <div style="text-align: center; margin-top: 20px;">
-          <img src="cid:qrcode" alt="Boarding Pass QR Code" style="max-width: 200px;" />
+        <div style="text-align: center; margin: 20px 0;">
+          <img src="${qrCodeDataUrl}" alt="Boarding Pass QR Code" style="max-width: 200px; width: 100%;" />
+          <p>Scan this QR code at the airport</p>
         </div>
         
-        <div style="margin-top: 20px; text-align: center;">
-          ${boardingPass.walletOptions.appleWalletAvailable ? 
-            `<p><a href="${ticket.apple_wallet_url}" style="display: inline-block; background-color: black; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; margin-right: 10px;">Add to Apple Wallet</a></p>` : ''}
-          ${boardingPass.walletOptions.googleWalletAvailable ? 
-            `<p><a href="${ticket.google_wallet_url}" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Add to Google Wallet</a></p>` : ''}
-        </div>
+        <p><strong>Passenger:</strong> ${boardingPass.passengerName}</p>
+        <p><strong>Seat:</strong> ${boardingPass.seat}</p>
+        <p><strong>Gate:</strong> ${boardingPass.gate}</p>
+        <p><strong>Boarding:</strong> ${boardingPass.boardingTime}</p>
       </div>
       
-      <div style="padding: 20px; text-align: center; color: #666; font-size: 14px;">
-        <p>Thank you for flying with JetStream!</p>
-        <p>If you have any questions, please contact our customer service.</p>
-      </div>
+      <p>Please arrive at the airport at least 2 hours before your scheduled departure time.</p>
+      <p>We wish you a pleasant flight!</p>
+      
+      <p style="font-size: 12px; color: #777;">This is an automated email, please do not reply.</p>
     </div>
   `;
   
-  // Add QR code as an inline attachment
-  const emailAttachments = [
-    {
-      filename: 'qrcode.png',
-      content: boardingPass.qrCodeData,
-      contentType: 'image/png',
-      cid: 'qrcode', // Same as the src in the HTML
-    },
-    ...attachments,
-  ];
-  
-  await sendEmail({
-    to: email,
-    subject: `Your JetStream Boarding Pass: ${flight.origin?.code} to ${flight.destination?.code}`,
-    html,
-    attachments: emailAttachments,
-  });
+  await sendEmail(to, subject, htmlContent);
 } 
