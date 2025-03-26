@@ -28,7 +28,7 @@ export default function RootLayout({
           <AuthProvider>
             <Toaster position="top-center" />
             <Navbar />
-            <main className="min-h-screen">
+            <main className="min-h-screen pt-24">
               {children}
             </main>
           </AuthProvider>
