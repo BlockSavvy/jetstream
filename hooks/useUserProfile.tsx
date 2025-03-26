@@ -148,12 +148,20 @@ export function useUserProfile() {
 
       // Update profile if there are profile updates
       if (Object.keys(profileUpdates).length > 0) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update(profileUpdates)
-          .eq("id", user.id);
+        // Make sure we don't try to update the ID field
+        const { id, ...updatesWithoutId } = profileUpdates;
+        
+        if (Object.keys(updatesWithoutId).length > 0) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update(updatesWithoutId)
+            .eq("id", user.id);
 
-        if (profileError) throw profileError;
+          if (profileError) {
+            console.error("Error updating profile:", profileError);
+            throw profileError;
+          }
+        }
       }
 
       // Update travel preferences if provided

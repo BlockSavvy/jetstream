@@ -50,6 +50,28 @@ export default function Home() {
         </div>
       </section>
 
+      {/* JetShare Banner */}
+      <section className="py-8 bg-amber-50 dark:bg-amber-900/30">
+        <div className="container px-4 md:px-6 mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+            <div className="flex-1">
+              <span className="inline-block px-3 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 text-xs font-semibold rounded-full mb-2">NEW FEATURE</span>
+              <h3 className="text-2xl font-bold mb-2 dark:text-white">JetShare: Offset Your Flight Costs</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                Share a portion of your private jet flight and reduce costs. Simple, secure, and efficient peer-to-peer payments.
+              </p>
+            </div>
+            <Button 
+              className="whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-black font-semibold px-6 py-3 text-base rounded-full shrink-0"
+              onClick={() => window.location.href = '/jetshare'}
+            >
+              Try JetShare
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works Section */}
       <section id="how-it-works" className="py-24 bg-gray-50 dark:bg-gray-900">
         <div className="container px-4 md:px-6 mx-auto">
