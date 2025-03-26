@@ -118,6 +118,7 @@ export default function CrewDetailClient({ crew }: CrewDetailClientProps) {
                 alt={updatedCrew.name}
                 fill
                 className="object-cover"
+                style={{ objectPosition: 'center 30%' }}
                 priority
                 onError={() => setHeaderImageError(true)}
               />
@@ -135,6 +136,7 @@ export default function CrewDetailClient({ crew }: CrewDetailClientProps) {
                 alt={`${updatedCrew.name} header image`}
                 fill
                 className="object-cover"
+                style={{ objectPosition: 'center 30%' }}
                 onError={() => setHeaderImageError(true)}
               />
             </button>
@@ -148,6 +150,7 @@ export default function CrewDetailClient({ crew }: CrewDetailClientProps) {
                 alt={`${updatedCrew.name} profile image`}
                 fill
                 className="object-cover"
+                style={{ objectPosition: 'center 30%' }}
                 onError={() => setImageError(true)}
               />
             </button>

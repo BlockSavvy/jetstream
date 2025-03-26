@@ -101,7 +101,7 @@ export function CrewCard({ crew }: CrewCardProps) {
             src={headerImage} 
             alt={crew.name} 
             fill 
-            style={{ objectFit: 'cover' }} 
+            style={{ objectFit: 'cover', objectPosition: 'center 30%' }} 
             className={`transition-transform duration-500 ${isHovered ? 'scale-105' : ''}`}
             onError={() => setHeaderImageError(true)}
           />

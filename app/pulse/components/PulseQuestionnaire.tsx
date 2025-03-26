@@ -5,16 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, Users, Shield } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useAuth } from "@/components/auth-provider";
 import { toast } from "sonner";
-import { CrewSpecialization } from "@/lib/types/crew.types";
+import { CrewSpecialization, CaptainSpecialization } from "@/lib/types/crew.types";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Define the question types
 type TravelInterest = "Business" | "Sports" | "Tech" | "Art" | "Luxury" | "Music" | "Fashion" | "Crypto" | "Wellness" | "Family" | "Adventure";
 type SocialPreference = "Networking" | "Privacy" | "Family-friendly" | "Social" | "Professional";
 type UrgencyPreference = "Last-minute" | "Advanced" | "Exclusive";
+type ProfessionalPreference = "Captain" | "Crew" | "Both";
 
 const travelInterests: TravelInterest[] = ["Business", "Sports", "Tech", "Art", "Luxury", "Music", "Fashion", "Crypto", "Wellness", "Family", "Adventure"];
 const socialPreferences: SocialPreference[] = ["Networking", "Privacy", "Family-friendly", "Social", "Professional"];
@@ -33,6 +37,17 @@ const crewSpecializations: CrewSpecialization[] = [
   'Interactive Mystery Events'
 ];
 
+// Captain specializations for the questionnaire
+const captainSpecializations: CaptainSpecialization[] = [
+  'Luxury',
+  'Business',
+  'Family-oriented',
+  'Entertainment-focused',
+  'Adventure',
+  'VIP Service',
+  'International Flights'
+];
+
 export default function PulseQuestionnaire() {
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile } = useUserProfile();
@@ -43,23 +58,26 @@ export default function PulseQuestionnaire() {
   const [selectedDestinations, setSelectedDestinations] = useState<string[]>([]);
   const [selectedUrgency, setSelectedUrgency] = useState<UrgencyPreference[]>([]);
   const [selectedCrewSpecializations, setSelectedCrewSpecializations] = useState<CrewSpecialization[]>([]);
+  const [selectedCaptainSpecializations, setSelectedCaptainSpecializations] = useState<CaptainSpecialization[]>([]);
+  const [professionalPreference, setProfessionalPreference] = useState<ProfessionalPreference>("Both");
+  const [preferDedicatedCaptain, setPreferDedicatedCaptain] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-
-  // Load existing preferences from profile if available
+  
   useEffect(() => {
     if (profile?.travel_preferences) {
       const prefs = profile.travel_preferences;
-      
-      // Type assertion for type safety
-      setSelectedInterests(prefs.travel_interests as TravelInterest[]);
-      setSelectedSocialPrefs(prefs.social_preferences as SocialPreference[]);
-      setSelectedDestinations(prefs.preferred_destinations);
-      setSelectedUrgency(prefs.urgency_preferences as UrgencyPreference[]);
-      setSelectedCrewSpecializations(prefs.crew_specializations as CrewSpecialization[] || []);
+      if (prefs.travel_interests) setSelectedInterests(prefs.travel_interests as TravelInterest[]);
+      if (prefs.social_preferences) setSelectedSocialPrefs(prefs.social_preferences as SocialPreference[]);
+      if (prefs.preferred_destinations) setSelectedDestinations(prefs.preferred_destinations);
+      if (prefs.urgency_preferences) setSelectedUrgency(prefs.urgency_preferences as UrgencyPreference[]);
+      if (prefs.crew_specializations) setSelectedCrewSpecializations(prefs.crew_specializations as CrewSpecialization[]);
+      if (prefs.captain_specializations) setSelectedCaptainSpecializations(prefs.captain_specializations as CaptainSpecialization[]);
+      if (prefs.professional_preference) setProfessionalPreference(prefs.professional_preference as ProfessionalPreference);
+      if (prefs.prefer_dedicated_captain !== undefined) setPreferDedicatedCaptain(prefs.prefer_dedicated_captain);
     }
   }, [profile]);
-
+  
   const toggleInterest = (interest: TravelInterest) => {
     if (selectedInterests.includes(interest)) {
       setSelectedInterests(selectedInterests.filter(i => i !== interest));
@@ -67,7 +85,7 @@ export default function PulseQuestionnaire() {
       setSelectedInterests([...selectedInterests, interest]);
     }
   };
-
+  
   const toggleSocialPref = (pref: SocialPreference) => {
     if (selectedSocialPrefs.includes(pref)) {
       setSelectedSocialPrefs(selectedSocialPrefs.filter(p => p !== pref));
@@ -75,7 +93,7 @@ export default function PulseQuestionnaire() {
       setSelectedSocialPrefs([...selectedSocialPrefs, pref]);
     }
   };
-
+  
   const toggleDestination = (destination: string) => {
     if (selectedDestinations.includes(destination)) {
       setSelectedDestinations(selectedDestinations.filter(d => d !== destination));
@@ -83,7 +101,7 @@ export default function PulseQuestionnaire() {
       setSelectedDestinations([...selectedDestinations, destination]);
     }
   };
-
+  
   const toggleUrgency = (urgency: UrgencyPreference) => {
     if (selectedUrgency.includes(urgency)) {
       setSelectedUrgency(selectedUrgency.filter(u => u !== urgency));
@@ -99,6 +117,18 @@ export default function PulseQuestionnaire() {
       setSelectedCrewSpecializations([...selectedCrewSpecializations, specialization]);
     }
   };
+  
+  const toggleCaptainSpecialization = (specialization: CaptainSpecialization) => {
+    if (selectedCaptainSpecializations.includes(specialization)) {
+      setSelectedCaptainSpecializations(selectedCaptainSpecializations.filter(s => s !== specialization));
+    } else {
+      setSelectedCaptainSpecializations([...selectedCaptainSpecializations, specialization]);
+    }
+  };
+
+  const handleProfessionalPrefChange = (value: string) => {
+    setProfessionalPreference(value as ProfessionalPreference);
+  };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -113,7 +143,10 @@ export default function PulseQuestionnaire() {
             social_preferences: selectedSocialPrefs,
             preferred_destinations: selectedDestinations,
             urgency_preferences: selectedUrgency,
-            crew_specializations: selectedCrewSpecializations
+            crew_specializations: selectedCrewSpecializations,
+            captain_specializations: selectedCaptainSpecializations,
+            professional_preference: professionalPreference,
+            prefer_dedicated_captain: preferDedicatedCaptain
           }
         });
         
@@ -141,7 +174,7 @@ export default function PulseQuestionnaire() {
     }
   };
 
-  const getTotalSteps = () => 5; // Now with 5 steps including crew specializations
+  const getTotalSteps = () => 6; // Now with 6 steps including flight professionals
   
   const nextStep = () => {
     if (step < getTotalSteps()) {
@@ -190,7 +223,7 @@ export default function PulseQuestionnaire() {
                     Scroll down to view your personalized flight suggestions.
                   </p>
                 </motion.div>
-              ) : (
+              ) :
                 <>
                   {/* Progress indicator */}
                   <div className="flex justify-between mb-6">
@@ -229,7 +262,7 @@ export default function PulseQuestionnaire() {
                       </div>
                     </motion.div>
                   )}
-
+                  
                   {step === 2 && (
                     <motion.div
                       key="step2"
@@ -237,7 +270,7 @@ export default function PulseQuestionnaire() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      <h3 className="text-lg font-medium text-white mb-4">How do you prefer to travel?</h3>
+                      <h3 className="text-lg font-medium text-white mb-4">What is your social preference?</h3>
                       <div className="flex flex-wrap gap-2 mb-6">
                         {socialPreferences.map((pref) => (
                           <Badge
@@ -255,7 +288,7 @@ export default function PulseQuestionnaire() {
                       </div>
                     </motion.div>
                   )}
-
+                  
                   {step === 3 && (
                     <motion.div
                       key="step3"
@@ -263,7 +296,7 @@ export default function PulseQuestionnaire() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      <h3 className="text-lg font-medium text-white mb-4">Select your preferred destinations</h3>
+                      <h3 className="text-lg font-medium text-white mb-4">Preferred destinations</h3>
                       <div className="flex flex-wrap gap-2 mb-6">
                         {popularDestinations.map((destination) => (
                           <Badge
@@ -281,7 +314,7 @@ export default function PulseQuestionnaire() {
                       </div>
                     </motion.div>
                   )}
-
+                  
                   {step === 4 && (
                     <motion.div
                       key="step4"
@@ -289,8 +322,8 @@ export default function PulseQuestionnaire() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      <h3 className="text-lg font-medium text-white mb-4">Your booking preferences</h3>
-                      <div className="flex flex-wrap gap-2 mb-6">
+                      <h3 className="text-lg font-medium text-white mb-4">How far ahead do you plan?</h3>
+                      <div className="flex flex-col gap-3 mb-6">
                         <Badge
                           variant={selectedUrgency.includes("Last-minute") ? "default" : "outline"}
                           className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
@@ -299,8 +332,9 @@ export default function PulseQuestionnaire() {
                               : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"}`}
                           onClick={() => toggleUrgency("Last-minute")}
                         >
-                          Notify me of last-minute specials
+                          I prefer last-minute deals and spontaneous travel
                         </Badge>
+                        
                         <Badge
                           variant={selectedUrgency.includes("Advanced") ? "default" : "outline"}
                           className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
@@ -309,8 +343,9 @@ export default function PulseQuestionnaire() {
                               : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"}`}
                           onClick={() => toggleUrgency("Advanced")}
                         >
-                          Prefer advanced planning
+                          I like to plan trips well in advance
                         </Badge>
+                        
                         <Badge
                           variant={selectedUrgency.includes("Exclusive") ? "default" : "outline"}
                           className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
@@ -332,33 +367,126 @@ export default function PulseQuestionnaire() {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      <h3 className="text-lg font-medium text-white mb-4">Select your preferred onboard experiences</h3>
-                      <p className="text-gray-400 mb-4 text-sm">
-                        Our specialized pilots and crew members offer unique experiences during your flight.
-                        What types of experiences would you like to have?
-                      </p>
-                      <div className="flex flex-wrap gap-2 mb-6">
-                        {crewSpecializations.map((specialization) => (
-                          <Badge
-                            key={specialization}
-                            variant={selectedCrewSpecializations.includes(specialization) ? "default" : "outline"}
-                            className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
-                              ${selectedCrewSpecializations.includes(specialization) 
-                                ? "bg-amber-500 hover:bg-amber-600 text-white" 
-                                : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"}`}
-                            onClick={() => toggleCrewSpecialization(specialization)}
-                          >
-                            {specialization}
-                          </Badge>
-                        ))}
+                      <h3 className="text-lg font-medium text-white mb-4">Flight Professional Preferences</h3>
+                      
+                      <div className="mb-6">
+                        <Label className="text-white mb-2 block">Who matters most for your journey?</Label>
+                        <Tabs 
+                          value={professionalPreference} 
+                          onValueChange={handleProfessionalPrefChange} 
+                          className="w-full mb-6"
+                        >
+                          <TabsList className="w-full grid grid-cols-3 bg-gray-800">
+                            <TabsTrigger value="Crew" className="data-[state=active]:bg-amber-500">
+                              <Users className="h-4 w-4 mr-2" />
+                              Crew
+                            </TabsTrigger>
+                            <TabsTrigger value="Captain" className="data-[state=active]:bg-amber-500">
+                              <Shield className="h-4 w-4 mr-2" />
+                              Captain
+                            </TabsTrigger>
+                            <TabsTrigger value="Both" className="data-[state=active]:bg-amber-500">
+                              Both
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                        
+                        {(professionalPreference === "Captain" || professionalPreference === "Both") && (
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <Label htmlFor="dedicated-toggle" className="text-gray-300">
+                                I prefer dedicated captains assigned to specific jets
+                              </Label>
+                              <Switch
+                                id="dedicated-toggle"
+                                checked={preferDedicatedCaptain}
+                                onCheckedChange={setPreferDedicatedCaptain}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}
+                  
+                  {step === 6 && (
+                    <motion.div
+                      key="step6"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <h3 className="text-lg font-medium text-white mb-4">Flight Experience Preferences</h3>
+                      
+                      <Tabs defaultValue={professionalPreference === "Captain" ? "captain" : "crew"} className="w-full mb-6">
+                        <TabsList className="w-full grid grid-cols-2 bg-gray-800">
+                          <TabsTrigger 
+                            value="crew" 
+                            disabled={professionalPreference === "Captain"}
+                            className="data-[state=active]:bg-amber-500"
+                          >
+                            <Users className="h-4 w-4 mr-2" />
+                            Crew Specializations
+                          </TabsTrigger>
+                          <TabsTrigger 
+                            value="captain" 
+                            disabled={professionalPreference === "Crew"}
+                            className="data-[state=active]:bg-amber-500"
+                          >
+                            <Shield className="h-4 w-4 mr-2" />
+                            Captain Specializations
+                          </TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="crew" className="mt-4">
+                          <p className="text-gray-400 mb-4">
+                            Select the types of in-flight experiences you're interested in:
+                          </p>
+                          <div className="flex flex-wrap gap-2 mb-6">
+                            {crewSpecializations.map((spec) => (
+                              <Badge
+                                key={spec}
+                                variant={selectedCrewSpecializations.includes(spec) ? "default" : "outline"}
+                                className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
+                                  ${selectedCrewSpecializations.includes(spec) 
+                                    ? "bg-amber-500 hover:bg-amber-600 text-white" 
+                                    : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"}`}
+                                onClick={() => toggleCrewSpecialization(spec)}
+                              >
+                                {spec}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="captain" className="mt-4">
+                          <p className="text-gray-400 mb-4">
+                            Select captain specializations that matter to you:
+                          </p>
+                          <div className="flex flex-wrap gap-2 mb-6">
+                            {captainSpecializations.map((spec) => (
+                              <Badge
+                                key={spec}
+                                variant={selectedCaptainSpecializations.includes(spec) ? "default" : "outline"}
+                                className={`text-sm py-1.5 px-3 rounded-full cursor-pointer transition-all
+                                  ${selectedCaptainSpecializations.includes(spec) 
+                                    ? "bg-amber-500 hover:bg-amber-600 text-white" 
+                                    : "bg-gray-800 hover:bg-gray-700 text-gray-300 border-gray-700"}`}
+                                onClick={() => toggleCaptainSpecialization(spec)}
+                              >
+                                {spec}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </motion.div>
+                  )}
                 </>
-              )}
+              }
             </AnimatePresence>
           </CardContent>
-
+          
           {!isComplete && (
             <CardFooter className="px-6 py-4 bg-gray-900 border-t border-gray-800 flex justify-between">
               <Button
