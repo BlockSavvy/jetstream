@@ -1,0 +1,16 @@
+{
+  "name": "jetstream-crew-image-generator",
+  "version": "1.0.0",
+  "description": "Script to generate crew profile images using OpenAI DALL-E API",
+  "main": "generate-crew-images.js",
+  "scripts": {
+    "generate": "node generate-crew-images.js",
+    "update-crew-images": "node update-crew-images.js",
+    "static-images": "node static-crew-images.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.33.2",
+    "dotenv": "^16.3.1",
+    "openai": "^4.0.0"
+  }
+} 
