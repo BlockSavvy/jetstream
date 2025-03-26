@@ -1,22 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase-server';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
+    // Use the existing createClient function
+    const supabase = await createClient();
     
     // Get the authenticated user
     const { data: { user } } = await supabase.auth.getUser();
@@ -29,8 +17,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    if (!body.crewId || !body.rating || (body.rating < 1 || body.rating > 5)) {
-      return NextResponse.json({ error: 'Missing required fields or invalid rating' }, { status: 400 });
+    if (!body.crewId || typeof body.rating !== 'number' || body.rating < 1 || body.rating > 5) {
+      return NextResponse.json({ error: 'Invalid request data' }, { status: 400 });
     }
     
     // Check if the user has already reviewed this crew member

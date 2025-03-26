@@ -1,29 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    console.log('Fetching crew with ID:', params?.id);
     
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
+    // Use the existing createClient function
+    const supabase = await createClient();
     
-    const { id } = params;
+    const id = params?.id;
     
     if (!id) {
+      console.error('No crew ID provided');
       return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
     }
     
@@ -35,48 +26,102 @@ export async function GET(
       .single();
     
     if (crewError) {
-      console.error('Error fetching crew member:', crewError);
-      return NextResponse.json({ error: crewError.message }, { status: 500 });
+      console.error('Error fetching crew member:', crewError, 'ID:', id);
+      
+      // If the error is "not found", return a 404 status
+      if (crewError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Crew member not found' }, { status: 404 });
+      }
+      
+      return NextResponse.json({ 
+        error: crewError.message,
+        details: `Failed to fetch crew with ID: ${id}` 
+      }, { status: 500 });
     }
     
-    // Get reviews for the crew member
-    const { data: reviewsData, error: reviewsError } = await supabase
-      .from('crew_reviews')
-      .select(`
-        *,
-        profiles:user_id (
-          id,
-          first_name,
-          last_name,
-          avatar_url
-        )
-      `)
-      .eq('crew_id', id)
-      .order('created_at', { ascending: false });
-    
-    if (reviewsError) {
-      console.error('Error fetching crew reviews:', reviewsError);
-      return NextResponse.json({ error: reviewsError.message }, { status: 500 });
+    if (!crewData) {
+      console.error('No crew data found for ID:', id);
+      return NextResponse.json({ error: 'Crew member not found' }, { status: 404 });
     }
     
-    // Get specialized flights for the crew member
-    const { data: flightsData, error: flightsError } = await supabase
-      .from('specialized_flights')
-      .select(`
-        *,
-        flights:flight_id (
+    console.log('Successfully fetched crew member:', crewData.name);
+    
+    // Get reviews for the crew member - if this fails, don't fail the whole request
+    let reviewsData = [];
+    try {
+      // First get the reviews without the problematic join
+      const { data, error } = await supabase
+        .from('crew_reviews')
+        .select('*')
+        .eq('crew_id', id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching crew reviews:', error);
+      } else if (data && data.length > 0) {
+        // If we have reviews, try to get user information separately
+        reviewsData = await Promise.all(data.map(async (review) => {
+          // Only try to get user info if user_id exists
+          if (review.user_id) {
+            const { data: userData, error: userError } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, avatar_url')
+              .eq('id', review.user_id)
+              .single();
+            
+            if (userError) {
+              console.error('Error fetching user data for review:', userError);
+              return {
+                ...review,
+                user: undefined
+              };
+            }
+            
+            return {
+              ...review,
+              user: userData ? {
+                name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || 'Anonymous',
+                avatarUrl: userData.avatar_url
+              } : undefined
+            };
+          }
+          
+          return {
+            ...review,
+            user: undefined
+          };
+        }));
+      } else {
+        reviewsData = data || [];
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching reviews:', error);
+    }
+    
+    // Get specialized flights for the crew member - if this fails, don't fail the whole request
+    let flightsData = [];
+    try {
+      const { data, error } = await supabase
+        .from('specialized_flights')
+        .select(`
           *,
-          jets:jet_id (*),
-          origin:origin_airport (*),
-          destination:destination_airport (*)
-        )
-      `)
-      .eq('crew_id', id)
-      .order('created_at', { ascending: false });
-    
-    if (flightsError) {
-      console.error('Error fetching specialized flights:', flightsError);
-      return NextResponse.json({ error: flightsError.message }, { status: 500 });
+          flights:flight_id (
+            *,
+            jets:jet_id (*),
+            origin:origin_airport (*),
+            destination:destination_airport (*)
+          )
+        `)
+        .eq('crew_id', id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching specialized flights:', error);
+      } else {
+        flightsData = data || [];
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching flights:', error);
     }
     
     // Transform data to match our types
@@ -87,21 +132,13 @@ export async function GET(
       bio: crewData.bio,
       profileImageUrl: crewData.profile_image_url,
       ratingsAvg: crewData.ratings_avg,
-      specializations: crewData.specializations,
-      socialLinks: crewData.social_links,
-      reviews: reviewsData.map(review => ({
-        id: review.id,
-        crewId: review.crew_id,
-        userId: review.user_id,
-        flightId: review.flight_id,
-        rating: review.rating,
-        reviewText: review.review_text,
-        createdAt: review.created_at,
-        user: review.profiles ? {
-          name: `${review.profiles.first_name} ${review.profiles.last_name}`,
-          avatarUrl: review.profiles.avatar_url
-        } : undefined
-      })),
+      specializations: crewData.specializations || [],
+      socialLinks: crewData.social_links || {},
+      isCaptain: crewData.is_captain || false,
+      dedicatedJetOwnerId: crewData.dedicated_jet_owner_id,
+      yearsOfExperience: crewData.years_of_experience,
+      availability: crewData.availability,
+      reviews: reviewsData,
       specializedFlights: flightsData.map(flight => ({
         id: flight.id,
         flightId: flight.flight_id,
@@ -119,8 +156,12 @@ export async function GET(
     
     return NextResponse.json({ crew: transformedCrew });
   } catch (error: any) {
-    console.error('Unexpected error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Unexpected error in crew API:', error);
+    return NextResponse.json({ 
+      error: error.message, 
+      stack: error.stack,
+      source: 'GET /api/crew/[id]'
+    }, { status: 500 });
   }
 }
 
@@ -129,21 +170,10 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    // Use the existing createClient function
+    const supabase = await createClient();
     
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
-    
-    const { id } = params;
+    const id = params?.id;
     
     if (!id) {
       return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
@@ -205,6 +235,10 @@ export async function PATCH(
       ratingsAvg: data.ratings_avg,
       specializations: data.specializations,
       socialLinks: data.social_links,
+      isCaptain: data.is_captain || false,
+      dedicatedJetOwnerId: data.dedicated_jet_owner_id,
+      yearsOfExperience: data.years_of_experience,
+      availability: data.availability
     };
     
     return NextResponse.json({ crew: transformedData });
@@ -219,21 +253,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    // Use the existing createClient function
+    const supabase = await createClient();
     
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
-    
-    const { id } = params;
+    const id = params?.id;
     
     if (!id) {
       return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
