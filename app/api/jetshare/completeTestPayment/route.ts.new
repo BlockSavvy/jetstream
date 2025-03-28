@@ -1,0 +1,310 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase-server';
+import { getJetShareOfferById, logJetShareTransaction } from '@/lib/services/jetshare';
+
+export async function POST(request: NextRequest) {
+  console.log('completeTestPayment API called');
+  
+  // Check if we have all required headers for better debugging
+  const headers = Object.fromEntries(request.headers.entries());
+  console.log('Request headers:', {
+    cookie: headers.cookie ? 'Present (length: ' + headers.cookie.length + ')' : 'Missing',
+    'content-type': headers['content-type'] || 'Missing',
+    authorization: headers.authorization ? 'Present' : 'Missing',
+    host: headers.host || 'Missing',
+    origin: headers.origin || 'Missing',
+    referer: headers.referer || 'Missing',
+  });
+  
+  try {
+    // Check cookies to help debug auth issues
+    const cookieString = request.headers.get('cookie') || '';
+    console.log('Cookie header present:', !!cookieString, 'Length:', cookieString.length);
+    if (cookieString) {
+      // Log the cookie names present (not values for security)
+      const cookieNames = cookieString.split(';').map(c => c.trim().split('=')[0]);
+      console.log('Cookie names present:', cookieNames);
+    }
+    
+    // Get the authenticated user
+    const supabase = await createClient();
+    const { data, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error('Authentication error:', authError);
+      return NextResponse.json({ 
+        error: 'Authentication failed', 
+        message: 'Authentication error occurred', 
+        details: authError.message 
+      }, { status: 401 });
+    }
+    
+    if (!data.user) {
+      console.error('No authenticated user found');
+      return NextResponse.json({ error: 'Unauthorized', message: 'You must be logged in to complete a payment' }, { status: 401 });
+    }
+    
+    const user = data.user;
+    console.log('Authenticated user:', user.id, user.email || 'no email');
+    
+    // Parse request body
+    const body = await request.json();
+    console.log('Request body:', body);
+    
+    const { offer_id, payment_intent_id } = body;
+    
+    if (!offer_id || !payment_intent_id) {
+      console.error('Missing required fields in request body');
+      return NextResponse.json(
+        { error: 'Missing required fields', details: 'offer_id and payment_intent_id are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Get the offer details
+    console.log('Getting offer details for:', offer_id);
+    let offer;
+    try {
+      offer = await getJetShareOfferById(offer_id);
+      console.log('Offer details retrieved:', { id: offer.id, status: offer.status, matched_user_id: offer.matched_user_id });
+      
+      // ------ VERIFY AND FIX OFFER STATUS IF NEEDED ------
+      
+      // First, directly check if the offer is in an acceptable state for payment
+      if (offer.status === 'accepted' && (offer.matched_user_id === user.id || !offer.matched_user_id)) {
+        console.log('Offer is already in correct state, proceeding with payment');
+        
+        // If matched_user_id isn't set but we're in accepted state, update it
+        if (!offer.matched_user_id) {
+          console.log('Setting missing matched_user_id...');
+          try {
+            const { error: updateError } = await supabase
+              .from('jetshare_offers')
+              .update({ 
+                matched_user_id: user.id,
+                updated_at: new Date().toISOString() 
+              })
+              .eq('id', offer_id);
+              
+            if (updateError) {
+              console.error('Error updating matched_user_id:', updateError);
+            } else {
+              console.log('Successfully updated matched_user_id');
+              // Refresh offer data
+              offer = await getJetShareOfferById(offer_id);
+            }
+          } catch (error) {
+            console.error('Error updating matched_user_id:', error);
+          }
+        }
+      }
+      // If offer is open or needs status update
+      else if (offer.status !== 'accepted' || offer.matched_user_id !== user.id) {
+        console.log('Offer needs updates before payment processing');
+        
+        // Make direct update to accepted state
+        try {
+          console.log('Updating offer to accepted state directly...');
+          const { data: updatedOffer, error: updateError } = await supabase
+            .from('jetshare_offers')
+            .update({ 
+              status: 'accepted',
+              matched_user_id: user.id,
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', offer_id)
+            .select('*')
+            .maybeSingle();
+            
+          if (updateError) {
+            console.error('Error updating offer to accepted state:', updateError);
+            
+            // Simplified approach - try a basic update without returning data
+            console.log('Attempting simplified update...');
+            const { error: basicUpdateError } = await supabase
+              .from('jetshare_offers')
+              .update({ 
+                status: 'accepted',
+                matched_user_id: user.id,
+                updated_at: new Date().toISOString() 
+              })
+              .eq('id', offer_id);
+              
+            if (basicUpdateError) {
+              console.error('Basic update failed:', basicUpdateError);
+              
+              // Final attempt - try with minimal fields
+              console.log('Attempting minimal update...');
+              const { error: minimalUpdateError } = await supabase
+                .from('jetshare_offers')
+                .update({ 
+                  status: 'accepted'
+                })
+                .eq('id', offer_id);
+                
+              if (minimalUpdateError) {
+                console.error('Minimal update failed:', minimalUpdateError);
+                return NextResponse.json(
+                  { error: 'Failed to update offer', message: 'Could not prepare offer for payment' },
+                  { status: 500 }
+                );
+              } else {
+                console.log('Minimal update succeeded, checking result...');
+              }
+            } else {
+              console.log('Basic update succeeded');
+            }
+            
+            // Check if any of our update attempts worked
+            const { data: checkOffer } = await supabase
+              .from('jetshare_offers')
+              .select('*')
+              .eq('id', offer_id)
+              .maybeSingle();
+              
+            if (checkOffer?.status === 'accepted') {
+              console.log('Offer is in accepted state after update attempts');
+              offer = checkOffer;
+            } else {
+              console.error('Failed to update offer status and verification failed');
+              return NextResponse.json(
+                { error: 'Failed to update offer', message: 'Could not prepare offer for payment' },
+                { status: 500 }
+              );
+            }
+          } else if (updatedOffer) {
+            console.log('Successfully updated offer to accepted state');
+            offer = updatedOffer;
+          } else {
+            // Check if the update might have succeeded without returning data
+            const { data: checkOffer } = await supabase
+              .from('jetshare_offers')
+              .select('*')
+              .eq('id', offer_id)
+              .maybeSingle();
+              
+            if (checkOffer?.status === 'accepted') {
+              console.log('Offer is in accepted state after update');
+              offer = checkOffer;
+            } else {
+              console.error('Failed to update offer status and verification failed');
+              return NextResponse.json(
+                { error: 'Failed to update offer', message: 'Could not prepare offer for payment' },
+                { status: 500 }
+              );
+            }
+          }
+        } catch (error) {
+          console.error('Unexpected error updating offer:', error);
+          return NextResponse.json(
+            { error: 'Failed to update offer', message: (error as Error).message },
+            { status: 500 }
+          );
+        }
+      }
+      
+      // At this point, we should have an offer in 'accepted' state with the correct matched_user_id
+      
+      // Generate a transaction reference for test payments
+      const transactionReference = payment_intent_id || `test_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      
+      // Calculate the handling fee (default 7.5% if not specified in settings)
+      const handlingFeePercentage = 0.075; // 7.5%
+      const handlingFee = offer.requested_share_amount * handlingFeePercentage;
+      
+      // Log the transaction
+      try {
+        console.log('Logging transaction...');
+        
+        const transactionData = await logJetShareTransaction({
+          offer_id: offer.id,
+          payer_user_id: user.id,
+          recipient_user_id: offer.user_id,
+          amount: offer.requested_share_amount,
+          handling_fee: handlingFee,
+          payment_method: 'fiat', // Assume test payments are 'fiat'
+          payment_status: 'completed',
+          transaction_reference: transactionReference
+        });
+        
+        console.log('Transaction logged successfully:', transactionData.id);
+        
+        // Update the offer status to 'completed'
+        console.log('Updating offer status to completed...');
+        try {
+          const { data: completedOffer, error: completeError } = await supabase
+            .from('jetshare_offers')
+            .update({ 
+              status: 'completed',
+              updated_at: new Date().toISOString() 
+            })
+            .eq('id', offer_id)
+            .select('*')
+            .maybeSingle();
+            
+          if (completeError) {
+            console.error('Error updating offer to completed:', completeError);
+            console.warn('Continuing despite update error - transaction was recorded');
+          } else if (completedOffer) {
+            console.log('Successfully updated offer to completed state');
+          } else {
+            console.warn('Update to completed state did not return data, but may have succeeded');
+          }
+        } catch (updateError) {
+          console.error('Error updating to completed state:', updateError);
+          console.warn('Continuing despite update error - transaction was recorded');
+        }
+        
+        // Return success response
+        return NextResponse.json({
+          success: true,
+          message: 'Test payment completed successfully',
+          transaction_id: transactionData.id,
+          offer_id: offer.id
+        }, { 
+          status: 200, 
+          headers: getCorsHeaders(request)
+        });
+      } catch (transactionError) {
+        console.error('Error logging transaction:', transactionError);
+        return NextResponse.json(
+          { error: 'Failed to log transaction', message: (transactionError as Error).message },
+          { status: 500 }
+        );
+      }
+    } catch (offerError) {
+      console.error('Error retrieving or updating offer:', offerError);
+      return NextResponse.json(
+        { error: 'Failed to retrieve or process offer', message: (offerError as Error).message },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error('Unexpected error in completeTestPayment:', error);
+    return NextResponse.json(
+      { error: 'Failed to process test payment', message: (error as Error).message },
+      { status: 500 }
+    );
+  }
+}
+
+// Helper function to get consistent CORS headers
+function getCorsHeaders(request: NextRequest) {
+  return {
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Origin': request.headers.get('origin') || '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
+
+// Add OPTIONS handler for CORS
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: getCorsHeaders(request),
+  });
+}
