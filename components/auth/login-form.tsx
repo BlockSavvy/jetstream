@@ -17,7 +17,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -28,6 +28,8 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const { signIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get('returnUrl')
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -40,13 +42,42 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true)
     try {
-      const { error } = await signIn(values.email, values.password)
+      console.log('Submitting login form')
+      const { error, session } = await signIn(values.email, values.password)
+      
       if (error) {
+        console.error('Login form error:', error.message)
         toast.error(error.message || 'Failed to sign in')
+        return
+      }
+
+      // Authentication successful
+      if (session) {
+        console.log('Login successful, session established')
+        
+        // Give the session a moment to fully establish
+        setTimeout(() => {
+          if (returnUrl) {
+            console.log('Redirecting to:', returnUrl)
+            // Use the router for same-origin URLs, window.location for cross-origin
+            if (returnUrl.startsWith('/')) {
+              router.push(returnUrl)
+              router.refresh()
+            } else {
+              window.location.href = returnUrl
+            }
+          } else {
+            console.log('Redirecting to home page')
+            router.push('/')
+            router.refresh()
+          }
+        }, 800) // Slightly longer delay to ensure session is established
       } else {
-        router.push('/')
+        console.warn('Login successful but no session returned')
+        toast.error('Authentication successful but session not established')
       }
     } catch (error) {
+      console.error('Login error:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)

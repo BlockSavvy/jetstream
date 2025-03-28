@@ -1,6 +1,7 @@
 import { LoginForm } from '@/components/auth/login-form'
 import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 export default function LoginPage() {
   return (
@@ -19,7 +20,9 @@ export default function LoginPage() {
         <div className="mb-8 flex justify-center">
           <Link href="/" className="text-3xl font-bold text-amber-500">JetStream</Link>
         </div>
-        <LoginForm />
+        <Suspense fallback={<div>Loading...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   )
