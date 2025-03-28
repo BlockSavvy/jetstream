@@ -14,22 +14,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Helper function to get random user ID
+-- Helper function to get random user ID with profile
 CREATE OR REPLACE FUNCTION random_user_id() RETURNS uuid AS $$
 DECLARE
   user_id uuid;
 BEGIN
-  SELECT id INTO user_id FROM auth.users ORDER BY RANDOM() LIMIT 1;
+  SELECT p.id INTO user_id 
+  FROM profiles p 
+  WHERE p.user_type = 'traveler' 
+  ORDER BY RANDOM() 
+  LIMIT 1;
   RETURN user_id;
 END;
 $$ LANGUAGE plpgsql;
 
--- Helper function to get different random user ID
+-- Helper function to get different random user ID with profile
 CREATE OR REPLACE FUNCTION different_random_user_id(exclude_id uuid) RETURNS uuid AS $$
 DECLARE
   user_id uuid;
 BEGIN
-  SELECT id INTO user_id FROM auth.users WHERE id != exclude_id ORDER BY RANDOM() LIMIT 1;
+  SELECT p.id INTO user_id 
+  FROM profiles p 
+  WHERE p.id != exclude_id AND p.user_type = 'traveler'
+  ORDER BY RANDOM() 
+  LIMIT 1;
   RETURN user_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -119,6 +127,45 @@ BEGIN
   RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Create sample users and profiles first
+DO $$
+DECLARE
+  new_user_id uuid;
+  first_names text[] := ARRAY['John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'James', 'Emma', 'William', 'Olivia'];
+  last_names text[] := ARRAY['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+  i int;
+BEGIN
+  FOR i IN 1..10 LOOP
+    -- Create user in auth.users
+    INSERT INTO auth.users (id, email)
+    VALUES (
+      gen_random_uuid(),
+      lower(first_names[i] || '.' || last_names[i] || '@example.com')
+    )
+    RETURNING id INTO new_user_id;
+    
+    -- Create corresponding profile
+    INSERT INTO profiles (
+      id,
+      first_name,
+      last_name,
+      user_type,
+      verification_status,
+      created_at,
+      updated_at
+    ) VALUES (
+      new_user_id,
+      first_names[i],
+      last_names[i],
+      'traveler',
+      'verified',
+      NOW(),
+      NOW()
+    );
+  END LOOP;
+END;
+$$;
 
 -- Create sample open offers
 DO $$
