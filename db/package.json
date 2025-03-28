@@ -3,15 +3,14 @@
   "version": "1.0.0",
   "description": "Database tools for JetStream",
   "scripts": {
-    "migrate": "node ./migrate.js",
-    "seed": "node ./seeds/001_seed_data.js && node ./seeds/002_crew_data.js",
-    "setup": "node ./setup-jetstream-db.js"
+    "setup": "node setup-all.js",
+    "test-connection": "node test-connection-with-env.js",
+    "check-tables": "node check-tables-info-schema.js",
+    "populate-minimal": "node populate-minimal.js",
+    "populate-ratings": "node populate-correct-schema.js"
   },
   "dependencies": {
-    "@faker-js/faker": "^8.0.2",
-    "@supabase/supabase-js": "^2.33.2",
-    "dotenv": "^16.3.1",
-    "pg": "^8.14.1",
-    "uuid": "^9.0.0"
+    "@supabase/supabase-js": "^2.38.4",
+    "uuid": "^9.0.1"
   }
 }

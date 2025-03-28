@@ -1,84 +1,97 @@
-# JetStream Database Tools
+# JetStream Database Setup and Restoration
 
-This directory contains tools for setting up and seeding the JetStream database in Supabase.
+This folder contains scripts to set up and restore the JetStream database, fully integrated with JetShare functionality.
 
-## Setup
+## Table Structure
 
-1. Install dependencies:
-```bash
-cd db
-npm install
+The JetStream database consists of several core tables:
+
+1. **profiles**: User profiles with basic information
+2. **jets**: Available jets with details like model, capacity, and cost
+3. **flights**: Scheduled flights with departure/arrival information
+4. **bookings**: Flight bookings made by users
+5. **ratings**: User ratings for flights
+6. **jetshare_offers**: Offers to share jet flights with other users
+7. **jetshare_transactions**: Financial transactions for jetshare arrangements
+8. **jetshare_settings**: System settings for the JetShare functionality
+
+## Scripts
+
+This folder contains several scripts for managing the database:
+
+### Core Scripts
+
+- **check-tables-info-schema.js**: Lists all tables in the database and their row counts
+- **populate-correct-schema.js**: Populates ratings and jetshare_transactions tables using the correct schema
+- **populate-minimal.js**: Populates jetshare_settings table with default values
+- **test-connection.js**: Tests the connection to the Supabase database
+
+### SQL Restoration Scripts
+
+The SQL scripts are designed to restore the entire database schema:
+
+- **restore-jetstream-1-schema.sql**: Creates the core schema
+- **restore-jetstream-2-crew-tables.sql**: Creates crew-related tables
+- **restore-jetstream-3-jetshare-tables.sql**: Creates JetShare tables
+- **restore-jetstream-4-rls-policies.sql**: Sets up Row Level Security policies
+- **restore-jetstream-5-triggers.sql**: Creates database triggers for automated actions
+- **restore-jetstream-6-seed-data.sql**: Populates the database with sample data
+- **restore-jetstream-complete.sql**: Master file combining all the above scripts
+
+## Setup Instructions
+
+### 1. Set up environment variables
+
+Create a `.env.local` file in the project root with the following variables:
+
 ```
-
-2. Create a `.env` file in the `db` directory with your Supabase credentials:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Note: The service role key is required for database migrations and creating users in the seed data. Keep this key secure and never expose it in client-side code.
-
-## Running Migrations
-
-To create the database schema:
+### 2. Test your connection
 
 ```bash
-npm run migrate
+node db/test-connection.js
 ```
 
-This will run the SQL files in the `migrations` directory in alphabetical order.
-
-## Alternative Migration Method
-
-If the default migration script encounters issues with the `pgbouncer_exec` function, you can try the alternative migration script:
+### 3. Check existing tables
 
 ```bash
-node migrate-sql.js
+node db/check-tables-info-schema.js
 ```
 
-## Seeding the Database
+### 4. Populate necessary tables
 
-To populate the database with test data:
+If tables exist but are empty, you can run these scripts to populate them:
 
 ```bash
-npm run seed
+# Populate JetShare settings table
+node db/populate-minimal.js
+
+# Populate ratings and jetshare_transactions tables
+node db/populate-correct-schema.js
 ```
 
-This will create:
-- 50 test users with realistic profiles
-- 25 private jets with detailed specifications
-- 100 flights between various airports
-- 40 fractional ownership tokens
-- Bookings, payments, and ratings
+### 5. Verify population was successful
 
-## Test User Credentials
+```bash
+node db/check-tables-info-schema.js
+```
 
-All test users are created with the same password: `Password123!`
+## Database Restoration Using SQL (if needed)
 
-You can log in with any of the email addresses generated during seeding.
+If you need to completely restore the database from scratch:
 
-## Migrations
+```bash
+# Connect to your Supabase database and run:
+\i '/path/to/restore-jetstream-complete.sql'
+```
 
-The migrations directory contains SQL files for creating the database schema:
+This will execute all the SQL scripts in the correct order to set up the entire database schema and populate it with sample data.
 
-- `001_initial_schema.sql` - Creates all tables, triggers, and RLS policies
+## Notes
 
-## Seed Data
-
-The seed script (`seeds/001_seed_data.js`) generates realistic data for:
-
-1. User profiles with preferences
-2. Jets with detailed specifications and amenities
-3. Flights with origin/destination airports and pricing
-4. Fractional ownership tokens with blockchain details
-5. Bookings and payments
-6. User ratings
-
-## Manual Database Management
-
-You can also use the Supabase dashboard to manage your database:
-
-1. Log in to your Supabase account
-2. Go to the SQL Editor
-3. Execute the SQL in the migration files manually 
+- The scripts use UUID v4 for generating IDs
+- The database is designed to work with Supabase and leverages Row Level Security
+- Sample data is provided for demonstration purposes only 

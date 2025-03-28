@@ -81,6 +81,12 @@ export default function Navbar() {
               Flights
             </Link>
             <Link 
+              href="/jetshare" 
+              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname.startsWith('/jetshare') ? 'font-semibold' : ''}`}
+            >
+              JetShare
+            </Link>
+            <Link 
               href="/pulse" 
               className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/pulse' ? 'font-semibold' : ''}`}
             >
@@ -148,6 +154,13 @@ export default function Navbar() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Flights
+            </Link>
+            <Link
+              href="/jetshare"
+              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname.startsWith('/jetshare') ? 'font-semibold' : ''}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              JetShare
             </Link>
             <Link
               href="/pulse"
