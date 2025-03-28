@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -41,12 +42,14 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-gray-200 mb-10 max-w-3xl mx-auto">
             Seamless fractional jet experiences. Personalized flights, effortlessly matched.
           </p>
-          <Button
-            className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
-          >
-            Reserve Your Flight Now
-            <ChevronRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Link href="/flights">
+            <Button
+              className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
+            >
+              Reserve Your Flight Now
+              <ChevronRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -61,13 +64,14 @@ export default function Home() {
                 Share a portion of your private jet flight and reduce costs. Simple, secure, and efficient peer-to-peer payments.
               </p>
             </div>
-            <Button 
-              className="whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-black font-semibold px-6 py-3 text-base rounded-full shrink-0"
-              onClick={() => window.location.href = '/jetshare'}
-            >
-              Try JetShare
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/jetshare">
+              <Button 
+                className="whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-black font-semibold px-6 py-3 text-base rounded-full shrink-0"
+              >
+                Try JetShare
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -190,12 +194,14 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <Button
-              className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
-            >
-              List Your Jet Today
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/jets">
+              <Button
+                className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
+              >
+                List Your Jet
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -284,10 +290,14 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <Button className="bg-white hover:bg-gray-100 text-amber-500 border-2 border-amber-500 font-semibold px-8 py-6 text-lg rounded-full">
-              Explore Fractional Ownership
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/ownership">
+              <Button
+                className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
+              >
+                Explore Fractional Ownership
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -346,10 +356,14 @@ export default function Home() {
           </div>
 
           <div className="text-center">
-            <Button className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full">
-              Discover Intelligent Matching
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/matching">
+              <Button
+                className="bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-6 text-lg rounded-full"
+              >
+                Discover Intelligent Matching
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

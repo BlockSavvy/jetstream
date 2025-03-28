@@ -25,6 +25,7 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: '/dashboard', label: 'Overview', icon: <LayoutDashboard className="h-5 w-5" /> },
   { href: '/dashboard/flights', label: 'My Flights', icon: <Plane className="h-5 w-5" /> },
+  { href: '/dashboard/jetshare', label: 'JetShare', icon: <Users className="h-5 w-5" /> },
   { href: '/dashboard/tokens', label: 'My Tokens', icon: <Wallet className="h-5 w-5" /> },
   { href: '/dashboard/matching', label: 'AI Matching', icon: <Users className="h-5 w-5" /> },
   { href: '/dashboard/calendar', label: 'Calendar', icon: <CalendarDays className="h-5 w-5" /> },
