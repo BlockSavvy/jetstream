@@ -1,11 +1,10 @@
 import Link from 'next/link';
-import { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Share, Search, Plane, Banknote, Clock, CheckCircle } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'JetShare - Share Your Private Jet Costs | JetStream',
-  description: 'Instantly share and offset your private jet costs with verified users through JetShare, a secure peer-to-peer flight sharing platform.',
+export const metadata = {
+  title: 'JetShare - Flight Sharing Platform',
+  description: 'Share and offset your private jet costs by connecting with verified travelers.',
 };
 
 export default function JetSharePage() {
