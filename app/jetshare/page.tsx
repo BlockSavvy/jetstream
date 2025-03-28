@@ -2,11 +2,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Share, Search, Plane, Banknote, Clock, CheckCircle } from 'lucide-react';
 
-export const metadata = {
-  title: 'JetShare - Flight Sharing Platform',
-  description: 'Share and offset your private jet costs by connecting with verified travelers.',
-};
-
 export default function JetSharePage() {
   return (
     <div className="container mx-auto px-4 md:px-6 pb-16">

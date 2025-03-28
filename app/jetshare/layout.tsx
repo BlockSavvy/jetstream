@@ -25,9 +25,7 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
   const needsAuth = PROTECTED_ROUTES.some(route => pathname?.startsWith(route));
   
   useEffect(() => {
-    console.log('JetShare layout auth check for:', pathname);
-    
-    // Wait for auth state to stabilize
+    // Only continue once auth state is loaded
     if (authLoading) {
       return;
     }
@@ -43,29 +41,26 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
     setLoading(false);
   }, [pathname, user, authLoading, needsAuth, router]);
   
-  // Simple loading state for protected routes
-  if (loading && needsAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-center">
-          <div className="text-lg font-medium">Loading JetShare...</div>
-          <div className="text-sm text-gray-500 mt-2">Checking authentication...</div>
-        </div>
-      </div>
-    );
-  }
+  // Create inner content based on loading state
+  const content = loading && needsAuth ? (
+    <div className="animate-pulse text-center">
+      <div className="text-lg font-medium">Loading JetShare...</div>
+      <div className="text-sm text-gray-500 mt-2">Checking authentication...</div>
+    </div>
+  ) : (
+    children
+  );
   
-  // Base layout content
+  // Base layout content that always renders
   return (
     <div className="flex flex-col min-h-screen">
       <JetShareHeader />
       
-      <main className="flex-1 pb-12">
-        {children}
+      <main className="flex-1 pb-12 flex justify-center items-center">
+        {content}
       </main>
       
       <JetShareFooter />
-      <Toaster position="top-center" />
     </div>
   );
 } 
