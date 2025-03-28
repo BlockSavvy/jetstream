@@ -32,7 +32,7 @@ export default function Navbar() {
   // Determine background color based on page and scroll state
   const headerBgClass = () => {
     if (isLandingPage) {
-      return isScrolled ? "bg-gray-900/95 backdrop-blur-sm" : "bg-transparent"
+      return isScrolled ? "bg-gray-900/95 backdrop-blur-sm" : "bg-gray-900/50 backdrop-blur-sm"
     }
     return isScrolled ? "bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b" : "bg-white dark:bg-gray-900 border-b"
   }
@@ -68,6 +68,12 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            <Link 
+              href="/crew" 
+              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/crew' ? 'font-semibold' : ''}`}
+            >
+              Crew
+            </Link>
             <Link 
               href="/flights" 
               className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname === '/flights' ? 'font-semibold' : ''}`}
@@ -135,6 +141,13 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            <Link
+              href="/crew"
+              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname === '/crew' ? 'font-semibold' : ''}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Crew
+            </Link>
             <Link
               href="/flights"
               className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname === '/flights' ? 'font-semibold' : ''}`}

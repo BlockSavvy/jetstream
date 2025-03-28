@@ -166,7 +166,7 @@ export default function ExclusiveFlights() {
               const limitedText = getLimitedAllocationText(flight.base_price, flight.available_seats);
               
               // Generate description
-              const description = generateDescription(eventName, flight.destination.city);
+              const description = generateDescription(eventName, flight.destination?.city || 'exclusive location');
               
               return (
                 <motion.div
@@ -198,7 +198,7 @@ export default function ExclusiveFlights() {
                         <h3 className="text-xl font-bold text-white">{eventName}</h3>
                         <div className="flex items-center text-gray-300 text-sm">
                           <MapPin className="w-3.5 h-3.5 mr-1" />
-                          <span>{flight.destination.city}</span>
+                          <span>{flight.destination?.city || 'Exclusive Destination'}</span>
                         </div>
                       </div>
                     </div>

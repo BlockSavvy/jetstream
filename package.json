@@ -11,6 +11,7 @@
     "seed:jetshare": "node db/seeds/jetshare_seed.js"
   },
   "dependencies": {
+    "@faker-js/faker": "^9.6.0",
     "@hookform/resolvers": "^3.9.1",
     "@langchain/cohere": "^0.3.2",
     "@langchain/community": "^0.3.36",

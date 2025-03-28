@@ -678,5 +678,6 @@ const seedDatabase = async () => {
   }
 };
 
-// Run the seeding function
-seedDatabase(); 
+// Run the seeding function and export it for use in other modules
+seedDatabase();
+module.exports = { seedDatabase }; 
