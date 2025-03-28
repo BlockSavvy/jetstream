@@ -18,6 +18,9 @@ export interface JetShareOffer {
   requested_share_amount: number;
   status: JetShareOfferStatus;
   matched_user_id?: string;
+  aircraft_model?: string;
+  total_seats?: number;
+  available_seats?: number;
   created_at: string;
   updated_at: string;
 }
@@ -54,10 +57,14 @@ export interface CreateJetShareOfferInput {
   arrival_location: string;
   total_flight_cost: number;
   requested_share_amount: number;
+  aircraft_model?: string;
+  total_seats?: number;
+  available_seats?: number;
 }
 
 export interface AcceptJetShareOfferInput {
   offer_id: string;
+  payment_method: 'fiat' | 'crypto';
 }
 
 export interface LogJetShareTransactionInput {
