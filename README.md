@@ -102,6 +102,30 @@ The matching service uses Cohere's embeddings to create vector representations o
 
 Each match includes a compatibility score and specific reasons why the match was recommended, providing transparency to users.
 
+## Database Setup
+
+We've added comprehensive scripts to set up and restore the JetStream database, fully integrated with JetShare functionality. To initialize the database:
+
+1. Make sure your `.env.local` file contains the Supabase credentials:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   ```
+
+2. Run the master setup script:
+   ```bash
+   node db/setup-all.js
+   ```
+
+   This script will:
+   - Test the connection to Supabase
+   - Check existing tables
+   - Populate JetShare settings
+   - Populate ratings and JetShare transactions
+   - Verify the final state of the database
+
+For more details about the database structure and available scripts, see the [Database README](db/README.md).
+
 ## Database Migrations
 
 If you're facing issues with missing tables or columns, you need to run the migration scripts against your Supabase database:
