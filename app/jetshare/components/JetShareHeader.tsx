@@ -82,7 +82,9 @@ export default function JetShareHeader() {
   };
   
   const handleSignIn = () => {
-    router.push('/auth/login');
+    // Redirect back to JetShare after login
+    const currentPath = pathname || '/jetshare';
+    router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
   };
 
   return (

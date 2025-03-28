@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "JetStream - Private Jets On-Demand",
   description:
     "Redefine luxury travel with JetStream - the Uber of private jets. Seamless fractional jet experiences, personalized flights, effortlessly matched.",
-  generator: 'v0.dev'
+  generator: 'v0dev'
 }
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
           <AuthProvider>
             <Toaster position="top-center" />
             <Navbar />
-            <main className="min-h-screen pt-24">
+            <main className="min-h-screen">
               {children}
             </main>
           </AuthProvider>

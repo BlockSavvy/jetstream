@@ -16,6 +16,14 @@ export default function Navbar() {
   // Determine if we're on the landing page or another page
   const isLandingPage = pathname === "/"
   
+  // Hide navbar on JetShare pages
+  const isJetSharePage = pathname?.startsWith('/jetshare')
+  
+  // If this is a JetShare page, don't render the navbar
+  if (isJetSharePage) {
+    return null
+  }
+  
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
