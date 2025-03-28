@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase';
 import { 
   Plane, 
   Calendar, 
@@ -13,7 +14,16 @@ import {
   X,
   Badge,
   ArrowRight,
-  BadgeCheck
+  BadgeCheck,
+  CheckCircle,
+  CreditCard,
+  Bitcoin,
+  RefreshCw,
+  LoaderCircle,
+  MoveUp,
+  MoveDown,
+  MapPin,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,9 +54,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { JetShareOfferWithUser } from '@/types/jetshare';
+import { JetShareOfferWithUser, JetShareOfferStatus } from '@/types/jetshare';
 import { Badge as UIBadge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import {
   Select,
@@ -56,6 +66,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { User } from '@supabase/supabase-js';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { formatCurrency } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+// Update the JetShareOfferWithUser type to include the isOwnOffer flag
+interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
+  isOwnOffer?: boolean;
+}
+
+// Type for user profile with verification status
+interface UserWithVerification {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  avatar_url?: string;
+  verification_status?: string;
+}
+
+interface JetShareListingsContentProps {
+  user: User | null;
+}
 
 // Placeholder component for empty state
 const EmptyState = () => (
@@ -102,15 +136,16 @@ const SkeletonCard = () => (
   </Card>
 );
 
-export default function JetShareListingsContent() {
+export default function JetShareListingsContent({ user }: JetShareListingsContentProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isAccepting, setIsAccepting] = useState(false);
-  const [offers, setOffers] = useState<JetShareOfferWithUser[]>([]);
-  const [filteredOffers, setFilteredOffers] = useState<JetShareOfferWithUser[]>([]);
+  const [offers, setOffers] = useState<EnhancedJetShareOfferWithUser[]>([]);
+  const [filteredOffers, setFilteredOffers] = useState<EnhancedJetShareOfferWithUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedOffer, setSelectedOffer] = useState<JetShareOfferWithUser | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<EnhancedJetShareOfferWithUser | null>(null);
   const [sortOption, setSortOption] = useState('date-asc');
+  const [error, setError] = useState<string | null>(null);
   
   // Filter states
   const [departureFilter, setDepartureFilter] = useState('');
@@ -118,32 +153,121 @@ export default function JetShareListingsContent() {
   const [minPriceFilter, setMinPriceFilter] = useState('');
   const [maxPriceFilter, setMaxPriceFilter] = useState('');
   
-  // Fetch offers
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  const supabase = createClient();
+  
+  // Add a new effect to check for offer status changes when the component gains focus
   useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        const response = await fetch('/api/jetshare/getOffers?status=open');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch offers');
-        }
-        
-        const data = await response.json();
-        setOffers(data.offers);
-        setFilteredOffers(data.offers);
-      } catch (error) {
-        console.error('Error fetching offers:', error);
-        toast.error('Failed to load flight share offers');
-      } finally {
-        setIsLoading(false);
+    // Function to check if page visibility changes (user returns to the tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, refreshing offers');
+        fetchOffers();
       }
     };
-    
-    fetchOffers();
+
+    // Function to handle when user navigates back to this page
+    const handleFocus = () => {
+      console.log('Window regained focus, refreshing offers');
+      fetchOffers();
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // Clean up event listeners
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
+  
+  // Modify fetchOffers to add a cache-busting parameter and improve error handling
+  const fetchOffers = async () => {
+    console.log('Starting to fetch offers...');
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log('Fetching from API...');
+      // Add a timestamp parameter to avoid caching issues
+      const timestamp = new Date().getTime();
+      const randomId = Math.random().toString(36).substring(2, 10);
+      const response = await fetch(`/api/jetshare/getOffers?status=open&viewMode=marketplace&t=${timestamp}&rid=${randomId}`, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        
+        // Display a friendly message regardless of error type
+        setError('Unable to load flight share offers. Please try again later.');
+        setIsLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('API response:', data);
+      
+      // Handle no offers case
+      if (!data.offers || !Array.isArray(data.offers) || data.offers.length === 0) {
+        console.log('No offers found in API response, showing empty state');
+        setOffers([]);
+        setFilteredOffers([]);
+        setError('No flight shares available at the moment. Try checking back later or create your own offer.');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Mark offers by the current user if user is authenticated
+      // Also filter out any non-open offers that might have been returned
+      const processedOffers = data.offers
+        .filter((offer: EnhancedJetShareOfferWithUser) => offer.status === 'open')
+        .map((offer: EnhancedJetShareOfferWithUser) => {
+          if (user && (offer.user_id === user.id || offer.isOwnOffer)) {
+            return { ...offer, isOwnOffer: true };
+          }
+          return { ...offer, isOwnOffer: false };
+        });
+      
+      console.log('Processed offers:', processedOffers.length);
+      setOffers(processedOffers);
+      setFilteredOffers(processedOffers);
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      setError('Failed to load flight share offers. Please try again later.');
+      // Set empty arrays to prevent undefined errors in the UI
+      setOffers([]);
+      setFilteredOffers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Fetch offers on mount and at intervals
+  useEffect(() => {
+    // Execute fetch on component mount
+    fetchOffers();
+    
+    // Set up a refresh interval to occasionally reload the offers
+    const interval = setInterval(() => {
+      fetchOffers();
+    }, 60000); // Refresh every minute
+    
+    return () => clearInterval(interval);
+  }, [user, router]);
   
   // Filter and sort offers
   useEffect(() => {
+    console.log('Filter/sort effect running, offers length:', offers.length);
     let result = [...offers];
     
     // Apply search term filter
@@ -200,74 +324,130 @@ export default function JetShareListingsContent() {
         break;
     }
     
+    console.log('Setting filtered offers:', result.length);
     setFilteredOffers(result);
   }, [offers, searchTerm, sortOption, departureFilter, arrivalFilter, minPriceFilter, maxPriceFilter]);
   
-  // Handle accepting an offer
-  const handleAcceptOffer = async (paymentMethod: 'fiat' | 'crypto') => {
-    if (!selectedOffer) return;
+  const handleOfferAccept = async (offer: EnhancedJetShareOfferWithUser) => {
+    // Early validation
+    if (!user) {
+      toast.error('Please sign in to accept this offer');
+      router.push(`/auth/signin?redirect=/jetshare/listings`);
+      return;
+    }
     
+    if (offer.isOwnOffer) {
+      toast.error('You cannot accept your own offer');
+      return;
+    }
+    
+    // Set the selected offer for the confirmation modal
+    setSelectedOffer(offer);
+    setShowConfirmDialog(true);
+  };
+  
+  const confirmOfferAccept = async () => {
+    if (!selectedOffer || !user) return;
+    
+    // Close the confirmation dialog
+    setShowConfirmDialog(false);
+    
+    // Set accepting state to show loading UI
     setIsAccepting(true);
     
     try {
-      // First, accept the offer
+      console.log('Accepting offer:', selectedOffer.id);
+      
+      // Step 1: Call acceptOffer API to mark the offer as accepted
       const acceptResponse = await fetch('/api/jetshare/acceptOffer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         },
+        credentials: 'include',
         body: JSON.stringify({
           offer_id: selectedOffer.id,
-          payment_method: paymentMethod,
+          payment_method: 'fiat' // Default to fiat, will be changed in payment page if needed
         }),
       });
       
       if (!acceptResponse.ok) {
         const errorData = await acceptResponse.json();
-        throw new Error(errorData.message || 'Failed to accept offer');
+        
+        // Check if error is due to offer already being accepted by another user
+        if (acceptResponse.status === 409 || 
+            errorData.message?.includes('already') || 
+            errorData.message?.includes('unavailable')) {
+          console.error('Offer unavailable error:', errorData);
+          toast.error('This offer is no longer available. It may have been accepted by another user.');
+          
+          // Refresh listings to remove this offer
+          await fetchOffers();
+          setIsAccepting(false);
+          return;
+        }
+        
+        // For other errors
+        console.error('Error accepting offer:', errorData);
+        throw new Error(errorData.message || 'Failed to accept the offer');
       }
       
-      // Then, process the payment
-      const paymentResponse = await fetch('/api/jetshare/processPayment', {
+      // Step 2: If successful, show a success message and redirect to payment page
+      const acceptData = await acceptResponse.json();
+      console.log('Offer accepted successfully:', acceptData);
+      
+      // Show success toast
+      toast.success('Offer accepted successfully! Redirecting to payment...');
+      
+      // Remove this offer from the listings in the UI immediately
+      setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
+      setFilteredOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
+      
+      // Redirect to payment page after a short delay (to allow seeing the toast)
+      setTimeout(() => {
+        router.push(`/jetshare/payment/${selectedOffer.id}`);
+      }, 1500);
+    } catch (error) {
+      console.error('Error in confirmOfferAccept:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to accept the offer. Please try again.');
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+  
+  // Handle seed data for development
+  const handleSeedData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/jetshare/seed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          offer_id: selectedOffer.id,
-          payment_method: paymentMethod,
-          payment_details: {
-            amount: selectedOffer.requested_share_amount,
-          },
-        }),
       });
       
-      if (!paymentResponse.ok) {
-        const errorData = await paymentResponse.json();
-        throw new Error(errorData.message || 'Failed to process payment');
+      if (!response.ok) {
+        throw new Error('Failed to seed data');
       }
       
-      const paymentData = await paymentResponse.json();
+      // Refetch offers after seeding
+      const offersResponse = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace');
       
-      toast.success('Flight share accepted successfully!');
-      
-      // Redirect based on payment method
-      if (paymentMethod === 'fiat' && paymentData.clientSecret) {
-        // For Stripe, redirect to the payment confirmation page
-        router.push(`/dashboard/jetshare/payment/stripe?intent=${paymentData.paymentIntentId}`);
-      } else if (paymentMethod === 'crypto' && paymentData.checkoutInfo?.checkoutUrl) {
-        // For Coinbase, redirect to the Coinbase checkout
-        window.location.href = paymentData.checkoutInfo.checkoutUrl;
-      } else {
-        // Default fallback
-        router.push('/dashboard/jetshare');
+      if (!offersResponse.ok) {
+        throw new Error('Failed to refresh offers');
       }
       
+      const data = await offersResponse.json();
+      setOffers(data.offers);
+      setFilteredOffers(data.offers);
+      toast.success('Sample data added successfully!');
     } catch (error) {
-      console.error('Error accepting offer:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to accept offer');
+      console.error('Error seeding data:', error);
+      toast.error('Failed to add sample data');
     } finally {
-      setIsAccepting(false);
+      setIsLoading(false);
     }
   };
   
@@ -280,8 +460,73 @@ export default function JetShareListingsContent() {
     setSearchTerm('');
   };
   
+  // Render flight share cards
+  const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
+    <Card key={offer.id} className="overflow-hidden">
+      <div className="relative">
+        {offer.isOwnOffer && (
+          <div className="absolute top-0 right-0 m-2 z-10">
+            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
+              Your Offer
+            </Badge>
+          </div>
+        )}
+        <CardHeader className="p-4 pb-2">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">{offer.departure_location} to {offer.arrival_location}</CardTitle>
+              <CardDescription>
+                <div className="flex items-center mt-1">
+                  <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
+                  <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
+                </div>
+              </CardDescription>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-semibold">${offer.requested_share_amount.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">
+                {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}% of ${offer.total_flight_cost.toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 pt-2">
+          <div className="flex items-center gap-2 mt-2">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="text-xs">
+                {offer.user?.first_name?.[0] || 'U'}
+                {offer.user?.last_name?.[0] || 'U'}
+              </AvatarFallback>
+              {offer.user?.avatar_url && (
+                <AvatarImage src={offer.user.avatar_url} alt={`${offer.user.first_name} ${offer.user.last_name}`} />
+              )}
+            </Avatar>
+            <span className="text-sm">
+              {offer.user?.first_name} {offer.user?.last_name?.[0] || ''}
+              {(offer.user as UserWithVerification)?.verification_status === 'verified' && (
+                <CheckCircle className="h-3 w-3 text-green-500 inline ml-1" />
+              )}
+            </span>
+          </div>
+        </CardContent>
+        <CardFooter className="p-4 pt-0">
+          <Button 
+            className="w-full" 
+            variant={offer.isOwnOffer ? "outline" : "default"}
+            onClick={() => setSelectedOffer(offer)}
+            disabled={offer.isOwnOffer}
+          >
+            {offer.isOwnOffer ? "Your Own Offer" : "View Details"}
+          </Button>
+        </CardFooter>
+      </div>
+    </Card>
+  );
+  
   return (
     <div>
+      {/* Debug state */}
+      {/* {console.log('Rendering JetShareListingsContent, isLoading:', isLoading, 'filteredOffers:', filteredOffers.length)} */}
       {/* Search and filter bar */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-4 mb-8">
         <div className="flex flex-col md:flex-row gap-4">
@@ -423,176 +668,213 @@ export default function JetShareListingsContent() {
         )}
       </div>
       
-      {/* Results count */}
-      {!isLoading && (
-        <div className="mb-4 text-sm text-muted-foreground">
-          {filteredOffers.length === 1
-            ? '1 flight share found'
-            : `${filteredOffers.length} flight shares found`}
+      {/* Main content */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h2 className="text-2xl font-semibold mb-2 md:mb-0">
+            Available Flight Shares
+            {!isLoading && filteredOffers.length > 0 && (
+              <Badge className="ml-2 text-xs">
+                {filteredOffers.length} {filteredOffers.length === 1 ? 'offer' : 'offers'}
+              </Badge>
+            )}
+          </h2>
+          <div className="flex gap-2">
+            <Button onClick={() => router.push('/jetshare/offer')}>
+              Create Offer
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleSeedData} disabled={isLoading}>
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
+        
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array(6).fill(0).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : filteredOffers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* We have {filteredOffers.length} offers to display */}
+            {filteredOffers.map((offer, index) => (
+              <Fragment key={offer.id || index}>
+                {renderOfferCard(offer)}
+              </Fragment>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-8">
+            <EmptyState />
+            {error && (
+              <p className="text-center text-red-500 mt-2">{error}</p>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Payment confirmation dialog */}
+      {selectedOffer && showConfirmDialog && (
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Flight Share</DialogTitle>
+              <DialogDescription>
+                You are about to book a shared flight from {selectedOffer.departure_location} to {selectedOffer.arrival_location} for ${selectedOffer.requested_share_amount.toLocaleString()}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col space-y-2">
+                <h3 className="font-medium">Payment Method</h3>
+                <div className="flex space-x-2">
+                  <Button 
+                    className="w-full" 
+                    onClick={() => confirmOfferAccept()}
+                    disabled={isAccepting}
+                  >
+                    {isAccepting ? <LoaderCircle className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                    Pay with Card
+                  </Button>
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={() => setSelectedOffer(null)}
+                    disabled={isAccepting}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <DialogFooter className="flex space-x-2 sm:justify-end">
+              <Button variant="outline" onClick={() => {
+                setShowConfirmDialog(false);
+                setSelectedOffer(null);
+                setIsAccepting(false);
+              }}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
       
-      {/* Listings grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, index) => (
-            <SkeletonCard key={index} />
-          ))}
-        </div>
-      ) : filteredOffers.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredOffers.map((offer) => (
-            <Card key={offer.id} className="overflow-hidden border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">
-                    {offer.departure_location} to {offer.arrival_location}
-                  </CardTitle>
-                </div>
-                <CardDescription>
-                  {format(new Date(offer.flight_date), 'EEE, MMM d, yyyy')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">
-                      {format(new Date(offer.flight_date), 'h:mm a')}
-                    </span>
+      {/* Offer details dialog */}
+      <Dialog open={selectedOffer !== null} onOpenChange={(open) => !open && setSelectedOffer(null)}>
+        <DialogContent className="sm:max-w-md">
+          {selectedOffer && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Flight Share Details</DialogTitle>
+                <DialogDescription>
+                  Review the details of this flight share offer.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-3">
+                <div className="flex justify-between items-center border-b pb-3">
+                  <div className="flex items-center gap-2">
+                    <Plane className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{selectedOffer.departure_location}</span>
                   </div>
-                  <div className="flex items-center">
-                    <Plane className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm">
-                      {offer.user?.first_name?.[0]}{offer.user?.last_name?.[0]} • Verified Owner
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="text-sm font-semibold">
-                      ${offer.requested_share_amount.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-muted-foreground ml-1">
-                      ({Math.round((offer.requested_share_amount / offer.total_flight_cost) * 100)}% of ${offer.total_flight_cost.toLocaleString()})
-                    </span>
+                  <ArrowRight className="h-4 w-4 mx-2" />
+                  <div className="flex items-center gap-2">
+                    <Plane className="h-4 w-4 text-muted-foreground rotate-90" />
+                    <span className="font-medium">{selectedOffer.arrival_location}</span>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => setSelectedOffer(offer)}
+                
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="font-medium">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Requested Share</p>
+                    <p className="font-medium">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Flight Cost</p>
+                    <p className="font-medium">${selectedOffer.total_flight_cost.toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Share Percentage</p>
+                    <p className="font-medium">
+                      {((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="pt-3 border-t">
+                  <p className="text-sm text-muted-foreground">Offered by</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Avatar>
+                      <AvatarFallback>
+                        {selectedOffer.user?.first_name?.[0] || 'U'}
+                        {selectedOffer.user?.last_name?.[0] || 'U'}
+                      </AvatarFallback>
+                      {selectedOffer.user?.avatar_url && (
+                        <AvatarImage 
+                          src={selectedOffer.user.avatar_url} 
+                          alt={`${selectedOffer.user.first_name} ${selectedOffer.user.last_name}`} 
+                        />
+                      )}
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">
+                        {selectedOffer.user?.first_name} {selectedOffer.user?.last_name}
+                        {(selectedOffer.user as UserWithVerification)?.verification_status === 'verified' && (
+                          <CheckCircle className="h-3.5 w-3.5 text-green-500 inline ml-1" />
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        This flight share is offered by a verified JetShare user. The requested share amount is
+                        {' '}{((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
+                        {' '}of the total flight cost.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {!selectedOffer.isOwnOffer ? (
+                <DialogFooter className="sm:justify-start">
+                  <div className="w-full space-y-2">
+                    <Button 
+                      className="w-full" 
+                      onClick={() => confirmOfferAccept()}
+                      disabled={isAccepting}
                     >
-                      View Details
+                      {isAccepting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Accept & Pay with Card
+                        </>
+                      )}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Flight Share Details</DialogTitle>
-                      <DialogDescription>
-                        Review the details of this flight share before accepting.
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    {selectedOffer && (
-                      <div className="space-y-6 py-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground">Flight Route</h4>
-                          <p className="text-lg font-semibold">{selectedOffer.departure_location} to {selectedOffer.arrival_location}</p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground">Date & Time</h4>
-                          <p>{format(new Date(selectedOffer.flight_date), 'EEEE, MMMM d, yyyy')}</p>
-                          <p>{format(new Date(selectedOffer.flight_date), 'h:mm a')}</p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground">Flight Owner</h4>
-                          <div className="flex items-center">
-                            <span className="bg-amber-100 dark:bg-amber-700/30 text-amber-800 dark:text-amber-200 p-1 rounded-full mr-2 h-8 w-8 flex items-center justify-center font-medium">
-                              {selectedOffer.user?.first_name?.[0]}{selectedOffer.user?.last_name?.[0]}
-                            </span>
-                            <span>Verified Owner</span>
-                            <BadgeCheck className="h-4 w-4 text-amber-500 ml-1" />
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground">Cost Details</h4>
-                          <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                            <div className="flex justify-between mb-1">
-                              <span>Share Amount:</span>
-                              <span className="font-medium">${selectedOffer.requested_share_amount.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between mb-1 text-sm text-muted-foreground">
-                              <span>Original Flight Cost:</span>
-                              <span>${selectedOffer.total_flight_cost.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between mb-1 text-sm text-muted-foreground">
-                              <span>Your Portion:</span>
-                              <span>{Math.round((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100)}%</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-muted-foreground">
-                              <span>JetShare Fee (7.5%):</span>
-                              <span>${(selectedOffer.requested_share_amount * 0.075).toLocaleString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm text-muted-foreground">Terms & Conditions</h4>
-                          <p className="text-sm text-muted-foreground">
-                            By accepting this offer, you agree to JetStream's terms and conditions for flight sharing. 
-                            Payment is processed securely through our platform.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <DialogFooter className="flex-col sm:flex-row gap-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handleAcceptOffer('fiat')}
-                        disabled={isAccepting}
-                        className="w-full sm:w-auto"
-                      >
-                        {isAccepting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>Pay with Card</>
-                        )}
-                      </Button>
-                      <Button 
-                        onClick={() => handleAcceptOffer('crypto')}
-                        disabled={isAccepting}
-                        className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600"
-                      >
-                        {isAccepting ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>Accept & Book <ArrowRight className="ml-2 h-4 w-4" /></>
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+                  </div>
+                </DialogFooter>
+              ) : (
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setSelectedOffer(null)}>
+                    Close
+                  </Button>
+                </DialogFooter>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

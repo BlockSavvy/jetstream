@@ -1,33 +1,21 @@
-import { Metadata } from 'next';
 import JetShareOfferForm from '../components/JetShareOfferForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
 
-export const metadata: Metadata = {
-  title: 'Offer a Flight Share | JetShare',
-  description: 'Create a new flight share offer and offset your private jet costs by sharing with verified users.',
+export const metadata = {
+  title: 'Create Flight Share Offer | JetShare',
+  description: 'Offer a portion of your private jet flight to offset costs and connect with verified travelers.',
 };
 
-export default function OfferFlightSharePage() {
+export default function OfferCreationPage() {
   return (
-    <div className="container mx-auto px-4 py-12 max-w-3xl">
-      <Link href="/jetshare" className="text-amber-500 hover:text-amber-600 flex items-center mb-6">
-        <ChevronLeft className="h-4 w-4 mr-1" />
-        Back to JetShare
-      </Link>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Create a Flight Share Offer</h1>
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+        Share your private jet flight and offset your costs by offering a portion to other verified travelers.
+      </p>
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl md:text-3xl">Offer a Flight Share</CardTitle>
-          <CardDescription>
-            Share the details of your private jet flight and how much of the cost you'd like to offset.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <JetShareOfferForm />
-        </CardContent>
-      </Card>
+      <div className="max-w-2xl mx-auto">
+        <JetShareOfferForm />
+      </div>
     </div>
   );
 } 
