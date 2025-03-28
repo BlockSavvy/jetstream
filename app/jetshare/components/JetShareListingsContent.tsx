@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Fragment, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRef, useState, useEffect, Fragment, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { 
   Plane, 
@@ -18,12 +18,12 @@ import {
   CheckCircle,
   CreditCard,
   Bitcoin,
-  RefreshCw,
-  LoaderCircle,
   MoveUp,
   MoveDown,
   MapPin,
-  Users
+  Users,
+  MoreVertical,
+  LoaderCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +71,16 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatCurrency } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Slider } from '@/components/ui/slider';
+import { Separator } from '@/components/ui/separator';
 
 // Update the JetShareOfferWithUser type to include the isOwnOffer flag
 interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
@@ -417,40 +427,6 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
     }
   };
   
-  // Handle seed data for development
-  const handleSeedData = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/jetshare/seed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to seed data');
-      }
-      
-      // Refetch offers after seeding
-      const offersResponse = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace');
-      
-      if (!offersResponse.ok) {
-        throw new Error('Failed to refresh offers');
-      }
-      
-      const data = await offersResponse.json();
-      setOffers(data.offers);
-      setFilteredOffers(data.offers);
-      toast.success('Sample data added successfully!');
-    } catch (error) {
-      console.error('Error seeding data:', error);
-      toast.error('Failed to add sample data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   // Clear all filters
   const clearFilters = () => {
     setDepartureFilter('');
@@ -670,8 +646,8 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
       
       {/* Main content */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h2 className="text-2xl font-semibold mb-2 md:mb-0">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold flex items-center">
             Available Flight Shares
             {!isLoading && filteredOffers.length > 0 && (
               <Badge className="ml-2 text-xs">
@@ -682,9 +658,6 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
           <div className="flex gap-2">
             <Button onClick={() => router.push('/jetshare/offer')}>
               Create Offer
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleSeedData} disabled={isLoading}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
           </div>
         </div>

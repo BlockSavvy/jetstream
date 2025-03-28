@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import JetShareListingsContent from '../components/JetShareListingsContent';
 import { createClient } from '@/lib/supabase-server';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import SeedOffersButton from '../components/SeedOffersButton';
 
 export const metadata: Metadata = {
   title: 'JetStream - Available Flight Shares',
@@ -66,11 +65,6 @@ export default async function JetShareListingsPage() {
       
       {/* Render the component regardless of authentication status */}
       <JetShareListingsContent user={user} />
-      
-      {/* Admin button for seeding offers */}
-      <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity">
-        <SeedOffersButton />
-      </div>
     </div>
   );
 } 

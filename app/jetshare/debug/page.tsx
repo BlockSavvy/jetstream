@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase';
 import { Check, AlertCircle, RefreshCw, Database, User, Plane } from 'lucide-react';
 import { toast } from 'sonner';
-import { DevModeHelpers } from '../components/DevModeHelpers';
 import { JetShareUITest } from '../components/JetShareUITest';
 
 export default function JetShareDebug() {
@@ -331,9 +330,6 @@ export default function JetShareDebug() {
       <p className="text-muted-foreground mb-8">
         This panel provides diagnostic information and tools for the JetShare module.
       </p>
-      
-      {/* Development Helpers */}
-      <DevModeHelpers />
       
       {/* UI Test Components */}
       <JetShareUITest />
