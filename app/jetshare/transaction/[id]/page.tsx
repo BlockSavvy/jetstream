@@ -46,17 +46,6 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
     return notFound();
   }
   
-  // Check if the user is authorized to view this transaction
-  if (offer.user_id !== user.id && offer.matched_user_id !== user.id) {
-    console.error('User not authorized to view this transaction:', user.id);
-    redirect('/jetshare/dashboard?error=not-authorized');
-  }
-  
-  // Only allow viewing completed transactions
-  if (offer.status !== 'completed') {
-    redirect(`/jetshare/offer/${id}`);
-  }
-  
   // Get the transaction details
   const { data: transactions, error: txError } = await supabase
     .from('jetshare_transactions')
@@ -71,6 +60,27 @@ export default async function TransactionPage({ params }: TransactionPageProps) 
     
   if (txError) {
     console.error('Error fetching transactions:', txError);
+  }
+  
+  // Check if the user is authorized to view this transaction
+  // Now we'll be less strict - check if user is either the offer creator, matched user, payer or recipient
+  let isAuthorized = offer.user_id === user.id || offer.matched_user_id === user.id;
+  
+  // If still not authorized, check if they're part of the transactions
+  if (!isAuthorized && transactions) {
+    isAuthorized = transactions.some(tx => 
+      tx.payer_user_id === user.id || tx.recipient_user_id === user.id
+    );
+  }
+  
+  if (!isAuthorized) {
+    console.error('User not authorized to view this transaction:', user.id);
+    redirect('/jetshare/dashboard?error=not-authorized');
+  }
+  
+  // Only allow viewing completed transactions
+  if (offer.status !== 'completed') {
+    redirect(`/jetshare/offer/${id}`);
   }
   
   // Now pass the data to the client component

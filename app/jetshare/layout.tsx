@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import JetShareHeader from './components/JetShareHeader';
 import { useAuth } from '@/components/auth-provider';
 import { Toaster } from 'sonner';
-import JetShareFooter from './components/JetShareFooter';
 
 // Routes that should have AuthGuard applied
 const PROTECTED_ROUTES = [
@@ -56,11 +55,9 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
     <div className="flex flex-col min-h-screen">
       <JetShareHeader />
       
-      <main className="flex-1 pb-12 flex justify-center items-center">
+      <main className="flex-1 pb-12">
         {content}
       </main>
-      
-      <JetShareFooter />
     </div>
   );
 } 

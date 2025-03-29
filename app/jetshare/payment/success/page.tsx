@@ -1,13 +1,36 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CheckCircle, ArrowRight, AlertCircle } from 'lucide-react';
 
-export default function PaymentSuccessPage() {
+// Loading component to use in Suspense
+function LoadingCard() {
+  return (
+    <div className="container mx-auto px-4 py-16 max-w-md">
+      <Card>
+        <CardHeader className="text-center">
+          <Skeleton className="h-8 w-full max-w-[250px] mx-auto mb-2" />
+          <Skeleton className="h-4 w-full max-w-[200px] mx-auto" />
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center pt-4">
+          <Skeleton className="h-16 w-16 rounded-full mb-4" />
+          <Skeleton className="h-4 w-full max-w-[280px] mb-2" />
+          <Skeleton className="h-4 w-full max-w-[220px]" />
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Skeleton className="h-10 w-full max-w-[180px]" />
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}
+
+// Component that uses search params
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const offerId = searchParams.get('offer_id');
@@ -62,24 +85,7 @@ export default function PaymentSuccessPage() {
   };
   
   if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-16 max-w-md">
-        <Card>
-          <CardHeader className="text-center">
-            <Skeleton className="h-8 w-full max-w-[250px] mx-auto mb-2" />
-            <Skeleton className="h-4 w-full max-w-[200px] mx-auto" />
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center pt-4">
-            <Skeleton className="h-16 w-16 rounded-full mb-4" />
-            <Skeleton className="h-4 w-full max-w-[280px] mb-2" />
-            <Skeleton className="h-4 w-full max-w-[220px]" />
-          </CardContent>
-          <CardFooter className="flex justify-center">
-            <Skeleton className="h-10 w-full max-w-[180px]" />
-          </CardFooter>
-        </Card>
-      </div>
-    );
+    return <LoadingCard />;
   }
   
   if (error) {
@@ -134,5 +140,14 @@ export default function PaymentSuccessPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingCard />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 } 

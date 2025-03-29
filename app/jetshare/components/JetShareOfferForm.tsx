@@ -392,11 +392,12 @@ export default function JetShareOfferForm() {
           name="flight_date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Flight Date & Time</FormLabel>
+              <FormLabel htmlFor="flight_date">Flight Date & Time</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
                     <Button
+                      id="flight_date"
                       variant="outline"
                       className={cn(
                         "pl-3 text-left font-normal w-full md:w-auto",
@@ -437,11 +438,12 @@ export default function JetShareOfferForm() {
             name="departure_location"
             render={({ field }) => (
               <FormItem className="relative">
-                <FormLabel>Departure Location</FormLabel>
+                <FormLabel htmlFor="departure_location">Departure Location</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Plane className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      id="departure_location"
                       placeholder="City or airport"
                       className="pl-10"
                       {...field}
@@ -483,11 +485,12 @@ export default function JetShareOfferForm() {
             name="arrival_location"
             render={({ field }) => (
               <FormItem className="relative">
-                <FormLabel>Arrival Location</FormLabel>
+                <FormLabel htmlFor="arrival_location">Arrival Location</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Plane className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 rotate-90 text-muted-foreground" />
+                    <Plane className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      id="arrival_location"
                       placeholder="City or airport"
                       className="pl-10"
                       {...field}
@@ -532,9 +535,10 @@ export default function JetShareOfferForm() {
             name="aircraft_model"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Aircraft Model</FormLabel>
+                <FormLabel htmlFor="aircraft_model">Aircraft Model</FormLabel>
                 <FormControl>
                   <AircraftModelSelector
+                    id="aircraft_model"
                     value={field.value}
                     onChange={(value, seatCapacity) => {
                       field.onChange(value);
@@ -564,11 +568,12 @@ export default function JetShareOfferForm() {
             name="total_seats"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Total Seats</FormLabel>
+                <FormLabel htmlFor="total_seats">Total Seats</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      id="total_seats"
                       type="number"
                       min={1}
                       placeholder="8"
@@ -599,11 +604,12 @@ export default function JetShareOfferForm() {
             name="available_seats"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Available Seats</FormLabel>
+                <FormLabel htmlFor="available_seats">Available Seats</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      id="available_seats"
                       type="number"
                       min={1}
                       max={form.watch('total_seats')}
@@ -635,11 +641,12 @@ export default function JetShareOfferForm() {
           name="total_flight_cost"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Total Flight Cost</FormLabel>
+              <FormLabel htmlFor="total_flight_cost">Total Flight Cost</FormLabel>
               <FormControl>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="total_flight_cost"
                     type="number"
                     min={1}
                     step="1"
@@ -689,7 +696,7 @@ export default function JetShareOfferForm() {
           name="requested_share_amount"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Desired Cost Offset</FormLabel>
+              <FormLabel htmlFor="requested_share_amount_slider">Desired Cost Offset</FormLabel>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
@@ -701,6 +708,7 @@ export default function JetShareOfferForm() {
                 </div>
                 <FormControl>
                   <Slider
+                    id="requested_share_amount_slider"
                     defaultValue={[50]}
                     max={100}
                     min={1}

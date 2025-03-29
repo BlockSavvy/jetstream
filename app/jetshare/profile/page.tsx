@@ -92,8 +92,8 @@ export default function JetShareProfilePage() {
             .from('jetshare_messages')
             .select(`
               *,
-              sender_profile:sender_id (first_name, last_name, avatar_url),
-              recipient_profile:recipient_id (first_name, last_name, avatar_url)
+              sender:sender_id (id, first_name, last_name, avatar_url),
+              recipient:recipient_id (id, first_name, last_name, avatar_url)
             `)
             .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
             .order('created_at', { ascending: false })
@@ -187,8 +187,8 @@ export default function JetShareProfilePage() {
           .from('jetshare_messages')
           .select(`
             *,
-            sender_profile:sender_id (first_name, last_name, avatar_url),
-            recipient_profile:recipient_id (first_name, last_name, avatar_url)
+            sender:sender_id (id, first_name, last_name, avatar_url),
+            recipient:recipient_id (id, first_name, last_name, avatar_url)
           `)
           .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
           .order('created_at', { ascending: false })
@@ -440,7 +440,7 @@ export default function JetShareProfilePage() {
                           <span className="text-xs font-medium">
                             {message.sender_id === user?.id 
                               ? 'You' 
-                              : `${message.sender_profile?.first_name || 'User'} ${message.sender_profile?.last_name || ''}`
+                              : `${message.sender?.first_name || 'User'} ${message.sender?.last_name || ''}`
                             }
                           </span>
                           <span className="text-xs opacity-70">
