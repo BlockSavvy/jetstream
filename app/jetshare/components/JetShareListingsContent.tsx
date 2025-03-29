@@ -248,9 +248,16 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
           return { ...offer, isOwnOffer: false };
         });
       
-      console.log('Processed offers:', processedOffers.length);
+      console.log(`Processed ${processedOffers.length} open offers for display`);
+      
+      // Store offers
       setOffers(processedOffers);
       setFilteredOffers(processedOffers);
+      
+      // If no offers are found after filtering
+      if (processedOffers.length === 0) {
+        setError('No flight shares available that match your criteria. Try adjusting your filters or check back later.');
+      }
     } catch (error) {
       console.error('Error fetching offers:', error);
       setError('Failed to load flight share offers. Please try again later.');
@@ -438,11 +445,11 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
   
   // Render flight share cards
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
-    <Card key={offer.id} className="overflow-hidden">
+    <Card key={offer.id} className={`overflow-hidden ${offer.isOwnOffer ? 'border-amber-400 shadow-md' : ''}`}>
       <div className="relative">
         {offer.isOwnOffer && (
           <div className="absolute top-0 right-0 m-2 z-10">
-            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">
+            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 font-semibold">
               Your Offer
             </Badge>
           </div>
@@ -478,21 +485,28 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
               )}
             </Avatar>
             <span className="text-sm">
-              {offer.user?.first_name} {offer.user?.last_name?.[0] || ''}
+              {offer.isOwnOffer ? 'You' : `${offer.user?.first_name} ${offer.user?.last_name?.[0] || ''}`}
               {(offer.user as UserWithVerification)?.verification_status === 'verified' && (
                 <CheckCircle className="h-3 w-3 text-green-500 inline ml-1" />
               )}
             </span>
           </div>
+          <div className="flex items-center gap-2 mt-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{offer.available_seats} of {offer.total_seats} seats available</span>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <Plane className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{offer.aircraft_model}</span>
+          </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button 
             className="w-full" 
-            variant={offer.isOwnOffer ? "outline" : "default"}
+            variant={offer.isOwnOffer ? "secondary" : "default"}
             onClick={() => setSelectedOffer(offer)}
-            disabled={offer.isOwnOffer}
           >
-            {offer.isOwnOffer ? "Your Own Offer" : "View Details"}
+            {offer.isOwnOffer ? "Manage Your Offer" : "View Details"}
           </Button>
         </CardFooter>
       </div>
