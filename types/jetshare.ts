@@ -96,6 +96,30 @@ export interface JetShareOfferWithUser extends JetShareOffer {
 // Define JetShare transaction with offer and user details
 export interface JetShareTransactionWithDetails extends JetShareTransaction {
   offer: JetShareOfferWithUser;
+  // The current user viewing the transaction
+  user?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    avatar_url?: string;
+  };
+  // Fields for recipient and payer with profile info
+  payer_user?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    avatar_url?: string;
+  };
+  recipient_user?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    avatar_url?: string;
+  };
+  // These fields are maintained for backwards compatibility
   payer: {
     id: string;
     first_name?: string;

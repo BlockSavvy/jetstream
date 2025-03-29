@@ -12,7 +12,8 @@ import {
   BarChart4, 
   LogOut,
   ChevronLeft,
-  LogIn
+  LogIn,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
@@ -119,12 +120,45 @@ export default function JetShareHeader() {
               </Link>
             ))}
             
+            {/* Divider */}
             <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
             
-            <Link href="/" className="flex items-center space-x-1 text-sm font-medium text-muted-foreground hover:text-amber-500">
-              <ChevronLeft className="h-5 w-5" />
-              <span>Back to JetStream</span>
+            {/* Profile link */}
+            <Link 
+              href="/jetshare/profile" 
+              className={cn(
+                "flex items-center space-x-1 text-sm font-medium transition-colors",
+                isActive('/jetshare/profile')
+                  ? "text-amber-500"
+                  : "text-muted-foreground hover:text-amber-500"
+              )}
+            >
+              <User className="h-5 w-5" />
+              <span>Profile</span>
             </Link>
+            
+            {/* Move 'Back to JetStream' to a more subtle location - dropdown instead of main nav */}
+            <div className="relative group">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-sm text-muted-foreground hover:text-muted-foreground/80"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                More
+              </Button>
+              <div className="absolute right-0 mt-2 w-56 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-1">
+                  <Link 
+                    href="/" 
+                    className="flex px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <ChevronLeft className="h-5 w-5 mr-2" />
+                    <span>Back to JetStream</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
             
             {/* Conditional auth buttons */}
             {user ? (
@@ -184,16 +218,22 @@ export default function JetShareHeader() {
               </Link>
             ))}
             
-            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
-            
-            <Link 
-              href="/"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+            {/* Add Profile link to mobile menu */}
+            <Link
+              href="/jetshare/profile"
+              className={cn(
+                "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                isActive('/jetshare/profile')
+                  ? "bg-amber-100 dark:bg-amber-900/30 text-amber-500"
+                  : "text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+              )}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <ChevronLeft className="h-5 w-5" />
-              <span>Back to JetStream</span>
+              <User className="h-5 w-5" />
+              <span>Profile</span>
             </Link>
+            
+            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
             
             {/* Conditional auth buttons for mobile */}
             {user ? (
@@ -213,6 +253,18 @@ export default function JetShareHeader() {
                 <span>Sign In</span>
               </button>
             )}
+            
+            {/* Move back to JetStream link to bottom */}
+            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+            
+            <Link 
+              href="/"
+              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 opacity-70"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <ChevronLeft className="h-5 w-5" />
+              <span>Back to JetStream</span>
+            </Link>
           </nav>
         )}
       </div>

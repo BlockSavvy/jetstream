@@ -803,46 +803,25 @@ export async function getJetShareTransactions(
       *,
       offer:offer_id (
         *,
-        user:user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          avatar_url
-        ),
-        matched_user:matched_user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          avatar_url
-        )
+        user:user_id (*),
+        matched_user:matched_user_id (*)
       ),
-      payer:payer_user_id (
-        id,
-        first_name,
-        last_name,
-        email,
-        avatar_url
-      ),
-      recipient:recipient_user_id (
-        id,
-        first_name,
-        last_name,
-        email,
-        avatar_url
-      )
-    `)
-    .or('payer_user_id.eq.' + userId + ',recipient_user_id.eq.' + userId);
+      payer:payer_user_id (*),
+      recipient:recipient_user_id (*)
+    `);
   
+  // Add filter for user as either payer or recipient 
+  query = query.or(`payer_user_id.eq.${userId},recipient_user_id.eq.${userId}`);
+  
+  // Filter by offer if provided
   if (options?.offerId) {
     query = query.eq('offer_id', options.offerId);
   }
   
-  // Order by transaction date (latest first)
+  // Add order by transaction date (most recent first)
   query = query.order('transaction_date', { ascending: false });
   
-  // Apply pagination
+  // Add pagination
   if (options?.limit) {
     query = query.limit(options.limit);
   }
@@ -858,7 +837,21 @@ export async function getJetShareTransactions(
     throw new Error('Failed to fetch JetShare transactions');
   }
   
-  return data as JetShareTransactionWithDetails[];
+  // Enhance transaction data with additional user information
+  const enhancedData = data.map(transaction => {
+    return {
+      ...transaction,
+      // Add the current user information for comparison in the UI
+      user: {
+        id: userId
+      },
+      // Add payer_user and recipient_user fields for convenience in the UI
+      payer_user: transaction.payer,
+      recipient_user: transaction.recipient
+    };
+  });
+  
+  return enhancedData as JetShareTransactionWithDetails[];
 }
 
 /**

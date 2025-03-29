@@ -86,12 +86,12 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
           setMyOffers(offersData.offers || []);
         }
 
-        // Fetch my bookings - including both accepted and completed status where current user is matched_user
-        console.log('Fetching bookings (all offers where current user is matched_user)...');
+        // Fetch my bookings - focusing on offers where I am the matched_user (accepted and completed)
+        console.log('Fetching bookings (offers where I am matched_user)...');
         const bookingsRes = await fetch('/api/jetshare/getOffers?matchedUserId=current&viewMode=dashboard', {
-          credentials: 'include', // Include cookies for authentication
+          credentials: 'include',
           headers: {
-            'Cache-Control': 'no-cache',
+            'Cache-Control': 'no-cache', 
             'Pragma': 'no-cache'
           }
         });
@@ -101,33 +101,65 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
           setMyBookings([]);
         } else {
           const bookingsData = await bookingsRes.json();
-          console.log('Bookings response:', bookingsData);
+          console.log('Bookings API response:', bookingsData);
           
-          if (bookingsData.offers && bookingsData.offers.length > 0) {
+          if (bookingsData.offers && Array.isArray(bookingsData.offers)) {
             console.log('Found bookings:', bookingsData.offers.length);
             
-            // Filter bookings based on status
-            const acceptedBookings = bookingsData.offers.filter((offer: JetShareOfferWithUser) => offer.status === 'accepted');
-            const completedBookings = bookingsData.offers.filter((offer: JetShareOfferWithUser) => offer.status === 'completed');
-            
-            console.log('Accepted bookings:', acceptedBookings.length);
-            console.log('Completed bookings:', completedBookings.length);
-            
             // For the bookings tab, include both accepted and completed where user is matched_user
-            setMyBookings(bookingsData.offers);
+            const myBookingsData = bookingsData.offers;
+            console.log('Setting my bookings to:', myBookingsData.length, 'items');
+            setMyBookings(myBookingsData);
             
-            // For the completed flights tab, use only completed
+            // For completed flights, filter only completed status
+            const completedBookings = bookingsData.offers.filter(
+              (offer: JetShareOfferWithUser) => offer.status === 'completed'
+            );
+            
+            console.log('Setting completed flights to:', completedBookings.length, 'items');
             setCompletedFlights(completedBookings);
           } else {
             console.log('No bookings found for current user');
             setMyBookings([]);
+            setCompletedFlights([]);
+          }
+        }
+        
+        // Fetch all my offers that are in accepted or completed status
+        console.log('Fetching my accepted & completed offers...');
+        const acceptedOffersRes = await fetch('/api/jetshare/getOffers?userId=current&status=accepted,completed&viewMode=dashboard', {
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (acceptedOffersRes.ok) {
+          const acceptedOffersData = await acceptedOffersRes.json();
+          console.log('My accepted/completed offers found:', acceptedOffersData.offers?.length || 0);
+          
+          // Add these to completed flights if they're in completed status
+          if (acceptedOffersData.offers && Array.isArray(acceptedOffersData.offers)) {
+            const myCompletedOffers = acceptedOffersData.offers.filter(
+              (offer: JetShareOfferWithUser) => offer.status === 'completed'
+            );
+            
+            // Combine with existing completed flights
+            const combinedCompleted = [...completedFlights, ...myCompletedOffers];
+            // Remove duplicates
+            const uniqueCompleted = combinedCompleted.filter((offer, index, self) =>
+              index === self.findIndex((o) => o.id === offer.id)
+            );
+            
+            setCompletedFlights(uniqueCompleted);
           }
         }
         
         // Fetch transactions
         console.log('Fetching transactions...');
-        const transactionsRes = await fetch('/api/jetshare/getTransactions?limit=5', {
-          credentials: 'include', // Include cookies for authentication
+        const transactionsRes = await fetch('/api/jetshare/getTransactions?limit=10', {
+          credentials: 'include',
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
@@ -140,7 +172,12 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
         } else {
           const transactionsData = await transactionsRes.json();
           console.log('Transactions fetched:', transactionsData.transactions?.length || 0);
-          setTransactions(transactionsData.transactions || []);
+          if (transactionsData.transactions && Array.isArray(transactionsData.transactions)) {
+            setTransactions(transactionsData.transactions);
+          } else {
+            console.log('No transactions found or invalid response format');
+            setTransactions([]);
+          }
         }
         
         console.log('JetShare dashboard data fetched successfully');
@@ -319,64 +356,90 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
   );
   
   const renderTransaction = (transaction: JetShareTransactionWithDetails) => {
-    // Determine if transaction is a purchase or sale for the current user
-    const isPayment = transaction.payer_user_id === transaction.offer.user_id;
-    const isReceipt = transaction.recipient_user_id === transaction.offer.user_id;
+    const isPayer = transaction.payer_user?.id === transaction.user?.id;
+    const isRecipient = transaction.recipient_user?.id === transaction.user?.id;
     
     return (
-      <Card 
-        key={transaction.id} 
-        className="mb-4 hover:shadow-md transition-shadow cursor-pointer"
-        onClick={() => router.push(`/jetshare/transaction/${transaction.offer.id}`)}
-      >
-        <CardContent className="pt-4">
-          <div className="flex justify-between items-center mb-2">
-            <div>
-              <div className="flex items-center">
-                <h4 className="font-medium">
-                  {transaction.offer.departure_location} → {transaction.offer.arrival_location}
-                </h4>
-                <Badge 
-                  variant="outline" 
-                  className={
-                    transaction.payer_user_id === transaction.recipient_user_id
-                    ? "ml-2 bg-blue-50 text-blue-600 border-blue-200"
-                    : transaction.payer_user_id === transaction.offer.matched_user_id
-                    ? "ml-2 bg-green-50 text-green-600 border-green-200"
-                    : "ml-2 bg-purple-50 text-purple-600 border-purple-200"
-                  }
-                >
-                  {transaction.payer_user_id === transaction.recipient_user_id 
-                    ? "Self-Payment" 
-                    : transaction.payer_user_id === transaction.offer.matched_user_id 
-                    ? "Purchase" 
-                    : "Sale"}
-                </Badge>
-              </div>
-              <div className="text-sm text-muted-foreground">
+      <Card key={transaction.id} className="mb-4 hover:shadow-md transition-shadow">
+        <div className="cursor-pointer" onClick={() => router.push(`/jetshare/transaction/${transaction.offer_id}`)}>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-lg font-medium">
+                {isPayer ? (
+                  <span className="flex items-center text-amber-600">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Payment Sent
+                  </span>
+                ) : isRecipient ? (
+                  <span className="flex items-center text-green-600">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Payment Received
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Transaction
+                  </span>
+                )}
+              </CardTitle>
+              {getPaymentStatusBadge(transaction.payment_status)}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {transaction.offer && (
+                <div className="flex items-center">
+                  <Plane className="h-3 w-3 mr-1 rotate-90" />
+                  <span>{transaction.offer.departure_location} → {transaction.offer.arrival_location}</span>
+                </div>
+              )}
+              <div className="text-sm mt-1">
                 {format(new Date(transaction.transaction_date), 'MMM d, yyyy')}
               </div>
             </div>
-            {getPaymentStatusBadge(transaction.payment_status)}
-          </div>
-          
-          <div className="space-y-1 mt-3 text-sm">
-            <div className="flex justify-between">
-              <span>Amount</span>
-              <span className="font-medium">{formatCurrency(transaction.amount)}</span>
-            </div>
-            {transaction.handling_fee && (
-              <div className="flex justify-between">
-                <span>Handling Fee</span>
-                <span>{formatCurrency(transaction.handling_fee)}</span>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Transaction Amount:</span>
+                <span className="font-medium">{formatCurrency(transaction.amount)}</span>
               </div>
-            )}
-            <div className="flex justify-between pt-1 border-t border-gray-100 mt-1">
-              <span>Payment Method</span>
-              <span className="capitalize">{transaction.payment_method || 'Unknown'}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Handling Fee:</span>
+                <span className="text-sm">{formatCurrency(transaction.handling_fee)}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t">
+                <span className="text-sm font-medium">
+                  {isPayer ? 'Total Paid:' : isRecipient ? 'Total Received:' : 'Total:'}
+                </span>
+                <span className={`font-semibold ${isPayer ? 'text-amber-600' : isRecipient ? 'text-green-600' : ''}`}>
+                  {formatCurrency(transaction.amount)}
+                </span>
+              </div>
+              
+              <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  {isPayer ? (
+                    <>
+                      <span>To: </span>
+                      <span className="ml-1 font-medium">
+                        {transaction.recipient_user?.first_name} {transaction.recipient_user?.last_name}
+                      </span>
+                    </>
+                  ) : isRecipient ? (
+                    <>
+                      <span>From: </span>
+                      <span className="ml-1 font-medium">
+                        {transaction.payer_user?.first_name} {transaction.payer_user?.last_name}
+                      </span>
+                    </>
+                  ) : (
+                    <span>Transaction ID: {transaction.id.substring(0, 8)}...</span>
+                  )}
+                </div>
+                <span className="text-xs">{transaction.payment_method === 'crypto' ? 'Crypto' : 'Credit Card'}</span>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        </div>
       </Card>
     );
   };

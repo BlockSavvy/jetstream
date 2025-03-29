@@ -130,8 +130,16 @@ export async function GET(request: NextRequest) {
       
       // Apply filters based on parameters
       if (status) {
-        query = query.eq('status', status);
-        console.log('Dashboard filter: status=' + status);
+        // Handle comma-separated status values (e.g., status=accepted,completed)
+        if (status.includes(',')) {
+          const statusValues = status.split(',');
+          // Use Supabase's .in() method for multiple statuses
+          query = query.in('status', statusValues);
+          console.log('Dashboard filter: status in', statusValues);
+        } else {
+          query = query.eq('status', status);
+          console.log('Dashboard filter: status=' + status);
+        }
       }
       
       // If userId=current, get the current user's offers (offers they created)
