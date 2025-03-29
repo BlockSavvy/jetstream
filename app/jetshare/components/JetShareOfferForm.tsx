@@ -29,6 +29,15 @@ import { format, addHours } from 'date-fns';
 import { toast } from 'sonner';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useAuth } from '@/components/auth-provider';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import AircraftModelSelector from './AircraftModelSelector';
 
 // Define form schema with zod
 const formSchema = z.object({
@@ -117,22 +126,31 @@ const POPULAR_AIRCRAFT = [
   "Gulfstream G550"
 ];
 
+// Add a new interface for aircraft models
+interface AircraftModel {
+  id: string;
+  manufacturer: string;
+  model: string;
+  display_name: string;
+  seat_capacity: number;
+  range_nm?: number;
+  cruise_speed_kts?: number;
+  image_url?: string;
+  description?: string;
+}
+
 export default function JetShareOfferForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { user } = useAuth();
   
-  // Add new state for autocomplete
+  // Add state to control autocomplete visibility
   const [departureResults, setDepartureResults] = useState<string[]>([]);
   const [arrivalResults, setArrivalResults] = useState<string[]>([]);
-  const [aircraftResults, setAircraftResults] = useState<string[]>([]);
-  
-  // Add state to control autocomplete visibility
   const [showDepartureResults, setShowDepartureResults] = useState(false);
   const [showArrivalResults, setShowArrivalResults] = useState(false);
-  const [showAircraftResults, setShowAircraftResults] = useState(false);
-  
+
   // Check for authentication on load
   useEffect(() => {
     if (!user) {
@@ -354,21 +372,6 @@ export default function JetShareOfferForm() {
     }
   };
   
-  const handleAircraftSearch = (value: string) => {
-    form.setValue("aircraft_model", value);
-    // Filter aircraft based on input
-    if (value.length > 1) {
-      const filtered = POPULAR_AIRCRAFT.filter(
-        aircraft => aircraft.toLowerCase().includes(value.toLowerCase())
-      );
-      setAircraftResults(filtered);
-      setShowAircraftResults(filtered.length > 0);
-    } else {
-      setAircraftResults([]);
-      setShowAircraftResults(false);
-    }
-  };
-  
   // Function to select from autocomplete results
   const selectDepartureLocation = (location: string) => {
     form.setValue("departure_location", location);
@@ -378,11 +381,6 @@ export default function JetShareOfferForm() {
   const selectArrivalLocation = (location: string) => {
     form.setValue("arrival_location", location);
     setShowArrivalResults(false);
-  };
-  
-  const selectAircraftModel = (aircraft: string) => {
-    form.setValue("aircraft_model", aircraft);
-    setShowAircraftResults(false);
   };
   
   return (
@@ -533,40 +531,27 @@ export default function JetShareOfferForm() {
             control={form.control}
             name="aircraft_model"
             render={({ field }) => (
-              <FormItem className="relative">
+              <FormItem className="flex flex-col">
                 <FormLabel>Aircraft Model</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Plane className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="e.g., Gulfstream G650"
-                      className="pl-10"
-                      {...field}
-                      onChange={(e) => handleAircraftSearch(e.target.value)}
-                      onFocus={() => setShowAircraftResults(aircraftResults.length > 0)}
-                      onBlur={() => {
-                        setTimeout(() => setShowAircraftResults(false), 200);
-                      }}
-                    />
-                  </div>
+                  <AircraftModelSelector
+                    value={field.value}
+                    onChange={(value, seatCapacity) => {
+                      field.onChange(value);
+                      
+                      // If seat capacity is provided, update related fields
+                      if (seatCapacity) {
+                        form.setValue('total_seats', seatCapacity);
+                        // Set available seats to half or a reasonable value
+                        const newAvailableSeats = Math.ceil(seatCapacity / 2);
+                        form.setValue('available_seats', newAvailableSeats);
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
                 </FormControl>
-                {showAircraftResults && aircraftResults.length > 0 && (
-                  <div className="absolute z-10 w-full bg-white dark:bg-gray-800 mt-1 rounded-md border shadow-lg max-h-60 overflow-y-auto">
-                    <div className="p-2">
-                      {aircraftResults.map((aircraft, index) => (
-                        <div
-                          key={index}
-                          className="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                          onMouseDown={() => selectAircraftModel(aircraft)}
-                        >
-                          {aircraft}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 <FormDescription>
-                  Select or enter your aircraft model
+                  Select the aircraft model for your flight share
                 </FormDescription>
                 <FormMessage />
               </FormItem>
