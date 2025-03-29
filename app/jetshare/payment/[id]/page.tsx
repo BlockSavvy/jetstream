@@ -13,9 +13,8 @@ interface PaymentPageProps {
 }
 
 export default async function PaymentPage({ params }: PaymentPageProps) {
-  // Get the offer ID from URL params
   const { id } = params;
-  
+
   if (!id) {
     return (
       <ErrorDisplay 
@@ -25,18 +24,14 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     );
   }
   
-  // Initialize Supabase client
   const supabase = await createClient();
-  
-  // Get authenticated user
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
   if (authError || !user) {
-    // Redirect to login if not authenticated
     return redirect('/auth/signin?redirect=/jetshare/payment/' + id);
   }
   
-  // Fetch the offer directly from database
+  console.log(`PaymentPage: Fetching offer details for ID: ${id}`);
   const { data: offer, error: offerError } = await supabase
     .from('jetshare_offers')
     .select(`
@@ -47,7 +42,6 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     .eq('id', id)
     .single();
   
-  // Handle database errors
   if (offerError) {
     console.error('Database error fetching offer:', offerError);
     return (
@@ -58,7 +52,6 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     );
   }
   
-  // Handle case where offer doesn't exist
   if (!offer) {
     return (
       <ErrorDisplay 
@@ -68,12 +61,13 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     );
   }
   
-  // Check if the user is authorized to view this payment page
-  const userIsCreator = offer.user_id === user.id;
-  let userIsMatched = offer.matched_user_id === user.id;
-  const offerIsOpen = offer.status === 'open';
+  console.log(`PaymentPage: Offer data fetched. Status: ${offer.status}, Matched User: ${offer.matched_user_id}`);
   
-  // If user is the creator, they shouldn't pay - show appropriate message
+  const userIsCreator = offer.user_id === user.id;
+  const userIsMatched = offer.matched_user_id === user.id;
+  const offerIsAccepted = offer.status === 'accepted';
+  const offerIsCompleted = offer.status === 'completed';
+  
   if (userIsCreator) {
     return (
       <ErrorDisplay 
@@ -85,8 +79,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     );
   }
   
-  // If offer is completed, show appropriate message
-  if (offer.status === 'completed') {
+  if (offerIsCompleted) {
     return (
       <ErrorDisplay 
         title="Already Paid" 
@@ -97,116 +90,40 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     );
   }
   
-  // If offer is open or user is matched, proceed to accept/update the offer
-  if (offerIsOpen || userIsMatched) {
-    // If offer is open and user is not matched, update the offer
-    if (offerIsOpen && !userIsMatched) {
-      try {
-        console.log('Attempting to update offer status to accepted with user as matched user...');
-        
-        // Add logging of user and offer details
-        console.log('User details:', {
-          id: user.id,
-          email: user.email || 'no email'
-        });
-        
-        console.log('Offer details before update:', {
-          id: offer.id,
-          status: offer.status,
-          user_id: offer.user_id,
-          matched_user_id: offer.matched_user_id || 'none'
-        });
-        
-        // Update offer to accepted with this user as matched user
-        const { error: updateError } = await supabase
-          .from('jetshare_offers')
-          .update({ 
-            status: 'accepted',
-            matched_user_id: user.id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', id)
-          .eq('status', 'open'); // Only update if still open
-        
-        if (updateError) {
-          console.error('Error updating offer:', updateError);
-          
-          // Check if the offer is still available or if it was taken by someone else
-          const { data: checkOffer } = await supabase
-            .from('jetshare_offers')
-            .select('status, matched_user_id, user_id')
-            .eq('id', id)
-            .single();
-          
-          console.log('Current offer state after failed update:', checkOffer);
-          
-          if (checkOffer?.matched_user_id && checkOffer.matched_user_id !== user.id) {
-            console.error('Offer was taken by another user:', checkOffer.matched_user_id);
-            return (
-              <ErrorDisplay 
-                title="Offer No Longer Available" 
-                message="This offer has been accepted by another user while you were browsing. Please check other available offers."
-                returnUrl="/jetshare/listings"
-                returnText="Return to Listings"
-              />
-            );
-          }
-          
-          // If the offer was already accepted by this user, that's fine
-          if (checkOffer?.status === 'accepted' && checkOffer.matched_user_id === user.id) {
-            console.log('Offer was already accepted by this user, continuing with payment');
-            userIsMatched = true;
-          }
-        } else {
-          console.log('Successfully updated offer to accepted state');
-          userIsMatched = true;
-          
-          // Refresh the offer data after update
-          const { data: refreshedOffer } = await supabase
-            .from('jetshare_offers')
-            .select(`
-              *,
-              user:user_id (id, email, first_name, last_name),
-              matched_user:matched_user_id (id, email, first_name, last_name)
-            `)
-            .eq('id', id)
-            .single();
-            
-          if (refreshedOffer) {
-            console.log('Refreshed offer data after update:', {
-              id: refreshedOffer.id,
-              status: refreshedOffer.status,
-              matched_user_id: refreshedOffer.matched_user_id || 'none'
-            });
-            Object.assign(offer, refreshedOffer); // Update the offer object
-          }
-        }
-      } catch (updateError) {
-        console.error('Exception during offer update:', updateError);
-      }
-    }
-    
-    // Now display the payment form
+  if (offerIsAccepted && userIsMatched) {
+    console.log(`PaymentPage: Offer ${id} is accepted and user ${user.id} is matched. Proceeding to payment form.`);
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Complete Your Payment</h1>
         <JetSharePaymentForm offer={offer} user={user} />
       </div>
     );
+  } else {
+    console.warn(`PaymentPage: Cannot proceed. Offer Status: ${offer.status}, User Matched: ${userIsMatched}`);
+    let title = "Payment Not Available";
+    let message = "Payment cannot be completed for this offer at this time.";
+    let returnUrl = "/jetshare/listings";
+    let returnText = "Browse Available Offers";
+
+    if (!offerIsAccepted) {
+      message = `The offer status is currently '${offer.status}'. Payment can only be made once an offer is accepted.`;
+    } else if (!userIsMatched) {
+      message = "You are not the user who accepted this offer. Payment cannot be completed.";
+      returnUrl = "/jetshare/dashboard?tab=bookings";
+      returnText = "Return to Your Bookings";
+    }
+
+    return (
+      <ErrorDisplay 
+        title={title}
+        message={message}
+        returnUrl={returnUrl}
+        returnText={returnText}
+      />
+    );
   }
-  
-  // If we reach here, user is not authorized
-  return (
-    <ErrorDisplay 
-      title="Not Authorized" 
-      message="You are not authorized to view this payment page. This may be because the offer is no longer available or has been accepted by another user."
-      returnUrl="/jetshare/listings"
-      returnText="Browse Available Offers"
-    />
-  );
 }
 
-// Helper component to display error messages
 function ErrorDisplay({ 
   title, 
   message, 
