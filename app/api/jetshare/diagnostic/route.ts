@@ -2,104 +2,138 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
+  console.log('Diagnostic API called');
+  
   try {
-    // Get the authenticated user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    // DIAGNOSTIC SECTION - Try different queries to understand the issue
-    
-    // 1. Check if the table exists by getting the count
-    const { count: offersCount, error: countError } = await supabase
-      .from('jetshare_offers')
-      .select('*', { count: 'exact', head: true });
-    
-    // 2. Try to get all offers regardless of status or user
-    const { data: allOffers, error: allOffersError } = await supabase
-      .from('jetshare_offers')
-      .select('*');
-    
-    // 3. Check specifically for open offers
-    const { data: openOffers, error: openOffersError } = await supabase
-      .from('jetshare_offers')
-      .select('*')
-      .eq('status', 'open');
-    
-    // 4. Check for the current user's offers
-    const { data: userOffers, error: userOffersError } = await supabase
-      .from('jetshare_offers')
-      .select('*')
-      .eq('user_id', user.id);
-    
-    // 5. Check RLS policies by getting table privileges
-    let policies = null;
-    let policiesError = null;
-    try {
-      const { data, error } = await supabase
-        .rpc('get_policies_info', { table_name: 'jetshare_offers' });
-      policies = data;
-      policiesError = error;
-    } catch (error) {
-      policiesError = { message: 'Function not available' };
-    }
-    
-    // 6. Try to insert a test offer to check if that's working
-    const testOffer = {
-      user_id: user.id,
-      flight_date: new Date().toISOString(),
-      departure_location: 'Test Location',
-      arrival_location: 'Test Destination',
-      total_flight_cost: 10000,
-      requested_share_amount: 5000,
-      status: 'open'
+    // Step 1: Check environment variables
+    const envCheck = {
+      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
     };
+    console.log('Environment variables check:', envCheck);
     
-    const { data: insertResult, error: insertError } = await supabase
-      .from('jetshare_offers')
-      .insert(testOffer)
-      .select();
+    // Step 2: Create Supabase client
+    console.log('Creating Supabase client...');
+    const supabase = await createClient();
+    console.log('Supabase client created successfully');
     
+    // Step 3: Check if user is authenticated
+    console.log('Checking authentication...');
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const authCheck = {
+      isAuthenticated: !!user,
+      userEmail: user?.email || null,
+      userId: user?.id || null,
+      authError: authError ? authError.message : null,
+    };
+    console.log('Authentication check:', authCheck);
+    
+    // Step 4: Check if tables exist
+    console.log('Checking database tables...');
+    
+    // First check if aircraft_models table exists
+    let aircraftModelsExist = false;
+    let aircraftModelsError = null;
+    let aircraftModelsCount = 0;
+    
+    try {
+      const { data, error, count } = await supabase
+        .from('aircraft_models')
+        .select('*', { count: 'exact' })
+        .limit(1);
+      
+      aircraftModelsExist = !error && !!data;
+      aircraftModelsError = error ? error.message : null;
+      aircraftModelsCount = count || 0;
+      
+      console.log('Aircraft models table check:', { 
+        exists: aircraftModelsExist,
+        count: aircraftModelsCount,
+        error: aircraftModelsError
+      });
+    } catch (error) {
+      aircraftModelsError = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error checking aircraft_models table:', error);
+    }
+    
+    // Also check jetshare_offers table as comparison
+    let jetshareOffersExist = false;
+    let jetshareOffersError = null;
+    let jetshareOffersCount = 0;
+    
+    try {
+      const { data, error, count } = await supabase
+        .from('jetshare_offers')
+        .select('*', { count: 'exact' })
+        .limit(1);
+      
+      jetshareOffersExist = !error && !!data;
+      jetshareOffersError = error ? error.message : null;
+      jetshareOffersCount = count || 0;
+      
+      console.log('Jetshare offers table check:', { 
+        exists: jetshareOffersExist,
+        count: jetshareOffersCount,
+        error: jetshareOffersError
+      });
+    } catch (error) {
+      jetshareOffersError = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error checking jetshare_offers table:', error);
+    }
+    
+    // Step 5: Try to list all tables in the schema
+    let tables = [];
+    let tablesError = null;
+    
+    try {
+      // This query may require more permissions than available to the anon key
+      const { data, error } = await supabase.rpc('list_tables');
+      
+      if (!error && data) {
+        tables = data;
+      } else {
+        tablesError = error ? error.message : 'No data returned';
+      }
+      
+      console.log('Tables in schema:', { count: tables.length, error: tablesError });
+    } catch (error) {
+      tablesError = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error listing tables:', error);
+    }
+    
+    // Step 6: Try to create a records in a test table 
+    // (this step might not be necessary if earlier steps identify the issue)
+    
+    // Return all diagnostic information
     return NextResponse.json({
-      success: true,
-      diagnostic: {
-        user_id: user.id,
-        offers_count: offersCount,
-        count_error: countError ? countError.message : null,
-        all_offers: {
-          count: allOffers?.length || 0,
-          data: allOffers,
-          error: allOffersError ? allOffersError.message : null
+      timestamp: new Date().toISOString(),
+      environment: envCheck,
+      authentication: authCheck,
+      database: {
+        aircraftModels: {
+          exists: aircraftModelsExist,
+          count: aircraftModelsCount,
+          error: aircraftModelsError
         },
-        open_offers: {
-          count: openOffers?.length || 0,
-          data: openOffers,
-          error: openOffersError ? openOffersError.message : null
+        jetshareOffers: {
+          exists: jetshareOffersExist,
+          count: jetshareOffersCount,
+          error: jetshareOffersError
         },
-        user_offers: {
-          count: userOffers?.length || 0, 
-          data: userOffers,
-          error: userOffersError ? userOffersError.message : null
-        },
-        policies: {
-          data: policies,
-          error: policiesError ? policiesError.message : null
-        },
-        insert_test: {
-          success: insertError ? false : true,
-          data: insertResult,
-          error: insertError ? insertError.message : null
+        tables: {
+          list: tables,
+          error: tablesError
         }
       }
-    }, { status: 200 });
+    });
+    
   } catch (error) {
-    console.error('Error running diagnostic:', error);
-    return NextResponse.json(
-      { error: 'Failed to run diagnostic', message: (error as Error).message },
-      { status: 500 }
-    );
+    console.error('Diagnostic error:', error);
+    return NextResponse.json({
+      error: 'Diagnostic failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 } 
