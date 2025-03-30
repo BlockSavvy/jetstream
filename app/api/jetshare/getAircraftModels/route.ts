@@ -230,4 +230,4 @@ export async function OPTIONS(request: NextRequest) {
     status: 200,
     headers: getCorsHeaders(request)
   });
-} 
+}

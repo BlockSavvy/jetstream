@@ -46,7 +46,6 @@ export async function POST(request: NextRequest) {
     if (!offer_id) {
       return NextResponse.json({ error: 'Offer ID is required' }, { status: 400 });
     }
-
     // Optional: Ensure user profile exists
     await ensureUserProfile(supabase, user);
     console.log('User profile confirmed, proceeding to accept offer');

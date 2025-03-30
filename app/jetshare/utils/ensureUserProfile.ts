@@ -1,18 +1,36 @@
 import { createClient } from '@/lib/supabase-server';
 import { User } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Ensures that a user profile exists in the profiles table
  * This is essential for foreign key relationships in jetshare_offers
+ * @param supabase - Optional Supabase client (to avoid creating a new one)
+ * @param user - User object from supabase.auth.getUser()
  * @returns boolean indicating success, and string message for error reporting
  */
-export async function ensureUserProfile(user: User): Promise<{ success: boolean; message?: string }> {
+export async function ensureUserProfile(
+  supabaseOrUser: SupabaseClient | User,
+  userParam?: User
+): Promise<{ success: boolean; message?: string }> {
+  let supabase: SupabaseClient;
+  let user: User;
+  
+  // Handle different parameter combinations
+  if (!userParam && !('auth' in supabaseOrUser)) {
+    // Old function signature: ensureUserProfile(user)
+    user = supabaseOrUser as User;
+    supabase = await createClient();
+  } else {
+    // New function signature: ensureUserProfile(supabase, user)
+    supabase = supabaseOrUser as SupabaseClient;
+    user = userParam as User;
+  }
+  
   // Early return if no user
   if (!user) return { success: false, message: 'No user provided' };
   
   try {
-    const supabase = await createClient();
-    
     // First, check if profiles table exists to avoid errors
     try {
       const { error: tableError } = await supabase
