@@ -50,7 +50,8 @@ export async function GET(
       
       // For this implementation, we'll redirect to a success page
       // In a real implementation, this would redirect to the actual Google Wallet
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
       const successUrl = `${baseUrl}/flights/tickets/${ticketId}?wallet=google&added=true`;
       
       return NextResponse.redirect(successUrl);

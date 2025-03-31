@@ -142,7 +142,7 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
                 <span className="text-sm text-muted-foreground">Share Percentage</span>
               </div>
               <p className="font-medium">
-                {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}%
+                {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}
               </p>
             </div>
           </div>

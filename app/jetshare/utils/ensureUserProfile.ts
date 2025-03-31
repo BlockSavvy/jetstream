@@ -7,12 +7,17 @@ import { SupabaseClient } from '@supabase/supabase-js';
  * This is essential for foreign key relationships in jetshare_offers
  * @param supabase - Optional Supabase client (to avoid creating a new one)
  * @param user - User object from supabase.auth.getUser()
- * @returns boolean indicating success, and string message for error reporting
+ * @returns Object with success flag, profile data, and error info
  */
 export async function ensureUserProfile(
   supabaseOrUser: SupabaseClient | User,
   userParam?: User
-): Promise<{ success: boolean; message?: string }> {
+): Promise<{ 
+  success: boolean; 
+  profile?: any; 
+  error?: { message: string } | null;
+  message?: string;
+}> {
   let supabase: SupabaseClient;
   let user: User;
   
@@ -28,7 +33,11 @@ export async function ensureUserProfile(
   }
   
   // Early return if no user
-  if (!user) return { success: false, message: 'No user provided' };
+  if (!user) return { 
+    success: false, 
+    error: { message: 'No user provided' }, 
+    message: 'No user provided' 
+  };
   
   try {
     // First, check if profiles table exists to avoid errors
@@ -40,6 +49,7 @@ export async function ensureUserProfile(
       if (tableError && tableError.message.includes('relation "profiles" does not exist')) {
         return { 
           success: false, 
+          error: { message: 'Profiles table does not exist' },
           message: 'Profiles table does not exist. Please ensure database is properly set up.' 
         };
       }
@@ -50,7 +60,7 @@ export async function ensureUserProfile(
     // Check if user profile exists
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, first_name, last_name, email, avatar_url, user_type, verification_status')
+      .select('*')
       .eq('id', user.id)
       .single();
     
@@ -78,7 +88,7 @@ export async function ensureUserProfile(
           // Continue anyway since the profile exists
         }
       }
-      return { success: true };
+      return { success: true, profile };
     }
     
     // If profile doesn't exist, create a new one
@@ -87,7 +97,7 @@ export async function ensureUserProfile(
       const { firstName, lastName } = extractUserNameDetails(user);
       
       // Create new profile with all required fields
-      const { error: insertError } = await supabase
+      const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -99,24 +109,32 @@ export async function ensureUserProfile(
           verification_status: 'pending',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        });
+        })
+        .select()
+        .single();
       
       if (insertError) {
         console.error('Error creating user profile:', insertError);
         return { 
           success: false, 
+          error: insertError,
           message: `Failed to create profile: ${insertError.message}` 
         };
       }
       
-      return { success: true };
+      return { success: true, profile: newProfile };
     }
     
-    return { success: false, message: 'Unexpected flow - neither found nor created profile' };
+    return { 
+      success: false, 
+      error: { message: 'Unexpected flow - neither found nor created profile' },
+      message: 'Unexpected flow - neither found nor created profile' 
+    };
   } catch (error) {
     console.error('Error ensuring user profile:', error);
     return { 
       success: false, 
+      error: { message: (error as Error).message },
       message: `Error ensuring user profile: ${(error as Error).message}` 
     };
   }

@@ -255,7 +255,7 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
             )}
             {formData.total_flight_cost > 0 && formData.requested_share_amount > 0 && (
               <p className="text-sm text-muted-foreground">
-                Share percentage: {((formData.requested_share_amount / formData.total_flight_cost) * 100).toFixed(0)}%
+                Share percentage: {((formData.requested_share_amount / formData.total_flight_cost) * 100).toFixed(0)}
               </p>
             )}
           </div>

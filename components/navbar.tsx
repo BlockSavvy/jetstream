@@ -19,12 +19,11 @@ export default function Navbar() {
   // Hide navbar on JetShare pages
   const isJetSharePage = pathname?.startsWith('/jetshare')
   
-  // If this is a JetShare page, don't render the navbar
-  if (isJetSharePage) {
-    return null
-  }
-  
+  // Define scroll handler in useEffect - this must come BEFORE any conditional returns
   useEffect(() => {
+    // Don't add scroll listener for JetShare pages
+    if (isJetSharePage) return;
+    
     const handleScroll = () => {
       if (window.scrollY > 10) {
         setIsScrolled(true)
@@ -35,7 +34,12 @@ export default function Navbar() {
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, [isJetSharePage])
+  
+  // If this is a JetShare page, don't render the navbar
+  if (isJetSharePage) {
+    return null
+  }
 
   // Determine background color based on page and scroll state
   const headerBgClass = () => {

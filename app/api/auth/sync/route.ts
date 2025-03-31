@@ -1,90 +1,90 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { type NextRequest } from 'next/server'
+import { createApiClient } from '@/lib/supabase-api'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  console.log('📝 API route called: /api/auth/sync');
+  const startTime = Date.now()
+  
   try {
-    console.log('Session sync API called');
-    
-    // Get the Supabase client
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
-    
-    // Get the session - this will sync the session with cookies
-    const { data: { session }, error } = await supabase.auth.getSession()
-    
-    if (error) {
-      console.error('Error syncing session:', error.message);
+    // Debug cookie access
+    const cookieHeader = request.headers.get('cookie');
+    console.log('🍪 Cookie header present:', !!cookieHeader);
+    if (cookieHeader) {
+      // Extract cookie names for debugging
+      const cookieNames = cookieHeader.split(';')
+        .map(c => c.trim().split('=')[0])
       
-      // Handle refresh token errors specifically
-      if (error.message.includes('Invalid Refresh Token') || 
-          error.message.includes('refresh token not found') ||
-          error.message.includes('expired')) {
-        // Return a more specific error so the client can handle it appropriately
-        return NextResponse.json({ 
-          error: 'invalid_refresh_token', 
-          message: error.message 
-        }, { status: 401 });
-      }
-      
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.log('🍪 Cookie names in request:', cookieNames);
+      console.log('🍪 Auth cookies in request:', 
+        cookieNames.some(name => name.includes('sb-') || name.includes('supabase'))
+      );
     }
     
-    // If we have a session, force a refresh to ensure it's valid
-    if (session) {
-      // Log the current session for debugging
-      console.log('Current session found:', {
-        user_id: session.user.id,
-        email: session.user.email,
-        expires_at: new Date(session.expires_at! * 1000).toISOString()
-      });
-      
-      // Force refresh the session 
-      const { data, error: refreshError } = await supabase.auth.refreshSession()
-      
-      if (refreshError) {
-        console.error('Error refreshing session:', refreshError.message);
-        
-        // Handle refresh token errors
-        if (refreshError.message.includes('Invalid Refresh Token') || 
-            refreshError.message.includes('refresh token not found') ||
-            refreshError.message.includes('expired')) {
-          return NextResponse.json({ 
-            error: 'invalid_refresh_token', 
-            message: refreshError.message 
-          }, { status: 401 });
-        }
-        
-        return NextResponse.json({ error: refreshError.message }, { status: 500 })
-      }
-      
-      // Session refreshed successfully
-      console.log('Session synced and refreshed successfully');
-      
-      // Return the refreshed session data
-      return NextResponse.json({ 
-        message: 'Session synced and refreshed successfully',
-        user: data.session?.user || null,
-        session: !!data.session,
-        expires_at: data.session?.expires_at
-      }, { 
-        status: 200,
+    // Create a Supabase client using our utility function
+    console.log('🔌 Creating Supabase API client');
+    const supabase = await createApiClient();
+    console.log('🔌 Supabase client created');
+    
+    // Get the current session
+    console.log('🔍 Fetching user session from Supabase auth');
+    const { data, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('❌ Error fetching session:', sessionError.message)
+      return NextResponse.json({ error: 'Authentication error', details: sessionError.message }, { 
+        status: 401,
         headers: {
-          // Prevent caching
           'Cache-Control': 'no-store, max-age=0',
         }
       })
     }
     
-    console.log('No active session found during sync');
+    console.log('💬 Session data returned:', !!data?.session);
+    if (data?.session) {
+      console.log('💬 Session user data:', !!data.session.user);
+    }
+    
+    const session = data.session
+    
+    // If no session exists, nothing to refresh
+    if (!session) {
+      console.log('👤 No session found in auth/sync')
+      return NextResponse.json({ status: 'no_session' }, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        }
+      })
+    }
+    
+    console.log('✅ Valid session found in sync API, user ID:', session.user.id)
+      
+    // Simply send back the current session user info
+    // We're skipping the refresh to simplify the process
+    const processingTime = Date.now() - startTime
+    console.log(`⏱️ /api/auth/sync completed in ${processingTime}ms`)
+    
     return NextResponse.json({ 
-      message: 'No active session found',
-      session: false
-    }, { status: 200 })
+      status: 'success',
+      user: session.user || null
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
+    })
+    
   } catch (error) {
-    console.error('Unexpected error syncing session:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    const processingTime = Date.now() - startTime
+    console.error(`❌ Unexpected error in auth sync (${processingTime}ms):`, error)
+    return NextResponse.json({ error: 'server_error', 
+                             details: JSON.stringify(error) }, {
+      status: 500, 
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      }
+    })
   }
 } 

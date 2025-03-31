@@ -31,10 +31,37 @@ CREATE POLICY "Users can mark received messages as read"
   USING (auth.uid() = recipient_id)
   WITH CHECK (auth.uid() = recipient_id AND NEW.read = true);
 
+-- Drop any existing views to avoid conflicts
+DROP VIEW IF EXISTS public.jetshare_message_sender_profiles;
+DROP VIEW IF EXISTS public.jetshare_message_recipient_profiles;
+
+-- Create views for sender and recipient profiles to fix messages query
+CREATE OR REPLACE VIEW public.jetshare_message_sender_profiles AS
+SELECT 
+  users.id,
+  profiles.first_name,
+  profiles.last_name,
+  profiles.avatar_url
+FROM auth.users
+LEFT JOIN public.profiles ON users.id = profiles.id;
+
+CREATE OR REPLACE VIEW public.jetshare_message_recipient_profiles AS
+SELECT 
+  users.id,
+  profiles.first_name,
+  profiles.last_name,
+  profiles.avatar_url
+FROM auth.users
+LEFT JOIN public.profiles ON users.id = profiles.id;
+
+-- Grant access to the views
+GRANT SELECT ON public.jetshare_message_sender_profiles TO authenticated;
+GRANT SELECT ON public.jetshare_message_recipient_profiles TO authenticated;
+
 -- Add index for faster lookups on common queries  
-CREATE INDEX idx_jetshare_messages_sender_id ON public.jetshare_messages(sender_id);
-CREATE INDEX idx_jetshare_messages_recipient_id ON public.jetshare_messages(recipient_id);
-CREATE INDEX idx_jetshare_messages_created_at ON public.jetshare_messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_jetshare_messages_sender_id ON public.jetshare_messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_jetshare_messages_recipient_id ON public.jetshare_messages(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_jetshare_messages_created_at ON public.jetshare_messages(created_at);
 
 -- Grant access to authenticated users
 GRANT SELECT, INSERT, UPDATE ON public.jetshare_messages TO authenticated; 

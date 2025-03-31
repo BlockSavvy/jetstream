@@ -1,32 +1,50 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
 import JetShareListingsContent from '../components/JetShareListingsContent';
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/components/auth-provider';
+import { Loader2 } from 'lucide-react';
 
-export const metadata: Metadata = {
-  title: 'JetStream - Available Flight Shares',
-  description: 'Browse and book available flight shares on private jets.',
-};
+export default function JetShareListingsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Check for a pending offer after login
+  useEffect(() => {
+    // Only run this once auth is loaded and user is authenticated
+    if (!authLoading && user) {
+      try {
+        const pendingOfferId = sessionStorage.getItem('jetshare_pending_offer');
+        if (pendingOfferId) {
+          console.log('Found pending offer after login:', pendingOfferId);
+          // Clear it from session storage
+          sessionStorage.removeItem('jetshare_pending_offer');
+          
+          // This will trigger a confirmation dialog in the JetShareListingsContent component
+          sessionStorage.setItem('jetshare_resume_offer_acceptance', pendingOfferId);
+        }
+      } catch (e) {
+        console.warn('Could not access sessionStorage:', e);
+      }
+    }
+  }, [user, authLoading]);
+  
+  // After auth is determined, finish loading
+  useEffect(() => {
+    if (!authLoading) {
+      setIsLoading(false);
+      
+      // Log user state for debugging (don't throw errors)
+      if (user) {
+        console.log('User authenticated for JetShare listings:', user.id, user.email);
+      } else {
+        console.log('No authenticated user for JetShare listings, allowing public access');
+      }
+    }
+  }, [user, authLoading]);
 
-export default async function JetShareListingsPage() {
-  console.log('Public JetShare route /jetshare/listings, allowing access');
-  
-  // Attempt to get the authenticated user to pass to the listings content
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  const user = data?.user || null;
-  
-  if (error) {
-    console.error('Auth error in JetShare listings page:', error);
-  }
-  
-  // If we have a user, log it (but allow the page to load even without a user)
-  if (user) {
-    console.log('User authenticated for JetShare listings:', user.id, user.email);
-  } else {
-    console.log('No authenticated user for JetShare listings, allowing public access');
-  }
-  
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Find Available Flight Shares</h1>
@@ -63,8 +81,14 @@ export default async function JetShareListingsPage() {
         </Card>
       </div>
       
-      {/* Render the component regardless of authentication status */}
-      <JetShareListingsContent user={user} />
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-3 text-lg">Loading flight listings...</span>
+        </div>
+      ) : (
+        <JetShareListingsContent />
+      )}
     </div>
   );
 } 

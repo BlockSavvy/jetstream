@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { Loader2 } from 'lucide-react'
 
 const registerSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -44,13 +45,17 @@ export function RegisterForm() {
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setIsLoading(true)
     try {
+      console.log('Submitting registration for:', values.email)
       const { error } = await signUp(values.email, values.password)
       if (error) {
+        console.error('Registration error:', error.message)
         toast.error(error.message || 'Failed to sign up')
       } else {
+        console.log('Registration successful, verification email sent')
         setIsSubmitted(true)
       }
     } catch (error) {
+      console.error('Unexpected registration error:', error)
       toast.error('An unexpected error occurred')
     } finally {
       setIsLoading(false)
@@ -119,7 +124,14 @@ export function RegisterForm() {
             )}
           />
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing up...' : 'Sign up'}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing up...
+              </>
+            ) : (
+              'Sign up'
+            )}
           </Button>
         </form>
       </Form>

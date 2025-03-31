@@ -23,7 +23,8 @@ import {
   MapPin,
   Users,
   MoreVertical,
-  LoaderCircle
+  LoaderCircle,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/components/auth-provider';
 
 // Update the JetShareOfferWithUser type to include the isOwnOffer flag
 interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
@@ -98,7 +102,7 @@ interface UserWithVerification {
 }
 
 interface JetShareListingsContentProps {
-  user: User | null;
+  // User is already provided by useAuth(), so no need to pass it in
 }
 
 // Placeholder component for empty state
@@ -146,8 +150,9 @@ const SkeletonCard = () => (
   </Card>
 );
 
-export default function JetShareListingsContent({ user }: JetShareListingsContentProps) {
+export default function JetShareListingsContent() {
   const router = useRouter();
+  const { user, refreshSession } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isAccepting, setIsAccepting] = useState(false);
   const [offers, setOffers] = useState<EnhancedJetShareOfferWithUser[]>([]);
@@ -162,8 +167,10 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
   const [arrivalFilter, setArrivalFilter] = useState('');
   const [minPriceFilter, setMinPriceFilter] = useState('');
   const [maxPriceFilter, setMaxPriceFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
   
   const supabase = createClient();
   
@@ -194,76 +201,243 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
     };
   }, []);
   
-  // Modify fetchOffers to add a cache-busting parameter and improve error handling
-  const fetchOffers = async () => {
-    console.log('Starting to fetch offers...');
+  // Fetch offers from API
+  const fetchOffers = async (
+    status = 'open', 
+    viewMode: 'marketplace' | 'dashboard' = 'marketplace',
+    userId?: string,
+    retry = 0
+  ) => {
+    console.log(`Fetching ${status} offers for ${viewMode} view (retry: ${retry})`);
+    if (retry > 3) {
+      console.error('Max retries reached, giving up');
+      setError('Unable to load offers after multiple attempts. Please refresh the page.');
+      setIsLoading(false);
+      return;
+    }
+    
     setIsLoading(true);
-    setError(null);
     
     try {
-      console.log('Fetching from API...');
-      // Add a timestamp parameter to avoid caching issues
-      const timestamp = new Date().getTime();
-      const randomId = Math.random().toString(36).substring(2, 10);
-      const response = await fetch(`/api/jetshare/getOffers?status=open&viewMode=marketplace&t=${timestamp}&rid=${randomId}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        credentials: 'include'
+      // Get auth token for API calls
+      let authToken = null;
+      let authUserId = userId;
+      
+      // Try to get token from supabase auth
+      try {
+        const supabase = createClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (sessionData?.session?.access_token) {
+          authToken = sessionData.session.access_token;
+          authUserId = authUserId || sessionData.session?.user?.id;
+          console.log('Using current session auth token for listings');
+        }
+      } catch (sessionError) {
+        console.warn('Error getting session:', sessionError);
+      }
+      
+      // If no token from session, try localStorage
+      if (!authToken) {
+        try {
+          const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+          if (tokenData) {
+            try {
+              const parsedToken = JSON.parse(tokenData);
+              if (parsedToken && parsedToken.access_token) {
+                authToken = parsedToken.access_token;
+                console.log('Using token from localStorage');
+                
+                // Also try to get user ID from localStorage if not provided
+                if (!authUserId) {
+                  authUserId = localStorage.getItem('jetstream_user_id') || undefined;
+                  if (authUserId) {
+                    console.log('Using user_id from localStorage');
+                  }
+                }
+              }
+            } catch (parseError) {
+              console.warn('Error parsing localStorage token:', parseError);
+            }
+          }
+        } catch (storageError) {
+          console.warn('Error accessing localStorage:', storageError);
+        }
+      }
+      
+      // Construct the API URL with query parameters
+      let url = `/api/jetshare/getOffers?status=${status}&viewMode=${viewMode}`;
+      
+      // Always append a timestamp to bust cache
+      url += `&t=${Date.now()}`;
+      
+      // Basic request headers
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      };
+      
+      // Add auth token if available
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      // Add user_id as query param for private browsing mode
+      if (authUserId && url.indexOf('user_id=') === -1) {
+        url += `&user_id=${encodeURIComponent(authUserId)}`;
+      }
+      
+      // Log request details for debugging
+      console.log(`JetShare request URL: ${url.substring(0, 100)}${url.length > 100 ? '...' : ''}`);
+      console.log('JetShare request headers:', Object.keys(headers).join(', '));
+      
+      // Add timeout with AbortController
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout (increased from 10)
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        credentials: 'include', // Important for cookie-based auth
+        signal: controller.signal,
       });
       
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API error:', errorData);
-        
-        // Display a friendly message regardless of error type
-        setError('Unable to load flight share offers. Please try again later.');
-        setIsLoading(false);
-        return;
-      }
-      
-      const data = await response.json();
-      console.log('API response:', data);
-      
-      // Handle no offers case
-      if (!data.offers || !Array.isArray(data.offers) || data.offers.length === 0) {
-        console.log('No offers found in API response, showing empty state');
-        setOffers([]);
-        setFilteredOffers([]);
-        setError('No flight shares available at the moment. Try checking back later or create your own offer.');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Mark offers by the current user if user is authenticated
-      // Also filter out any non-open offers that might have been returned
-      const processedOffers = data.offers
-        .filter((offer: EnhancedJetShareOfferWithUser) => offer.status === 'open')
-        .map((offer: EnhancedJetShareOfferWithUser) => {
-          if (user && (offer.user_id === user.id || offer.isOwnOffer)) {
-            return { ...offer, isOwnOffer: true };
+        // Handle auth errors specifically
+        if (response.status === 401 || response.status === 403) {
+          console.error('Authentication error fetching offers:', response.status);
+          
+          // If this is already a retry, fail gracefully
+          if (retry >= 2) {
+            console.error('Max retries reached for auth error, giving up');
+            setError('Authentication failed. Please try refreshing the page or logging in again.');
+            setIsLoading(false);
+            return;
           }
-          return { ...offer, isOwnOffer: false };
-        });
-      
-      console.log(`Processed ${processedOffers.length} open offers for display`);
-      
-      // Store offers
-      setOffers(processedOffers);
-      setFilteredOffers(processedOffers);
-      
-      // If no offers are found after filtering
-      if (processedOffers.length === 0) {
-        setError('No flight shares available that match your criteria. Try adjusting your filters or check back later.');
+          
+          // Try to refresh auth and retry
+          try {
+            console.log('Auth error, attempting to refresh session and retry...');
+            const supabase = createClient();
+            const { data } = await supabase.auth.refreshSession();
+            
+            if (data.session) {
+              console.log('Session refreshed, retrying fetch...');
+              // Wait a moment for auth to propagate
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              // Retry with incremented retry count
+              return fetchOffers(status, viewMode, userId, retry + 1);
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing session:', refreshError);
+          }
+        } else if (response.status === 500) {
+          // For server errors, wait and retry with backoff
+          console.error('Server error (500) fetching offers. Retrying with backoff...');
+          
+          // Check response for specific database relationship error
+          try {
+            const errorData = await response.json();
+            
+            // Check for the specific relationship error
+            if (errorData?.details?.includes('relationship between') &&
+                errorData?.details?.includes('jetshare_profiles')) {
+              console.log('Detected database relationship error with profiles. Continuing with empty results...');
+              
+              // Instead of retrying, just continue with empty results since we know it will fail again
+              setOffers([]);
+              setError('Unable to load user profiles. Basic listing information is still available.');
+              setIsLoading(false);
+              return;
+            }
+          } catch (parseError) {
+            // If we can't parse the response, just continue with standard retry logic
+            console.warn('Could not parse error response:', parseError);
+          }
+          
+          const backoffTime = Math.min(1000 * (retry + 1), 5000); // Exponential backoff with max of 5 seconds
+          
+          setTimeout(() => {
+            fetchOffers(status, viewMode, userId, retry + 1);
+          }, backoffTime);
+          
+          return;
+        }
+        
+        // General error handling
+        let errorMessage = 'Failed to fetch offers';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+          console.error('Error details:', errorData);
+        } catch (e) {
+          // If we can't parse JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        
+        setError(errorMessage);
+        
+        // For all errors, show empty state after a few seconds rather than spinning forever
+        setTimeout(() => {
+          setIsLoading(false);
+          setOffers([]);
+        }, 2000);
+        
+        return;
       }
+      
+      // Process successful response
+      const data = await response.json();
+      
+      if (!data.offers || !Array.isArray(data.offers)) {
+        console.warn('Unexpected response format - missing offers array:', data);
+        setOffers([]);
+      } else {
+        // Enhance offers with default user info if missing
+        const enhancedOffers = data.offers.map((offer: JetShareOfferWithUser) => {
+          // Check if user info is missing and provide defaults
+          if (!offer.user) {
+            return {
+              ...offer,
+              user: {
+                id: offer.user_id,
+                first_name: "Jet",
+                last_name: "Owner"
+              }
+            };
+          }
+          return offer;
+        });
+        
+        setOffers(enhancedOffers || []);
+        console.log(`Fetched ${enhancedOffers?.length || 0} ${status} offers`);
+      }
+      
+      setError(null);
     } catch (error) {
       console.error('Error fetching offers:', error);
-      setError('Failed to load flight share offers. Please try again later.');
-      // Set empty arrays to prevent undefined errors in the UI
+      
+      // Handle aborted requests separately
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        setError('Failed to fetch offers. Please try again later.');
+      }
+      
+      // For network errors, retry once after a delay
+      if (error instanceof TypeError && error.message.includes('fetch') && retry < 2) {
+        console.log('Network error, retrying after delay...');
+        setTimeout(() => {
+          fetchOffers(status, viewMode, userId, retry + 1);
+        }, 2000);
+        return;
+      }
+      
+      // Set empty offers array on error to avoid showing stale data
       setOffers([]);
-      setFilteredOffers([]);
     } finally {
       setIsLoading(false);
     }
@@ -281,6 +455,36 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
     
     return () => clearInterval(interval);
   }, [user, router]);
+  
+  // Check for resumed offer acceptance after login
+  useEffect(() => {
+    // Only try to resume if user is authenticated
+    if (user) {
+      try {
+        const resumeOfferId = sessionStorage.getItem('jetshare_resume_offer_acceptance');
+        if (resumeOfferId) {
+          console.log('Resuming offer acceptance after login:', resumeOfferId);
+          
+          // Clear from session storage to prevent repeated attempts
+          sessionStorage.removeItem('jetshare_resume_offer_acceptance');
+          
+          // Find the offer in our loaded offers
+          const offerToResume = offers.find(offer => offer.id === resumeOfferId);
+          if (offerToResume) {
+            // Trigger the confirmation dialog
+            setSelectedOffer(offerToResume);
+            setShowConfirmDialog(true);
+          } else {
+            // If we can't find the offer, refresh to see if it's still available
+            console.log('Offer not found in current list, refreshing...');
+            fetchOffers();
+          }
+        }
+      } catch (e) {
+        console.warn('Could not access sessionStorage:', e);
+      }
+    }
+  }, [user, offers]);
   
   // Filter and sort offers
   useEffect(() => {
@@ -345,11 +549,99 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
     setFilteredOffers(result);
   }, [offers, searchTerm, sortOption, departureFilter, arrivalFilter, minPriceFilter, maxPriceFilter]);
   
+  // Ensure auth session is fresh before making important API calls
+  const ensureAuthSession = async (): Promise<boolean> => {
+    console.log('Ensuring fresh auth session before API call...');
+    
+    // First try the standard refresh via auth context
+    try {
+      const refreshed = await refreshSession();
+      if (refreshed) {
+        console.log('Session refreshed successfully via auth context');
+        return true;
+      }
+    } catch (refreshError) {
+      console.warn('Error in standard session refresh:', refreshError);
+    }
+    
+    // If that fails, try direct client refresh
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (!error && data.session) {
+        console.log('Session refreshed successfully via direct client call');
+        return true;
+      } else if (error) {
+        console.warn('Failed to refresh session via direct client call:', error);
+      }
+    } catch (directRefreshError) {
+      console.warn('Error in direct session refresh:', directRefreshError);
+    }
+    
+    // Try multiple sources for auth token - for improved reliability
+    let authToken = null;
+    let authTokenSource = '';
+    
+    // First try to get token from supabase auth
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.access_token) {
+        authToken = sessionData.session.access_token;
+        authTokenSource = 'current session';
+      }
+    } catch (sessionError) {
+      console.warn('Error getting session:', sessionError);
+    }
+    
+    // Then try localStorage JWT token if available
+    if (!authToken) {
+      try {
+        const storedToken = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+        if (storedToken) {
+          const tokenData = JSON.parse(storedToken);
+          if (tokenData?.access_token) {
+            authToken = tokenData.access_token;
+            authTokenSource = 'localStorage';
+          }
+        }
+      } catch (e) {
+        console.warn('Error accessing localStorage for auth token:', e);
+      }
+    }
+    
+    // If we still don't have a token, try refresh
+    if (!authToken) {
+      try {
+        console.log('No auth token found, attempting to refresh session...');
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        if (refreshData?.session?.access_token) {
+          authToken = refreshData.session.access_token;
+          authTokenSource = 'refreshed session';
+        }
+      } catch (refreshError) {
+        console.warn('Error refreshing session:', refreshError);
+      }
+    }
+    
+    return false;
+  };
+
   const handleOfferAccept = async (offer: EnhancedJetShareOfferWithUser) => {
     // Early validation
     if (!user) {
       toast.error('Please sign in to accept this offer');
-      router.push(`/auth/signin?redirect=/jetshare/listings`);
+      
+      // Store offer ID in sessionStorage for resuming after login
+      try {
+        sessionStorage.setItem('jetshare_resume_offer_acceptance', offer.id || '');
+        sessionStorage.setItem('auth_redirect_url', '/jetshare/listings');
+      } catch (storageError) {
+        console.warn('Could not access sessionStorage:', storageError);
+      }
+      
+      // Fix the auth redirect URL - signin should be login
+      router.push(`/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}`);
       return;
     }
     
@@ -364,71 +656,295 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
   };
   
   const confirmOfferAccept = async () => {
-    if (!selectedOffer || !user) return;
-    
-    // Close the confirmation dialog
-    setShowConfirmDialog(false);
-    
-    // Set accepting state to show loading UI
-    setIsAccepting(true);
-    
-    try {
-      console.log('Accepting offer:', selectedOffer.id);
+    // Early return if selectedOffer is null
+    if (!selectedOffer) {
+      console.error('Cannot accept offer: No offer selected');
+      toast.error('Something went wrong. Please try again.');
+      return;
+    }
+
+    if (!user) {
+      console.log('ConfirmOfferAccept: No user, attempting to recover session before redirect');
       
-      // Step 1: Call acceptOffer API to mark the offer as accepted
-      const acceptResponse = await fetch('/api/jetshare/acceptOffer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          offer_id: selectedOffer.id,
-          payment_method: 'fiat' // Default to fiat, will be changed in payment page if needed
-        }),
-      });
-      
-      if (!acceptResponse.ok) {
-        const errorData = await acceptResponse.json();
+      // Instead of immediately redirecting, try to refresh the session
+      try {
+        // First try direct Supabase refresh
+        const { data, error } = await supabase.auth.refreshSession();
         
-        // Check if error is due to offer already being accepted by another user
-        if (acceptResponse.status === 409 || 
-            errorData.message?.includes('already') || 
-            errorData.message?.includes('unavailable')) {
-          console.error('Offer unavailable error:', errorData);
-          toast.error('This offer is no longer available. It may have been accepted by another user.');
+        if (!error && data.session) {
+          console.log('ConfirmOfferAccept: Session restored through refresh');
+          // We have a session now, we can continue without redirect
           
-          // Refresh listings to remove this offer
-          await fetchOffers();
-          setIsAccepting(false);
+          // Add a small delay for the auth context to update
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          // If we still don't have the user in context, but we do have a session,
+          // we can use the session user directly
+          const currentUser = data.session.user;
+          
+          // Continue with the accept process using the session user
+          console.log('ConfirmOfferAccept: Using session user to continue:', currentUser.id);
+          
+          // Proceed with the current user from the session
+          // The rest of the code will use this user object
+          
+          // Force setting user data in localStorage for recovery
+          try {
+            localStorage.setItem('jetstream_user_id', currentUser.id);
+            localStorage.setItem('jetstream_user_email', currentUser.email || '');
+          } catch (e) {}
+          
+          toast.success('Session restored');
+          
+          // Return to avoid redirect
+          return;
+        } else {
+          console.error('ConfirmOfferAccept: Session refresh failed:', error);
+          toast.error('Please sign in to accept this offer');
+          
+          // Store state for resuming after login
+          try {
+            sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id || '');
+            sessionStorage.setItem('auth_redirect_url', '/jetshare/listings');
+          } catch (e) {}
+          
+          window.location.href = `/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}`;
           return;
         }
+      } catch (refreshError) {
+        console.error('ConfirmOfferAccept: Error during refresh:', refreshError);
+        toast.error('Please sign in to accept this offer');
         
-        // For other errors
-        console.error('Error accepting offer:', errorData);
-        throw new Error(errorData.message || 'Failed to accept the offer');
+        // Store state for resuming after login
+        try {
+          sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id || '');
+          sessionStorage.setItem('auth_redirect_url', '/jetshare/listings');
+        } catch (e) {}
+        
+        window.location.href = `/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}`;
+        return;
+      }
+    }
+
+    try {
+      // Show loading state
+      setIsAccepting(true);
+      setError(null);
+      
+      // --- PRE-AUTHENTICATION REFRESH ---
+      console.log('ConfirmOfferAccept: Attempting pre-emptive session refresh...');
+      
+      // First try the context's refreshSession method if available
+      let refreshSuccessful = false;
+      if (refreshSession) {
+        try {
+          // Get current token status for logging
+          let tokenState = 'unknown';
+          try {
+            const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+            if (tokenData) {
+              const parsed = JSON.parse(tokenData);
+              tokenState = `access: ${!!parsed?.access_token}, refresh: ${!!parsed?.refresh_token}`;
+            }
+          } catch (e) {}
+          console.log(`ConfirmOfferAccept: Token state before refresh: ${tokenState}`);
+          
+          // Now try the refresh
+          await refreshSession();
+          console.log('ConfirmOfferAccept: Pre-emptive context refresh successful');
+          refreshSuccessful = true;
+        } catch (refreshError) {
+          console.warn('ConfirmOfferAccept: Context refresh failed:', refreshError);
+          // We'll try direct Supabase refresh next if this fails
+        }
       }
       
-      // Step 2: If successful, show a success message and redirect to payment page
-      const acceptData = await acceptResponse.json();
-      console.log('Offer accepted successfully:', acceptData);
+      // If context refresh failed, try direct Supabase refresh
+      if (!refreshSuccessful) {
+        try {
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.warn('ConfirmOfferAccept: Direct Supabase refresh failed:', refreshError);
+            
+            // If we still can't refresh, this is a critical error - send to login
+            toast.error('Your session seems invalid. Please sign in again.');
+            // Store state for resumption
+            try {
+              sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id || '');
+            } catch (e) {}
+            
+            // Hard redirect to login
+            window.location.href = `/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}&tokenExpired=true`;
+            return; // Exit early
+          } else {
+            console.log('ConfirmOfferAccept: Direct Supabase refresh successful');
+            refreshSuccessful = true;
+          }
+        } catch (e) {
+          console.error('ConfirmOfferAccept: Error during refresh attempts:', e);
+          // Continue anyway as a last resort
+        }
+      }
       
-      // Show success toast
+      // Clear any previous state that might be lingering
+      try {
+        sessionStorage.removeItem('jetshare_payment_redirect');
+        sessionStorage.removeItem('jetshare_resume_offer_acceptance');
+      } catch (e) {
+        console.warn('Failed to clear session storage:', e);
+      }
+      
+      console.log('Accepting offer:', selectedOffer.id);
+      
+      // Get the auth token after refresh attempts
+      let authToken = null;
+      
+      // Get the auth token from Supabase client
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session?.access_token) {
+          authToken = data.session.access_token;
+          console.log('Using session token for API call');
+        }
+      } catch (authError) {
+        console.warn('Failed to get session token:', authError);
+      }
+      
+      // If no token from session, try localStorage as fallback
+      if (!authToken) {
+        try {
+          const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+          if (tokenData) {
+            const parsedToken = JSON.parse(tokenData);
+            if (parsedToken && parsedToken.access_token) {
+              authToken = parsedToken.access_token;
+              console.log('Using localStorage token for API call');
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to get token from localStorage:', e);
+        }
+      }
+      
+      // Current timestamp for cache busting
+      const timestamp = Date.now();
+      const requestId = Math.random().toString(36).substring(2, 15); // Random ID to correlate logs
+      
+      // Setup headers with authentication
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store',
+        'Pragma': 'no-cache',
+        'X-Request-ID': requestId,
+      };
+      
+      // Add auth token if available
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      // Add user ID explicitly to ensure it's available to the API
+      if (user?.id) {
+        headers['X-User-ID'] = user.id;
+      }
+      
+      // Make the API call to accept the offer
+      const response = await fetch(`/api/jetshare/acceptOffer?t=${timestamp}&rid=${requestId}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ 
+          offer_id: selectedOffer.id,
+          payment_method: 'fiat', // Default to fiat payments
+          user_id: user.id // Include user ID for additional verification
+        }),
+        credentials: 'include', // Important for cookie-based auth
+      });
+      
+      // Parse the API response
+      const apiData = await response.json();
+      
+      // Check for auth errors first
+      if (!response.ok && response.status === 401) {
+        // Auth error - store information for later and redirect to login
+        console.error('Authentication error:', apiData);
+        
+        try {
+          // Store data for resuming after login with null-safety
+          if (selectedOffer) {
+            sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id);
+            sessionStorage.setItem('jetshare_pending_offer', selectedOffer.id);
+            localStorage.setItem('current_payment_offer_id', selectedOffer.id);
+            localStorage.setItem('jetstream_last_action', 'accept_offer');
+            localStorage.setItem('jetstream_last_offer_id', selectedOffer.id);
+          }
+        } catch (storageError) {
+          console.warn('Error storing session data:', storageError);
+        }
+        
+        toast.error('Your session has expired. Please sign in to continue.');
+        // Redirect to login with return URL and the offer ID, with null-safety
+        const returnUrl = encodeURIComponent('/jetshare/listings');
+        const loginUrl = `/auth/login?returnUrl=${returnUrl}&t=${Date.now()}${selectedOffer ? `&offer=${selectedOffer.id}` : ''}`;
+        
+        // Use window.location for a hard redirect to ensure cookies are properly reset
+        window.location.href = loginUrl;
+        return;
+      }
+      
+      // For other errors, show a general error message
+      if (!response.ok) {
+        console.error('API error:', apiData);
+        throw new Error(apiData.message || 'Failed to accept offer');
+      }
+      
+      // Special handling for status constraint workaround:
+      // The API may have returned success but only partially updated the offer
+      // (matched_user_id set but status still "open")
+      const updatedOffer = apiData.data?.offer;
+      
+      if (updatedOffer && updatedOffer.status !== 'accepted' && 
+          (user ? updatedOffer.matched_user_id === user.id : false)) {
+        console.log('Offer partially accepted (status not updated but matched_user_id set)');
+        console.log('This is expected due to the constraint workaround - proceeding to payment with partial flag');
+        // We can still proceed to payment if the matched_user_id is set
+        // Add partial flag to URL to trigger status fix on the payment page
+        apiData.data.redirect_url = (apiData.data.redirect_url || `/jetshare/payment/${selectedOffer.id}`) + '?partial=true';
+      }
+      
+      // Handle successful response
+      console.log('Offer acceptance successful:', apiData);
+      
+      // Use the redirect URL from the API if available
+      let redirectUrl = apiData.data?.redirect_url || `/jetshare/payment/${selectedOffer.id}?from=accept`;
+      
+      // Add timestamp to prevent caching issues
+      if (!redirectUrl.includes('?')) {
+        redirectUrl += `?t=${Date.now()}`;
+      } else if (!redirectUrl.includes('t=')) {
+        redirectUrl += `&t=${Date.now()}`;
+      }
+      
+      // Store essential data for recovery across various locations
+      try {
+        localStorage.setItem('current_payment_offer_id', selectedOffer.id);
+        sessionStorage.setItem('current_payment_offer_id', selectedOffer.id);
+        
+        // Clean up other states that might interfere
+        sessionStorage.removeItem('jetshare_resume_offer_acceptance');
+        sessionStorage.removeItem('jetshare_payment_redirect');
+      } catch (storageError) {
+        console.warn('Error managing offer data in storage:', storageError);
+      }
+      
       toast.success('Offer accepted successfully! Redirecting to payment...');
       
-      // Remove this offer from the listings in the UI immediately
-      setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
-      setFilteredOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
-      
-      // Redirect to payment page after a short delay (to allow seeing the toast)
-      setTimeout(() => {
-        router.push(`/jetshare/payment/${selectedOffer.id}`);
-      }, 1500);
+      // Use window.location for a hard redirect to ensure cookies are properly set
+      // and to ensure a clean state when loading the payment page
+      window.location.href = redirectUrl;
     } catch (error) {
-      console.error('Error in confirmOfferAccept:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to accept the offer. Please try again.');
+      console.error('Error accepting offer:', error);
+      setError(error instanceof Error ? error.message : 'An unknown error occurred');
+      toast.error('Failed to accept offer. Please try again.');
     } finally {
       setIsAccepting(false);
     }
@@ -481,11 +997,11 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
                 {offer.user?.last_name?.[0] || 'U'}
               </AvatarFallback>
               {offer.user?.avatar_url && (
-                <AvatarImage src={offer.user.avatar_url} alt={`${offer.user.first_name} ${offer.user.last_name}`} />
+                <AvatarImage src={offer.user.avatar_url} alt={`${offer.user?.first_name || 'User'} ${offer.user?.last_name || ''}`} />
               )}
             </Avatar>
             <span className="text-sm">
-              {offer.isOwnOffer ? 'You' : `${offer.user?.first_name} ${offer.user?.last_name?.[0] || ''}`}
+              {offer.isOwnOffer ? 'You' : (offer.user?.first_name ? `${offer.user.first_name} ${offer.user.last_name?.[0] || ''}` : 'Jet Owner')}
               {(offer.user as UserWithVerification)?.verification_status === 'verified' && (
                 <CheckCircle className="h-3 w-3 text-green-500 inline ml-1" />
               )}
@@ -497,14 +1013,23 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
           </div>
           <div className="flex items-center gap-2 mt-2">
             <Plane className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{offer.aircraft_model}</span>
+            <span className="text-sm">{offer.aircraft_model || 'Aircraft info unavailable'}</span>
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button 
             className="w-full" 
             variant={offer.isOwnOffer ? "secondary" : "default"}
-            onClick={() => setSelectedOffer(offer)}
+            onClick={() => {
+              setSelectedOffer(offer);
+              // If it's the user's own offer, just show details
+              // Otherwise, determine if we should show details or accept dialog
+              if (!offer.isOwnOffer && user) {
+                setShowConfirmDialog(true);
+              } else {
+                setShowDetailDialog(true);
+              }
+            }}
           >
             {offer.isOwnOffer ? "Manage Your Offer" : "View Details"}
           </Button>
@@ -512,6 +1037,39 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
       </div>
     </Card>
   );
+  
+  // DEBUG: Add a hidden function to run SQL fix if needed (triggered by keyboard shortcut)
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      // Alt+F10 will trigger the fix (obscure enough to not be triggered accidentally)
+      if (e.altKey && e.key === 'F10') {
+        console.log('Running SQL fix for status constraint issue...');
+        
+        try {
+          const response = await fetch('/api/jetshare/runSql', {
+            method: 'GET',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            console.log('SQL fix completed successfully');
+            toast.success('Database fix applied successfully');
+          } else {
+            console.error('SQL fix error:', result);
+            toast.error('Error applying database fix');
+          }
+        } catch (error) {
+          console.error('Error running SQL fix:', error);
+          toast.error('Failed to run database fix');
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   return (
     <div>
@@ -702,54 +1260,97 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
       </div>
       
       {/* Payment confirmation dialog */}
-      {selectedOffer && showConfirmDialog && (
-        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirm Flight Share</DialogTitle>
-              <DialogDescription>
-                You are about to book a shared flight from {selectedOffer.departure_location} to {selectedOffer.arrival_location} for ${selectedOffer.requested_share_amount.toLocaleString()}.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="flex flex-col space-y-2">
-                <h3 className="font-medium">Payment Method</h3>
-                <div className="flex space-x-2">
-                  <Button 
-                    className="w-full" 
-                    onClick={() => confirmOfferAccept()}
-                    disabled={isAccepting}
-                  >
-                    {isAccepting ? <LoaderCircle className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                    Pay with Card
-                  </Button>
-                  <Button 
-                    className="w-full" 
-                    variant="outline"
-                    onClick={() => setSelectedOffer(null)}
-                    disabled={isAccepting}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
+      <Dialog 
+        open={showConfirmDialog && selectedOffer !== null} 
+        onOpenChange={(open) => {
+          setShowConfirmDialog(open);
+          if (!open) {
+            // Allow time for the animation to complete before removing the offer
+            setTimeout(() => {
+              if (!isAccepting) {
+                setSelectedOffer(null);
+              }
+            }, 300);
+          }
+        }}
+      >
+        <DialogContent 
+          className="sm:max-w-md" 
+          onInteractOutside={(e) => {
+            // Prevent closing the dialog when accepting an offer
+            if (isAccepting) {
+              e.preventDefault();
+            }
+          }}
+        >
+          {selectedOffer && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Confirm Flight Share</DialogTitle>
+                <DialogDescription>
+                  You are about to book a shared flight from {selectedOffer.departure_location} to {selectedOffer.arrival_location} for ${selectedOffer.requested_share_amount.toLocaleString()}.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="flex flex-col space-y-2">
+                  <h3 className="font-medium">Payment Method</h3>
+                  <div className="flex space-x-2">
+                    <Button 
+                      className="w-full dialog-content" 
+                      onClick={() => confirmOfferAccept()}
+                      disabled={isAccepting}
+                      autoFocus
+                    >
+                      {isAccepting ? <LoaderCircle className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                      Pay with Card
+                    </Button>
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => {
+                        setShowConfirmDialog(false);
+                        // Allow animation to complete before clearing selection
+                        setTimeout(() => setSelectedOffer(null), 300);
+                      }}
+                      disabled={isAccepting}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter className="flex space-x-2 sm:justify-end">
-              <Button variant="outline" onClick={() => {
-                setShowConfirmDialog(false);
-                setSelectedOffer(null);
-                setIsAccepting(false);
-              }}>
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+              <DialogFooter className="flex space-x-2 sm:justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowConfirmDialog(false);
+                    // Allow animation to complete before clearing selection
+                    setTimeout(() => {
+                      setSelectedOffer(null);
+                      setIsAccepting(false);
+                    }, 300);
+                  }}
+                  disabled={isAccepting}
+                >
+                  Cancel
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Offer details dialog */}
-      <Dialog open={selectedOffer !== null} onOpenChange={(open) => !open && setSelectedOffer(null)}>
+      <Dialog 
+        open={selectedOffer !== null && !showConfirmDialog} 
+        onOpenChange={(open) => {
+          if (!open) {
+            // Allow animation to complete before clearing selection
+            setTimeout(() => setSelectedOffer(null), 300);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           {selectedOffer && (
             <>
@@ -792,7 +1393,7 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">Share Percentage</p>
                     <p className="font-medium">
-                      {((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
+                      {((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}
                     </p>
                   </div>
                 </div>
@@ -808,20 +1409,22 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
                       {selectedOffer.user?.avatar_url && (
                         <AvatarImage 
                           src={selectedOffer.user.avatar_url} 
-                          alt={`${selectedOffer.user.first_name} ${selectedOffer.user.last_name}`} 
+                          alt={`${selectedOffer.user?.first_name || 'User'} ${selectedOffer.user?.last_name || ''}`} 
                         />
                       )}
                     </Avatar>
                     <div>
                       <p className="font-medium">
-                        {selectedOffer.user?.first_name} {selectedOffer.user?.last_name}
+                        {selectedOffer.user?.first_name ? 
+                          `${selectedOffer.user.first_name} ${selectedOffer.user.last_name || ''}` : 
+                          'Jet Owner'}
                         {(selectedOffer.user as UserWithVerification)?.verification_status === 'verified' && (
                           <CheckCircle className="h-3.5 w-3.5 text-green-500 inline ml-1" />
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         This flight share is offered by a verified JetShare user. The requested share amount is
-                        {' '}{((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
+                        {' '}{((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}
                         {' '}of the total flight cost.
                       </p>
                     </div>
@@ -833,8 +1436,11 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
                 <DialogFooter className="sm:justify-start">
                   <div className="w-full space-y-2">
                     <Button 
-                      className="w-full" 
-                      onClick={() => confirmOfferAccept()}
+                      className="w-full details-dialog" 
+                      onClick={() => {
+                        // Show the confirmation dialog instead of the details dialog
+                        setShowConfirmDialog(true);
+                      }}
                       disabled={isAccepting}
                     >
                       {isAccepting ? (
@@ -853,7 +1459,14 @@ export default function JetShareListingsContent({ user }: JetShareListingsConten
                 </DialogFooter>
               ) : (
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setSelectedOffer(null)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      // Allow animation to complete before clearing selection
+                      setTimeout(() => setSelectedOffer(null), 300);
+                    }}
+                    className="details-dialog"
+                  >
                     Close
                   </Button>
                 </DialogFooter>

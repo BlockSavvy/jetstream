@@ -193,7 +193,24 @@ export async function generateAndDeliverBoardingPasses(
       // Send email if requested
       if (options.sendEmail && options.email) {
         try {
-          await sendBoardingPassEmail(options.email, boardingPass);
+          const emailOptions = {
+            to: options.email,
+            boardingPass: {
+              passengerName: options.passengerName,
+              seat: ticket.seat_number,
+              gate: ticket.gate,
+              boardingTime: new Date(ticket.boarding_time).toLocaleTimeString(),
+              qrCodeData: ticket.qr_code_url,
+            },
+            flight: {
+              flightNumber: `JS-${flight.id.substring(0, 6)}`,
+              departureCity: flight.origin?.city || flight.origin_airport || '',
+              arrivalCity: flight.destination?.city || flight.destination_airport || '',
+              departureDate: new Date(flight.departure_time).toLocaleDateString(),
+              departureTime: new Date(flight.departure_time).toLocaleTimeString(),
+            }
+          };
+          await sendBoardingPassEmail(emailOptions);
         } catch (emailError) {
           console.error('Error sending boarding pass email:', emailError);
         }
@@ -209,9 +226,16 @@ export async function generateAndDeliverBoardingPasses(
             time: new Date(flight.departure_time).toLocaleTimeString(),
           };
           
-          const boardingPassUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/flights/tickets/${ticket.id}`;
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+            (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+          const boardingPassUrl = `${baseUrl}/flights/tickets/${ticket.id}`;
           
-          await sendBoardingPassSMS(options.phone, ticket.ticket_code, flightInfo, boardingPassUrl);
+          await sendBoardingPassSMS(
+            options.phone, 
+            ticket.ticket_code, 
+            flightInfo, 
+            boardingPassUrl
+          );
         } catch (smsError) {
           console.error('Error sending boarding pass SMS:', smsError);
         }

@@ -139,11 +139,21 @@ interface AircraftModel {
   description?: string;
 }
 
-export default function JetShareOfferForm() {
+// Add interface for Airport type
+interface Airport {
+  code: string;
+  name: string;
+  city: string;
+  country: string;
+  is_private?: boolean;
+}
+
+export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   // Add state to control autocomplete visibility
   const [departureResults, setDepartureResults] = useState<string[]>([]);
@@ -153,11 +163,97 @@ export default function JetShareOfferForm() {
 
   // Check for authentication on load
   useEffect(() => {
-    if (!user) {
-      toast.error('Please sign in to create a jet share offer');
-      router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
+    // Wait for auth to complete loading
+    if (authLoading) {
+      return;
     }
-  }, [user, router]);
+    
+    // Auth has loaded, update state
+    setIsAuthenticating(false);
+    
+    // If no authenticated user, redirect to login
+    if (!user) {
+      console.log('JetShareOfferForm: No authenticated user, redirecting to login');
+      toast.error('Please sign in to create a flight share offer');
+      
+      // Encode the current URL to return after login
+      const returnUrl = encodeURIComponent(window.location.pathname);
+      router.push(`/auth/login?returnUrl=${returnUrl}`);
+    } else {
+      console.log('JetShareOfferForm: User authenticated, can proceed', user.id);
+      
+      // Private browsing session handling - enable direct form submission without session validation
+      // This bypasses the session check in private browsing scenarios or when cookies are blocked
+      
+      // Add some state to track if we're working with private browsing or limited cookie scenarios
+      // This will allow us to continue anyway if we have a user object but no proper session
+      
+      let privateMode = false;
+      try {
+        // Try to detect private browsing mode by testing localStorage access (not 100% reliable)
+        localStorage.setItem('__test_private_mode', '1');
+        localStorage.removeItem('__test_private_mode');
+        
+        // If we suspect private browsing due to limited cookies, set a flag
+        if (!document.cookie) {
+          console.log('JetShareOfferForm: Limited or no cookies available - possible private browsing');
+          privateMode = true;
+        }
+      } catch (e) {
+        console.log('JetShareOfferForm: Storage access failed - likely private browsing');
+        privateMode = true;
+      }
+      
+      if (privateMode) {
+        console.log('JetShareOfferForm: Operating in private browsing compatibility mode');
+        // In private mode, we'll rely solely on the user object from auth context
+        // No additional session validation to avoid redirect loops
+        return;
+      }
+      
+      // Only perform session validation in normal browsing mode where it's expected to work
+      const checkSession = async () => {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData?.session?.access_token) {
+            console.log('JetShareOfferForm: No valid session token found, trying to refresh...');
+            
+            // Try to refresh the session before showing an error
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData?.session?.access_token) {
+              console.log('JetShareOfferForm: Session refreshed successfully');
+              return; // Session refresh worked, no need to redirect
+            }
+            
+            // Only show error after refresh attempt fails
+            console.error('JetShareOfferForm: No valid session token found after refresh attempt');
+            toast.error('Your session needs to be refreshed. Redirecting to login...', {
+              duration: 3000,
+              action: {
+                label: 'Cancel',
+                onClick: () => {
+                  console.log('JetShareOfferForm: User canceled redirect - continuing in limited mode');
+                  // User chose to continue anyway - we'll try to work with what we have
+                }
+              }
+            });
+            
+            // Delay the redirect slightly to allow the user to see the toast and potentially cancel
+            // This also increases chances of the refresh working in the background
+            setTimeout(() => {
+              router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
+            }, 3000);
+          } else {
+            console.log('JetShareOfferForm: Valid session token found');
+          }
+        } catch (err) {
+          console.error('Error checking session:', err);
+        }
+      };
+      
+      checkSession();
+    }
+  }, [user, authLoading, router, supabase.auth]);
   
   // Initialize form with default values
   const form = useForm<z.infer<typeof enhancedFormSchema>>({
@@ -170,7 +266,7 @@ export default function JetShareOfferForm() {
       total_seats: 8, // Default for a typical private jet
       available_seats: 4, // Default to half the seats
       total_flight_cost: 25000, // Default value
-      requested_share_amount: 12500, // Default to 50%
+      requested_share_amount: 12500, // Default to 50
     },
   });
   
@@ -269,46 +365,277 @@ export default function JetShareOfferForm() {
     setIsSubmitting(true);
     
     try {
-      // Check if user is authenticated
+      // If the user is still null at this point, we should check the session again
       if (!user) {
-        toast.error('You must be signed in to create an offer');
-        router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
-        return;
-      }
-      
-      // Format the date for the API
-      const formattedValues = {
-        ...values,
-        // Ensure numbers are properly formatted as integers
-        total_flight_cost: Number(values.total_flight_cost),
-        requested_share_amount: Number(values.requested_share_amount),
-        total_seats: Number(values.total_seats),
-        available_seats: Number(values.available_seats),
-        flight_date: values.flight_date.toISOString(),
-        status: 'open',
-        matched_user_id: null,
-      };
-      
-      // Submit the form data using API endpoint instead of direct Supabase access
-      const response = await fetch('/api/jetshare/createOffer', {
-        method: 'POST',
-        headers: {
+        console.log('User is still null, attempting to get user ID from session');
+        // Attempt to get user ID from the session
+        const { data } = await supabase.auth.getSession();
+        const sessionUserId = data.session?.user?.id;
+        
+        // Format the date for the API
+        const formattedValues = {
+          ...values,
+          // Ensure numbers are properly formatted as integers
+          total_flight_cost: Number(values.total_flight_cost),
+          requested_share_amount: Number(values.requested_share_amount),
+          total_seats: Number(values.total_seats),
+          available_seats: Number(values.available_seats),
+          flight_date: values.flight_date.toISOString(),
+          status: 'open',
+          matched_user_id: null,
+          // Include user ID from session if available, or null if not
+          user_id: sessionUserId || null
+        };
+        
+        // Prepare request headers
+        const headers: Record<string, string> = {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedValues),
-      });
-      
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to create offer');
+        };
+        
+        // Submit the form data using API endpoint
+        const response = await fetch('/api/jetshare/createOffer', {
+          method: 'POST',
+          headers,
+          credentials: 'include', // Include cookies for authentication
+          body: JSON.stringify(formattedValues),
+        });
+        
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          // Handle different error scenarios
+          if (response.status === 401) {
+            // Auth error
+            if (responseData.code === 'AUTH_TOKEN_EXPIRED') {
+              toast.error('Your session has expired. Attempting to refresh...', {
+                duration: 5000,
+                description: 'Please wait a moment'
+              });
+              
+              // Try to refresh the session before redirecting
+              try {
+                const { data } = await supabase.auth.refreshSession();
+                if (data.session) {
+                  // Session refreshed, retry submission
+                  toast.success('Session refreshed');
+                  setIsSubmitting(false);
+                  // Wait a moment for auth state to update
+                  setTimeout(() => onSubmit(values), 1000);
+                  return;
+                } else {
+                  // If refresh failed, then redirect
+                  toast.error('Unable to refresh session. Please sign in again.', {
+                    duration: 5000,
+                    description: 'After signing in, you will be returned to this page'
+                  });
+                }
+              } catch (refreshError) {
+                console.error('Error refreshing session:', refreshError);
+                toast.error('Unable to refresh your session. Please sign in again.', {
+                  duration: 5000,
+                  description: 'After signing in, you will be returned to this page'
+                });
+              }
+            } else if (responseData.code === 'INVALID_USER_ID') {
+              toast.error('Authentication error. Please try again in a regular browser window.', {
+                duration: 5000,
+                description: 'Private browsing may limit functionality'
+              });
+            } else {
+              toast.error('Authentication error. Please sign in again.', {
+                duration: 5000
+              });
+            }
+            
+            // If we got a redirect URL, use it
+            if (responseData.redirectUrl) {
+              console.log('Redirecting to:', responseData.redirectUrl);
+              router.push(responseData.redirectUrl);
+              return;
+            }
+            
+            // Default redirect
+            router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
+            return;
+          } else if (response.status === 400) {
+            // Validation error
+            toast.error('Please check your form inputs', {
+              description: responseData.message || 'Some fields need correction'
+            });
+            // Highlight specific form errors if possible
+            if (responseData.details) {
+              Object.entries(responseData.details).forEach(([field, message]) => {
+                if (form.getValues(field as any) !== undefined) {
+                  form.setError(field as any, { 
+                    type: 'manual', 
+                    message: message as string 
+                  });
+                }
+              });
+            }
+            return;
+          } else {
+            // Generic server error
+            toast.error(responseData.message || 'Failed to create offer. Please try again.', {
+              duration: 5000
+            });
+          }
+          
+          throw new Error(responseData.message || 'Failed to create offer');
+        }
+        
+        // Show success message
+        toast.success('Flight share offer created successfully!', {
+          description: 'Your offer is now live and visible to potential matches'
+        });
+        
+        // Redirect to the listings page
+        router.push('/jetshare/listings');
+      } else {
+        // User is available, use their ID for the submission
+        const formattedValues = {
+          ...values,
+          // Ensure numbers are properly formatted as integers
+          total_flight_cost: Number(values.total_flight_cost),
+          requested_share_amount: Number(values.requested_share_amount),
+          total_seats: Number(values.total_seats),
+          available_seats: Number(values.available_seats),
+          flight_date: values.flight_date.toISOString(),
+          status: 'open',
+          matched_user_id: null,
+          // Use the user ID from the user object
+          user_id: user.id
+        };
+        
+        // Get fresh auth session with token
+        let token = null;
+        
+        // In normal browsing mode, try to get a token
+        if (!isAuthenticating) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          token = sessionData?.session?.access_token;
+          
+          // If no token is found, try refreshing the session
+          if (!token) {
+            console.log('No auth token available, attempting to refresh session...');
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            token = refreshData?.session?.access_token;
+          }
+        }
+
+        // Prepare request headers
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add auth token if available (may not be in private browsing)
+        if (token) {
+          console.log('Submitting offer with auth token:', token.substring(0, 10) + '...');
+          headers['Authorization'] = `Bearer ${token}`;
+        } else {
+          console.log('Submitting offer without auth token (private browsing mode)');
+        }
+        
+        // Submit the form data using API endpoint
+        const response = await fetch('/api/jetshare/createOffer', {
+          method: 'POST',
+          headers,
+          credentials: 'include', // Include cookies for authentication
+          body: JSON.stringify(formattedValues),
+        });
+        
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          // Handle different error scenarios
+          if (response.status === 401) {
+            // Auth error
+            if (responseData.code === 'AUTH_TOKEN_EXPIRED') {
+              toast.error('Your session has expired. Attempting to refresh...', {
+                duration: 5000,
+                description: 'Please wait a moment'
+              });
+              
+              // Try to refresh the session before redirecting
+              try {
+                const { data } = await supabase.auth.refreshSession();
+                if (data.session) {
+                  // Session refreshed, retry submission
+                  toast.success('Session refreshed');
+                  setIsSubmitting(false);
+                  // Wait a moment for auth state to update
+                  setTimeout(() => onSubmit(values), 1000);
+                  return;
+                } else {
+                  // If refresh failed, then redirect
+                  toast.error('Unable to refresh session. Please sign in again.', {
+                    duration: 5000,
+                    description: 'After signing in, you will be returned to this page'
+                  });
+                }
+              } catch (refreshError) {
+                console.error('Error refreshing session:', refreshError);
+                toast.error('Unable to refresh your session. Please sign in again.', {
+                  duration: 5000,
+                  description: 'After signing in, you will be returned to this page'
+                });
+              }
+            } else if (responseData.code === 'INVALID_USER_ID') {
+              toast.error('Authentication error. Please try again in a regular browser window.', {
+                duration: 5000,
+                description: 'Private browsing may limit functionality'
+              });
+            } else {
+              toast.error('Authentication error. Please sign in again.', {
+                duration: 5000
+              });
+            }
+            
+            // If we got a redirect URL, use it
+            if (responseData.redirectUrl) {
+              console.log('Redirecting to:', responseData.redirectUrl);
+              router.push(responseData.redirectUrl);
+              return;
+            }
+            
+            // Default redirect
+            router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
+            return;
+          } else if (response.status === 400) {
+            // Validation error
+            toast.error('Please check your form inputs', {
+              description: responseData.message || 'Some fields need correction'
+            });
+            // Highlight specific form errors if possible
+            if (responseData.details) {
+              Object.entries(responseData.details).forEach(([field, message]) => {
+                if (form.getValues(field as any) !== undefined) {
+                  form.setError(field as any, { 
+                    type: 'manual', 
+                    message: message as string 
+                  });
+                }
+              });
+            }
+            return;
+          } else {
+            // Generic server error
+            toast.error(responseData.message || 'Failed to create offer. Please try again.', {
+              duration: 5000
+            });
+          }
+          
+          throw new Error(responseData.message || 'Failed to create offer');
+        }
+        
+        // Show success message
+        toast.success('Flight share offer created successfully!', {
+          description: 'Your offer is now live and visible to potential matches'
+        });
+        
+        // Redirect to the listings page
+        router.push('/jetshare/listings');
       }
-      
-      // Show success message
-      toast.success('Flight share offer created successfully!');
-      
-      // Redirect to the listings page
-      router.push('/jetshare/listings');
     } catch (error) {
       console.error('Error creating offer:', error);
       
@@ -346,9 +673,30 @@ export default function JetShareOfferForm() {
     form.setValue("departure_location", value);
     // Filter airports based on input
     if (value.length > 1) {
-      const filtered = POPULAR_AIRPORTS.filter(
-        airport => airport.toLowerCase().includes(value.toLowerCase())
-      );
+      let filtered = [];
+      
+      // Check if we have airports from API to use
+      if (airportsList && airportsList.length > 0) {
+        filtered = airportsList.filter(
+          airport => {
+            const searchLower = value.toLowerCase();
+            return (
+              airport.code.toLowerCase().includes(searchLower) || 
+              airport.city.toLowerCase().includes(searchLower) ||
+              airport.name.toLowerCase().includes(searchLower)
+            );
+          }
+        ).map(airport => `${airport.city} (${airport.code})`);
+      } else {
+        // Fallback to POPULAR_AIRPORTS
+        filtered = POPULAR_AIRPORTS.filter(
+          airport => airport.toLowerCase().includes(value.toLowerCase())
+        );
+      }
+      
+      // Limit results to 10 for better UX
+      filtered = filtered.slice(0, 10);
+      
       setDepartureResults(filtered);
       setShowDepartureResults(filtered.length > 0);
     } else {
@@ -361,9 +709,30 @@ export default function JetShareOfferForm() {
     form.setValue("arrival_location", value);
     // Filter airports based on input
     if (value.length > 1) {
-      const filtered = POPULAR_AIRPORTS.filter(
-        airport => airport.toLowerCase().includes(value.toLowerCase())
-      );
+      let filtered = [];
+      
+      // Check if we have airports from API to use
+      if (airportsList && airportsList.length > 0) {
+        filtered = airportsList.filter(
+          airport => {
+            const searchLower = value.toLowerCase();
+            return (
+              airport.code.toLowerCase().includes(searchLower) || 
+              airport.city.toLowerCase().includes(searchLower) ||
+              airport.name.toLowerCase().includes(searchLower)
+            );
+          }
+        ).map(airport => `${airport.city} (${airport.code})`);
+      } else {
+        // Fallback to POPULAR_AIRPORTS
+        filtered = POPULAR_AIRPORTS.filter(
+          airport => airport.toLowerCase().includes(value.toLowerCase())
+        );
+      }
+      
+      // Limit results to 10 for better UX
+      filtered = filtered.slice(0, 10);
+      
       setArrivalResults(filtered);
       setShowArrivalResults(filtered.length > 0);
     } else {
@@ -383,6 +752,44 @@ export default function JetShareOfferForm() {
     setShowArrivalResults(false);
   };
   
+  // Show loading state while authentication is in progress
+  if (isAuthenticating || authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-12 w-12 animate-spin text-amber-500 mb-4" />
+        <p className="text-gray-600 dark:text-gray-300">Verifying authentication...</p>
+      </div>
+    );
+  }
+  
+  // Show error state if not authenticated
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="p-4 mb-6 rounded-full bg-red-100 text-red-500">
+          <UserPlus className="h-12 w-12" />
+        </div>
+        <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md">
+          You need to be signed in to create a flight share offer. Please sign in or create an account to continue.
+        </p>
+        <Button
+          onClick={() => router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`)}
+          className="mb-4"
+        >
+          Sign In
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => router.push('/jetshare')}
+        >
+          Return to JetShare Home
+        </Button>
+      </div>
+    );
+  }
+  
+  // Continue with the normal form render if authenticated
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
@@ -666,7 +1073,7 @@ export default function JetShareOfferForm() {
                         // Calculate platform fee (7.5% is the default handling fee)
                         const platformFee = value * 0.075;
                         
-                        // Preserve the current percentage if available, otherwise default to 50%
+                        // Preserve the current percentage if available, otherwise default to 50
                         const currentPercentage = totalFlightCost && totalFlightCost > 0 
                           ? (requestedShareAmount / totalFlightCost * 100)
                           : 50;
@@ -700,7 +1107,7 @@ export default function JetShareOfferForm() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Percentage: {sharePercentage}%
+                    Percentage: {sharePercentage}
                   </span>
                   <span className="font-medium">
                     ${typeof field.value === 'number' ? field.value.toLocaleString() : Number(field.value).toLocaleString()}

@@ -12,6 +12,9 @@ import { format } from 'date-fns';
 import { CheckCircle, Clock, AlertCircle, Plane, Users, CreditCard } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase';
+import { useAuth } from '@/components/auth-provider';
+import { v4 as uuidv4 } from 'uuid';
 
 // Add props interface
 interface JetShareDashboardProps {
@@ -20,8 +23,17 @@ interface JetShareDashboardProps {
   successMessage?: string;
 }
 
+// Define type for stats
+interface JetShareStats {
+  totalOffers: number;
+  totalBookings: number;
+  totalSpent: number;
+  totalEarned: number;
+}
+
 export default function JetShareDashboard({ initialTab = 'dashboard', errorMessage, successMessage }: JetShareDashboardProps) {
   const router = useRouter();
+  const { refreshSession, user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [myOffers, setMyOffers] = useState<JetShareOfferWithUser[]>([]);
   const [myBookings, setMyBookings] = useState<JetShareOfferWithUser[]>([]);
@@ -29,6 +41,12 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
   const [transactions, setTransactions] = useState<JetShareTransactionWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(errorMessage || null);
+  const [stats, setStats] = useState<JetShareStats>({
+    totalOffers: 0,
+    totalBookings: 0, 
+    totalSpent: 0,
+    totalEarned: 0
+  });
 
   // Display success message if provided
   useEffect(() => {
@@ -58,150 +76,239 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching JetShare dashboard data...');
-        setError(null);
         setIsLoading(true);
         
-        // Fetch my open offers - using userId=current and viewMode=dashboard ensures we only get the current user's offers
-        console.log('Fetching open offers...');
-        const offersRes = await fetch('/api/jetshare/getOffers?status=open&userId=current&viewMode=dashboard', {
-          credentials: 'include', // Include cookies for authentication
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
+        // Generate unique request identifiers
+        const timestamp = Date.now();
+        const requestId = Math.random().toString(36).substring(2, 10);
+        const instanceId = uuidv4();
         
-        if (!offersRes.ok) {
-          console.error('Error fetching open offers:', await offersRes.text());
-          if (offersRes.status === 401) {
-            setError('Authentication required. Please sign in to view your dashboard.');
-            setIsLoading(false);
-            return;
+        // Get the user's token for authenticated requests
+        const supabase = createClient();
+        let session = null;
+        let userId = null;
+        
+        try {
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error('Session error:', sessionError);
+          } else if (sessionData?.session) {
+            session = sessionData.session;
+            userId = sessionData.session.user?.id;
+            if (userId) {
+              console.log('Dashboard: Using authenticated session for user', userId);
+            } else {
+              console.log('Dashboard: Session found but user ID is missing');
+            }
+          } else {
+            console.log('Dashboard: No valid session found');
           }
+        } catch (sessionError) {
+          console.error('Error getting session:', sessionError);
+        }
+        
+        // If no session, try to get user ID from localStorage
+        if (!userId) {
+          try {
+            userId = localStorage.getItem('jetstream_user_id');
+            if (userId) {
+              console.log('Dashboard: Using user ID from localStorage:', userId);
+            }
+          } catch (storageError) {
+            console.error('Error accessing localStorage:', storageError);
+          }
+        }
+        
+        // If still no user ID, use the user from the auth context
+        if (!userId && user) {
+          userId = user.id;
+          console.log('Dashboard: Using user ID from auth context:', userId);
+        }
+        
+        // If we still don't have a user ID at this point, we're in trouble
+        if (!userId) {
+          console.error('Unable to determine user ID for dashboard');
+          setError('Authentication issue occurred. Please refresh the page or sign in again.');
+          setIsLoading(false);
+          
+          // Still show empty state rather than throwing
           setMyOffers([]);
-        } else {
-          const offersData = await offersRes.json();
-          console.log('Open offers fetched:', offersData.offers?.length || 0);
-          setMyOffers(offersData.offers || []);
-        }
-
-        // Fetch my bookings - focusing on offers where I am the matched_user (accepted and completed)
-        console.log('Fetching bookings (offers where I am matched_user)...');
-        const bookingsRes = await fetch('/api/jetshare/getOffers?matchedUserId=current&viewMode=dashboard', {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache', 
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (!bookingsRes.ok) {
-          console.error('Error fetching bookings:', await bookingsRes.text());
           setMyBookings([]);
-        } else {
-          const bookingsData = await bookingsRes.json();
-          console.log('Bookings API response:', bookingsData);
-          
-          if (bookingsData.offers && Array.isArray(bookingsData.offers)) {
-            console.log('Found bookings:', bookingsData.offers.length);
-            
-            // For the bookings tab, include both accepted and completed where user is matched_user
-            const myBookingsData = bookingsData.offers;
-            console.log('Setting my bookings to:', myBookingsData.length, 'items');
-            setMyBookings(myBookingsData);
-            
-            // For completed flights, filter only completed status
-            const completedBookings = bookingsData.offers.filter(
-              (offer: JetShareOfferWithUser) => offer.status === 'completed'
-            );
-            
-            console.log('Setting completed flights to:', completedBookings.length, 'items');
-            setCompletedFlights(completedBookings);
-          } else {
-            console.log('No bookings found for current user');
-            setMyBookings([]);
-            setCompletedFlights([]);
-          }
-        }
-        
-        // Fetch all my offers that are in accepted or completed status
-        console.log('Fetching my accepted & completed offers...');
-        const acceptedOffersRes = await fetch('/api/jetshare/getOffers?userId=current&status=accepted,completed&viewMode=dashboard', {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (acceptedOffersRes.ok) {
-          const acceptedOffersData = await acceptedOffersRes.json();
-          console.log('My accepted/completed offers found:', acceptedOffersData.offers?.length || 0);
-          
-          // Add these to completed flights if they're in completed status
-          if (acceptedOffersData.offers && Array.isArray(acceptedOffersData.offers)) {
-            const myCompletedOffers = acceptedOffersData.offers.filter(
-              (offer: JetShareOfferWithUser) => offer.status === 'completed'
-            );
-            
-            // Combine with existing completed flights
-            const combinedCompleted = [...completedFlights, ...myCompletedOffers];
-            // Remove duplicates
-            const uniqueCompleted = combinedCompleted.filter((offer, index, self) =>
-              index === self.findIndex((o) => o.id === offer.id)
-            );
-            
-            setCompletedFlights(uniqueCompleted);
-          }
-        }
-        
-        // Fetch transactions
-        console.log('Fetching transactions...');
-        const transactionsRes = await fetch('/api/jetshare/getTransactions?limit=10', {
-          credentials: 'include',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        });
-        
-        if (!transactionsRes.ok) {
-          console.error('Error fetching transactions:', await transactionsRes.text());
+          setCompletedFlights([]);
           setTransactions([]);
-        } else {
-          const transactionsData = await transactionsRes.json();
-          console.log('Transactions fetched:', transactionsData.transactions?.length || 0);
-          if (transactionsData.transactions && Array.isArray(transactionsData.transactions)) {
-            setTransactions(transactionsData.transactions);
-          } else {
-            console.log('No transactions found or invalid response format');
-            setTransactions([]);
-          }
+          setStats({
+            totalOffers: 0,
+            totalBookings: 0,
+            totalSpent: 0,
+            totalEarned: 0,
+          });
+          return;
         }
         
-        console.log('JetShare dashboard data fetched successfully');
+        // Prepare headers with auth token and cache control
+        const headers: Record<string, string> = {
+          'Cache-Control': 'no-cache',
+        };
+        
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+        
+        // Log the dashboard request
+        console.log(`Dashboard fetch for user ${userId} at ${new Date().toISOString()}`);
+        
+        try {
+          // Fetch offers (this may fail, which is ok)
+          let postedOffers = [];
+          let acceptedOffers = [];
+          let completedOffers = [];
+          
+          try {
+            const offersResponse = await fetch(`/api/jetshare/getOffers?viewMode=dashboard&user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
+          headers,
+          credentials: 'include',
+        });
+        
+            if (!offersResponse.ok) {
+              console.error('Error fetching offers:', offersResponse.status);
+              console.warn('Unable to fetch offers, will display empty offers');
+            } else {
+              // Process offers normally
+              const offersData = await offersResponse.json();
+              
+              if (offersData.offers && Array.isArray(offersData.offers)) {
+                // Separate offers by status
+                postedOffers = offersData.offers.filter((offer: any) => offer.status === 'open') || [];
+                acceptedOffers = offersData.offers.filter((offer: any) => offer.status === 'accepted') || [];
+                completedOffers = offersData.offers.filter((offer: any) => offer.status === 'completed') || [];
+                console.log(`Found ${offersData.offers.length} offers: ${postedOffers.length} open, ${acceptedOffers.length} accepted, ${completedOffers.length} completed`);
+              } else {
+                console.warn('Offers data is not in expected format:', offersData);
+              }
+            }
+          } catch (offersError) {
+            console.error('Error fetching offers:', offersError);
+            console.warn('Will display empty offers');
+          }
+          
+          // Set offer state with whatever we got, even if empty
+          setMyOffers(postedOffers);
+          setMyBookings(acceptedOffers);
+          setCompletedFlights(completedOffers);
+          
+          // Continue with stats regardless of offers success
+          await proceedWithStats(headers, userId, timestamp, requestId, instanceId);
+        } catch (fetchError) {
+          console.error('Error in main fetch operation:', fetchError);
+          setError('Unable to load your dashboard data. Please try again later.');
+          
+          // Set empty data to avoid crashes
+          setMyOffers([]);
+          setMyBookings([]);
+          setCompletedFlights([]);
+          setStats({
+            totalOffers: 0,
+            totalBookings: 0,
+            totalSpent: 0,
+            totalEarned: 0,
+          });
+          
+          setIsLoading(false);
+        }
       } catch (error) {
-        console.error('Error fetching JetShare data:', error);
-        // Set empty arrays for any data that might not have been fetched
-        setMyOffers([]);
-        setMyBookings([]);
-        setCompletedFlights([]);
-        setTransactions([]);
-        setError('Failed to load dashboard data. Please try again later.');
-      } finally {
+        console.error('Dashboard error:', error);
+        setError('An unexpected error occurred. Please refresh the page.');
         setIsLoading(false);
       }
     };
 
+    // Setup instance ID if not present
+    if (typeof window !== 'undefined' && !localStorage.getItem('jetstream_instance_id')) {
+      // Generate a UUID for instance tracking
+      const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+      localStorage.setItem('jetstream_instance_id', uuid);
+      console.log('Created new instance ID for session tracking:', uuid);
+    }
+
     fetchData();
-    
-    // Set up an interval to refresh data every 30 seconds
-    const refreshInterval = setInterval(fetchData, 30000);
-    
-    // Clear the interval when component unmounts
-    return () => clearInterval(refreshInterval);
-  }, [activeTab]); // Add activeTab as a dependency to refresh when tab changes
+  }, [refreshSession]);
+
+  // Helper function to fetch stats to avoid code duplication
+  const proceedWithStats = async (headers: Record<string, string>, userId: string, timestamp: number, requestId: string, instanceId: string) => {
+    try {
+      // 1. First fetch transactions
+      let transactions = [];
+      try {
+        const transactionsResponse = await fetch(`/api/jetshare/getTransactions?user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
+          headers,
+          credentials: 'include',
+        });
+        
+        if (!transactionsResponse.ok) {
+          console.error('Error fetching transactions:', transactionsResponse.status);
+          console.warn('Will continue with empty transactions data');
+        } else {
+          const transactionsData = await transactionsResponse.json();
+          transactions = transactionsData.transactions || [];
+        }
+      } catch (txError) {
+        console.error('Transaction fetch failed:', txError);
+        console.warn('Will continue with empty transactions data');
+      }
+      
+      // Set transactions regardless of success/failure
+      setTransactions(transactions);
+      
+      // 2. Fetch user stats (or use default values if this fails)
+      let stats = {
+        totalOffers: 0,
+        totalBookings: 0,
+        totalSpent: 0,
+        totalEarned: 0,
+      };
+      
+      try {
+        const statsResponse = await fetch(`/api/jetshare/stats?user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
+          headers,
+          credentials: 'include',
+        });
+        
+        if (!statsResponse.ok) {
+          console.error('Error fetching stats:', statsResponse.status);
+          console.warn('Will use default stats values');
+        } else {
+          const statsData = await statsResponse.json();
+          if (statsData.stats) {
+            stats = statsData.stats;
+          }
+        }
+      } catch (statsError) {
+        console.error('Stats fetch failed:', statsError);
+        console.warn('Will use default stats values');
+      }
+      
+      // Set stats regardless of success/failure
+      setStats(stats);
+      
+      // Done loading
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error in stats/transactions fetching:', error);
+      // Set default values
+      setTransactions([]);
+      setStats({
+          totalOffers: 0,
+          totalBookings: 0,
+          totalSpent: 0,
+          totalEarned: 0,
+        });
+        setIsLoading(false);
+      }
+    };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -238,20 +345,37 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
     }
   };
 
-  const renderOffer = (offer: JetShareOfferWithUser & { isOwnOffer?: boolean }) => (
+  const renderOffer = (offer: JetShareOfferWithUser & { isOwnOffer?: boolean }) => {
+    if (!offer) {
+      return null;
+    }
+    
+    // Ensure we have valid dates and amounts
+    const flightDate = offer.flight_date ? new Date(offer.flight_date) : new Date();
+    const totalFlightCost = typeof offer.total_flight_cost === 'number' ? offer.total_flight_cost : 0;
+    const requestedShareAmount = typeof offer.requested_share_amount === 'number' ? offer.requested_share_amount : 0;
+    
+    // Safe status with default
+    const status = offer.status || 'unknown';
+    
+    // Safe locations with defaults
+    const departureLocation = offer.departure_location || 'Unknown';
+    const arrivalLocation = offer.arrival_location || 'Unknown';
+    
+    return (
     <Card 
-      key={offer.id} 
+        key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
       className={`mb-4 hover:shadow-md transition-shadow relative overflow-hidden ${
-        offer.status === 'completed' ? 'border-green-200' : 
-        offer.status === 'accepted' ? 'border-amber-200' : 
+          status === 'completed' ? 'border-green-200' : 
+          status === 'accepted' ? 'border-amber-200' : 
         'border-blue-200'
       }`}
     >
       {/* Status indicator bar at the top */}
       <div 
         className={`h-1.5 w-full absolute top-0 left-0 ${
-          offer.status === 'completed' ? 'bg-green-500' : 
-          offer.status === 'accepted' ? 'bg-amber-500' : 
+            status === 'completed' ? 'bg-green-500' : 
+            status === 'accepted' ? 'bg-amber-500' : 
           'bg-blue-500'
         }`}
       />
@@ -259,9 +383,11 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
       <div 
         className="cursor-pointer"
         onClick={() => {
-          if (offer.status === 'completed') {
+            if (!offer.id) return;
+            
+            if (status === 'completed') {
             router.push(`/jetshare/transaction/${offer.id}`);
-          } else if (offer.status === 'accepted') {
+            } else if (status === 'accepted') {
             // If this is a booking we made (we are the matched_user)
             if (offer.matched_user_id && offer.matched_user?.id === offer.matched_user_id) {
               router.push(`/jetshare/payment/${offer.id}`);
@@ -269,7 +395,7 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
               // If we created this offer and it's accepted but not paid for
               router.push(`/jetshare/offer/${offer.id}`);
             }
-          } else if (offer.status === 'open') {
+            } else if (status === 'open') {
             // For open offers, navigate to the offer detail page
             router.push(`/jetshare/offer/${offer.id}`);
           }
@@ -279,12 +405,12 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
           <div className="flex justify-between items-start">
             <CardTitle className="text-lg font-medium flex items-center">
               <Plane className="h-4 w-4 mr-2 rotate-90" />
-              {offer.departure_location} → {offer.arrival_location}
+                {departureLocation} → {arrivalLocation}
             </CardTitle>
-            {getStatusBadge(offer.status)}
+              {getStatusBadge(status)}
           </div>
           <div className="text-sm text-muted-foreground">
-            {format(new Date(offer.flight_date), 'MMM d, yyyy')}
+              {format(flightDate, 'MMM d, yyyy')}
           </div>
         </CardHeader>
         <CardContent>
@@ -294,18 +420,18 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
                 <CreditCard className="h-4 w-4 mr-1 text-gray-500" />
                 Total Cost
               </span>
-              <span className="font-medium">{formatCurrency(offer.total_flight_cost)}</span>
+                <span className="font-medium">{formatCurrency(totalFlightCost)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="flex items-center text-sm">
                 <Users className="h-4 w-4 mr-1 text-gray-500" />
                 Share Amount
               </span>
-              <span className="font-medium">{formatCurrency(offer.requested_share_amount)}</span>
+                <span className="font-medium">{formatCurrency(requestedShareAmount)}</span>
             </div>
             
             {/* Show additional information based on status */}
-            {offer.status === 'accepted' && (
+              {status === 'accepted' && (
               <div className="mt-3 pt-3 border-t border-gray-100">
                 {offer.isOwnOffer ? (
                   // If this is my offer and someone accepted it
@@ -333,7 +459,7 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
               </div>
             )}
             
-            {offer.status === 'completed' && (
+              {status === 'completed' && (
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-green-700 flex items-center">
@@ -354,14 +480,25 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
       </div>
     </Card>
   );
+  };
   
-  const renderTransaction = (transaction: JetShareTransactionWithDetails) => {
-    const isPayer = transaction.payer_user?.id === transaction.user?.id;
-    const isRecipient = transaction.recipient_user?.id === transaction.user?.id;
+  const renderTransaction = (transaction: JetShareTransactionWithDetails, currentUserId?: string) => {
+    if (!transaction) {
+      return null;
+    }
+    
+    // Safely access properties - updated to match the schema
+    const isPayer = transaction.payer_user_id === currentUserId; 
+    const isRecipient = transaction.recipient_user_id === currentUserId;
+    
+    // Ensure we have valid dates and amounts
+    const transactionDate = transaction.transaction_date ? new Date(transaction.transaction_date) : new Date();
+    const amount = typeof transaction.amount === 'number' ? transaction.amount : 0;
+    const handlingFee = typeof transaction.handling_fee === 'number' ? transaction.handling_fee : 0;
     
     return (
-      <Card key={transaction.id} className="mb-4 hover:shadow-md transition-shadow">
-        <div className="cursor-pointer" onClick={() => router.push(`/jetshare/transaction/${transaction.offer_id}`)}>
+      <Card key={transaction.id || `tx-${Math.random().toString(36).substring(2, 10)}`} className="mb-4 hover:shadow-md transition-shadow">
+        <div className="cursor-pointer" onClick={() => transaction.offer_id ? router.push(`/jetshare/transaction/${transaction.offer_id}`) : null}>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <CardTitle className="text-lg font-medium">
@@ -392,7 +529,7 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
                 </div>
               )}
               <div className="text-sm mt-1">
-                {format(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                {format(transactionDate, 'MMM d, yyyy')}
               </div>
             </div>
           </CardHeader>
@@ -400,18 +537,18 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
             <div className="flex flex-col space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Transaction Amount:</span>
-                <span className="font-medium">{formatCurrency(transaction.amount)}</span>
+                <span className="font-medium">{formatCurrency(amount)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Handling Fee:</span>
-                <span className="text-sm">{formatCurrency(transaction.handling_fee)}</span>
+                <span className="text-sm">{formatCurrency(handlingFee)}</span>
               </div>
               <div className="flex items-center justify-between pt-1 border-t">
                 <span className="text-sm font-medium">
                   {isPayer ? 'Total Paid:' : isRecipient ? 'Total Received:' : 'Total:'}
                 </span>
                 <span className={`font-semibold ${isPayer ? 'text-amber-600' : isRecipient ? 'text-green-600' : ''}`}>
-                  {formatCurrency(transaction.amount)}
+                  {formatCurrency(amount)}
                 </span>
               </div>
               
@@ -421,18 +558,18 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
                     <>
                       <span>To: </span>
                       <span className="ml-1 font-medium">
-                        {transaction.recipient_user?.first_name} {transaction.recipient_user?.last_name}
+                        {transaction.recipient_user?.first_name || 'Recipient'} {transaction.recipient_user?.last_name || ''}
                       </span>
                     </>
                   ) : isRecipient ? (
                     <>
                       <span>From: </span>
                       <span className="ml-1 font-medium">
-                        {transaction.payer_user?.first_name} {transaction.payer_user?.last_name}
+                        {transaction.payer_user?.first_name || 'Payer'} {transaction.payer_user?.last_name || ''}
                       </span>
                     </>
                   ) : (
-                    <span>Transaction ID: {transaction.id.substring(0, 8)}...</span>
+                    <span>Transaction ID: {transaction.id?.substring(0, 8) || 'Unknown'}...</span>
                   )}
                 </div>
                 <span className="text-xs">{transaction.payment_method === 'crypto' ? 'Crypto' : 'Credit Card'}</span>
@@ -449,22 +586,14 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
       {[1, 2].map((i) => (
         <Card key={`skeleton-${i}`} className="mb-4">
           <CardHeader className="pb-2">
-            <div className="flex justify-between">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-5 w-16" />
-            </div>
-            <Skeleton className="h-4 w-24 mt-1" />
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-4 w-1/2 mt-2" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-              <div className="flex justify-between">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-16" />
-              </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
           </CardContent>
         </Card>
@@ -472,250 +601,219 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
     </>
   );
 
-  // If there's an authentication error, show a sign-in prompt
-  if (error && error.includes('Authentication required')) {
-    return (
-      <div className="container mx-auto px-4 py-12 max-w-md">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
-          <p className="mb-6">Please sign in to access your JetShare dashboard</p>
-          <Button 
-            onClick={() => router.push('/auth/signin')} 
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Sign In
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Add a minimum timeout to prevent endless loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.log('Dashboard: Forcing loading to complete after timeout');
+        setIsLoading(false);
+      }
+    }, 10000); // 10 seconds max loading time
+    
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">My JetShare</h1>
-        <Button onClick={() => router.push('/jetshare/offer')} className="bg-blue-600 hover:bg-blue-700">
-          Create Offer
-        </Button>
-      </div>
-
+    <div className="container mx-auto py-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
-          <p>{error}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2" 
-            onClick={() => router.push('/auth/signin?redirect=/jetshare/dashboard')}
-          >
-            Sign In
-          </Button>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 flex items-center">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <span>{error}</span>
         </div>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="dashboard">Overview</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-4">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="offers">My Offers</TabsTrigger>
           <TabsTrigger value="bookings">My Bookings</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6">
-          <h2 className="text-xl font-semibold">JetShare Overview</h2>
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <TabsContent value="dashboard" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Open Offers</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Offers Created</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ) : myOffers.length > 0 ? (
-                  <div className="text-2xl font-bold">{myOffers.length}</div>
+                  <Skeleton className="h-7 w-1/2" />
                 ) : (
-                  <div className="text-muted-foreground">No open offers</div>
+                  <div className="text-2xl font-bold">{stats.totalOffers}</div>
                 )}
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Upcoming Flights</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ) : myBookings.length > 0 ? (
-                  <div className="text-2xl font-bold">{myBookings.length}</div>
+                  <Skeleton className="h-7 w-1/2" />
                 ) : (
-                  <div className="text-muted-foreground">No upcoming flights</div>
+                  <div className="text-2xl font-bold">{stats.totalBookings}</div>
                 )}
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-7 w-1/2" />
+                ) : (
+                  <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total Earned</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <Skeleton className="h-7 w-1/2" />
+                ) : (
+                  <div className="text-2xl font-bold">{formatCurrency(stats.totalEarned)}</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  renderSkeleton()
+                ) : transactions.length > 0 ? (
+                  <div className="space-y-4">
+                    {transactions.slice(0, 3).map(transaction => renderTransaction(transaction, user?.id))}
+                    {transactions.length > 3 && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={() => setActiveTab('transactions')}
+                      >
+                        View All Transactions
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No recent activity
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="offers" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>My Posted Offers</CardTitle>
+                <Button 
+                  onClick={() => router.push('/jetshare/create')}
+                  variant="outline"
+                  size="sm"
+                >
+                  Create New Offer
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                renderSkeleton()
+              ) : myOffers.length > 0 ? (
+                <div className="space-y-4">
+                  {myOffers.map(offer => renderOffer({...offer, isOwnOffer: true}))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  You haven't posted any offers yet
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => router.push('/jetshare/create')}
+                      variant="default"
+                    >
+                      Create Your First Offer
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="bookings" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Bookings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                renderSkeleton()
+              ) : myBookings.length > 0 ? (
+                <div className="space-y-4">
+                  {myBookings.map(offer => renderOffer(offer))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  You haven't booked any flights yet
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => router.push('/jetshare/browse')}
+                      variant="default"
+                    >
+                      Browse Available Flights
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {completedFlights.length > 0 && (
+            <Card>
+              <CardHeader>
                 <CardTitle>Completed Flights</CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoading ? (
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                ) : completedFlights.length > 0 ? (
-                  <div className="text-2xl font-bold">{completedFlights.length}</div>
-                ) : (
-                  <div className="text-muted-foreground">No completed flights</div>
-                )}
+                <div className="space-y-4">
+                  {completedFlights.map(offer => renderOffer(offer))}
+                </div>
               </CardContent>
             </Card>
-          </div>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Recent Offers</h3>
+          )}
+        </TabsContent>
+
+        <TabsContent value="transactions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Transaction History</CardTitle>
+            </CardHeader>
+            <CardContent>
               {isLoading ? (
-                Array(2).fill(0).map((_, i) => <div key={`dashboard-offers-skeleton-${i}`}>{renderSkeleton()}</div>)
-              ) : myOffers.length > 0 ? (
-                myOffers.slice(0, 2).map(offer => renderOffer(offer))
-              ) : (
-                <Card className="mb-4 p-4 text-center">
-                  <p className="text-muted-foreground">No open offers found</p>
-                  <Button 
-                    onClick={() => router.push('/jetshare/offer')} 
-                    className="mt-4"
-                  >
-                    Create an Offer
-                  </Button>
-                </Card>
-              )}
-              
-              {myOffers.length > 2 && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={() => setActiveTab('offers')}
-                >
-                  View All Offers
-                </Button>
-              )}
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
-              {isLoading ? (
-                Array(2).fill(0).map((_, i) => <div key={`dashboard-transactions-skeleton-${i}`}>{renderSkeleton()}</div>)
+                renderSkeleton()
               ) : transactions.length > 0 ? (
-                transactions.slice(0, 2).map(tx => renderTransaction(tx))
+                <div className="space-y-4">
+                  {transactions.map(transaction => renderTransaction(transaction, user?.id))}
+                </div>
               ) : (
-                <Card className="mb-4 p-4 text-center">
-                  <p className="text-muted-foreground">No transactions yet</p>
-                  <Button 
-                    onClick={() => router.push('/jetshare/listings')} 
-                    className="mt-4"
-                  >
-                    Browse Flight Shares
-                  </Button>
-                </Card>
+                <div className="text-center py-4 text-muted-foreground">
+                  No transactions yet
+                </div>
               )}
-              
-              {transactions.length > 2 && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={() => setActiveTab('transactions')}
-                >
-                  View All Transactions
-                </Button>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="offers" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Offers</h2>
-            <Button onClick={() => router.push('/jetshare/offer')}>
-              Create New Offer
-            </Button>
-          </div>
-          
-          {isLoading ? (
-            Array(4).fill(0).map((_, i) => <div key={`offers-skeleton-${i}`}>{renderSkeleton()}</div>)
-          ) : myOffers.length > 0 ? (
-            <div className="space-y-4">
-              {myOffers.map(offer => renderOffer(offer))}
-            </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No Open Offers</h3>
-              <p className="text-muted-foreground mb-4">
-                You haven't created any flight share offers yet. Create an offer to share your flight costs.
-              </p>
-              <Button onClick={() => router.push('/jetshare/offer')}>
-                Create an Offer
-              </Button>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="bookings" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Bookings</h2>
-            <Button onClick={() => router.push('/jetshare/listings')}>
-              Find Available Shares
-            </Button>
-          </div>
-          
-          {isLoading ? (
-            Array(4).fill(0).map((_, i) => <div key={`bookings-skeleton-${i}`}>{renderSkeleton()}</div>)
-          ) : myBookings.length > 0 ? (
-            <div className="space-y-4">
-              {myBookings.map(booking => renderOffer(booking))}
-            </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No Active Bookings</h3>
-              <p className="text-muted-foreground mb-4">
-                You haven't booked any flight shares yet. Browse available listings to find your next flight.
-              </p>
-              <Button onClick={() => router.push('/jetshare/listings')}>
-                Browse Flight Shares
-              </Button>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="transactions" className="space-y-6">
-          <h2 className="text-xl font-semibold">Transactions</h2>
-          
-          {isLoading ? (
-            Array(4).fill(0).map((_, i) => <div key={`transactions-skeleton-${i}`}>{renderSkeleton()}</div>)
-          ) : transactions.length > 0 ? (
-            <div className="space-y-4">
-              {transactions.map(tx => renderTransaction(tx))}
-            </div>
-          ) : (
-            <Card className="p-8 text-center">
-              <h3 className="text-lg font-medium mb-2">No Transactions Yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Once you book or sell flight shares, your transactions will appear here.
-              </p>
-              <Button onClick={() => router.push('/jetshare/listings')}>
-                Browse Flight Shares
-              </Button>
-            </Card>
-          )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
-} 
+}

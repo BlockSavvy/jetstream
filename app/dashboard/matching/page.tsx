@@ -543,7 +543,7 @@ export default function AIMatchingPage() {
                         </div>
                         <div className="absolute -top-1 -right-1">
                           <Badge className="bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs">
-                            {person.matchScore}%
+                            {person.matchScore}
                           </Badge>
                         </div>
                       </div>

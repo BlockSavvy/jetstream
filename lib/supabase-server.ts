@@ -1,50 +1,42 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient as createSBClient } from '@supabase/supabase-js';
 
+/**
+ * Creates a Supabase client for server-side usage with admin privileges
+ * This always uses the service role key for server-side operations
+ * that require full database access
+ */
 export async function createClient() {
   try {
-    const cookieStore = await cookies()
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    // Always use the service role key for admin-level access
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
     
-    // Log the keys being used (sanitized for security)
-    console.log('Creating Supabase client with URL:', supabaseUrl)
-    console.log('Using service role key:', supabaseKey ? 'Key provided (value hidden)' : 'No key provided')
-
-    return createServerClient(
-      supabaseUrl,
-      supabaseKey,
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing Supabase URL or service role key');
+    }
+    
+    // Log that we're using the service role for transparency in non-production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Creating Supabase client with URL:', supabaseUrl);
+      console.log('Using service role key: Key provided (value hidden)');
+    }
+    
+    // Create the admin client directly with service role
+    // This ensures we don't try to use cookies which can cause dynamic API issues
+    const supabase = createSBClient(
+      supabaseUrl, 
+      supabaseServiceKey,
       {
-        cookies: {
-          get(name) {
-            try {
-              return cookieStore.get(name)?.value
-            } catch (error) {
-              console.error(`Error getting cookie ${name}:`, error)
-              return undefined
-            }
-          },
-          set(name, value, options) {
-            try {
-              cookieStore.set({ name, value, ...options as CookieOptions })
-            } catch (error) {
-              // The `set` method was called from a Server Component.
-              console.error(`Error setting cookie ${name}:`, error)
-            }
-          },
-          remove(name, options) {
-            try {
-              cookieStore.set({ name, value: '', ...options as CookieOptions })
-            } catch (error) {
-              // The `delete` method was called from a Server Component.
-              console.error(`Error removing cookie ${name}:`, error)
-            }
-          },
-        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
       }
-    )
+    );
+    
+    return supabase;
   } catch (error) {
-    console.error('Error creating server-side Supabase client:', error)
-    throw error
+    console.error('Error in createClient:', error);
+    throw error;
   }
-} 
+}

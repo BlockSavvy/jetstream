@@ -96,140 +96,54 @@ export async function POST(request: NextRequest) {
         matched_user_id: offer.matched_user_id || 'none'
       });
       
-      // Check if the offer is in a valid state for payment (either open or accepted)
-      if (offer.status !== 'accepted' && offer.status !== 'open') {
-        console.error('Offer is not in a valid state for payment, current status:', offer.status);
+      // Check if the offer is in a valid state for payment
+      if (offer.status === 'completed') {
+        console.error('Offer is already completed, cannot process payment');
+        return NextResponse.json(
+          { error: 'This offer has already been completed and paid for' },
+          { status: 409 }
+        );
+      }
+      
+      // Check that the offer is accepted and matched to the current user
+      if (offer.status !== 'accepted') {
+        console.error('Offer is not in accepted state, current status:', offer.status);
         return NextResponse.json(
           { error: `Offer is not in a valid state for payment, current status: ${offer.status}` },
           { status: 400 }
         );
       }
       
-      // If status is open, update it to accepted and set matched_user_id
-      if (offer.status === 'open') {
-        console.log('Offer is open, updating to accepted with user as matched user');
-        
-        // Check if this is the user who created the offer - they shouldn't be able to match with their own offer
-        if (offer.user_id === user.id) {
-          console.error('User trying to match with their own offer');
-          return NextResponse.json(
-            { error: 'You cannot match with your own offer' },
-            { status: 400 }
-          );
-        }
-        
-        // Update the offer to set matched_user_id to current user and status to accepted
-        const { error: updateError } = await supabase
-          .from('jetshare_offers')
-          .update({ 
-            matched_user_id: user.id,
-            status: 'accepted' 
-          })
-          .eq('id', offer_id)
-          .eq('status', 'open');
-        
-        if (updateError) {
-          console.error('Failed to update offer to accepted:', updateError);
-          return NextResponse.json(
-            { error: 'Failed to update offer for payment', details: updateError.message },
-            { status: 500 }
-          );
-        }
-        
-        console.log('Updated offer status to accepted and set matched_user_id to:', user.id);
-        
-        // Refresh the offer data and double-check status
-        offer = await getJetShareOfferById(offer_id);
-        console.log('Refreshed offer data:', {
-          id: offer.id, 
-          status: offer.status,
-          matched_user_id: offer.matched_user_id
-        });
-        
-        // Verify the status was actually updated
-        if (offer.status !== 'accepted') {
-          console.error('Offer status still not updated correctly. Current status:', offer.status);
-          // Make one more attempt to fix the status directly
-          try {
-            const { error: fixError } = await supabase
-              .from('jetshare_offers')
-              .update({ 
-                status: 'accepted', 
-                matched_user_id: user.id 
-              })
-              .eq('id', offer_id);
-              
-            if (fixError) {
-              console.error('Failed final attempt to update offer status:', fixError);
-              return NextResponse.json(
-                { error: 'Unable to prepare offer for payment' },
-                { status: 500 }
-              );
-            }
-            
-            // Refresh one more time
-            offer = await getJetShareOfferById(offer_id);
-            console.log('Final offer status check:', {
-              id: offer.id,
-              status: offer.status,
-              matched_user_id: offer.matched_user_id
-            });
-          } catch (fixError) {
-            console.error('Error during final attempt to fix offer status:', fixError);
-          }
-        }
-      }
-      // Handle the case where matched_user_id is still null but status is already 'accepted'
-      else if (offer.status === 'accepted' && !offer.matched_user_id) {
-        console.log('Offer is accepted but has no matched_user_id, setting current user as matched user');
-        
-        if (offer.user_id === user.id) {
-          console.error('User trying to match with their own offer');
-          return NextResponse.json(
-            { error: 'You cannot match with your own offer' },
-            { status: 400 }
-          );
-        }
-        
-        // Update the offer to set matched_user_id to current user
-        const { error: updateError } = await supabase
-          .from('jetshare_offers')
-          .update({ matched_user_id: user.id })
-          .eq('id', offer_id)
-          .eq('status', 'accepted');
-        
-        if (updateError) {
-          console.error('Failed to update matched_user_id for accepted offer:', updateError);
-          return NextResponse.json(
-            { error: 'Failed to update offer matched user', details: updateError.message },
-            { status: 500 }
-          );
-        }
-        
-        console.log('Updated accepted offer to set matched_user_id to:', user.id);
-        
-        // Refresh the offer data
-        offer = await getJetShareOfferById(offer_id);
-        console.log('Refreshed offer data after updating matched_user_id:', {
-          id: offer.id, 
-          status: offer.status, 
-          matched_user_id: offer.matched_user_id
-        });
-      }
-      
-      // Now check if the user is authorized to make this payment
-      // The matched_user_id should be the current user
       if (offer.matched_user_id !== user.id) {
-        console.error('User mismatch for payment:', { 
-          matched_user_id: offer.matched_user_id, 
-          current_user_id: user.id 
-        });
-        
+        console.error('User mismatch: offer is matched to', offer.matched_user_id, 'but payment attempt from', user.id);
         return NextResponse.json(
-          { error: 'Unauthorized - you are not the matched user for this offer' },
+          { error: 'You are not authorized to pay for this offer' },
           { status: 403 }
         );
       }
+      
+      // Make sure we don't charge the offer creator
+      if (offer.user_id === user.id) {
+        console.error('Offer creator attempting to pay for their own offer');
+        return NextResponse.json(
+          { error: 'You cannot pay for your own offer' },
+          { status: 400 }
+        );
+      }
+      
+      // Calculate payment details
+      const amount = offer.requested_share_amount;
+      const handlingFee = Math.round(amount * 0.075); // 7.5% handling fee
+      const totalAmount = amount + handlingFee;
+      
+      console.log('Payment details:', { 
+        amount, 
+        handlingFee, 
+        totalAmount, 
+        paymentMethod: payment_method 
+      });
+      
+      // Rest of payment processing code...
     } catch (offerError) {
       console.error('Error getting offer details:', offerError);
       throw offerError;

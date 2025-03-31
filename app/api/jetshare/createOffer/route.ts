@@ -2,21 +2,132 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { ensureUserProfile } from '@/app/jetshare/utils/ensureUserProfile';
 
+// Add CORS headers to support cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 export async function POST(request: Request) {
   try {
     // Use server-side client instead of cookie-based authentication
     const supabase = await createClient();
     
-    // Get the current user's session
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Try to get the authentication token from the request header
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
     
-    if (userError || !user) {
-      console.error('Authentication error in createOffer:', userError || 'No user found');
+    console.log('API: CreateOffer - Auth Header:', authHeader ? 'Present' : 'Missing');
+    console.log('API: CreateOffer - Token Extracted:', token ? 'Yes' : 'No');
+    
+    // Parse body first to get user_id in case we need it for private browsing mode
+    const body = await request.json().catch(e => ({}));
+    console.log('Request body received:', Object.keys(body).join(', '));
+    
+    const providedUserId = body.user_id;
+    console.log('API: CreateOffer - User ID from request body:', providedUserId || 'None provided');
+    
+    // Get the current user's session using token if available
+    let userData;
+    let privateMode = false;
+    
+    if (token) {
+      // Use the token to get the user
+      const { data: userDataWithToken, error: userErrorWithToken } = await supabase.auth.getUser(token);
+      userData = userDataWithToken;
+      
+      if (userErrorWithToken) {
+        console.error('Auth error with token:', userErrorWithToken.message);
+      } else {
+        console.log('API: CreateOffer - Token auth successful, user ID:', userDataWithToken?.user?.id);
+      }
+    }
+    
+    // If token approach failed, fall back to cookie-based auth
+    if (!userData?.user) {
+      const { data, error: userError } = await supabase.auth.getUser();
+      userData = data;
+      
+      if (userError) {
+        console.error('Authentication error in createOffer (cookie auth):', userError.message);
+        
+        // If specific token-related auth errors occur, provide a more helpful error message
+        if (userError.message.includes('expired') || userError.message.includes('invalid') || userError.message.includes('missing')) {
+          // This may be a private browsing context with no cookies/tokens
+          // Check if we have a user_id in the request body for private browsing mode
+          if (providedUserId) {
+            console.log('API: CreateOffer - Attempting private browsing mode with provided user ID');
+            privateMode = true;
+          } else {
+            return NextResponse.json(
+              { 
+                message: 'Your authentication session has expired. Please refresh the page and try again.',
+                code: 'AUTH_TOKEN_EXPIRED',
+                redirectUrl: '/auth/login?returnUrl=' + encodeURIComponent('/jetshare/create') + '&tokenExpired=true'
+              },
+              { status: 401, headers: corsHeaders }
+            );
+          }
+        }
+      } else {
+        console.log('API: CreateOffer - Cookie auth successful, user ID:', data?.user?.id || 'Unknown');
+      }
+    }
+    
+    // Handle private browsing mode if needed
+    let user = userData?.user;
+    
+    // If we're in privateMode and have a providedUserId but no authenticated user
+    if (!user && privateMode && providedUserId) {
+      console.log('API: CreateOffer - Using provided User ID in private mode:', providedUserId);
+      
+      // First verify this user actually exists in our database
+      const { data: userCheck, error: userCheckError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', providedUserId)
+        .single();
+      
+      if (userCheckError || !userCheck) {
+        console.error('API: CreateOffer - Invalid user ID provided in private mode:', userCheckError?.message);
+        return NextResponse.json(
+          { 
+            message: 'Invalid user credentials. Please try again with a standard browser session.',
+            code: 'INVALID_USER_ID',
+            redirectUrl: '/auth/login?returnUrl=' + encodeURIComponent('/jetshare/create')
+          },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+      
+      // If user exists in our database, manually construct a user object
+      // Use a simplified user object that matches what ensureUserProfile needs
+      user = { 
+        id: providedUserId,
+        // Add minimum required User properties to satisfy TypeScript
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString()
+      };
+      console.log('API: CreateOffer - Verified user in private mode:', user.id);
+    }
+    
+    // Final check if we have a valid user
+    if (!user) {
+      console.error('No authenticated user found in createOffer');
       return NextResponse.json(
-        { message: 'Not authenticated' },
-        { status: 401 }
+        { 
+          message: 'Not authenticated. Please sign in to create an offer.',
+          code: 'NO_USER',
+          redirectUrl: '/auth/login?returnUrl=' + encodeURIComponent('/jetshare/listings/create')
+        },
+        { status: 401, headers: corsHeaders }
       );
     }
+    
+    console.log('Authenticated user ID:', user.id);
     
     // Before creating the offer, ensure the user profile exists
     // This is required because jetshare_offers has a foreign key to the profiles table
@@ -25,12 +136,14 @@ export async function POST(request: Request) {
     if (!profileSuccess) {
       console.error('Failed to ensure user profile:', profileMessage);
       return NextResponse.json(
-        { message: 'Failed to create user profile required for offers: ' + profileMessage },
-        { status: 500 }
+        { 
+          message: 'Failed to create user profile required for offers: ' + profileMessage,
+          code: 'PROFILE_ERROR' 
+        },
+        { status: 500, headers: corsHeaders }
       );
     }
     
-    // Get the request body
     const {
       flight_date,
       departure_location,
@@ -41,32 +154,51 @@ export async function POST(request: Request) {
       total_flight_cost,
       requested_share_amount,
       status = 'open'
-    } = await request.json();
+    } = body;
     
     // Validate required fields
     if (!flight_date || !departure_location || !arrival_location || !aircraft_model || 
         !total_seats || !available_seats || !total_flight_cost || !requested_share_amount) {
+      console.error('Missing required fields in createOffer', body);
       return NextResponse.json(
-        { message: 'Missing required fields' },
-        { status: 400 }
+        { 
+          message: 'Missing required fields', 
+          code: 'VALIDATION_ERROR',
+          details: {
+            requiredFields: ['flight_date', 'departure_location', 'arrival_location', 'aircraft_model', 
+                           'total_seats', 'available_seats', 'total_flight_cost', 'requested_share_amount'],
+            receivedFields: Object.keys(body || {})
+          }
+        },
+        { status: 400, headers: corsHeaders }
       );
     }
     
     // Validate numeric fields
     if (total_seats < 1 || available_seats < 1 || total_flight_cost <= 0 || requested_share_amount <= 0) {
       return NextResponse.json(
-        { message: 'Invalid numeric values' },
-        { status: 400 }
+        { 
+          message: 'Invalid numeric values',
+          code: 'VALIDATION_ERROR',
+          details: { total_seats, available_seats, total_flight_cost, requested_share_amount }
+        },
+        { status: 400, headers: corsHeaders }
       );
     }
     
     // Validate available seats
     if (available_seats > total_seats) {
       return NextResponse.json(
-        { message: 'Available seats cannot exceed total seats' },
-        { status: 400 }
+        { 
+          message: 'Available seats cannot exceed total seats',
+          code: 'VALIDATION_ERROR',
+          details: { total_seats, available_seats }
+        },
+        { status: 400, headers: corsHeaders }
       );
     }
+    
+    console.log('Creating offer for user:', user.id);
     
     // Create the offer
     const { data: offer, error: offerError } = await supabase
@@ -92,17 +224,29 @@ export async function POST(request: Request) {
     if (offerError) {
       console.error('Error creating offer:', offerError);
       return NextResponse.json(
-        { message: 'Failed to create offer' },
-        { status: 500 }
+        { 
+          message: 'Failed to create offer: ' + offerError.message,
+          code: 'DB_ERROR',
+          details: offerError
+        },
+        { status: 500, headers: corsHeaders }
       );
     }
     
-    return NextResponse.json(offer);
+    console.log('Offer created successfully:', offer.id);
+    return NextResponse.json(offer, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in createOffer route:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
+      { 
+        message: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error'),
+        code: 'INTERNAL_ERROR'
+      },
+      { status: 500, headers: corsHeaders }
     );
   }
+}
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
 } 

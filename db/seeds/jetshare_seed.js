@@ -66,7 +66,7 @@ const randomFlightCost = () => {
 
 // Calculate share amount (usually 40-60% of total cost)
 const calculateShareAmount = (totalCost) => {
-  const percentage = Math.random() * 0.2 + 0.4; // 40-60%
+  const percentage = Math.random() * 0.2 + 0.4; // 40-60
   return Math.floor(totalCost * percentage);
 };
 

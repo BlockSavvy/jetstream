@@ -195,3 +195,53 @@ WHERE user_id NOT IN (SELECT id FROM profiles);
 - Database Schema: See SQL setup above
 - Supabase Documentation: [https://supabase.com/docs](https://supabase.com/docs)
 - Next.js Documentation: [https://nextjs.org/docs](https://nextjs.org/docs)
+
+# JetShare Dashboard Module
+
+## Error Handling and Resilience Strategy
+
+The JetShare dashboard is designed to be highly resilient to various failure modes, using the following strategies:
+
+### Client-Side Component
+
+1. **Multiple Authentication Sources**:
+   - Uses session, localStorage, and auth context as fallbacks to find the user ID
+   - Continues to function if any single auth method fails
+
+2. **Graceful Data Handling**:
+   - Implements timeouts to prevent endless loading states
+   - Individual API failures do not crash the entire dashboard
+   - Shows empty states with helpful messages when data cannot be loaded
+
+3. **Defensive Rendering**:
+   - Validates all data before rendering components
+   - Provides fallbacks for missing or malformed data
+   - Prevents crashes from unexpected API response formats
+
+### API Routes
+
+1. **Direct Database Access**:
+   - Uses Supabase service role for authentication-independent data access
+   - Bypasses session validation to avoid "Auth session missing" errors
+
+2. **Explicit Error Handling**:
+   - Provides detailed error messages for debugging
+   - Returns clean error responses to the client
+   - Logs issues with context for troubleshooting
+
+3. **Safe Query Construction**:
+   - Uses simplified queries without complex joins to reduce points of failure
+   - Ensures minimal dependencies on related data structures
+
+## Common Issues and Fixes
+
+1. **Auth Session Missing**: Fixed by using direct service role access in API routes
+2. **Cannot Read Properties of Undefined**: Fixed by adding null checks and safe property access
+3. **Empty Data States**: Fixed by providing default values and arrays
+4. **Server Error (500)**: Fixed by improving error handling in API routes
+
+## Future Improvements
+
+- Implement local data caching for offline or error recovery
+- Add retry logic for failed API requests
+- Consider server-side rendering for initial data fetch

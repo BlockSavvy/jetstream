@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'JetShare - Flight Sharing Platform',
-  description: 'Share and offset your private jet costs by connecting with verified travelers.',
+  title: 'JetStream - Private Jet Sharing',
+  description: 'JetStream - The ultimate platform for private jet sharing and luxury air travel experiences.',
 }; 

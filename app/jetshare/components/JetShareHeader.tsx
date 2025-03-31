@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -18,12 +18,61 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase';
 
 export default function JetShareHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+  const [hasLocalAuth, setHasLocalAuth] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Check for auth in localStorage as a fallback
+    const checkLocalAuth = () => {
+      try {
+        const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+        const userId = localStorage.getItem('jetstream_user_id');
+        
+        // If we have either token data or user_id stored, consider this as potential auth
+        setHasLocalAuth(!!(tokenData || userId));
+        
+        // If we have token but no user in Auth provider, try to restore session
+        if ((tokenData || userId) && !user && !loading) {
+          console.log('Header: Found auth data in localStorage but no user in context - refreshing auth state');
+          
+          // This will trigger the auth provider to try restoring the session
+          const refreshAuth = async () => {
+            try {
+              const supabase = createClient();
+              await supabase.auth.refreshSession();
+            } catch (e) {
+              console.warn('Header: Error refreshing session:', e);
+            }
+          };
+          
+          refreshAuth();
+        }
+      } catch (e) {
+        console.warn('Header: Error checking localStorage:', e);
+        setHasLocalAuth(false);
+      }
+    };
+    
+    checkLocalAuth();
+    
+    // Re-check authentication every 5 seconds in case it changes
+    // This helps when redirecting from auth page back to JetShare
+    const intervalId = setInterval(checkLocalAuth, 5000);
+    
+    return () => clearInterval(intervalId);
+  }, [user, loading]);
+  
+  // Determine if user is authenticated - either through Auth provider or localStorage
+  const isAuthenticated = !!user || (!loading && isClient && hasLocalAuth);
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -46,7 +95,7 @@ export default function JetShareHeader() {
     ];
     
     // Items that require authentication
-    const authItems = user ? [
+    const authItems = isAuthenticated ? [
       {
         name: 'Offer a Share',
         path: '/jetshare/offer',
@@ -83,9 +132,10 @@ export default function JetShareHeader() {
   };
   
   const handleSignIn = () => {
-    // Redirect back to JetShare after login
+    // Redirect back to JetShare after login with current path
     const currentPath = pathname || '/jetshare';
-    router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
+    const timestamp = Date.now(); // Add timestamp to avoid caching issues
+    router.push(`/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`);
   };
 
   return (
@@ -161,7 +211,7 @@ export default function JetShareHeader() {
             </div>
             
             {/* Conditional auth buttons */}
-            {user ? (
+            {isAuthenticated ? (
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -236,7 +286,7 @@ export default function JetShareHeader() {
             <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
             
             {/* Conditional auth buttons for mobile */}
-            {user ? (
+            {isAuthenticated ? (
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"

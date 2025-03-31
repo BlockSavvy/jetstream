@@ -172,7 +172,7 @@ export function JetShareUITest() {
         <div className="text-right">
           <p className="text-sm text-muted-foreground">Share Percentage</p>
           <p className="font-medium">
-            {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}%
+            {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}
           </p>
         </div>
       </div>
@@ -201,7 +201,7 @@ export function JetShareUITest() {
             </p>
             <p className="text-xs text-muted-foreground">
               This flight share is offered by a {offer.user?.verification_status === 'verified' ? 'verified' : 'pending'} JetShare user. The requested share amount is
-              {' '}{((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}%
+              {' '}{((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}
               {' '}of the total flight cost.
             </p>
           </div>

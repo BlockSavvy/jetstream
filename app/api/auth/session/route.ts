@@ -1,65 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createApiClient } from '@/lib/supabase-api';
+
+export const dynamic = 'force-dynamic';
 
 // This is a stub endpoint that returns an empty session
 // This prevents 404 errors when Next.js tries to fetch the session
 export async function GET(request: NextRequest) {
+  console.log('📝 API route called: /api/auth/session');
+  
   try {
-    // Check cookies
-    const cookieString = request.headers.get('cookie') || '';
-    console.log('GET /api/auth/session - Cookie header present:', !!cookieString, 'Length:', cookieString.length);
+    // Create a Supabase client using our utility function
+    // Now we need to await the createApiClient call
+    const supabase = await createApiClient();
+    console.log('🔌 Supabase client created');
     
-    // Create Supabase client
-    const supabase = await createClient();
+    // Get user session 
+    console.log('🔍 Fetching user session from Supabase auth');
+    const { data, error: sessionError } = await supabase.auth.getSession();
     
-    // Get session
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Error getting session:', error);
-      return NextResponse.json({ 
-        error: 'Authentication error', 
-        message: error.message 
-      }, { status: 401 });
-    }
-    
-    // Get user if session exists
-    if (data?.session) {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('Error getting user:', userError);
-        return NextResponse.json({ 
-          error: 'Error getting user data', 
-          message: userError.message 
-        }, { status: 500 });
-      }
-      
-      return NextResponse.json({ 
-        session: data.session,
-        user: userData.user,
-        authenticated: true
-      }, { 
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
+    if (sessionError) {
+      console.error('❌ Error fetching session:', sessionError.message);
+      return NextResponse.json(
+        { 
+          authenticated: false, 
+          error: sessionError.message 
+        }, 
+        { 
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+          }
         }
-      });
+      );
     }
     
-    // No session
-    return NextResponse.json({ 
-      authenticated: false,
-      message: 'No active session found'
-    }, { status: 200 });
+    const session = data.session;
     
-  } catch (error) {
-    console.error('Unexpected error in session route:', error);
+    if (!session || !session.user) {
+      console.log('👤 No authenticated user found');
+      return NextResponse.json(
+        { authenticated: false }, 
+        { 
+          status: 200,
+          headers: {
+            'Cache-Control': 'no-store, max-age=0',
+          }
+        }
+      );
+    }
+    
+    console.log('✅ User authenticated:', session.user.id);
     return NextResponse.json(
-      { error: 'Session error', message: (error as Error).message },
-      { status: 500 }
+      { 
+        authenticated: true, 
+        user: {
+          id: session.user.id,
+          email: session.user.email,
+          created_at: session.user.created_at
+        }
+      }, 
+      {
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        }
+      }
+    );
+  } catch (error: any) {
+    console.error('❌ Unexpected error checking session:', error);
+    return NextResponse.json(
+      { 
+        authenticated: false, 
+        error: error.message 
+      }, 
+      { 
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        }
+      }
     );
   }
 } 

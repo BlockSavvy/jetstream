@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { useAuth } from "@/components/auth-provider";
+import { toast } from 'sonner';
 
 export type UserTravelPreferences = {
   id?: string;
@@ -22,210 +23,153 @@ export type UserTravelPreferences = {
 export type UserProfile = {
   id: string;
   email: string;
-  full_name?: string;
-  avatar_url?: string;
-  bio?: string;
-  company?: string;
-  position?: string;
-  website?: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  company?: string | null;
+  position?: string | null;
+  website?: string | null;
+  location?: string | null;
+  verification_status?: string;
+  last_login?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  onboarding_completed?: boolean;
+  travel_preferences?: UserTravelPreferences;
+  phone_number?: string | null;
+  marketing_emails?: boolean;
+  profile_visibility?: 'public' | 'private' | 'connections_only';
   social_links?: {
     twitter?: string;
     linkedin?: string;
     instagram?: string;
-  };
-  phone_number?: string;
-  travel_preferences?: UserTravelPreferences;
-  notification_preferences?: {
-    email: boolean;
-    sms: boolean;
-    push: boolean;
-  };
-  privacy_settings?: {
-    show_profile: boolean;
-    show_travel_history: boolean;
-    show_upcoming_flights: boolean;
-  };
-  created_at?: string;
-  updated_at?: string;
+    [key: string]: string | undefined;
+  } | null;
+  pilot_license?: string;
+  verified?: boolean;
 };
 
+/**
+ * Hook for managing user profile data
+ */
 export function useUserProfile() {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
-  const supabase = createClient();
-
-  const fetchProfile = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
+  
+  // Use refs to prevent excessive profile fetching
+  const profileFetchAttempted = useRef(false);
+  const isFetchingProfile = useRef(false);
+  
+  /**
+   * Fetch user profile from Supabase
+   */
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    // If already fetching or already attempted, skip
+    if (isFetchingProfile.current || !userId) {
       return;
     }
-
-    setLoading(true);
-    setError(null);
-
+    
     try {
-      // Fetch user profile - using direct match without filter
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select()
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error("Error fetching profile data:", profileError);
+      isFetchingProfile.current = true;
+      setLoading(true);
+      setError(null);
+      
+      console.log('Fetching profile for user:', userId);
+      
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
         
-        // Create a new profile if not found - using upsert to avoid conflicts
-        if (profileError.code === "PGRST116" || !profileData) { // Row not found
-          console.log("Profile not found, creating new profile for user:", user.id);
-          
-          const profileToCreate = {
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || "",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          const { data: newProfile, error: insertError } = await supabase
-            .from("profiles")
-            .upsert(profileToCreate)
-            .select();
-            
-          if (insertError) {
-            console.error("Error creating new profile:", insertError);
-            throw insertError;
-          }
-          
-          // Use the newly created profile
-          const fullProfile: UserProfile = {
-            ...(newProfile?.[0] || profileToCreate),
-            id: user.id,
-            email: user.email || "",
-          };
-          
-          setProfile(fullProfile);
-          setLoading(false);
-          return;
-        }
-        
-        throw profileError;
+      if (error) {
+        console.error('Error fetching profile:', error);
+        setError('Failed to load profile');
+        return;
       }
-
-      // Fetch travel preferences
-      const { data: preferencesData, error: preferencesError } = await supabase
-        .from("travel_preferences")
+      
+      setProfile(data as UserProfile);
+      profileFetchAttempted.current = true;
+    } catch (err) {
+      console.error('Unexpected error fetching profile:', err);
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+      isFetchingProfile.current = false;
+    }
+  }, []);
+  
+  /**
+   * Update user profile
+   */
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    if (!user?.id) {
+      toast.error('You must be logged in to update your profile');
+      return { error: new Error('User not authenticated') };
+    }
+    
+    try {
+      setLoading(true);
+      const supabase = createClient();
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id)
         .select()
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (preferencesError && preferencesError.code !== "PGRST116") {
-        // PGRST116 is "not found", we can ignore this as the user might not have travel preferences yet
-        console.warn("Error fetching travel preferences:", preferencesError);
+        .single();
+        
+      if (error) {
+        toast.error('Failed to update profile');
+        console.error('Error updating profile:', error);
+        return { error };
       }
-
-      // Combine profile and preferences
-      const fullProfile: UserProfile = {
-        ...(profileData || { id: user.id }),
-        email: user.email || "",
-        travel_preferences: preferencesData || undefined,
-      };
-
-      setProfile(fullProfile);
-    } catch (err: any) {
-      console.error("Error fetching user profile:", err);
-      // Make sure we capture the detailed error message or fallback to a generic one
-      setError(err.message || err.details || JSON.stringify(err) || "Failed to load user profile");
+      
+      setProfile(data as UserProfile);
+      toast.success('Profile updated successfully');
+      return { data };
+    } catch (err) {
+      toast.error('An unexpected error occurred');
+      console.error('Unexpected error updating profile:', err);
+      return { error: err };
     } finally {
       setLoading(false);
     }
-  }, [user?.id, user?.email, supabase]);
-
-  // Update profile in Supabase
-  const updateProfile = async (updates: Partial<UserProfile>) => {
-    if (!user?.id || !profile) return { error: new Error("User not authenticated") };
-
-    try {
-      // Separate travel preferences from other profile updates
-      const { travel_preferences, ...profileUpdates } = updates;
-
-      // Update profile if there are profile updates
-      if (Object.keys(profileUpdates).length > 0) {
-        // Make sure we don't try to update the ID field
-        const { id, ...updatesWithoutId } = profileUpdates;
-        
-        if (Object.keys(updatesWithoutId).length > 0) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update(updatesWithoutId)
-            .eq("id", user.id);
-
-          if (profileError) {
-            console.error("Error updating profile:", profileError);
-            throw profileError;
-          }
-        }
-      }
-
-      // Update travel preferences if provided
-      if (travel_preferences) {
-        // Check if travel preferences exist
-        const { data: existingPrefs, error: checkError } = await supabase
-          .from("travel_preferences")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (checkError && checkError.code !== "PGRST116") {
-          throw checkError;
-        }
-
-        if (existingPrefs) {
-          // Update existing preferences
-          const { error: prefError } = await supabase
-            .from("travel_preferences")
-            .update({
-              ...travel_preferences,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("user_id", user.id);
-
-          if (prefError) throw prefError;
-        } else {
-          // Insert new preferences
-          const { error: prefError } = await supabase
-            .from("travel_preferences")
-            .insert({
-              ...travel_preferences,
-              user_id: user.id,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-
-          if (prefError) throw prefError;
-        }
-      }
-
-      // Refetch profile to get updated data
-      await fetchProfile();
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error updating profile:", error);
-      return { error };
+  }, [user]);
+  
+  /**
+   * Refresh profile data - public function to trigger a re-fetch
+   */
+  const refreshProfile = useCallback(() => {
+    if (user?.id) {
+      // Reset the fetch attempted flag to force a new fetch
+      profileFetchAttempted.current = false;
+      fetchUserProfile(user.id);
     }
-  };
-
-  // Fetch profile on mount and when user changes
+  }, [user, fetchUserProfile]);
+  
+  // Fetch profile on component mount or user change
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
+    if (user?.id && !profileFetchAttempted.current) {
+      fetchUserProfile(user.id);
+    } else if (!user) {
+      // Reset profile when user logs out
+      setProfile(null);
+      setLoading(false);
+      profileFetchAttempted.current = false;
+    }
+  }, [user, fetchUserProfile]);
+  
   return {
     profile,
     loading,
     error,
     updateProfile,
-    refetchProfile: fetchProfile,
+    refreshProfile
   };
 } 

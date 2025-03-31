@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
+import { useUserProfile } from '@/hooks/useUserProfile'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProfileForm from '@/components/profile/ProfileForm'
 import NotificationPreferences from '@/components/profile/NotificationPreferences'
@@ -11,6 +12,7 @@ import { Loader2 } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, loading } = useAuth()
+  const { refreshProfile } = useUserProfile()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('account')
 
@@ -18,8 +20,11 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/login')
+    } else if (!loading && user) {
+      // Refresh profile data when settings page loads
+      refreshProfile()
     }
-  }, [user, loading, router])
+  }, [user, loading, router, refreshProfile])
 
   if (loading) {
     return (

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/components/auth-provider"
 import { Toaster } from "sonner"
 import Navbar from "@/components/navbar"
+import { AuthPersistenceProvider } from "@/components/auth-persistence-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,18 +27,16 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
-            <Toaster position="top-center" />
-            <Navbar />
-            <main className="min-h-screen">
-              {children}
-            </main>
+            <AuthPersistenceProvider>
+              <Toaster position="top-center" />
+              <Navbar />
+              <main className="min-h-screen">
+                {children}
+              </main>
+            </AuthPersistenceProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   )
 }
-
-
-
-import './globals.css'

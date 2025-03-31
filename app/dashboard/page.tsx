@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
+import { useUserProfile } from '@/hooks/useUserProfile'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -144,6 +145,7 @@ const recommendedFlights = [
 
 export default function DashboardPage() {
   const { user, loading } = useAuth()
+  const { profile, refreshProfile } = useUserProfile()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
 
@@ -151,8 +153,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth/login')
+    } else if (!loading && user) {
+      // Refresh profile data when dashboard loads
+      refreshProfile()
     }
-  }, [user, loading, router])
+  }, [user, loading, router, refreshProfile])
 
   if (loading) {
     return (
@@ -173,7 +178,9 @@ export default function DashboardPage() {
         {/* Welcome header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold dark:text-white">Welcome back, {user.email?.split('@')[0] || 'Traveler'}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold dark:text-white">
+              Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'Traveler'}
+            </h1>
             <p className="text-muted-foreground dark:text-gray-400">
               Here's an overview of your account and upcoming trips
             </p>

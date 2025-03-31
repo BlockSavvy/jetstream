@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase';
 import { Check, AlertCircle, RefreshCw, Database, User, Plane } from 'lucide-react';
 import { toast } from 'sonner';
 import { JetShareUITest } from '../components/JetShareUITest';
+import { useRouter } from 'next/navigation';
 
 export default function JetShareDebug() {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,6 +18,7 @@ export default function JetShareDebug() {
   const [user, setUser] = useState<any>(null);
   const [runningTests, setRunningTests] = useState(false);
   const [testResults, setTestResults] = useState<{[key: string]: {success: boolean, message: string}}>({});
+  const router = useRouter();
   
   // Initialize Supabase client
   const supabase = createClient();
@@ -35,8 +37,24 @@ export default function JetShareDebug() {
       
       setUser(session.user);
       
+      // Get auth token for API calls
+      let authToken = session?.access_token;
+      
+      // Prepare headers with auth token
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       // Fetch debug data from our API
-      const response = await fetch('/api/jetshare/debug');
+      const response = await fetch('/api/jetshare/debug', {
+        headers,
+        credentials: 'include' // Include cookies for authentication
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch debug data');
@@ -58,20 +76,42 @@ export default function JetShareDebug() {
     setTestResults({});
     
     try {
+      // Get auth token for API calls
+      let authToken = null;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          authToken = sessionData.session.access_token;
+        }
+      } catch (sessionError) {
+        console.warn('Error getting session:', sessionError);
+      }
+      
+      // Prepare headers for API calls
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       // Test 1: Check User Profile
-      const profileResult = await testUserProfile();
+      const profileResult = await testUserProfile(headers);
       setTestResults(prev => ({...prev, profile: profileResult}));
       
       // Test 2: Test Offers API
-      const offersResult = await testOffersAPI();
+      const offersResult = await testOffersAPI(headers);
       setTestResults(prev => ({...prev, offers: offersResult}));
       
       // Test 3: Test Create Offer
-      const createOfferResult = await testCreateOffer();
+      const createOfferResult = await testCreateOffer(headers);
       setTestResults(prev => ({...prev, createOffer: createOfferResult}));
       
       // Test 4: Test Database Foreign Keys
-      const foreignKeyResult = await testForeignKeys();
+      const foreignKeyResult = await testForeignKeys(headers);
       setTestResults(prev => ({...prev, foreignKeys: foreignKeyResult}));
       
       // Refresh debug data after tests
@@ -85,7 +125,7 @@ export default function JetShareDebug() {
   };
   
   // Test User Profile
-  const testUserProfile = async (): Promise<{success: boolean, message: string}> => {
+  const testUserProfile = async (headers: Record<string, string>): Promise<{success: boolean, message: string}> => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -102,7 +142,11 @@ export default function JetShareDebug() {
         };
       } else {
         // Try to fix by ensuring profile
-        const response = await fetch('/api/jetshare/debug');
+        const response = await fetch('/api/jetshare/debug', {
+          headers,
+          credentials: 'include'
+        });
+        
         const data = await response.json();
         
         if (data.debug_info.profile.fixed) {
@@ -127,15 +171,23 @@ export default function JetShareDebug() {
   };
   
   // Test Offers API
-  const testOffersAPI = async (): Promise<{success: boolean, message: string}> => {
+  const testOffersAPI = async (headers: Record<string, string>): Promise<{success: boolean, message: string}> => {
     try {
       // Test marketplace view
-      const marketplaceRes = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace');
+      const marketplaceRes = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace', {
+        headers,
+        credentials: 'include'
+      });
+      
       if (!marketplaceRes.ok) throw new Error(`Marketplace API error: ${marketplaceRes.statusText}`);
       const marketplaceData = await marketplaceRes.json();
       
       // Test dashboard view
-      const dashboardRes = await fetch('/api/jetshare/getOffers?status=open&userId=current&viewMode=dashboard');
+      const dashboardRes = await fetch('/api/jetshare/getOffers?status=open&userId=current&viewMode=dashboard', {
+        headers,
+        credentials: 'include'
+      });
+      
       if (!dashboardRes.ok) throw new Error(`Dashboard API error: ${dashboardRes.statusText}`);
       const dashboardData = await dashboardRes.json();
       
@@ -153,7 +205,7 @@ export default function JetShareDebug() {
   };
   
   // Test Create Offer
-  const testCreateOffer = async (): Promise<{success: boolean, message: string}> => {
+  const testCreateOffer = async (headers: Record<string, string>): Promise<{success: boolean, message: string}> => {
     try {
       // Create a test offer with minimal data
       const testOffer = {
@@ -161,15 +213,18 @@ export default function JetShareDebug() {
         departure_location: 'Test Departure',
         arrival_location: 'Test Arrival',
         total_flight_cost: 10000,
-        requested_share_amount: 5000
+        requested_share_amount: 5000,
+        user_id: user.id // Include user_id for private browsing support
       };
+      
+      // Prepare headers for createOffer
+      const createHeaders = { ...headers };
       
       // Call the API
       const response = await fetch('/api/jetshare/createOffer', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: createHeaders,
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify(testOffer)
       });
       
@@ -204,7 +259,7 @@ export default function JetShareDebug() {
   };
   
   // Test Foreign Keys
-  const testForeignKeys = async (): Promise<{success: boolean, message: string}> => {
+  const testForeignKeys = async (headers: Record<string, string>): Promise<{success: boolean, message: string}> => {
     try {
       // Attempt to create an offer with a non-existent user
       const nonExistentUserId = 'non-existent-user-id';
@@ -252,8 +307,33 @@ export default function JetShareDebug() {
   const fixIssues = async () => {
     setIsLoading(true);
     try {
+      // Get auth token for API calls
+      let authToken = null;
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          authToken = sessionData.session.access_token;
+        }
+      } catch (sessionError) {
+        console.warn('Error getting session:', sessionError);
+      }
+      
+      // Prepare headers for API calls
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       // First, ensure profile exists
-      const response = await fetch('/api/jetshare/debug');
+      const response = await fetch('/api/jetshare/debug', {
+        headers,
+        credentials: 'include'
+      });
+      
       const data = await response.json();
       
       if (!data.debug_info.profile.exists) {
@@ -315,7 +395,7 @@ export default function JetShareDebug() {
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => window.location.href = '/login'}>
+            <Button onClick={() => router.push('/auth/login?returnUrl=/jetshare/debug')}>
               Go to Login
             </Button>
           </CardFooter>

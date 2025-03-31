@@ -259,303 +259,208 @@ export async function getJetShareOfferById(offerId: string): Promise<JetShareOff
  * Accept a JetShare offer
  */
 export async function acceptJetShareOffer(
+  supabase: any,
   userId: string,
-  offerData: AcceptJetShareOfferInput
-): Promise<JetShareOfferWithUser> {
-  const supabase = await createClient();
-  
-  console.log('Accepting offer:', offerData.offer_id, 'by user:', userId);
-  
-  // First, ensure the user has a profile
-  const { data: userProfile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  offerId: string,
+  paymentMethod: 'fiat' | 'crypto'
+): Promise<{
+  success: boolean;
+  error?: string;
+  data?: any;
+}> {
+  try {
+    // First check if the authenticated user is valid
+    console.log(`Validating user authentication for user ${userId} accepting offer ${offerId}`);
     
-  if (!userProfile) {
-    // Create a basic profile if it doesn't exist
-    const { data: authUser } = await supabase.auth.getUser();
-    if (!authUser.user) throw new Error('User not authenticated');
+    // Start by checking if we have a valid user session
+    const { data: userData, error: userError } = await supabase.auth.getUser();
     
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        first_name: 'User',  // These will be updated later
-        last_name: String(userId).slice(0, 8),
-        user_type: 'traveler',
-        verification_status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+    if (userError || !userData.user) {
+      console.error('Authentication error when accepting offer:', userError || 'No user data found');
+      return {
+        success: false,
+        error: 'Authentication required: ' + (userError?.message || 'User session is invalid')
+      };
+    }
+    
+    // Verify the authenticated user matches the provided userId
+    if (userData.user.id !== userId) {
+      console.error(`Authentication mismatch: provided user ID ${userId} doesn't match authenticated user ${userData.user.id}`);
+      return {
+        success: false,
+        error: 'Authentication error: User ID mismatch'
+      };
+    }
+    
+    // Fetch the offer to check status and ownership - with retry
+    console.log(`Fetching offer ${offerId} for acceptance by user ${userId}`);
+    let offerData;
+    let fetchError;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      const result = await supabase
+        .from('jetshare_offers')
+        .select('id, user_id, status, matched_user_id, requested_share_amount')
+        .eq('id', offerId)
+        .single();
       
-    if (insertError) {
-      console.error('Error creating user profile:', insertError);
-      throw new Error('Failed to create user profile');
-    }
-  }
-
-  // Update the offer checking logic in acceptJetShareOffer
-  // Before checking if the offer exists and is still open
-  console.log('Checking if offer exists and checking its status...');
-
-  // First check if the offer exists at all, regardless of status
-  const { data: existingOffer, error: existingOfferError } = await supabase
-    .from('jetshare_offers')
-    .select(`
-      *,
-      user:user_id (
-        id,
-        first_name,
-        last_name,
-        email,
-        avatar_url
-      )
-    `)
-    .eq('id', offerData.offer_id)
-    .single();
-    
-  if (existingOfferError) {
-    console.error('Error fetching any JetShare offer:', existingOfferError);
-    throw new Error(`Offer not found: ${existingOfferError.message}`);
-  }
-
-  if (!existingOffer) {
-    console.error('No offer found with ID:', offerData.offer_id);
-    throw new Error('Offer not found');
-  }
-
-  // Additional logging for debugging
-  console.log('Found offer with status:', existingOffer.status, 'matched_user_id:', existingOffer.matched_user_id || 'none');
-
-  // Check if the user is trying to accept their own offer
-  if (existingOffer.user_id === userId) {
-    console.error('User trying to accept their own offer:', userId);
-    throw new Error('You cannot accept your own offer');
-  }
-
-  // Check if the offer is already completed
-  if (existingOffer.status === 'completed') {
-    console.error('Offer is already completed:', existingOffer.id);
-    throw new Error('This offer has already been completed and is no longer available');
-  }
-
-  // Check if the offer is already accepted by another user
-  if (existingOffer.status === 'accepted' && existingOffer.matched_user_id && existingOffer.matched_user_id !== userId) {
-    console.error('Offer already accepted by another user:', existingOffer.matched_user_id);
-    throw new Error('Offer has already been accepted by another user');
-  }
-
-  // If the offer is already accepted by this user, return it without an error
-  if (existingOffer.status === 'accepted' && existingOffer.matched_user_id === userId) {
-    console.log('Offer already accepted by this user:', userId);
-    
-    // Re-fetch with full relations to ensure we have all data
-    const { data: alreadyAcceptedOffer, error: fetchError } = await supabase
-      .from('jetshare_offers')
-      .select(`
-        *,
-        user:user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          avatar_url
-        ),
-        matched_user:matched_user_id (
-          id,
-          first_name,
-          last_name,
-          email,
-          avatar_url
-        )
-      `)
-      .eq('id', offerData.offer_id)
-      .single();
+      fetchError = result.error;
+      offerData = result.data;
       
-    if (fetchError || !alreadyAcceptedOffer) {
-      console.error('Error fetching already accepted offer with relations:', fetchError);
-      throw new Error('Failed to fetch offer details');
+      if (!fetchError && offerData) {
+        break;
+      }
+      
+      console.warn(`Retry ${retryCount + 1}/${maxRetries} fetching offer ${offerId}`);
+      retryCount++;
+      // Small delay before retry
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+      
+    if (fetchError || !offerData) {
+      console.error(`Error fetching offer ${offerId} or not found:`, fetchError);
+      return {
+        success: false,
+        error: 'Offer not found or cannot be accessed'
+      };
     }
     
-    return alreadyAcceptedOffer as JetShareOfferWithUser;
-  }
+    console.log(`Offer details for accepting:`, {
+      id: offerData.id,
+      status: offerData.status,
+      offerUserId: offerData.user_id,
+      currentMatchedUserId: offerData.matched_user_id ?? 'none',
+      acceptingUserId: userId,
+      requestedAmount: offerData.requested_share_amount,
+    });
 
-  // Now proceed with the standard flow for an open offer
-  // But only if we're really still dealing with an open offer
-  if (existingOffer.status !== 'open') {
-    console.error('Offer is in an unexpected state:', existingOffer.status);
-    throw new Error(`Offer is in an invalid state: ${existingOffer.status}`);
-  }
+    // Validation checks
+    if (offerData.user_id === userId) {
+      console.warn(`User ${userId} cannot accept their own offer ${offerId}`);
+      return {
+        success: false,
+        error: 'You cannot accept your own offer'
+      };
+    }
+    
+    // Check if offer is already completed
+    if (offerData.status === 'completed') {
+      console.warn(`Offer ${offerId} is already completed. Cannot accept.`);
+      return {
+        success: false,
+        error: 'This offer has already been completed'
+      };
+    }
+    
+    // Check if offer is already accepted by another user
+    if (offerData.status === 'accepted' && offerData.matched_user_id && offerData.matched_user_id !== userId) {
+      console.warn(`Offer ${offerId} already accepted by user ${offerData.matched_user_id}. Cannot accept.`);
+      return {
+        success: false,
+        error: 'This offer has already been accepted by another user'
+      };
+    }
+    
+    // If the offer is already accepted by this user, just return success
+    if (offerData.status === 'accepted' && offerData.matched_user_id === userId) {
+      console.log(`Offer ${offerId} is already accepted by this user ${userId}. Returning success.`);
+      return {
+        success: true,
+        data: offerData,
+        error: 'Offer already accepted. Proceed to payment.'
+      };
+    }
 
-  // Continue with the original open offer check and update
-  console.log('Proceeding with standard open offer update to accepted state...');
-  
-  // Update the offer
-  console.log('Updating offer status to accepted...');
-  
-  // First try to update with status check
-  const updateResult = await supabase
-    .from('jetshare_offers')
-    .update({
-      status: 'accepted',
-      matched_user_id: userId,
-      updated_at: new Date().toISOString() // Add timestamp to force update
-    })
-    .eq('id', offerData.offer_id)
-    .eq('status', 'open');
+    // If status is not open, reject (covers cases like 'cancelled')
+    if (offerData.status !== 'open' && offerData.status !== 'accepted') {
+      console.warn(`Offer ${offerId} is not available (status: ${offerData.status}). Cannot accept.`);
+      return {
+        success: false,
+        error: `Offer is not available (status: ${offerData.status})`
+      };
+    }
+
+    // Perform the update - with retry mechanism
+    retryCount = 0;
+    let updatedOffer;
+    let updateError;
     
-  // Check for update errors
-  if (updateResult.error) {
-    console.error('Error updating JetShare offer:', updateResult.error);
-    console.log('Update failed for offer ID:', offerData.offer_id, 'Status:', 'open');
-    
-    // Let's check if the offer exists at all
-    const { data: checkOffer, error: checkError } = await supabase
-      .from('jetshare_offers')
-      .select('status, matched_user_id')
-      .eq('id', offerData.offer_id)
-      .maybeSingle();
+    while (retryCount < maxRetries) {
+      console.log(`Attempt ${retryCount + 1}/${maxRetries} to update offer ${offerId}: set status=accepted, matched_user_id=${userId}`);
       
-    if (checkError) {
-      console.error('Error checking offer existence:', checkError);
-      throw new Error(`Failed to verify offer: ${checkError.message}`);
-    }
-    
-    if (!checkOffer) {
-      console.error('Offer does not exist:', offerData.offer_id);
-      throw new Error('Offer not found');
-    }
-    
-    // If offer exists but status is already accepted/completed
-    if (checkOffer.status === 'accepted' || checkOffer.status === 'completed') {
-      console.error('Offer already accepted or completed:', checkOffer.status);
-      throw new Error(`Offer is no longer available. Current status: ${checkOffer.status}`);
-    }
-    
-    // If it exists but couldn't be updated due to other reasons
-    throw new Error(`Failed to update offer status: ${updateResult.error.message}`);
-  }
-  
-  // Check if the update affected any rows
-  if (updateResult.count === 0) {
-    console.error('No rows were updated. Offer might have been accepted by someone else already.');
-    
-    // Double-check the current status
-    const { data: statusCheck, error: statusError } = await supabase
-      .from('jetshare_offers')
-      .select('status, matched_user_id')
-      .eq('id', offerData.offer_id)
-      .maybeSingle();
-      
-    if (statusError) {
-      console.error('Error checking offer status after failed update:', statusError);
-      throw new Error('Failed to verify offer status');
-    }
-    
-    if (!statusCheck) {
-      console.error('Offer not found during status check:', offerData.offer_id);
-      throw new Error('Offer no longer exists');
-    }
-    
-    // If the offer is already accepted by this user, we can proceed
-    if (statusCheck.status === 'accepted' && statusCheck.matched_user_id === userId) {
-      console.log('Offer is already accepted by this user, proceeding');
-    } else if (statusCheck.status === 'accepted') {
-      console.error('Offer already accepted by another user:', statusCheck.matched_user_id);
-      throw new Error('Offer has already been accepted by another user');
-    } else if (statusCheck.status === 'completed') {
-      console.error('Offer already completed');
-      throw new Error('Offer has already been completed and is no longer available');
-    } else {
-      // Status is still 'open' but update failed - try a force update without status check
-      console.log('Attempting force update without status check...');
-      
-      const forceResult = await supabase
+      const result = await supabase
         .from('jetshare_offers')
         .update({
           status: 'accepted',
           matched_user_id: userId,
-          updated_at: new Date().toISOString() // Add timestamp to force update
         })
-        .eq('id', offerData.offer_id);
-        
-      if (forceResult.error) {
-        console.error('Force update failed:', forceResult.error);
-        throw new Error(`Failed to update offer status even with force update: ${forceResult.error.message}`);
+        .eq('id', offerId)
+        .or(`status.eq.open,and(status.eq.accepted,matched_user_id.is.null)`) // Accept if open or if accepted with no matched user
+        .select() // Return the updated record
+        .single();
+      
+      updateError = result.error;
+      updatedOffer = result.data;
+      
+      if (!updateError && updatedOffer) {
+        break;
       }
       
-      if (forceResult.count === 0) {
-        console.error('Force update affected 0 rows');
-        throw new Error('Failed to update offer status despite multiple attempts. The offer might have been modified or removed.');
+      console.warn(`Retry ${retryCount + 1}/${maxRetries} updating offer ${offerId} (error: ${updateError?.message || 'unknown'})`);
+      retryCount++;
+      // Slightly longer delay for update retries
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+
+    if (updateError || !updatedOffer) {
+      console.error(`Failed to update offer ${offerId} to accepted state:`, updateError);
+      
+      // Check if offer status changed concurrently
+      const { data: currentOfferState } = await supabase
+        .from('jetshare_offers')
+        .select('status, matched_user_id')
+        .eq('id', offerId)
+        .single();
+      
+      if (currentOfferState?.matched_user_id && currentOfferState.matched_user_id !== userId) {
+        console.warn(`Offer ${offerId} was accepted by another user concurrently.`);
+        return { 
+          success: false,
+          error: 'This offer was accepted by another user in the meantime. Please try a different offer.'
+        };
       }
       
-      console.log('Force update succeeded, affected rows:', forceResult.count);
+      if (currentOfferState?.status !== 'open') {
+        console.warn(`Offer ${offerId} changed status concurrently to ${currentOfferState?.status}.`);
+        return { 
+          success: false,
+          error: `Offer status changed to ${currentOfferState?.status || 'unknown'}. Cannot accept.`
+        };
+      }
+      
+      return { 
+        success: false,
+        error: updateError?.message || 'Database error: Unable to update offer status'
+      };
     }
+
+    console.log(`Offer ${offerId} updated successfully to accepted state by user ${userId}. Updated data:`, updatedOffer);
+
+    // Return success response with the updated offer data
+    return { 
+      success: true, 
+      data: updatedOffer,
+      error: undefined
+    };
+  } catch (error) {
+    console.error('Error in acceptJetShareOffer:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
   }
-  
-  console.log('Offer updated successfully to accepted state');
-  
-  // Only if update was successful, fetch the updated offer with all relations
-  const { data: updatedOffer, error: fetchError } = await supabase
-    .from('jetshare_offers')
-    .select(`
-      *,
-      user:user_id (
-        id,
-        first_name,
-        last_name,
-        email,
-        avatar_url
-      ),
-      matched_user:matched_user_id (
-        id,
-        first_name,
-        last_name,
-        email,
-        avatar_url
-      )
-    `)
-    .eq('id', offerData.offer_id)
-    .single();
-    
-  if (fetchError || !updatedOffer) {
-    console.error('Error fetching updated JetShare offer:', fetchError);
-    throw new Error('Offer status was updated, but failed to fetch the updated offer details');
-  }
-  
-  // Send notification to the offer creator
-  const { data: userData, error: userError } = await supabase
-    .from('profiles')
-    .select('email, phone')
-    .eq('id', updatedOffer.user_id)
-    .single();
-    
-  if (userData?.email) {
-    try {
-      await sendEmail(
-        userData.email,
-        'Your JetShare Offer Has Been Accepted',
-        `Your flight share offer from ${updatedOffer.departure_location} to ${updatedOffer.arrival_location} on ${new Date(updatedOffer.flight_date).toLocaleDateString()} has been accepted. The requested share amount of $${updatedOffer.requested_share_amount} will be transferred to your account once payment is completed.`
-      );
-    } catch (emailError) {
-      console.error('Error sending email notification:', emailError);
-    }
-  }
-  
-  if (userData?.phone) {
-    try {
-      await sendSMS(
-        userData.phone,
-        `Your JetShare offer for flight from ${updatedOffer.departure_location} to ${updatedOffer.arrival_location} has been accepted. Amount: $${updatedOffer.requested_share_amount}.`
-      );
-    } catch (smsError) {
-      console.error('Error sending SMS notification:', smsError);
-    }
-  }
-  
-  return updatedOffer as JetShareOfferWithUser;
 }
 
 /**

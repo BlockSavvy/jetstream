@@ -179,7 +179,7 @@ export default function TokensPage() {
             <div className="flex items-center mt-1 text-xs">
               <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
                 <TrendingUp className="h-3 w-3 mr-1" />
-                +{totalAppreciation.toFixed(1)}%
+                +{totalAppreciation.toFixed(1)}
               </Badge>
               <span className="text-muted-foreground ml-2">from purchase value</span>
             </div>
@@ -220,7 +220,7 @@ export default function TokensPage() {
           <CardContent>
             <div className="text-2xl font-bold">{tokens.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total ownership: {tokens.reduce((acc, token) => acc + token.percentage, 0).toFixed(1)}%
+              Total ownership: {tokens.reduce((acc, token) => acc + token.percentage, 0).toFixed(1)}
             </p>
           </CardContent>
         </Card>
@@ -305,7 +305,7 @@ export default function TokensPage() {
                           <p className="text-xs text-muted-foreground mb-1">Appreciation</p>
                           <p className="font-medium flex items-center text-green-600">
                             <TrendingUp className="h-3 w-3 mr-1" />
-                            {token.appreciation}%
+                            {token.appreciation}
                           </p>
                         </div>
                         <div>

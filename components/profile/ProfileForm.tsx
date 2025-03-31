@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ export default function ProfileForm() {
   });
   
   // Update form when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setFormData({
         full_name: profile.full_name || "",
@@ -47,7 +47,7 @@ export default function ProfileForm() {
         }
       });
     }
-  });
+  }, [profile]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -118,7 +118,7 @@ export default function ProfileForm() {
           <CardContent className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center gap-6 mb-6">
               <Avatar className="w-20 h-20 border-2 border-amber-500">
-                <AvatarImage src={profile?.avatar_url} />
+                <AvatarImage src={profile?.avatar_url || undefined} />
                 <AvatarFallback className="bg-amber-100 text-amber-950 text-xl">
                   {profile?.full_name ? profile.full_name.split(" ").map(n => n[0]).join("").toUpperCase() : profile?.email?.[0]?.toUpperCase()}
                 </AvatarFallback>
