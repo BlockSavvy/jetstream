@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Share, Search, Plane, Banknote, Clock, CheckCircle } from 'lucide-react';
 
+// Prevent static generation of this page
+export const dynamic = 'force-dynamic';
+
 export default function JetSharePage() {
   return (
     <div className="container mx-auto px-4 md:px-6 pb-16">
