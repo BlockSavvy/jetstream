@@ -10,6 +10,9 @@ import Link from 'next/link';
 import React from 'react';
 import { toast } from 'sonner';
 
+// Prevent static generation of this page
+export const dynamic = 'force-dynamic';
+
 // Loading component to use in Suspense
 function LoadingCard() {
   return (
