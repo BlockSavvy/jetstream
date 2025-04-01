@@ -21,9 +21,19 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  // Disable static generation for problematic pages
+  // Disable static generation completely
   staticPageGenerationTimeout: 300,
   output: 'standalone',
+  // Configure which pages should never be statically generated
+  unstable_excludeRoutes: [
+    '/jetshare/auth-test',
+    '/jetshare/dashboard', 
+    '/jetshare/listings',
+    '/jetshare/profile',
+    '/jetshare/create',
+    '/jetshare/offer',
+    '/jetshare/payment'
+  ],
 }
 
 mergeConfig(nextConfig, userConfig)
