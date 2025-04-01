@@ -8,7 +8,7 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
     "grok-2-latest",
     "grok-1"
   ];
-  private defaultModel: string = "grok-3";
+  private defaultModel: string = "grok-2-latest";
 
   constructor() {
     // Get API key from environment variables
@@ -53,8 +53,16 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
     try {
       const formattedMessages = this.formatMessages(messages);
 
+      let requestedModel = options?.modelName || this.defaultModel;
+      
+      // If grok-3 is requested but unavailable, fall back to grok-2-latest
+      if (requestedModel === 'grok-3' || requestedModel.startsWith('grok-3')) {
+        console.warn("Grok-3 model requested but may not be available. Using grok-2-latest as fallback.");
+        requestedModel = 'grok-2-latest';
+      }
+
       const requestBody: any = {
-        model: options?.modelName || this.defaultModel,
+        model: requestedModel,
         messages: formattedMessages,
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.maxTokens,
@@ -62,7 +70,8 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
         stream: false
       };
 
-      // Add function calling options if provided and if using Grok-3 which supports it
+      // Only add function calling if using Grok-3 (though we're likely using the fallback)
+      // We keep this code for when Grok-3 access becomes available
       if (options?.functions && options.functions.length > 0 && 
           (requestBody.model === 'grok-3' || requestBody.model.startsWith('grok-3'))) {
         requestBody.functions = options.functions;
@@ -116,8 +125,16 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
     try {
       const formattedMessages = this.formatMessages(messages);
 
+      let requestedModel = options?.modelName || this.defaultModel;
+      
+      // If grok-3 is requested but unavailable, fall back to grok-2-latest
+      if (requestedModel === 'grok-3' || requestedModel.startsWith('grok-3')) {
+        console.warn("Grok-3 model requested but may not be available. Using grok-2-latest as fallback.");
+        requestedModel = 'grok-2-latest';
+      }
+
       const requestBody: any = {
-        model: options?.modelName || this.defaultModel,
+        model: requestedModel,
         messages: formattedMessages,
         temperature: options?.temperature ?? 0.7,
         max_tokens: options?.maxTokens,
@@ -125,7 +142,8 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
         stream: true
       };
 
-      // Add function calling options if provided and if using Grok-3 which supports it
+      // Only add function calling if using Grok-3 (though we're likely using the fallback)
+      // We keep this code for when Grok-3 access becomes available
       if (options?.functions && options.functions.length > 0 && 
           (requestBody.model === 'grok-3' || requestBody.model.startsWith('grok-3'))) {
         requestBody.functions = options.functions;

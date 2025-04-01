@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     async start(controller) {
       try {
         // Parse the request body
-        const { messages, userId, contextData } = await request.json();
+        const { messages, userId, contextData, interactionType } = await request.json();
 
         // Validate input
         if (!messages || !Array.isArray(messages)) {
@@ -57,33 +57,46 @@ export async function POST(request: NextRequest) {
           try {
             const supabase = createClient();
             
-            // Check if conversation exists
-            const { data: existingConversation } = await supabase
+            // Check if conversation exists - avoiding .single() to prevent 406 errors
+            const { data: existingConversations, error: queryError } = await supabase
               .from('concierge_conversations')
               .select('id, messages')
               .eq('user_id', userId)
               .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
+              .limit(1);
             
-            if (existingConversation) {
+            if (queryError) {
+              console.error('Supabase query error:', queryError);
+              // Continue with API call even if database operation fails
+            } else if (existingConversations && existingConversations.length > 0) {
               // Update existing conversation
-              await supabase
+              const existingConversation = existingConversations[0];
+              const { error: updateError } = await supabase
                 .from('concierge_conversations')
                 .update({ 
                   messages: messages,
+                  interaction_type: interactionType || 'text',
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', existingConversation.id);
+                
+              if (updateError) {
+                console.error('Error updating conversation:', updateError);
+              }
             } else {
               // Create new conversation
-              await supabase
+              const { error: insertError } = await supabase
                 .from('concierge_conversations')
                 .insert({
                   user_id: userId,
                   messages: messages,
+                  interaction_type: interactionType || 'text',
                   created_at: new Date().toISOString()
                 });
+                
+              if (insertError) {
+                console.error('Error creating conversation:', insertError);
+              }
             }
           } catch (dbError) {
             console.error('Error storing conversation:', dbError);

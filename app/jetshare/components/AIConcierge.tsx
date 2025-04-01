@@ -40,32 +40,43 @@ export default function AIConcierge() {
     
     try {
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('concierge_conversations')
         .select('messages')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
       
-      if (data && data.messages) {
+      // Check for errors
+      if (error) {
+        console.error('Supabase query error:', error);
+        // Continue with default system prompt
+        return;
+      }
+      
+      // Check if we got data
+      if (data && data.length > 0 && data[0].messages) {
         // Ensure the system prompt is always at the beginning
-        const hasSystemPrompt = data.messages.some(
+        const hasSystemPrompt = data[0].messages.some(
           (msg: Message) => msg.role === 'system'
         );
         
         if (hasSystemPrompt) {
-          setMessages(data.messages);
+          setMessages(data[0].messages);
         } else {
           setMessages([
             { role: 'system', content: SYSTEM_PROMPT },
-            ...data.messages
+            ...data[0].messages
           ]);
         }
+      } else {
+        // No conversation found, use default system prompt
+        setMessages([{ role: 'system', content: SYSTEM_PROMPT }]);
       }
     } catch (error) {
       console.error('Error loading conversation:', error);
-      // If no conversation found, just use the default system prompt
+      // If error occurred, use the default system prompt
+      setMessages([{ role: 'system', content: SYSTEM_PROMPT }]);
     }
   };
 
