@@ -21,15 +21,17 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  // Force server-side rendering configuration
-  swcMinify: true,
+  // Set reasonable timeout for static generation
+  staticPageGenerationTimeout: 300,
+  // Force all pages to be server-side rendered with lambdas
+  output: 'standalone',
+  // Disable prerendering entirely
   reactStrictMode: true,
   poweredByHeader: false,
-  staticPageGenerationTimeout: 300,
-  // Disable static optimization entirely
-  unstable_runtimeJS: true,
-  trailingSlash: false,
-  productionBrowserSourceMaps: true
+  // Skip all static optimization
+  env: {
+    NEXT_SKIP_STATIC_GENERATION: 'true'
+  }
 }
 
 mergeConfig(nextConfig, userConfig)
