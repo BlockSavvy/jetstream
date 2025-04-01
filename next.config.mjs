@@ -24,16 +24,10 @@ const nextConfig = {
   // Disable static generation completely
   staticPageGenerationTimeout: 300,
   output: 'standalone',
-  // Configure which pages should never be statically generated
-  unstable_excludeRoutes: [
-    '/jetshare/auth-test',
-    '/jetshare/dashboard', 
-    '/jetshare/listings',
-    '/jetshare/profile',
-    '/jetshare/create',
-    '/jetshare/offer',
-    '/jetshare/payment'
-  ],
+  // Set environment variables to control static generation
+  env: {
+    NEXT_DISABLE_STATIC_GENERATION: 'true'
+  }
 }
 
 mergeConfig(nextConfig, userConfig)

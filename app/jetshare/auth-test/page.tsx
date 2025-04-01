@@ -1,6 +1,10 @@
 'use client';
 
-import { dynamic } from '@/app/dynamic-ssr';
+// Force dynamic rendering without using route.js
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
