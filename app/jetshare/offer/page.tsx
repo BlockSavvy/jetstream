@@ -1,5 +1,10 @@
 'use client';
 
+// Force dynamic rendering to prevent client-side code execution during static generation
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import JetShareOfferForm from '../components/JetShareOfferForm';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';

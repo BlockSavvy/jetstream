@@ -12,6 +12,11 @@ interface PageProps {
   };
 }
 
+// Force dynamic rendering to prevent client-side code execution during static generation
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 // Page component is now a Server Component (no 'use client')
 export default function PaymentPage(props: PageProps) {
   const offerId = props.params?.id;
