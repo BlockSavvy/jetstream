@@ -9,6 +9,11 @@ interface EditOfferPageProps {
   };
 }
 
+// Force dynamic rendering to prevent redirect during static generation
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 export default async function EditOfferPage({ params }: EditOfferPageProps) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

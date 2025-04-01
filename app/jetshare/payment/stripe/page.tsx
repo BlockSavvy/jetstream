@@ -9,6 +9,11 @@ import PaymentConfirmation from '../../components/PaymentConfirmation';
 import StripeTestHelper from '../../components/StripeTestHelper';
 import { useEffect, useState } from 'react';
 
+// Force dynamic rendering to prevent redirect during static generation
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 // Make sure to use the test mode publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
