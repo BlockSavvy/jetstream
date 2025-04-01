@@ -1,3 +1,8 @@
+// Force dynamic rendering to prevent static generation errors
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Share, Search, Plane, Banknote, Clock, CheckCircle } from 'lucide-react';

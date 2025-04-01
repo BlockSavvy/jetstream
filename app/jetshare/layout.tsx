@@ -1,5 +1,10 @@
 'use client';
 
+// Force dynamic rendering to prevent client-side code execution during static generation
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 import { ReactNode, useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import JetShareHeader from './components/JetShareHeader';
