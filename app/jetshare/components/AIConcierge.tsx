@@ -275,6 +275,46 @@ export default function AIConcierge() {
     }
   };
 
+  // Save conversation to database
+  const saveConversation = async (messageList: Message[], interactionType: 'text' | 'voice' | 'multimodal') => {
+    if (!user) return;
+    
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('concierge_conversations')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        // Update existing conversation
+        await supabase
+          .from('concierge_conversations')
+          .update({ 
+            messages: messageList,
+            interaction_type: interactionType,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', data.id);
+      } else {
+        // Create new conversation
+        await supabase
+          .from('concierge_conversations')
+          .insert({
+            user_id: user.id,
+            messages: messageList,
+            interaction_type: interactionType,
+            created_at: new Date().toISOString()
+          });
+      }
+    } catch (error) {
+      console.error('Error saving conversation:', error);
+    }
+  };
+
   // Handle audio recording complete
   const handleRecordingComplete = async (blob: Blob) => {
     setAudioBlob(blob);
@@ -282,9 +322,32 @@ export default function AIConcierge() {
     setIsTranscribing(true);
     
     try {
+      // Create a voice session record in the database
+      let voiceSessionId = null;
+      
+      if (user) {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('concierge_voice_sessions')
+          .insert({
+            user_id: user.id,
+            session_data: {},
+            created_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+        
+        if (data) {
+          voiceSessionId = data.id;
+        }
+      }
+      
       // Create form data with the audio blob
       const formData = new FormData();
       formData.append('file', blob, 'recording.webm');
+      if (voiceSessionId) {
+        formData.append('voice_session_id', voiceSessionId);
+      }
       
       // Send to the transcription endpoint
       const response = await fetch('/api/concierge/transcribe', {
@@ -353,10 +416,19 @@ export default function AIConcierge() {
       content: textToSend
     };
     
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputValue('');
     setIsLoading(true);
     setStreamingResponse('');
+    
+    // Determine interaction type
+    const interactionType = isVoiceMode 
+      ? (audioBlob ? 'multimodal' : 'voice')
+      : 'text';
+    
+    // Save conversation with appropriate type
+    saveConversation(updatedMessages, interactionType);
     
     // Gather user context if available
     let contextData = null;
@@ -376,7 +448,7 @@ export default function AIConcierge() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          messages: updatedMessages,
           userId: user?.id,
           contextData,
           functions: FUNCTION_DEFINITIONS,
@@ -428,8 +500,12 @@ export default function AIConcierge() {
                   await handleFunctionCall(functionCall);
                 }
                 
-                setMessages(prev => [...prev, assistantMessage]);
+                const finalMessages = [...updatedMessages, assistantMessage];
+                setMessages(finalMessages);
                 setIsLoading(false);
+                
+                // Save the final conversation with the assistant response
+                saveConversation(finalMessages, interactionType);
                 
                 // Play audio response if in voice mode
                 if (isVoiceMode) {
@@ -438,11 +514,18 @@ export default function AIConcierge() {
               } else if (jsonData.type === 'error') {
                 console.error('Error from server:', jsonData.error);
                 setStreamingResponse('');
-                setMessages(prev => [
-                  ...prev,
-                  { role: 'assistant', content: `Error: ${jsonData.error}` }
-                ]);
+                
+                const errorMessage = { 
+                  role: 'assistant' as const, 
+                  content: `Error: ${jsonData.error}` 
+                };
+                const finalMessages = [...updatedMessages, errorMessage];
+                
+                setMessages(finalMessages);
                 setIsLoading(false);
+                
+                // Save the error conversation
+                saveConversation(finalMessages, interactionType);
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
@@ -453,11 +536,18 @@ export default function AIConcierge() {
     } catch (error) {
       console.error('Error sending message:', error);
       setStreamingResponse('');
-      setMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: 'Sorry, there was an error processing your request.' }
-      ]);
+      
+      const errorMessage = { 
+        role: 'assistant' as const, 
+        content: 'Sorry, there was an error processing your request.' 
+      };
+      const finalMessages = [...updatedMessages, errorMessage];
+      
+      setMessages(finalMessages);
       setIsLoading(false);
+      
+      // Save the error conversation
+      saveConversation(finalMessages, interactionType);
     }
   };
 
