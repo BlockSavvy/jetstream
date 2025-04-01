@@ -178,9 +178,14 @@ export default function BoardingPassPage() {
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl flex items-center">
-                <Plane className="h-5 w-5 mr-2 rotate-90" />
-                Flight {boardingPass?.flightNumber || 'JS1234'}
+              <CardTitle className="text-xl flex items-center justify-between">
+                <div className="flex items-center">
+                  <Plane className="h-5 w-5 mr-2 rotate-90" />
+                  Flight {boardingPass?.flightNumber || 'JS1234'}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  Flight #{id?.substring(0, 6)}
+                </div>
               </CardTitle>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {boardingPass ? format(new Date(boardingPass.departureTime), 'EEEE, MMMM d, yyyy') : new Date().toDateString()}

@@ -118,6 +118,9 @@ export default function TransactionClient({
           <div className="flex items-center text-amber-700 dark:text-amber-100 mb-2">
             <AlertCircle className="h-5 w-5 mr-2" />
             <h2 className="text-lg font-medium">Transaction Details Processing</h2>
+            <div className="ml-auto text-xs text-amber-500 dark:text-amber-300 font-mono">
+              Flight #{offer.id?.toString().substring(0, 6)}
+            </div>
           </div>
           <p className="text-amber-600 dark:text-amber-200 mb-3">Your payment has been received, but transaction details are still being processed.</p>
           
@@ -179,9 +182,14 @@ export default function TransactionClient({
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl dark:text-high-contrast">
-                <div className="flex items-center">
-                  <Plane className="h-5 w-5 mr-2 rotate-90" />
-                  {offer?.departure_location} → {offer?.arrival_location}
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center">
+                    <Plane className="h-5 w-5 mr-2 rotate-90" />
+                    {offer?.departure_location} → {offer?.arrival_location}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                    Flight #{offer?.id?.toString().substring(0, 6)}
+                  </div>
                 </div>
               </CardTitle>
               <CardDescription className="mt-1 dark:text-medium-contrast">
@@ -219,7 +227,12 @@ export default function TransactionClient({
             <Separator className="dark:bg-gray-700" />
             
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">TRANSACTION DETAILS</h3>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2 flex justify-between items-center">
+                <span>TRANSACTION DETAILS</span>
+                <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+                  Txn #{transaction.id?.toString().substring(0, 6)}
+                </span>
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Transaction ID</p>

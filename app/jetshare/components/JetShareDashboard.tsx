@@ -409,8 +409,13 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
             </CardTitle>
               {getStatusBadge(status)}
           </div>
-          <div className="text-sm text-muted-foreground">
-              {format(flightDate, 'MMM d, yyyy')}
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+                {format(flightDate, 'MMM d, yyyy')}
+            </div>
+            <div className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+              Flight #{offer.id?.toString().substring(0, 6)}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -537,8 +542,13 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
                   <span>{transaction.offer.departure_location} → {transaction.offer.arrival_location}</span>
                 </div>
               )}
-              <div className="text-sm mt-1">
-                {format(transactionDate, 'MMM d, yyyy')}
+              <div className="flex justify-between items-center">
+                <div className="text-sm mt-1">
+                  {format(transactionDate, 'MMM d, yyyy')}
+                </div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                  Txn #{transaction.id?.toString().substring(0, 6)}
+                </div>
               </div>
             </div>
           </CardHeader>

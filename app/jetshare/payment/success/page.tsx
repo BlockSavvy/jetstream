@@ -67,20 +67,27 @@ function SuccessCard({
   isRedirecting, 
   onViewDetails, 
   onDashboard,
-  onBoardingPass 
+  onBoardingPass,
+  offerId
 }: { 
   offerDetails: any, 
   paymentIntentId: string | null, 
   isRedirecting: boolean, 
   onViewDetails: () => void, 
   onDashboard: () => void,
-  onBoardingPass: () => void
+  onBoardingPass: () => void,
+  offerId: string | null
 }) {
   return (
     <div className="container mx-auto px-4 py-16 max-w-md">
       <Card className="border-green-200 dark:border-green-700 dark:bg-green-900/10 jetstream-card dark:futuristic-border">
         <CardHeader className="text-center">
           <CardTitle className="text-green-600 dark:text-green-400">Payment Successful!</CardTitle>
+          {offerId && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
+              Flight #{offerId.substring(0, 6)}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="text-center pt-4">
           <div className="bg-green-50 dark:bg-green-900/30 p-6 rounded-full inline-flex items-center justify-center mb-4">
@@ -313,6 +320,7 @@ function PaymentSuccessContent() {
       onViewDetails={viewTransaction}
       onDashboard={goToDashboard}
       onBoardingPass={goToBoardingPass}
+      offerId={offerId}
     />
   );
 }
