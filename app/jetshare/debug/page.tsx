@@ -12,6 +12,9 @@ import { toast } from 'sonner';
 import { JetShareUITest } from '../components/JetShareUITest';
 import { useRouter } from 'next/navigation';
 
+// Prevent static generation of this page
+export const dynamic = 'force-dynamic';
+
 export default function JetShareDebug() {
   const [isLoading, setIsLoading] = useState(true);
   const [debugData, setDebugData] = useState<any>(null);
