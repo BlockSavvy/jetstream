@@ -21,6 +21,9 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  // Disable static generation for all pages
+  staticPageGenerationTimeout: 0,
+  output: 'standalone',
 }
 
 mergeConfig(nextConfig, userConfig)
