@@ -32,6 +32,7 @@ This interface provides a standardized way to interact with different AI inferen
 **File:** `app/lib/ai/components/InferenceTestChat.tsx`
 
 A React component that provides:
+
 - Model selection dropdown
 - Chat history display
 - Text input for user messages
@@ -43,6 +44,7 @@ A React component that provides:
 **File:** `app/dashboard/test-chat/page.tsx`
 
 A Next.js page component that:
+
 - Incorporates the InferenceTestChat component
 - Provides context about the testing purpose
 - Is accessible at `/dashboard/test-chat`
@@ -85,13 +87,13 @@ A Next.js page component that:
 ## Vercel Deployment
 
 Both branches are configured for automatic Vercel preview deployment, allowing:
+
 - Isolated testing of each implementation
 - Side-by-side comparison of model responses
 - Sharing test environments with stakeholders
 
 ## File Structure
 
-```
 app/
 ├── dashboard/
 │   └── test-chat/
@@ -101,11 +103,10 @@ app/
         ├── AIInferenceClient.ts
         └── components/
             └── InferenceTestChat.tsx
-```
 
 ## Technical Debt and Future Considerations
 
 - The current implementation does not include authentication for the test page
 - Performance optimization might be needed for larger chat histories
 - Function calling and other advanced model features are not yet supported
-- A more comprehensive comparison UI could be developed 
+- A more comprehensive comparison UI could be developed

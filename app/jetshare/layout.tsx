@@ -7,6 +7,7 @@ import { useAuth } from '@/components/auth-provider';
 import { useAuthSync } from '@/hooks/useAuthSync';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'sonner';
+import AIConcierge from './components/AIConcierge';
 
 // Routes that should have AuthGuard applied
 // Also protect /jetshare/payment/* routes
@@ -341,6 +342,8 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
       <div className={`jetshare-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
         {(!needsAuth || user || loading) ? children : null}
       </div>
+      {/* Add AI Concierge for authenticated users */}
+      {user && <AIConcierge />}
     </main>
   );
 } 
