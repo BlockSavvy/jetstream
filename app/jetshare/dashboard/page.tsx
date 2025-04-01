@@ -9,9 +9,6 @@ import { toast } from 'sonner';
 
 // Prevent static generation of this page
 export const dynamic = 'force-dynamic';
-// Set generation mode to SSR
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
 
 export default function JetShareDashboardPage() {
   const { user, loading, refreshSession } = useAuth();
