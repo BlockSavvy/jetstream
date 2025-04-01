@@ -25,6 +25,7 @@ The concierge supports multiple interaction modes:
 - **Multimodal**: Combination of text and voice in the same conversation
 
 Voice capabilities are powered by:
+
 - OpenAI Whisper API for speech-to-text transcription
 - ElevenLabs API for natural-sounding text-to-speech responses
 
@@ -205,4 +206,4 @@ Future enhancements could include:
 2. **Personalization**: Tailor responses based on user preferences and history
 3. **Advanced Function Calling**: Expand functionality to handle more complex requests
 4. **Offline Support**: Add queueing mechanism for offline function execution
-5. **Conversation Memory**: Implement long-term memory for more personalized interactions 
+5. **Conversation Memory**: Implement long-term memory for more personalized interactions
