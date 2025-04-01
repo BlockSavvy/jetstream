@@ -7,6 +7,9 @@ import { Loader2 } from 'lucide-react';
 import JetShareDashboard from '../components/JetShareDashboard';
 import { toast } from 'sonner';
 
+// Prevent static generation of this page
+export const dynamic = 'force-dynamic';
+
 export default function JetShareDashboardPage() {
   const { user, loading, refreshSession } = useAuth();
   const router = useRouter();
