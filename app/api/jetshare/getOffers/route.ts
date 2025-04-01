@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { createClient as createSBClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -44,9 +45,10 @@ export async function GET(request: NextRequest) {
     });
 
     // Log request headers for debugging (redact cookies for privacy)
-    const cookieHeader = request.headers.get('cookie');
+    const cookieStore = await cookies();
+    const authCookie = cookieStore.get('sb-vjhrmizwqhmafkxbmfwa-auth-token');
     console.log('[API /jetshare/getOffers] Request headers:', { 
-      cookie: cookieHeader ? 'Present (length: ' + cookieHeader.length + ')' : 'Missing',
+      cookie: authCookie ? 'Present' : 'Missing',
       authorization: request.headers.get('authorization') ? 'Present (Bearer token)' : 'Missing'
     });
 
