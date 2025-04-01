@@ -95,14 +95,7 @@ export interface AIInferenceClient {
  * based on environment variables or configuration
  */
 export function getInferenceClient(): AIInferenceClient {
-  // TEMPORARY FALLBACK:
-  // Using OpenAI implementation since Grok-3 access is not available yet
-  // This allows the application to function while still in the grok clean branch
-  // We can keep the branch structure without the errors from missing Grok-3 access
-  const { OpenAIInferenceClient } = require('./OpenAIInferenceClient');
-  return new OpenAIInferenceClient();
-  
-  // Original implementation - uncomment when Grok-3 access is available:
-  // const { XAIGrokInferenceClient } = require('./XAIGrokInferenceClient');
-  // return new XAIGrokInferenceClient();
+  // Import and use the xAI Grok implementation for this branch
+  const { XAIGrokInferenceClient } = require('./XAIGrokInferenceClient');
+  return new XAIGrokInferenceClient();
 } 

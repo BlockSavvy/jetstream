@@ -4,7 +4,6 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
   private apiKey: string;
   private apiUrl: string = 'https://api.x.ai/v1/chat/completions';
   private availableModels: string[] = [
-    "grok-3",
     "grok-2-latest",
     "grok-1"
   ];
@@ -52,14 +51,9 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
   ): Promise<{ content: string; functionCall?: FunctionCall }> {
     try {
       const formattedMessages = this.formatMessages(messages);
-
-      let requestedModel = options?.modelName || this.defaultModel;
       
-      // If grok-3 is requested but unavailable, fall back to grok-2-latest
-      if (requestedModel === 'grok-3' || requestedModel.startsWith('grok-3')) {
-        console.warn("Grok-3 model requested but may not be available. Using grok-2-latest as fallback.");
-        requestedModel = 'grok-2-latest';
-      }
+      // Use grok-2-latest instead of grok-3
+      const requestedModel = options?.modelName || this.defaultModel;
 
       const requestBody: any = {
         model: requestedModel,
@@ -70,17 +64,9 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
         stream: false
       };
 
-      // Only add function calling if using Grok-3 (though we're likely using the fallback)
-      // We keep this code for when Grok-3 access becomes available
-      if (options?.functions && options.functions.length > 0 && 
-          (requestBody.model === 'grok-3' || requestBody.model.startsWith('grok-3'))) {
-        requestBody.functions = options.functions;
-        
-        if (options.functionCall) {
-          requestBody.function_call = options.functionCall;
-        }
-      }
-
+      // Remove function calling for non-grok-3 models
+      // Function calling is only supported in grok-3
+      
       const response = await fetch(this.apiUrl, {
         method: 'POST',
         headers: {
@@ -98,14 +84,9 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
       const data = await response.json();
       const message = data.choices[0].message;
 
-      // Extract function call if present
+      // Function calling won't be supported with grok-2-latest,
+      // but we'll keep the structure for future compatibility
       let functionCall: FunctionCall | undefined;
-      if (message.function_call) {
-        functionCall = {
-          name: message.function_call.name,
-          arguments: message.function_call.arguments || '{}'
-        };
-      }
 
       return {
         content: message.content || '',
@@ -124,14 +105,9 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
   ): Promise<void> {
     try {
       const formattedMessages = this.formatMessages(messages);
-
-      let requestedModel = options?.modelName || this.defaultModel;
       
-      // If grok-3 is requested but unavailable, fall back to grok-2-latest
-      if (requestedModel === 'grok-3' || requestedModel.startsWith('grok-3')) {
-        console.warn("Grok-3 model requested but may not be available. Using grok-2-latest as fallback.");
-        requestedModel = 'grok-2-latest';
-      }
+      // Use grok-2-latest instead of grok-3
+      const requestedModel = options?.modelName || this.defaultModel;
 
       const requestBody: any = {
         model: requestedModel,
@@ -142,16 +118,8 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
         stream: true
       };
 
-      // Only add function calling if using Grok-3 (though we're likely using the fallback)
-      // We keep this code for when Grok-3 access becomes available
-      if (options?.functions && options.functions.length > 0 && 
-          (requestBody.model === 'grok-3' || requestBody.model.startsWith('grok-3'))) {
-        requestBody.functions = options.functions;
-        
-        if (options.functionCall) {
-          requestBody.function_call = options.functionCall;
-        }
-      }
+      // Remove function calling for non-grok-3 models
+      // Function calling is only supported in grok-3
 
       // Call onStart callback if provided
       if (callbacks.onStart) {
