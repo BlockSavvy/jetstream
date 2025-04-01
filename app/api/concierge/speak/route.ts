@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     if (!elevenLabsApiKey) {
       return NextResponse.json(
         { error: 'Text-to-speech service not configured' },
-        { status: 500 }
+        { status: 503 }
       );
     }
 

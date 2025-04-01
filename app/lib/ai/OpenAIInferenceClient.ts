@@ -16,16 +16,21 @@ export class OpenAIInferenceClient implements AIInferenceClient {
   constructor() {
     // Get API keys from environment variables
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("OPENAI_API_KEY environment variable is not set");
-    }
-
+    
+    // Instead of throwing an error, we'll check for the key when methods are called
+    // This allows the client to initialize during build time
     this.client = new OpenAI({
-      apiKey: apiKey
+      apiKey: apiKey || 'dummy-key-for-build' // Use a dummy key during build time
     });
 
     // Initialize ElevenLabs (optional)
     this.elevenLabsApiKey = process.env.ELEVENLABS_API_KEY || null;
+  }
+
+  private ensureApiKey() {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY environment variable is not set");
+    }
   }
 
   getAvailableModels(): string[] {
@@ -41,6 +46,9 @@ export class OpenAIInferenceClient implements AIInferenceClient {
     options?: AICompletionOptions
   ): Promise<{ content: string; functionCall?: FunctionCall }> {
     try {
+      // Ensure API key is available at runtime (not build time)
+      this.ensureApiKey();
+      
       const formattedMessages = messages.map(m => {
         const formatted: any = {
           role: m.role,
@@ -107,6 +115,9 @@ export class OpenAIInferenceClient implements AIInferenceClient {
     options?: AICompletionOptions
   ): Promise<void> {
     try {
+      // Ensure API key is available at runtime (not build time)
+      this.ensureApiKey();
+      
       const formattedMessages = messages.map(m => {
         const formatted: any = {
           role: m.role,
@@ -192,6 +203,9 @@ export class OpenAIInferenceClient implements AIInferenceClient {
 
   async transcribeAudio(audioBlob: Blob, options?: VoiceOptions): Promise<string> {
     try {
+      // Ensure API key is available at runtime (not build time)
+      this.ensureApiKey();
+      
       // Convert blob to file
       const file = new File([audioBlob], 'audio.webm', { type: audioBlob.type });
       
