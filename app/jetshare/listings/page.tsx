@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuth } from '@/components/auth-provider';
 import { Loader2 } from 'lucide-react';
 
+// Prevent static generation of this page
+export const dynamic = 'force-dynamic';
+
 export default function JetShareListingsPage() {
   const { user, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
