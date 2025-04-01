@@ -53,6 +53,7 @@ export interface AIInferenceClient {
  * based on environment variables or configuration
  */
 export function getInferenceClient(): AIInferenceClient {
-  // This will be implemented in each feature branch with the specific client
-  throw new Error("No inference client implementation available");
+  // Import and use the xAI Grok implementation
+  const { XAIGrokInferenceClient } = require('./XAIGrokInferenceClient');
+  return new XAIGrokInferenceClient();
 } 
