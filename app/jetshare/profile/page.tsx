@@ -27,6 +27,9 @@ import { toast } from 'sonner';
 import { useAuth } from '@/components/auth-provider';
 import { useUserProfile } from '@/hooks/useUserProfile';
 
+// Prevent static generation of this page
+export const dynamic = 'force-dynamic';
+
 export default function JetShareProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, updateProfile, refreshProfile } = useUserProfile();
