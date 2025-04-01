@@ -1,10 +1,5 @@
 'use client';
 
-// Force dynamic rendering to prevent client-side code execution during static generation
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
-
 import { useEffect, useState } from 'react';
 import JetShareListingsContent from '../components/JetShareListingsContent';
 import { createClient } from '@/lib/supabase';
