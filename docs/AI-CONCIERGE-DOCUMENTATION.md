@@ -63,6 +63,17 @@ Voice capabilities are powered by:
    - `concierge_function_calls`: Function call tracking
    - `concierge_scheduled_tasks`: Scheduled notifications and reminders
 
+### Environment Variables
+
+The following environment variables need to be set in your .env file:
+
+```
+OPENAI_API_KEY=your_openai_api_key
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+```
+
+Never commit these API keys to the repository. Use environment variables in your development and production environments.
+
 ### API Reference
 
 #### 1. Chat Completion
