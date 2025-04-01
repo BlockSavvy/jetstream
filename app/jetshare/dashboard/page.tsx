@@ -50,6 +50,25 @@ export default function JetShareDashboardPage() {
       setInitialTab('transactions');
     }
 
+    // Check for booking completion redirect
+    const bookedOfferId = searchParams?.get('booked');
+    if (bookedOfferId) {
+      // If redirected from successful booking, show booking tab
+      setInitialTab('bookings');
+      setSuccessMessage(`Your booking has been completed successfully! Your ticket and boarding pass are now available.`);
+      
+      // Store the booking information for highlighting
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('last_completed_booking', bookedOfferId);
+        localStorage.setItem('booking_completed_at', Date.now().toString());
+      }
+      
+      toast.success('Flight booked successfully!', {
+        description: 'Your ticket and boarding pass are now available',
+        duration: 5000
+      });
+    }
+
     const error = searchParams?.get('error');
     if (error) setErrorMessage(error);
 

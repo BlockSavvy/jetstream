@@ -117,9 +117,39 @@ export function useUserProfile() {
       setLoading(true);
       const supabase = createClient();
       
+      // First, fetch the current profile to see what columns are available
+      const { data: currentProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (fetchError) {
+        console.error('Error fetching current profile:', fetchError);
+        return { error: fetchError };
+      }
+      
+      // Filter updates to only include keys that exist in the current profile
+      const safeUpdates: Record<string, any> = {};
+      Object.keys(updates).forEach(key => {
+        // Only include the key if it exists in the current profile or is a standard field
+        // that we know should be in profiles (like first_name, last_name, etc.)
+        const standardFields = ['first_name', 'last_name', 'full_name', 'avatar_url', 
+                               'bio', 'phone_number', 'website', 'location', 
+                               'verification_status', 'profile_visibility'];
+                               
+        if (key in currentProfile || standardFields.includes(key)) {
+          // @ts-ignore - we're being careful about the keys
+          safeUpdates[key] = updates[key];
+        } else {
+          console.warn(`Skipping update for field "${key}" as it doesn't exist in the profiles table`);
+        }
+      });
+      
+      // Now update with only the fields that exist
       const { data, error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(safeUpdates)
         .eq('id', user.id)
         .select()
         .single();

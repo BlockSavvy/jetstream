@@ -64,6 +64,38 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+
+  /* JetStream Enhanced Dark Mode - Improved Contrast */
+  .dark {
+    /* Higher contrast background/foreground */
+    --background: 220 20% 2.5%;
+    --foreground: 210 40% 98%;
+    
+    /* Card with better defined borders */
+    --card: 220 20% 5%;
+    --card-foreground: 0 0% 98%;
+    
+    /* Popover with improved visibility */
+    --popover: 220 20% 2.5%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Better secondary contrast */
+    --secondary: 217 30% 14%;
+    --secondary-foreground: 210 40% 98%;
+    
+    /* More visible muted text */
+    --muted: 217 30% 14%;
+    --muted-foreground: 215 20% 75%;
+    
+    /* Enhanced accent colors */
+    --accent: 214 60% 20%;
+    --accent-foreground: 210 40% 98%;
+    
+    /* More visible borders */
+    --border: 217 30% 25%;
+    --input: 217 30% 25%;
+    --ring: 212.7 50% 85%;
+  }
 }
 
 @layer base {
@@ -96,5 +128,168 @@ html {
 
 .hero-gradient {
   background: linear-gradient(to right, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3));
+}
+
+/* JetStream Custom UI Styles */
+.jetstream-card {
+  @apply border-2 rounded-xl shadow-md overflow-hidden;
+}
+
+.dark .jetstream-card {
+  @apply border-gray-700 bg-gray-900;
+}
+
+/* High contrast badges for dark mode */
+.dark .badge-success {
+  @apply bg-green-900 text-green-100 border-green-600;
+}
+
+.dark .badge-warning {
+  @apply bg-amber-900 text-amber-100 border-amber-600;
+}
+
+.dark .badge-error {
+  @apply bg-red-900 text-red-100 border-red-600;
+}
+
+/* Better contrast for important UI text */
+.dark .text-high-contrast {
+  @apply text-white font-medium;
+}
+
+.dark .text-medium-contrast {
+  @apply text-gray-200;
+}
+
+/* Futuristic border effects for cards in dark mode */
+.dark .futuristic-border {
+  @apply border-l-4 border-blue-500;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+/* Enhanced Mobile Styles for JetShare */
+.jetstream-mobile .jetstream-card {
+  @apply border rounded-lg shadow-sm overflow-hidden;
+  border-width: 1px !important;
+  margin-bottom: 0.75rem;
+}
+
+.jetstream-mobile h1 {
+  @apply text-xl;
+  padding: 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.jetstream-mobile h2 {
+  @apply text-lg;
+  padding: 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.jetstream-mobile h3 {
+  @apply text-base font-medium;
+}
+
+.jetstream-mobile .jetshare-content-container {
+  max-width: 100% !important;
+  overflow-x: hidden;
+  margin: 0 !important;
+  padding-top: 0.5rem !important;
+}
+
+/* Improved touch targets for mobile */
+.jetstream-mobile button, 
+.jetstream-mobile a, 
+.jetstream-mobile input[type="checkbox"],
+.jetstream-mobile input[type="radio"] {
+  min-height: 40px !important;  
+  min-width: 40px !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Better form controls for mobile */
+.jetstream-mobile input[type="text"],
+.jetstream-mobile input[type="email"],
+.jetstream-mobile input[type="password"],
+.jetstream-mobile input[type="number"],
+.jetstream-mobile input[type="tel"],
+.jetstream-mobile select,
+.jetstream-mobile textarea {
+  font-size: 16px !important; /* Prevents iOS zoom on input */
+  padding: 0.75rem !important;
+  border-radius: 0.375rem !important;
+  min-height: 48px !important;
+}
+
+/* Improved card layouts for mobile */
+.jetstream-mobile .card-content-mobile {
+  padding: 0.75rem !important;
+}
+
+/* Fix scrolling issues on mobile */
+.jetstream-mobile {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Mobile-specific dark mode enhancements */
+.dark.jetstream-mobile {
+  color-scheme: dark;
+  background-color: #121212 !important;
+}
+
+.dark.jetstream-mobile .jetstream-card {
+  background-color: #1a1a1a !important;
+  border-color: #333 !important;
+}
+
+/* Optimize text display on mobile */
+.jetstream-mobile p, 
+.jetstream-mobile span, 
+.jetstream-mobile div {
+  font-size: 15px;
+}
+
+.jetstream-mobile small {
+  font-size: 13px;
+}
+
+/* Better visibility and contrast for mobile dark mode */
+.dark.jetstream-mobile .text-high-contrast {
+  color: #fff !important;
+  font-weight: 500;
+}
+
+/* Bottom-pinned controls for mobile */
+.mobile-bottom-controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid #e5e7eb;
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dark .mobile-bottom-controls {
+  background-color: rgba(18, 18, 18, 0.95);
+  border-top: 1px solid #333;
+}
+
+/* Safe area spacing for mobile devices with notches */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .jetstream-mobile .mobile-bottom-controls {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+  
+  .jetstream-mobile {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 

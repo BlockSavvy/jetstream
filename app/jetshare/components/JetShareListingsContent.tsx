@@ -628,31 +628,11 @@ export default function JetShareListingsContent() {
   };
 
   const handleOfferAccept = async (offer: EnhancedJetShareOfferWithUser) => {
-    // Early validation
-    if (!user) {
-      toast.error('Please sign in to accept this offer');
-      
-      // Store offer ID in sessionStorage for resuming after login
-      try {
-        sessionStorage.setItem('jetshare_resume_offer_acceptance', offer.id || '');
-        sessionStorage.setItem('auth_redirect_url', '/jetshare/listings');
-      } catch (storageError) {
-        console.warn('Could not access sessionStorage:', storageError);
-      }
-      
-      // Fix the auth redirect URL - signin should be login
-      router.push(`/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}`);
-      return;
-    }
-    
-    if (offer.isOwnOffer) {
-      toast.error('You cannot accept your own offer');
-      return;
-    }
-    
-    // Set the selected offer for the confirmation modal
     setSelectedOffer(offer);
-    setShowConfirmDialog(true);
+    
+    // Instead of showing a confirmation dialog, go straight to details
+    setShowDetailDialog(true);
+    setShowConfirmDialog(false);
   };
   
   const confirmOfferAccept = async () => {
@@ -663,252 +643,165 @@ export default function JetShareListingsContent() {
       return;
     }
 
-    if (!user) {
-      console.log('ConfirmOfferAccept: No user, attempting to recover session before redirect');
-      
-      // Instead of immediately redirecting, try to refresh the session
-      try {
-        // First try direct Supabase refresh
-        const { data, error } = await supabase.auth.refreshSession();
-        
-        if (!error && data.session) {
-          console.log('ConfirmOfferAccept: Session restored through refresh');
-          // We have a session now, we can continue without redirect
-          
-          // Add a small delay for the auth context to update
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          // If we still don't have the user in context, but we do have a session,
-          // we can use the session user directly
-          const currentUser = data.session.user;
-          
-          // Continue with the accept process using the session user
-          console.log('ConfirmOfferAccept: Using session user to continue:', currentUser.id);
-          
-          // Proceed with the current user from the session
-          // The rest of the code will use this user object
-          
-          // Force setting user data in localStorage for recovery
-          try {
-            localStorage.setItem('jetstream_user_id', currentUser.id);
-            localStorage.setItem('jetstream_user_email', currentUser.email || '');
-          } catch (e) {}
-          
-          toast.success('Session restored');
-          
-          // Return to avoid redirect
-          return;
-        } else {
-          console.error('ConfirmOfferAccept: Session refresh failed:', error);
-          toast.error('Please sign in to accept this offer');
-          
-          // Store state for resuming after login
-          try {
-            sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id || '');
-            sessionStorage.setItem('auth_redirect_url', '/jetshare/listings');
-          } catch (e) {}
-          
-          window.location.href = `/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}`;
-          return;
-        }
-      } catch (refreshError) {
-        console.error('ConfirmOfferAccept: Error during refresh:', refreshError);
-        toast.error('Please sign in to accept this offer');
-        
-        // Store state for resuming after login
-        try {
-          sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id || '');
-          sessionStorage.setItem('auth_redirect_url', '/jetshare/listings');
-        } catch (e) {}
-        
-        window.location.href = `/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}`;
-        return;
-      }
-    }
-
     try {
-      // Show loading state
+      // Show loading state immediately for better UX
       setIsAccepting(true);
       setError(null);
       
-      // --- PRE-AUTHENTICATION REFRESH ---
-      console.log('ConfirmOfferAccept: Attempting pre-emptive session refresh...');
-      
-      // First try the context's refreshSession method if available
-      let refreshSuccessful = false;
-      if (refreshSession) {
-        try {
-          // Get current token status for logging
-          let tokenState = 'unknown';
-          try {
-            const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
-            if (tokenData) {
-              const parsed = JSON.parse(tokenData);
-              tokenState = `access: ${!!parsed?.access_token}, refresh: ${!!parsed?.refresh_token}`;
-            }
-          } catch (e) {}
-          console.log(`ConfirmOfferAccept: Token state before refresh: ${tokenState}`);
-          
-          // Now try the refresh
-          await refreshSession();
-          console.log('ConfirmOfferAccept: Pre-emptive context refresh successful');
-          refreshSuccessful = true;
-        } catch (refreshError) {
-          console.warn('ConfirmOfferAccept: Context refresh failed:', refreshError);
-          // We'll try direct Supabase refresh next if this fails
-        }
-      }
-      
-      // If context refresh failed, try direct Supabase refresh
-      if (!refreshSuccessful) {
-        try {
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.warn('ConfirmOfferAccept: Direct Supabase refresh failed:', refreshError);
-            
-            // If we still can't refresh, this is a critical error - send to login
-            toast.error('Your session seems invalid. Please sign in again.');
-            // Store state for resumption
-            try {
-              sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id || '');
-            } catch (e) {}
-            
-            // Hard redirect to login
-            window.location.href = `/auth/login?returnUrl=${encodeURIComponent('/jetshare/listings')}&tokenExpired=true`;
-            return; // Exit early
-          } else {
-            console.log('ConfirmOfferAccept: Direct Supabase refresh successful');
-            refreshSuccessful = true;
-          }
-        } catch (e) {
-          console.error('ConfirmOfferAccept: Error during refresh attempts:', e);
-          // Continue anyway as a last resort
-        }
-      }
-      
-      // Clear any previous state that might be lingering
-      try {
-        sessionStorage.removeItem('jetshare_payment_redirect');
-        sessionStorage.removeItem('jetshare_resume_offer_acceptance');
-      } catch (e) {
-        console.warn('Failed to clear session storage:', e);
-      }
-      
-      console.log('Accepting offer:', selectedOffer.id);
-      
-      // Get the auth token after refresh attempts
+      // Get user ID from all possible sources for robustness
+      const currentUserId: string | undefined = user?.id;
+      let hasValidSession = !!user;
       let authToken = null;
       
-      // Get the auth token from Supabase client
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data?.session?.access_token) {
-          authToken = data.session.access_token;
-          console.log('Using session token for API call');
-        }
-      } catch (authError) {
-        console.warn('Failed to get session token:', authError);
-      }
-      
-      // If no token from session, try localStorage as fallback
-      if (!authToken) {
+      // Skip extensive auth recovery attempts if we already have a user ID
+      if (!currentUserId) {
+        // Try localStorage as a quick alternative
         try {
-          const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
-          if (tokenData) {
-            const parsedToken = JSON.parse(tokenData);
-            if (parsedToken && parsedToken.access_token) {
-              authToken = parsedToken.access_token;
-              console.log('Using localStorage token for API call');
+          const storedUserId = localStorage.getItem('jetstream_user_id');
+          if (storedUserId) {
+            console.log('Using cached user ID from localStorage:', storedUserId);
+            // Use this userId instead of modifying currentUserId (which is const)
+            // We'll use this in the payload directly
+            const payload = { 
+              offer_id: selectedOffer.id,
+              payment_method: 'fiat', // Default to fiat payments
+              user_id: storedUserId // Type-safe user ID from localStorage
+            };
+            
+            console.log('Accepting offer with payload:', { offer_id: payload.offer_id, user_id: payload.user_id });
+            
+            // Make the API call to accept the offer - simplified headers
+            const timestamp = Date.now();
+            const requestId = Math.random().toString(36).substring(2, 15);
+            
+            const response = await fetch(`/api/jetshare/acceptOffer?t=${timestamp}&rid=${requestId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store'
+              },
+              body: JSON.stringify(payload),
+              credentials: 'include', // Important for cookie-based auth
+            });
+            
+            // Parse the API response
+            const apiData = await response.json();
+            
+            // Continue with response handling as before
+            // Handle API response
+            if (!response.ok) {
+              console.warn('Error from accept offer API:', apiData);
+              
+              // Special case for authentication errors
+              if (response.status === 401) {
+                console.log('Authentication needed for booking. Storing offer info and redirecting to payment page directly.');
+                
+                // Store the offer ID in localStorage for later recovery
+                try {
+                  localStorage.setItem('current_payment_offer_id', selectedOffer.id);
+                } catch (e) {
+                  console.warn('Error storing offer ID in localStorage:', e);
+                }
+                
+                // Go directly to the payment page which handles authentication more gracefully
+                window.location.href = `/jetshare/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+                return;
+              }
+              
+              throw new Error(apiData.message || 'Failed to accept offer');
             }
+            
+            // Handle successful response
+            console.log('Offer acceptance successful:', apiData);
+            
+            // Use the redirect URL from the API if available
+            let redirectUrl = apiData.data?.redirect_url || `/jetshare/payment/${selectedOffer.id}?from=accept`;
+            
+            // Add timestamp to prevent caching issues
+            if (!redirectUrl.includes('?')) {
+              redirectUrl += `?t=${Date.now()}`;
+            } else if (!redirectUrl.includes('t=')) {
+              redirectUrl += `&t=${Date.now()}`;
+            }
+            
+            // Store essential data for recovery
+            try {
+              localStorage.setItem('current_payment_offer_id', selectedOffer.id);
+            } catch (e) {
+              console.warn('Error storing offer ID in localStorage:', e);
+            }
+            
+            toast.success('Proceeding to payment...');
+            
+            // Use window.location for a hard redirect
+            window.location.href = redirectUrl;
+            return;
           }
         } catch (e) {
-          console.warn('Failed to get token from localStorage:', e);
+          console.warn('Error reading localStorage user ID:', e);
         }
+
+        // If still no user ID from localStorage, go directly to payment page 
+        // which has better auth handling
+        console.log('No user ID found, redirecting to payment page directly');
+        try {
+          localStorage.setItem('current_payment_offer_id', selectedOffer.id);
+        } catch (e) {
+          console.warn('Error storing offer ID in localStorage:', e);
+        }
+        
+        // Go to payment page which will handle auth correctly
+        window.location.href = `/jetshare/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct_noauth`;
+        return;
       }
       
-      // Current timestamp for cache busting
-      const timestamp = Date.now();
-      const requestId = Math.random().toString(36).substring(2, 15); // Random ID to correlate logs
-      
-      // Setup headers with authentication
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store',
-        'Pragma': 'no-cache',
-        'X-Request-ID': requestId,
+      // If we have a currentUserId, continue with original flow
+      const payload = { 
+        offer_id: selectedOffer.id,
+        payment_method: 'fiat', // Default to fiat payments
+        user_id: currentUserId 
       };
+
+      console.log('Accepting offer with payload:', { offer_id: payload.offer_id, user_id: payload.user_id });
       
-      // Add auth token if available
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
+      // Make the API call to accept the offer - simplified headers
+      const timestamp = Date.now();
+      const requestId = Math.random().toString(36).substring(2, 15);
       
-      // Add user ID explicitly to ensure it's available to the API
-      if (user?.id) {
-        headers['X-User-ID'] = user.id;
-      }
-      
-      // Make the API call to accept the offer
       const response = await fetch(`/api/jetshare/acceptOffer?t=${timestamp}&rid=${requestId}`, {
         method: 'POST',
-        headers,
-        body: JSON.stringify({ 
-          offer_id: selectedOffer.id,
-          payment_method: 'fiat', // Default to fiat payments
-          user_id: user.id // Include user ID for additional verification
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store'
+        },
+        body: JSON.stringify(payload),
         credentials: 'include', // Important for cookie-based auth
       });
       
       // Parse the API response
       const apiData = await response.json();
       
-      // Check for auth errors first
-      if (!response.ok && response.status === 401) {
-        // Auth error - store information for later and redirect to login
-        console.error('Authentication error:', apiData);
+      // Handle API response
+      if (!response.ok) {
+        console.warn('Error from accept offer API:', apiData);
         
-        try {
-          // Store data for resuming after login with null-safety
-          if (selectedOffer) {
-            sessionStorage.setItem('jetshare_resume_offer_acceptance', selectedOffer.id);
-            sessionStorage.setItem('jetshare_pending_offer', selectedOffer.id);
+        // Special case for authentication errors
+        if (response.status === 401) {
+          console.log('Authentication needed for booking. Storing offer info and redirecting to payment page directly.');
+          
+          // Store the offer ID in localStorage for later recovery
+          try {
             localStorage.setItem('current_payment_offer_id', selectedOffer.id);
-            localStorage.setItem('jetstream_last_action', 'accept_offer');
-            localStorage.setItem('jetstream_last_offer_id', selectedOffer.id);
+          } catch (e) {
+            console.warn('Error storing offer ID in localStorage:', e);
           }
-        } catch (storageError) {
-          console.warn('Error storing session data:', storageError);
+          
+          // Go directly to the payment page which handles authentication more gracefully
+          window.location.href = `/jetshare/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+          return;
         }
         
-        toast.error('Your session has expired. Please sign in to continue.');
-        // Redirect to login with return URL and the offer ID, with null-safety
-        const returnUrl = encodeURIComponent('/jetshare/listings');
-        const loginUrl = `/auth/login?returnUrl=${returnUrl}&t=${Date.now()}${selectedOffer ? `&offer=${selectedOffer.id}` : ''}`;
-        
-        // Use window.location for a hard redirect to ensure cookies are properly reset
-        window.location.href = loginUrl;
-        return;
-      }
-      
-      // For other errors, show a general error message
-      if (!response.ok) {
-        console.error('API error:', apiData);
         throw new Error(apiData.message || 'Failed to accept offer');
-      }
-      
-      // Special handling for status constraint workaround:
-      // The API may have returned success but only partially updated the offer
-      // (matched_user_id set but status still "open")
-      const updatedOffer = apiData.data?.offer;
-      
-      if (updatedOffer && updatedOffer.status !== 'accepted' && 
-          (user ? updatedOffer.matched_user_id === user.id : false)) {
-        console.log('Offer partially accepted (status not updated but matched_user_id set)');
-        console.log('This is expected due to the constraint workaround - proceeding to payment with partial flag');
-        // We can still proceed to payment if the matched_user_id is set
-        // Add partial flag to URL to trigger status fix on the payment page
-        apiData.data.redirect_url = (apiData.data.redirect_url || `/jetshare/payment/${selectedOffer.id}`) + '?partial=true';
       }
       
       // Handle successful response
@@ -924,22 +817,16 @@ export default function JetShareListingsContent() {
         redirectUrl += `&t=${Date.now()}`;
       }
       
-      // Store essential data for recovery across various locations
+      // Store essential data for recovery
       try {
         localStorage.setItem('current_payment_offer_id', selectedOffer.id);
-        sessionStorage.setItem('current_payment_offer_id', selectedOffer.id);
-        
-        // Clean up other states that might interfere
-        sessionStorage.removeItem('jetshare_resume_offer_acceptance');
-        sessionStorage.removeItem('jetshare_payment_redirect');
-      } catch (storageError) {
-        console.warn('Error managing offer data in storage:', storageError);
+      } catch (e) {
+        console.warn('Error storing offer ID in localStorage:', e);
       }
       
-      toast.success('Offer accepted successfully! Redirecting to payment...');
+      toast.success('Proceeding to payment...');
       
-      // Use window.location for a hard redirect to ensure cookies are properly set
-      // and to ensure a clean state when loading the payment page
+      // Use window.location for a hard redirect
       window.location.href = redirectUrl;
     } catch (error) {
       console.error('Error accepting offer:', error);
@@ -961,7 +848,11 @@ export default function JetShareListingsContent() {
   
   // Render flight share cards
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
-    <Card key={offer.id} className={`overflow-hidden ${offer.isOwnOffer ? 'border-amber-400 shadow-md' : ''}`}>
+    <Card 
+      key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => handleOfferAccept(offer)}
+    >
       <div className="relative">
         {offer.isOwnOffer && (
           <div className="absolute top-0 right-0 m-2 z-10">
@@ -1291,36 +1182,42 @@ export default function JetShareListingsContent() {
                   You are about to book a shared flight from {selectedOffer.departure_location} to {selectedOffer.arrival_location} for ${selectedOffer.requested_share_amount.toLocaleString()}.
                 </DialogDescription>
               </DialogHeader>
+              
               <div className="grid gap-4 py-4">
-                <div className="flex flex-col space-y-2">
-                  <h3 className="font-medium">Payment Method</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      className="w-full dialog-content" 
-                      onClick={() => confirmOfferAccept()}
-                      disabled={isAccepting}
-                      autoFocus
-                    >
-                      {isAccepting ? <LoaderCircle className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                      Pay with Card
-                    </Button>
-                    <Button 
-                      className="w-full" 
-                      variant="outline"
-                      onClick={() => {
-                        setShowConfirmDialog(false);
-                        // Allow animation to complete before clearing selection
-                        setTimeout(() => setSelectedOffer(null), 300);
-                      }}
-                      disabled={isAccepting}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b pb-3">
+                    <div>
+                      <span className="text-sm text-muted-foreground">From</span>
+                      <p className="font-medium">{selectedOffer.departure_location}</p>
+                    </div>
+                    <Plane className="h-5 w-5 mx-4 transform rotate-90" />
+                    <div className="text-right">
+                      <span className="text-sm text-muted-foreground">To</span>
+                      <p className="font-medium">{selectedOffer.arrival_location}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Flight Date</span>
+                      </div>
+                      <p className="font-medium">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div>
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Your Share Cost</span>
+                      </div>
+                      <p className="font-medium">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-              <DialogFooter className="flex space-x-2 sm:justify-end">
+              
+              <DialogFooter className="flex justify-between">
                 <Button 
                   variant="outline" 
                   onClick={() => {
@@ -1334,6 +1231,24 @@ export default function JetShareListingsContent() {
                   disabled={isAccepting}
                 >
                   Cancel
+                </Button>
+                
+                <Button 
+                  onClick={() => confirmOfferAccept()}
+                  disabled={isAccepting}
+                  className="dialog-content"
+                >
+                  {isAccepting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Continue to Booking
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </>
@@ -1437,10 +1352,7 @@ export default function JetShareListingsContent() {
                   <div className="w-full space-y-2">
                     <Button 
                       className="w-full details-dialog" 
-                      onClick={() => {
-                        // Show the confirmation dialog instead of the details dialog
-                        setShowConfirmDialog(true);
-                      }}
+                      onClick={() => confirmOfferAccept()}
                       disabled={isAccepting}
                     >
                       {isAccepting ? (
@@ -1450,8 +1362,8 @@ export default function JetShareListingsContent() {
                         </>
                       ) : (
                         <>
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Accept & Pay with Card
+                          <ArrowRight className="mr-2 h-4 w-4" />
+                          Book This Flight
                         </>
                       )}
                     </Button>

@@ -11,6 +11,16 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Helper function to debounce function calls
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  return function(...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
 // Helper function to recover offer ID from various storage methods
 function recoverOfferId(providedId?: string): string | null {
   // If we have a valid ID, use it
@@ -84,14 +94,79 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
   const [offer, setOffer] = useState<JetShareOfferWithUser | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // On mount, attempt to refresh the session to ensure we have fresh tokens
+  // Update the syncAuthState function in useEffect to use debouncing and prevent double refreshes
   useEffect(() => {
+    // Track if component is mounted to prevent state updates after unmount
+    let isMounted = true;
+    // Track if a session refresh is already in progress
+    let isRefreshing = false;
+    
     const syncAuthState = async () => {
+      // Skip if refresh already in progress
+      if (isRefreshing) {
+        console.log('PaymentContent: Session refresh already in progress, skipping');
+        return;
+      }
+      
+      isRefreshing = true;
       console.log('PaymentContent: Attempting to refresh session on mount');
+      
       try {
+        // Check for authentication bypass in URL - if coming from guest checkout
+        const url = new URL(window.location.href);
+        const fromGuest = url.searchParams.get('from') === 'guest';
+        const fromListing = url.searchParams.get('flow')?.includes('listing');
+        const sessionRestored = url.searchParams.get('session') === 'restored';
+        
+        // If we already have a restored session flag, skip the refresh completely
+        if (sessionRestored) {
+          console.log('PaymentContent: Session already restored (from URL param), skipping refresh');
+          isRefreshing = false;
+          return;
+        }
+        
+        if (fromGuest || fromListing) {
+          console.log('PaymentContent: Guest checkout flow detected, skipping session refresh');
+          isRefreshing = false;
+          return;
+        }
+        
+        // Check if there's a pending payment cookie - indicates post-login redirect
+        const hasPendingPayment = document.cookie.includes('pending_payment_offer_id') || 
+                                document.cookie.includes('jetshare_pending_payment=true');
+        
+        if (hasPendingPayment) {
+          console.log('PaymentContent: Pending payment cookies found, user likely just logged in');
+          isRefreshing = false;
+          return;
+        }
+        
+        // Check if we already have a user, no need to refresh in that case
+        if (user && !sessionError) {
+          console.log('PaymentContent: User already authenticated, skipping session refresh');
+          isRefreshing = false;
+          return;
+        }
+        
+        // Check for session restore timestamp to prevent frequent refreshes
+        try {
+          const lastRefreshTime = parseInt(localStorage.getItem('jetstream_session_refresh_time') || '0', 10);
+          const now = Date.now();
+          const REFRESH_THROTTLE = 60000; // 1 minute between refreshes
+          
+          if (now - lastRefreshTime < REFRESH_THROTTLE) {
+            console.log('PaymentContent: Session refresh throttled, last refresh too recent');
+            isRefreshing = false;
+            return;
+          }
+        } catch (e) {
+          console.warn('PaymentContent: Error checking refresh timestamp:', e);
+        }
+        
         // First check if we already have auth issues
         if (sessionError && ('refresh_failed' in sessionError || sessionError.message?.includes('expired'))) {
           console.log('PaymentContent: Session already has refresh failure, skipping refresh attempt');
+          isRefreshing = false;
           return;
         }
         
@@ -110,23 +185,48 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
         
         // Only attempt refresh if we seem to have tokens
         if (hasLocalTokens) {
-          const refreshResult = await refreshSession();
-          if (refreshResult) {
-            console.log('PaymentContent: Session refresh successful');
-          } else {
-            console.warn('PaymentContent: Session refresh failed, may need to login');
-            // We'll show login UI via sessionError from auth provider
+          try {
+            // Mark refresh timestamp before attempting
+            localStorage.setItem('jetstream_session_refresh_time', Date.now().toString());
+            
+            const refreshResult = await refreshSession();
+            
+            if (refreshResult && isMounted) {
+              console.log('PaymentContent: Session refresh successful');
+              
+              // Instead of showing a toast or refreshing the page, add a URL parameter
+              // to indicate the session was restored
+              if (window.history && window.history.replaceState) {
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('session', 'restored');
+                window.history.replaceState({}, '', newUrl.toString());
+              }
+            } else if (isMounted) {
+              console.warn('PaymentContent: Session refresh failed, may need to login');
+            }
+          } catch (refreshError) {
+            console.warn('PaymentContent: Error during refresh:', refreshError);
           }
         } else {
           console.log('PaymentContent: No tokens found, user likely needs to login');
         }
       } catch (e) {
         console.warn('PaymentContent: Session refresh failed with error:', e);
+      } finally {
+        isRefreshing = false;
       }
     };
     
-    syncAuthState();
-  }, [refreshSession, sessionError]);
+    // Debounce the syncAuthState function to prevent multiple calls
+    const debouncedSyncAuth = debounce(syncAuthState, 500);
+    
+    // Execute the sync on mount
+    debouncedSyncAuth();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshSession, sessionError, user]);
   
   // Validate the offer ID param and recover if needed
   useEffect(() => {
@@ -424,7 +524,7 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
   return (
     <div className="container mx-auto px-4 py-8">
       <JetSharePaymentForm offer={offer} />
-      {/* Display session error prominently if it exists */}
+      {/* Only display session error if still present after multiple refresh attempts */}
       {sessionError && (
         <Card className="mt-4 max-w-md mx-auto border-red-500">
           <CardHeader>
@@ -433,47 +533,116 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
           <CardContent>
             <p className="text-center text-red-700">{sessionError.message}</p>
             <p className="text-center text-muted-foreground mt-2">You may need to sign in again to complete the payment.</p>
-            <Button className="w-full mt-4" onClick={async () => {
-              // Try to refresh the session first
-              try {
-                const supabase = createClient();
-                const { data, error } = await supabase.auth.refreshSession();
-                
-                if (!error && data.session) {
-                  // Session refreshed successfully
-                  toast.success('Session restored');
-                  console.log('Session restored through refresh');
+            <div className="flex flex-col space-y-2 mt-4">
+              <Button onClick={async () => {
+                // Try to refresh the session first with additional retry logic
+                try {
+                  console.log("Attempting to restore session with multiple refresh attempts...");
+                  let refreshSuccess = false;
                   
-                  // Update auth state and reload the page
-                  try {
-                    localStorage.setItem('jetstream_user_id', data.session.user.id);
-                    if (data.session.user.email) {
-                      localStorage.setItem('jetstream_user_email', data.session.user.email);
+                  // First attempt: Use the built-in refresh method
+                  if (refreshSession) {
+                    try {
+                      const refreshResult = await refreshSession();
+                      if (refreshResult) {
+                        console.log("Session successfully refreshed via provider");
+                        refreshSuccess = true;
+                        toast.success('Session restored');
+                        window.location.reload();
+                        return;
+                      }
+                    } catch (e) {
+                      console.warn("First refresh attempt failed:", e);
                     }
-                    // Force reload to pick up the new session
-                    window.location.reload();
-                    return;
-                  } catch (e) {
-                    console.warn('Failed to update local storage:', e);
                   }
-                } else {
-                  console.log('Session refresh failed, redirecting to login');
+                  
+                  // Second attempt: Try direct Supabase refresh
+                  if (!refreshSuccess) {
+                    const supabase = createClient();
+                    const { data, error } = await supabase.auth.refreshSession();
+                    
+                    if (!error && data.session) {
+                      console.log("Session successfully refreshed via direct Supabase call");
+                      refreshSuccess = true;
+                      // Update auth state
+                      try {
+                        localStorage.setItem('jetstream_user_id', data.session.user.id);
+                        if (data.session.user.email) {
+                          localStorage.setItem('jetstream_user_email', data.session.user.email);
+                        }
+                        localStorage.setItem('jetstream_session_time', Date.now().toString());
+                      } catch (e) {
+                        console.warn('Failed to update local storage:', e);
+                      }
+                      
+                      // Force reload with the new session
+                      toast.success('Session restored');
+                      window.location.reload();
+                      return;
+                    } else {
+                      console.warn("Second refresh attempt failed:", error);
+                    }
+                  }
+                  
+                  // Third attempt: Try to directly set a new session if we have tokens in localStorage
+                  if (!refreshSuccess) {
+                    try {
+                      const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+                      if (tokenData) {
+                        const parsed = JSON.parse(tokenData);
+                        if (parsed?.access_token && parsed?.refresh_token) {
+                          const supabase = createClient();
+                          const { data, error } = await supabase.auth.setSession({
+                            access_token: parsed.access_token,
+                            refresh_token: parsed.refresh_token
+                          });
+                          
+                          if (!error && data.session) {
+                            console.log("Session successfully restored via token data");
+                            refreshSuccess = true;
+                            toast.success('Session restored');
+                            // Wait a moment for auth to update
+                            setTimeout(() => window.location.reload(), 1000);
+                            return;
+                          } else {
+                            console.warn("Third refresh attempt failed:", error);
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      console.error("Error in third refresh attempt:", e);
+                    }
+                  }
+                  
+                  // If we still failed to refresh after all attempts
+                  if (!refreshSuccess) {
+                    console.log("All session refresh attempts failed, preparing for login redirect");
+                    // Only now do we redirect to login
+                    try { 
+                      sessionStorage.setItem('pending_payment_id', offer.id); 
+                      localStorage.setItem('current_payment_offer_id', offer.id);
+                    } catch(e) {
+                      console.warn("Failed to store payment state:", e);
+                    }
+                    
+                    // Use window.location instead of router.push
+                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/jetshare/payment/${offer.id}`)}&lastAction=payment`;
+                  }
+                } catch (e) {
+                  console.error('Error during session refresh attempts:', e);
+                  toast.error('Unable to restore session');
                 }
-              } catch (e) {
-                console.error('Error refreshing session:', e);
-              }
-              
-              // If refresh fails or errors, redirect to login
-              // Store state and redirect to login
-              try { 
-                sessionStorage.setItem('pending_payment_id', offer.id); 
-              } catch(e){}
-              
-              // Use window.location instead of router.push for a clean state transition
-              window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/jetshare/payment/${offer.id}`)}`;
-            }}>
-              Restore Session
-            </Button>
+              }}>
+                Restore Session
+              </Button>
+              <Button variant="outline" onClick={() => {
+                // Force continue without auth - this is risky but can be useful in some cases
+                setError(null);
+                window.location.reload();
+              }}>
+                Continue Without Auth
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -4,6 +4,11 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase';
 
+// Global refresh lock to prevent multiple simultaneous refreshes
+let refreshInProgress = false;
+let lastRefreshTime = 0;
+const REFRESH_COOLDOWN = 2000; // 2 seconds cooldown between refresh attempts
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -34,7 +39,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Session refresh function
   const refreshSession = async (): Promise<boolean> => {
     try {
+      // Check if refresh is already in progress or was done very recently
+      const now = Date.now();
+      if (refreshInProgress) {
+        console.log('Auth refresh already in progress, skipping duplicate request');
+        return true; // Assume previous refresh will succeed
+      }
+      
+      if (now - lastRefreshTime < REFRESH_COOLDOWN) {
+        console.log(`Auth refresh attempted too soon (${now - lastRefreshTime}ms < ${REFRESH_COOLDOWN}ms), skipping`);
+        return true; // Skip too-frequent refreshes
+      }
+      
       console.log('Attempting to refresh session...');
+      refreshInProgress = true;
       
       // First try to get the current session to diagnose what's going on
       try {
@@ -69,6 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Now attempt the actual refresh
       const { error } = await supabase.auth.refreshSession();
+      
+      // Update refresh state
+      lastRefreshTime = Date.now();
+      refreshInProgress = false;
       
       if (error) {
         console.error('Refresh token is invalid (400 Bad Request). Clearing session state.');

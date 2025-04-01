@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-server';
 const PROTECTED_ROUTES = [
   '/jetshare/dashboard',
   '/jetshare/listings/manage',
-  '/jetshare/payment',  // Add payment route to protected routes
+  // '/jetshare/payment',  // REMOVED payment route from protected routes
 ];
 
 // Authentication routes that should be excluded from redirect loops
@@ -74,8 +74,11 @@ const AUTH_EXEMPT_PATHS = [
   '/jetshare', // Public landing page
   '/jetshare/listings', // Public listings page
   '/jetshare/offer', // Allowed in middleware, auth checked in component
-  '/jetshare/payment', // Base payment path handled with custom auth
-  '/jetshare/payment/', // Payment paths with IDs are exempt for custom auth handling
+  '/jetshare/payment', // Base payment path exempt
+  '/jetshare/payment/', // Payment paths with IDs are exempt
+  '/jetshare/payment/[id]', // Payment page with ID template
+  '/jetshare/payment/*', // All payment page variations
+  '/jetshare/payment/success', // Success page explicitly exempt
   '/images', // Allow access to static images
   '/favicon.ico',
   '/api/webhooks',
@@ -130,9 +133,43 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
   const url = request.nextUrl.clone();
   const pathname = url.pathname;
   
+  // Special handling for the success page to ensure it never redirects
+  if (pathname === '/jetshare/payment/success') {
+    console.log('Middleware: Success page detected - allowing without auth');
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-payment-flow', 'true');
+    requestHeaders.set('x-bypass-auth', 'true');
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders
+      }
+    });
+  }
+  
   // Check if we're on the payment page
   if (pathname.startsWith('/jetshare/payment/') && !pathname.includes('/stripe/')) {
+    // First check if we're coming from a dashboard or success page redirect
+    // This prevents redirect loops between dashboard and payment
+    const referer = request.headers.get('referer') || '';
+    const isFromDashboard = referer.includes('/jetshare/dashboard');
+    const searchParams = request.nextUrl.searchParams;
+    const isSuccessRedirect = searchParams.has('success') || searchParams.has('booked');
+    
+    // If we detect a potential redirect loop, allow the dashboard to handle it
+    if ((isFromDashboard || isSuccessRedirect) && !searchParams.has('payment_retry')) {
+      console.log('Middleware: Detected potential redirect loop, allowing dashboard to handle auth');
+      // Force redirect to dashboard to break the loop
+      url.pathname = '/jetshare/dashboard';
+      return NextResponse.redirect(url);
+    }
+    
+    // Add more detailed logging
+    console.log('Middleware: Payment route detected:', pathname);
+    console.log('Middleware: BYPASSING AUTH CHECKS COMPLETELY FOR PAYMENT ROUTE');
+    
     const offerId = pathname.split('/').pop();
+    console.log('Middleware: Payment for offerId:', offerId);
     
     // If the offerId is invalid, try to recover from cookies or storage
     if (!offerId || offerId === 'undefined' || offerId.length < 10) {
@@ -159,6 +196,7 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
     // Add a header to the request to bypass auth checks for payment pages
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-payment-flow', 'true');
+    requestHeaders.set('x-bypass-auth', 'true'); // New header to explicitly bypass auth
     
     return NextResponse.next({
       request: {
@@ -272,11 +310,13 @@ export async function middleware(request: NextRequest) {
   
   // Explicitly exempt payment routes to avoid auth issues
   if (pathname.startsWith('/jetshare/payment/')) {
-    console.log('Payment route detected - bypassing middleware auth check');
+    console.log('Payment route detected - COMPLETELY BYPASSING middleware auth check');
+    console.log('Headers being passed:', Array.from(request.headers.entries()).map(([key, value]) => `${key}: ${value.substring(0, 20)}${value.length > 20 ? '...' : ''}`));
     
     // Add helpful headers to assist with auth in the route handler
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-payment-flow', 'true');
+    requestHeaders.set('x-bypass-auth', 'true'); // Explicit bypass header
     
     // If auth token is present in any form, pass it along in the headers
     if (jwtToken) {

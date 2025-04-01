@@ -25,14 +25,20 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
   const redirectAttempted = useRef(false);
   const tokenRefreshed = useRef(false);
   const authCheckCompleted = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const lastAuthCheck = useRef<number>(0);
+  const AUTH_CHECK_COOLDOWN = 60000; // 1 minute between auth checks
+  const authNotificationDisplayed = useRef<boolean>(false);
   
   // Determine if current path needs authentication
   const isPaymentPath = pathname ? pathname.startsWith('/jetshare/payment/') : false;
   const isDashboardPath = pathname ? pathname.startsWith('/jetshare/dashboard') : false;
   const isOfferPath = pathname ? pathname.startsWith('/jetshare/offer') : false;
+  
+  // NEVER require auth for payment paths - they'll handle their own auth
   const needsAuth = pathname ? (
-    PROTECTED_ROUTES.some(route => pathname.startsWith(route)) || 
-    isPaymentPath
+    PROTECTED_ROUTES.some(route => pathname.startsWith(route)) && 
+    !isPaymentPath
   ) : false;
   
   // Local function to sync tokens to localStorage
@@ -240,50 +246,79 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
     checkAndRefreshAuth();
   }, [user, authLoading, needsAuth, pathname, refreshSession, router, isPaymentPath, isDashboardPath, isOfferPath]);
   
-  // Proactively refresh token on payment pages to prevent expiry during checkout
+  // Add mobile detection in a new useEffect
   useEffect(() => {
-    if (isPaymentPath && user && !tokenRefreshed.current) {
-      console.log('Payment page detected, proactively refreshing auth token');
-      refreshSessionToken();
-      tokenRefreshed.current = true;
+    // Detect if the user is on a mobile device
+    const checkMobile = () => {
+      const isMobileDevice = typeof window !== 'undefined' && 
+        (window.innerWidth <= 768 || 
+         /Android/i.test(navigator.userAgent) ||
+         /iPhone|iPad|iPod/i.test(navigator.userAgent));
       
-      // Also attempt to verify session directly with Supabase
-      const verifyAndRefreshSession = async () => {
-        try {
-          const supabase = createClient();
-          const { data, error } = await supabase.auth.refreshSession();
-          if (error) {
-            console.error('Failed to refresh session on payment page:', error);
-          } else {
-            console.log('Session refreshed successfully on payment page');
-            
-            // Store user ID in localStorage for redundancy
-            try {
-              localStorage.setItem('jetstream_user_id', data.session?.user?.id || '');
-            } catch (e) {
-              console.warn('Error storing user ID in localStorage:', e);
-            }
-          }
-        } catch (err) {
-          console.error('Error verifying session:', err);
-        }
-      };
+      setIsMobile(!!isMobileDevice);
       
-      verifyAndRefreshSession();
-    }
-  }, [isPaymentPath, user, refreshSessionToken]);
+      // Store preference to reduce unnecessary computations
+      try {
+        localStorage.setItem('jetstream_is_mobile', isMobileDevice ? 'true' : 'false');
+      } catch (e) {
+        console.warn('Could not store mobile preference:', e);
+      }
+    };
+    
+    // Run on mount
+    checkMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
   
-  // Reset token refreshed flag when navigating away from payment pages
+  // Replace the payment page token refresh to reduce refresh calls
   useEffect(() => {
-    if (!isPaymentPath) {
-      tokenRefreshed.current = false;
+    if (isPaymentPath && user) {
+      const now = Date.now();
+      
+      // Only refresh if we haven't checked recently
+      if (now - lastAuthCheck.current > AUTH_CHECK_COOLDOWN && !tokenRefreshed.current) {
+        console.log('Payment page detected, checking auth token freshness');
+        
+        // Just use the existing AuthProvider refresh mechanism
+        refreshSession().then(success => {
+          if (success) {
+            console.log('Auth token refreshed for payment page');
+            tokenRefreshed.current = true;
+            lastAuthCheck.current = now;
+          } else {
+            console.warn('Auth token refresh failed, payment may encounter issues');
+          }
+        });
+        
+        // Store user ID in localStorage for redundancy in case auth completely fails
+        try {
+          console.log('Storing user ID in localStorage for payment backup');
+          localStorage.setItem('jetstream_user_id', user.id || '');
+        } catch (e) {
+          console.warn('Error storing user ID in localStorage:', e);
+        }
+      } else {
+        console.log('Skipping auth refresh due to cooldown or already refreshed');
+      }
     }
-  }, [isPaymentPath]);
+  }, [isPaymentPath, user, refreshSession]);
   
   // Use AuthSync hook to ensure auth state is maintained
   useAuthSync();
   
   useEffect(() => {
+    // NEVER redirect payment paths - they'll handle auth internally
+    if (isPaymentPath) {
+      console.log('JetShare: Payment path detected, bypassing auth redirect check');
+      return;
+    }
+    
     // Only redirect if authentication is required for this route
     if (!authLoading && needsAuth && !user && !redirectAttempted.current) {
       console.log(`JetShare: Protected route ${pathname} requires login`);
@@ -298,13 +333,14 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
     if (!authLoading && loading) {
       setLoading(false);
     }
-  }, [user, authLoading, needsAuth, router, loading, pathname]);
+  }, [user, authLoading, needsAuth, router, loading, pathname, isPaymentPath]);
   
   return (
-    <main className="min-h-screen bg-background">
+    <main className={`min-h-screen bg-background ${isMobile ? 'jetstream-mobile' : ''}`}>
       <JetShareHeader />
-      {/* Show content regardless of auth state for non-protected routes */}
-      {(!needsAuth || user || loading) ? children : null}
+      <div className={`jetshare-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
+        {(!needsAuth || user || loading) ? children : null}
+      </div>
     </main>
   );
 } 

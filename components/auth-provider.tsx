@@ -32,6 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const AUTH_SYNC_THROTTLE = 10000 // 10 seconds between sync attempts
   const lastRefreshAttempt = useRef<number>(0)
   const [sessionError, setSessionError] = useState<AuthError | null>(null)
+  const [sessionRestored, setSessionRestored] = useState(false)
+  const [postPaymentMode, setPostPaymentMode] = useState(false)
 
   const supabase = createClient()
   const router = useRouter()
@@ -40,21 +42,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Singleton pattern to ensure only one profile sync can run at a time
   const syncInProgress = useRef(false)
   
-  // New function to help with session refreshing across the app
+  // Add these variables at the top of AuthProvider component right after the existing variables
+  const refreshLock = useRef<boolean>(false);
+  const refreshCooldown = useRef<number>(0);
+  const REFRESH_COOLDOWN_PERIOD = 5000; // 5 seconds between refresh attempts
+  const refreshQueue = useRef<Array<() => void>>([]);
+  
+  // Replace the refreshSession function with this improved version
   const refreshSession = async (): Promise<boolean> => {
     console.log('Attempting to refresh auth session...');
     setSessionError(null); // Clear previous errors
     
-    // Throttle refresh attempts to avoid spamming the auth service
-    const now = Date.now();
-    if (now - lastRefreshAttempt.current < 2000) {
-      console.log('Throttling refresh attempt');
-      return false;
+    // Check for post-payment state
+    if (isPostPaymentState()) {
+      console.log('Auth Provider: Detected post-payment state, maintaining session');
+      
+      // Mark as in post-payment mode to prevent login redirects
+      setPostPaymentMode(true);
+      
+      // After payment, just return success without actual refresh to prevent login redirects
+      if (user) {
+        return true;
+      }
+      
+      // If we don't have a user but have localStorage data, try to restore from storage
+      try {
+        const localUserId = localStorage.getItem('jetstream_user_id');
+        if (localUserId) {
+          // Don't trigger a full refresh, just maintain state
+          console.log('Auth Provider: Found user ID in storage after payment, using it');
+          setSessionRestored(true);
+          return true;
+        }
+      } catch (e) {
+        console.warn('Error accessing localStorage in post-payment state:', e);
+      }
     }
     
-    lastRefreshAttempt.current = now;
+    // Implement refresh lock to prevent multiple simultaneous refreshes
+    if (refreshLock.current) {
+      console.log('Refresh already in progress, queuing this request');
+      
+      // Return a promise that will resolve when the current refresh completes
+      return new Promise(resolve => {
+        refreshQueue.current.push(() => resolve(true));
+      });
+    }
+    
+    // Check cooldown period to avoid excessive refreshes
+    const now = Date.now();
+    if (now - refreshCooldown.current < REFRESH_COOLDOWN_PERIOD) {
+      console.log('Refresh cooldown active, skipping refresh');
+      return true; // Return true to prevent error cascades
+    }
     
     try {
+      // Set the lock
+      refreshLock.current = true;
+      refreshCooldown.current = now;
+      
       // First, try standard refresh method
       const { data, error } = await supabase.auth.refreshSession();
       
@@ -68,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Clear local state and storage because the refresh token is bad
           setUser(null);
           setSession(null);
+          
           try {
             localStorage.removeItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
             localStorage.removeItem('jetstream_user_id');
@@ -77,108 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } catch (storageError) {
             console.warn('Error clearing localStorage after invalid refresh token:', storageError);
           }
-          // Optionally trigger a sign-out process or inform the user
-          // signOut(); // Consider if automatic sign-out is desired here
+          
           return false; // Indicate refresh failed due to invalid token
         }
         
-        // Try localStorage fallback ONLY if it wasn't a 400 error
-        // (If it was 400, the localStorage token is likely the problem)
-        if (!(error instanceof AuthError && error.status === 400)) {
-          try {
-            const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
-            if (tokenData) {
-              const parsedToken = JSON.parse(tokenData);
-              if (parsedToken && parsedToken.access_token && parsedToken.refresh_token) {
-                console.log('Attempting to restore session from localStorage token (non-400 error path)');
-                const { data: localData, error: localError } = await supabase.auth.setSession({
-                  access_token: parsedToken.access_token,
-                  refresh_token: parsedToken.refresh_token
-                });
-                
-                if (!localError && localData.session) {
-                  console.log('Session restored successfully from localStorage tokens');
-                  setUser(localData.session.user);
-                  setSession(localData.session);
-                  setSessionError(null); // Clear error on success
-                  
-                  // Re-store the tokens to ensure they're still available
-                  try {
-                    const storageData = {
-                      access_token: localData.session.access_token,
-                      refresh_token: localData.session.refresh_token,
-                      expires_at: Math.floor(Date.now() / 1000) + 3600,
-                      user: localData.session.user
-                    };
-                    localStorage.setItem('sb-vjhrmizwqhmafkxbmfwa-auth-token', JSON.stringify(storageData));
-                    localStorage.setItem('auth_last_authenticated', 'true');
-                    localStorage.setItem('jetstream_session_time', new Date().getTime().toString());
-                    localStorage.setItem('jetstream_user_id', localData.session.user.id);
-                    if (localData.session.user.email) {
-                      localStorage.setItem('jetstream_user_email', localData.session.user.email);
-                    }
-                  } catch (storageError) {
-                    console.warn('Error saving restored tokens to localStorage:', storageError);
-                  }
-                  
-                  // Register a global fetch interceptor to automatically include auth headers
-                  try {
-                    const originalFetch = window.fetch;
-                    window.fetch = async function(input, init) {
-                      // Only add auth headers for same-origin API requests
-                      const url = input instanceof Request ? input.url : String(input);
-                      
-                      // Don't add auth to cross-origin or non-API requests
-                      // Check if we already have an Authorization header
-                      let hasAuthHeader = false;
-                      
-                      if (init?.headers) {
-                        if (init.headers instanceof Headers) {
-                          hasAuthHeader = init.headers.has('Authorization');
-                        } else if (typeof init.headers === 'object') {
-                          // Use safe property access
-                          hasAuthHeader = Object.keys(init.headers).some(key => 
-                            key.toLowerCase() === 'authorization'
-                          );
-                        }
-                      }
-                      
-                      if (url.startsWith('/api/') && !hasAuthHeader) {
-                        init = init || {};
-                        init.headers = init.headers || {};
-                        
-                        // Add the Authorization header with the bearer token
-                        const headers = new Headers(init.headers);
-                        if (localData.session && localData.session.access_token) {
-                          headers.set('Authorization', `Bearer ${localData.session.access_token}`);
-                          init.headers = Object.fromEntries(headers.entries());
-                          
-                          console.log('Fetch interceptor: Added auth header to API request');
-                        }
-                      }
-                      
-                      return originalFetch(input, init);
-                    };
-                  } catch (fetchInterceptError) {
-                    console.warn('Error setting up fetch interceptor:', fetchInterceptError);
-                  }
-                  
-                  return true;
-                } else {
-                  console.warn('Failed to restore session from localStorage tokens:', localError);
-                  // If localStorage restore fails too, clear it
-                  localStorage.removeItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
-                }
-              } else {
-                localStorage.removeItem('sb-vjhrmizwqhmafkxbmfwa-auth-token'); // Clear if invalid structure
-              }
-            }
-          } catch (localStorageError) {
-            console.warn('Error accessing localStorage during refresh fallback:', localStorageError);
-          }
-        }
-        
-        // If we reach here, all refresh methods failed for non-400 reasons or 400 was handled
         return false;
       }
       
@@ -197,6 +146,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             expires_at: Math.floor(Date.now() / 1000) + 3600,
             user: data.session.user
           };
+          
+          // Update localStorage
           localStorage.setItem('sb-vjhrmizwqhmafkxbmfwa-auth-token', JSON.stringify(storageData));
           localStorage.setItem('auth_last_authenticated', 'true');
           localStorage.setItem('jetstream_session_time', new Date().getTime().toString());
@@ -211,60 +162,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn('Error storing refreshed auth data in localStorage:', storageError);
         }
         
-        // Register a global fetch interceptor to automatically include auth headers
-        try {
-          const originalFetch = window.fetch;
-          window.fetch = async function(input, init) {
-            // Only add auth headers for same-origin API requests
-            const url = input instanceof Request ? input.url : String(input);
-            
-            // Check if Authorization header already exists
-            let hasAuthHeader = false;
-            
-            if (init?.headers) {
-              if (init.headers instanceof Headers) {
-                hasAuthHeader = init.headers.has('Authorization');
-              } else if (typeof init.headers === 'object') {
-                // Use safe property access
-                hasAuthHeader = Object.keys(init.headers).some(key => 
-                  key.toLowerCase() === 'authorization'
-                );
-              }
-            }
-            
-            // Don't add auth to cross-origin or non-API requests
-            if (url.startsWith('/api/') && !hasAuthHeader && data.session?.access_token) {
-              init = init || {};
-              init.headers = init.headers || {};
-              
-              // Add the Authorization header with the bearer token
-              const headers = new Headers(init.headers);
-              headers.set('Authorization', `Bearer ${data.session.access_token}`);
-              init.headers = Object.fromEntries(headers.entries());
-            }
-            
-            return originalFetch(input, init);
-          };
-        } catch (fetchInterceptError) {
-          console.warn('Error setting up fetch interceptor:', fetchInterceptError);
-        }
-        
         return true;
       } else {
         console.log('Session refresh returned no session, but no error.');
         // This case might happen if cookies were cleared server-side?
         // Ensure local state is cleared
-         setUser(null);
-         setSession(null);
-         try {
-           localStorage.removeItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
-         } catch (e) {}
+        setUser(null);
+        setSession(null);
+        try {
+          localStorage.removeItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+        } catch (e) {}
         return false;
       }
     } catch (refreshError) {
       console.error('Unexpected error during session refresh:', refreshError);
       setSessionError(refreshError instanceof AuthError ? refreshError : new AuthError('Unexpected refresh error'));
       return false;
+    } finally {
+      // Release the lock
+      refreshLock.current = false;
+      
+      // Process any queued refresh requests
+      const queuedRefreshes = [...refreshQueue.current];
+      refreshQueue.current = [];
+      
+      // Execute all queued callbacks with a small delay
+      if (queuedRefreshes.length > 0) {
+        console.log(`Processing ${queuedRefreshes.length} queued refresh requests`);
+        queuedRefreshes.forEach(callback => setTimeout(callback, 50));
+      }
     }
   };
   
@@ -871,6 +797,111 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: err as AuthError }
     }
   }
+
+  // Replace the current isPostPaymentState function
+  const isPostPaymentState = () => {
+    try {
+      // Multiple ways to detect post-payment flow
+      const paymentComplete = typeof window !== 'undefined' && 
+        (localStorage.getItem('payment_complete') === 'true' ||
+         sessionStorage.getItem('payment_complete') === 'true' ||
+         document.cookie.includes('payment_complete=true'));
+         
+      const lastAction = typeof window !== 'undefined' && 
+        localStorage.getItem('jetstream_last_action') === 'payment_complete';
+      
+      const urlHasPaymentParams = typeof window !== 'undefined' && 
+        (window.location.href.includes('payment_complete=true') ||
+         window.location.href.includes('from=payment'));
+      
+      return paymentComplete || lastAction || urlHasPaymentParams;
+    } catch (e) {
+      console.warn('Error checking post-payment state:', e);
+      return false;
+    }
+  };
+
+  // Add this function to the component
+  const checkAndFixPostPaymentState = () => {
+    if (isPostPaymentState() && !postPaymentMode) {
+      console.log('Post-payment state detected on focus event');
+      
+      // Create a synthetic auth event for post-payment flow
+      if (!user && !loading) {
+        try {
+          const localUserId = localStorage.getItem('jetstream_user_id');
+          const localUserEmail = localStorage.getItem('jetstream_user_email');
+          
+          if (localUserId) {
+            // Manually set some user state to prevent login redirects
+            setSessionRestored(true);
+            setPostPaymentMode(true);
+            console.log('Synthetic post-payment session maintained');
+            
+            // Stop session restoration messages
+            localStorage.setItem('suppress_auth_messages', 'true');
+          }
+        } catch (e) {
+          console.warn('Error in post-payment state handler:', e);
+        }
+      }
+    }
+  };
+
+  // Define the missing function just before the useEffect
+  const runAuthRefreshCheck = async () => {
+    // Skip if we're already loading or if we've refreshed recently
+    const now = Date.now();
+    if (loading || now - lastRefreshAttempt.current < AUTH_SYNC_THROTTLE) {
+      return;
+    }
+    
+    lastRefreshAttempt.current = now;
+    
+    // Check if session needs refresh based on expiry time or other criteria
+    const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
+    if (tokenData) {
+      try {
+        const parsedData = JSON.parse(tokenData);
+        const expiresAt = parsedData.expires_at;
+        const SESSION_EXPIRY_BUFFER = 300; // 5 minutes in seconds
+        
+        // Check if token is close to expiring
+        if (expiresAt && expiresAt - SESSION_EXPIRY_BUFFER < Math.floor(now / 1000)) {
+          console.log('Token close to expiry, refreshing session...');
+          await refreshSession();
+        }
+      } catch (e) {
+        console.warn('Error checking token expiry:', e);
+      }
+    }
+  };
+
+  // Fix the useEffect with focus event handler
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Window focused, checking auth...');
+      
+      // Check for post-payment state to maintain session
+      checkAndFixPostPaymentState();
+      
+      // Check if session needs refresh
+      runAuthRefreshCheck();
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocus);
+    }
+    
+    // Also run the check immediately on mount
+    checkAndFixPostPaymentState();
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
+      }
+    };
+  }, [user, loading]);
 
   return (
     <AuthContext.Provider value={{

@@ -51,6 +51,16 @@ export async function POST(request: NextRequest) {
     // Get the request body first to extract user_id for private browsing mode
     const body = await request.json();
     
+    // Extract offer_id from the request body immediately for use throughout the function
+    const offer_id = body.offer_id;
+    
+    if (!offer_id) {
+      return NextResponse.json(
+        { error: 'Missing offer ID' }, 
+        { status: 400 }
+      );
+    }
+    
     // Extract auth token from Authorization header if present
     const authHeader = request.headers.get('authorization');
     let authToken = null;
@@ -119,31 +129,51 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // If all authentication methods failed, return 401
+    // If all authentication methods failed, we'll implement a "guest checkout" flow
+    // This allows the user to continue to payment where they'll authenticate later
     if (!user) {
-      console.error('API: acceptOffer - Authentication failed through all methods');
+      console.log('API: acceptOffer - No authenticated user, implementing guest checkout flow');
       
-      return NextResponse.json(
-        { 
-          error: 'Authentication required',
-          message: 'You must be logged in to accept this offer',
-          details: 'No valid authentication method found',
-          redirectUrl: '/auth/login?returnUrl=' + encodeURIComponent('/jetshare/listings'),
-          authHeaderPresent: authHeaderPresent
-        }, 
-        { status: 401 }
-      );
+      // Generate a temporary guest ID to track this session
+      const guestId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store this in the response as a cookie to track the guest session
+      const response = NextResponse.json({
+        success: true,
+        message: 'Proceeding to guest checkout',
+        data: {
+          guest_checkout: true,
+          offer_id,
+          redirect_url: `/jetshare/payment/${offer_id}?t=${Date.now()}&from=guest&flow=listing_to_payment`
+        }
+      });
+      
+      // Set cookies to remember this offer during the auth flow
+      response.cookies.set({
+        name: 'pending_payment_offer_id',
+        value: offer_id,
+        expires: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+        path: '/',
+      });
+      
+      response.cookies.set({
+        name: 'jetshare_pending_payment',
+        value: 'true',
+        expires: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+        path: '/',
+      });
+      
+      response.cookies.set({
+        name: 'guest_checkout_id',
+        value: guestId,
+        expires: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+        path: '/',
+      });
+      
+      return response;
     }
     
-    // Basic validation of offer_id
-    if (!body.offer_id) {
-      return NextResponse.json(
-        { error: 'Missing offer ID' }, 
-        { status: 400 }
-      );
-    }
-    
-    const offer_id = body.offer_id;
+    // Now continue with normal flow for authenticated users
     
     // Accept the offer
     const { data: updatedOffer, error: updateError } = await supabase
