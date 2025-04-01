@@ -7,9 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 
-// Prevent static generation of this page
-export const dynamic = 'force-dynamic';
-
 export default function AuthTestPage() {
   const { user, loading, refreshSession } = useAuth();
   const [tokenData, setTokenData] = useState<any>(null);

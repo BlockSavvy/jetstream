@@ -9,9 +9,6 @@ import PaymentConfirmation from '../../components/PaymentConfirmation';
 import StripeTestHelper from '../../components/StripeTestHelper';
 import { useEffect, useState } from 'react';
 
-// Prevent static generation of this page
-export const dynamic = 'force-dynamic';
-
 // Make sure to use the test mode publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 

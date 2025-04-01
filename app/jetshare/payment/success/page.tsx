@@ -9,8 +9,6 @@ import { CheckCircle, ArrowRight, AlertCircle, Plane, Ticket, Wallet } from 'luc
 import Link from 'next/link';
 import React from 'react';
 import { toast } from 'sonner';
-// Import dynamic exports to force SSR
-import '@/app/dynamic-ssr';
 
 // Loading component to use in Suspense
 function LoadingCard() {

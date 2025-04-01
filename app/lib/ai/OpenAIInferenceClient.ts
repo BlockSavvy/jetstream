@@ -14,13 +14,9 @@ export class OpenAIInferenceClient implements AIInferenceClient {
   private elevenLabsApiKey: string | null = null;
 
   constructor() {
-    // Get API keys from environment variables
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    // Instead of throwing an error, we'll check for the key when methods are called
-    // This allows the client to initialize during build time
+    // Initialize with a dummy key for build time, will be replaced at runtime
     this.client = new OpenAI({
-      apiKey: apiKey || 'dummy-key-for-build' // Use a dummy key during build time
+      apiKey: process.env.OPENAI_API_KEY || 'sk-dummy-key-for-build-time-only'
     });
 
     // Initialize ElevenLabs (optional)
@@ -28,7 +24,8 @@ export class OpenAIInferenceClient implements AIInferenceClient {
   }
 
   private ensureApiKey() {
-    if (!process.env.OPENAI_API_KEY) {
+    // Only check for real API key at runtime, not during build
+    if (typeof window !== 'undefined' && !process.env.OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY environment variable is not set");
     }
   }
