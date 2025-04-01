@@ -148,7 +148,14 @@ interface Airport {
   is_private?: boolean;
 }
 
-export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
+// First update the component interface to include editOfferId
+interface JetShareOfferFormProps {
+  airportsList?: Airport[];
+  editOfferId?: string | null;
+}
+
+// Then update the component signature
+export default function JetShareOfferForm({ airportsList = [] as Airport[], editOfferId = null }: JetShareOfferFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
   const router = useRouter();
@@ -160,6 +167,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
   const [arrivalResults, setArrivalResults] = useState<string[]>([]);
   const [showDepartureResults, setShowDepartureResults] = useState(false);
   const [showArrivalResults, setShowArrivalResults] = useState(false);
+
+  // Add a state to track if we're in edit mode
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Check for authentication on load
   useEffect(() => {
@@ -331,6 +341,61 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
     form.setValue('requested_share_amount', newAmount > 0 ? newAmount : 1);
   };
   
+  // Add a new useEffect to fetch offer details when in edit mode
+  useEffect(() => {
+    if (!editOfferId) return;
+    
+    // Set edit mode flag
+    setIsEditMode(true);
+    
+    const fetchOfferDetails = async () => {
+      try {
+        // Show loading state
+        setIsSubmitting(true);
+        
+        const response = await fetch(`/api/jetshare/offer?id=${editOfferId}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch offer details');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.offer) {
+          throw new Error('Offer not found');
+        }
+        
+        const offer = data.offer;
+        
+        // Populate form with offer details
+        form.reset({
+          flight_date: new Date(offer.flight_date),
+          departure_location: offer.departure_location,
+          arrival_location: offer.arrival_location,
+          aircraft_model: offer.aircraft_model || '',
+          total_seats: offer.total_seats,
+          available_seats: offer.available_seats,
+          total_flight_cost: offer.total_flight_cost,
+          requested_share_amount: offer.requested_share_amount
+        });
+        
+        toast.success('Offer details loaded successfully');
+      } catch (error) {
+        console.error('Error fetching offer details:', error);
+        toast.error('Failed to load offer details. Please try again.');
+        
+        // Redirect back to listings if we can't load the offer
+        setTimeout(() => {
+          router.push('/jetshare/listings');
+        }, 2000);
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+    
+    fetchOfferDetails();
+  }, [editOfferId, router, form]);
+  
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof enhancedFormSchema>) => {
     // Validate available seats one more time before submission
@@ -392,9 +457,15 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
           'Content-Type': 'application/json',
         };
         
+        // Determine if we're creating or updating
+        const endpoint = isEditMode 
+          ? `/api/jetshare/updateOffer?id=${editOfferId}` 
+          : '/api/jetshare/createOffer';
+        const method = isEditMode ? 'PUT' : 'POST';
+        
         // Submit the form data using API endpoint
-        const response = await fetch('/api/jetshare/createOffer', {
-          method: 'POST',
+        const response = await fetch(endpoint, {
+          method,
           headers,
           credentials: 'include', // Include cookies for authentication
           body: JSON.stringify(formattedValues),
@@ -485,8 +556,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
         }
         
         // Show success message
-        toast.success('Flight share offer created successfully!', {
-          description: 'Your offer is now live and visible to potential matches'
+        toast.success(isEditMode 
+          ? 'Flight share offer updated successfully!' 
+          : 'Flight share offer created successfully!', {
+          description: isEditMode 
+            ? 'Your offer has been updated' 
+            : 'Your offer is now live and visible to potential matches'
         });
         
         // Redirect to the listings page
@@ -536,9 +611,15 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
           console.log('Submitting offer without auth token (private browsing mode)');
         }
         
+        // Determine if we're creating or updating
+        const endpoint = isEditMode 
+          ? `/api/jetshare/updateOffer?id=${editOfferId}` 
+          : '/api/jetshare/createOffer';
+        const method = isEditMode ? 'PUT' : 'POST';
+        
         // Submit the form data using API endpoint
-        const response = await fetch('/api/jetshare/createOffer', {
-          method: 'POST',
+        const response = await fetch(endpoint, {
+          method,
           headers,
           credentials: 'include', // Include cookies for authentication
           body: JSON.stringify(formattedValues),
@@ -629,8 +710,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[] }) {
         }
         
         // Show success message
-        toast.success('Flight share offer created successfully!', {
-          description: 'Your offer is now live and visible to potential matches'
+        toast.success(isEditMode 
+          ? 'Flight share offer updated successfully!' 
+          : 'Flight share offer created successfully!', {
+          description: isEditMode 
+            ? 'Your offer has been updated' 
+            : 'Your offer is now live and visible to potential matches'
         });
         
         // Redirect to the listings page

@@ -398,10 +398,14 @@ export default function JetShareListingsContent() {
       } else {
         // Enhance offers with default user info if missing
         const enhancedOffers = data.offers.map((offer: JetShareOfferWithUser) => {
+          // Mark offers created by current user
+          const isOwnOffer = authUserId && offer.user_id === authUserId;
+          
           // Check if user info is missing and provide defaults
           if (!offer.user) {
             return {
               ...offer,
+              isOwnOffer,
               user: {
                 id: offer.user_id,
                 first_name: "Jet",
@@ -409,7 +413,10 @@ export default function JetShareListingsContent() {
               }
             };
           }
-          return offer;
+          return {
+            ...offer,
+            isOwnOffer
+          };
         });
         
         setOffers(enhancedOffers || []);
@@ -851,7 +858,7 @@ export default function JetShareListingsContent() {
     <Card 
       key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => handleOfferAccept(offer)}
+      onClick={() => !offer.isOwnOffer && handleOfferAccept(offer)}
     >
       <div className="relative">
         {offer.isOwnOffer && (
@@ -908,22 +915,46 @@ export default function JetShareListingsContent() {
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          <Button 
-            className="w-full" 
-            variant={offer.isOwnOffer ? "secondary" : "default"}
-            onClick={() => {
-              setSelectedOffer(offer);
-              // If it's the user's own offer, just show details
-              // Otherwise, determine if we should show details or accept dialog
-              if (!offer.isOwnOffer && user) {
-                setShowConfirmDialog(true);
-              } else {
-                setShowDetailDialog(true);
-              }
-            }}
-          >
-            {offer.isOwnOffer ? "Manage Your Offer" : "View Details"}
-          </Button>
+          {offer.isOwnOffer ? (
+            <div className="flex w-full gap-2">
+              <Button 
+                className="flex-1" 
+                variant="secondary"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent card onClick from firing
+                  router.push(`/jetshare/create?edit=${offer.id}`);
+                }}
+              >
+                Edit Offer
+              </Button>
+              <Button 
+                className="flex-1" 
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent card onClick from firing
+                  setSelectedOffer(offer);
+                  setShowDetailDialog(true);
+                }}
+              >
+                View Details
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              className="w-full" 
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card onClick from firing
+                setSelectedOffer(offer);
+                if (user) {
+                  setShowConfirmDialog(true);
+                } else {
+                  setShowDetailDialog(true);
+                }
+              }}
+            >
+              View Details
+            </Button>
+          )}
         </CardFooter>
       </div>
     </Card>
