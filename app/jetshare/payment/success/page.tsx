@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle, ArrowRight, AlertCircle, Plane } from 'lucide-react';
+import { CheckCircle, ArrowRight, AlertCircle, Plane, Ticket, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 import { toast } from 'sonner';
@@ -66,13 +66,15 @@ function SuccessCard({
   paymentIntentId, 
   isRedirecting, 
   onViewDetails, 
-  onDashboard 
+  onDashboard,
+  onBoardingPass 
 }: { 
   offerDetails: any, 
   paymentIntentId: string | null, 
   isRedirecting: boolean, 
   onViewDetails: () => void, 
-  onDashboard: () => void 
+  onDashboard: () => void,
+  onBoardingPass: () => void
 }) {
   return (
     <div className="container mx-auto px-4 py-16 max-w-md">
@@ -120,21 +122,32 @@ function SuccessCard({
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex justify-center gap-3">
-          <Button 
-            onClick={onViewDetails}
-            className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white"
-          >
-            View Details
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+        <CardFooter className="flex flex-col gap-3">
+          <div className="flex justify-center gap-3 w-full">
+            <Button 
+              onClick={onViewDetails}
+              className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white"
+            >
+              View Details
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={onDashboard}
+              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Dashboard
+            </Button>
+          </div>
           
-          <Button 
-            variant="outline"
-            onClick={onDashboard}
-            className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+          <Button
+            onClick={onBoardingPass}
+            variant="secondary"
+            className="w-full"
           >
-            Dashboard
+            <Ticket className="mr-2 h-4 w-4" />
+            Access Boarding Pass
           </Button>
         </CardFooter>
       </Card>
@@ -220,12 +233,30 @@ function PaymentSuccessContent() {
         if (response.ok && data.success) {
           console.log('Booking finalized successfully:', data);
           setBookingFinalized(true);
-          toast.success('Booking finalized successfully!');
+          toast.success('Your flight has been booked!', {
+            description: 'Boarding passes are now available on your dashboard'
+          });
+          
+          // Mark the booking as completed in session storage to avoid duplicate notifications
+          try {
+            sessionStorage.setItem(`booking_${offerId}_finalized`, 'true');
+            sessionStorage.setItem('last_booking_time', new Date().toISOString());
+          } catch (e) {
+            console.warn('Could not update session storage:', e);
+          }
         } else {
           console.error('Error finalizing booking:', data);
+          // Don't show error to user if already shown
+          if (!sessionStorage.getItem(`booking_${offerId}_error_shown`)) {
+            toast.error('There was an issue processing your booking details');
+            try {
+              sessionStorage.setItem(`booking_${offerId}_error_shown`, 'true');
+            } catch (e) {}
+          }
         }
       } catch (err) {
         console.error('Exception finalizing booking:', err);
+        // Silent error - we don't want to alarm the user on the success page
       }
     }
     
@@ -235,8 +266,18 @@ function PaymentSuccessContent() {
   
   const viewTransaction = () => {
     if (offerId) {
+      // Preserve test mode flag for test transactions
       const testParam = searchParams.get('test') === 'true' ? '&test=true' : '';
-      router.push(`/jetshare/transaction/${offerId}?from=payment&payment_complete=true${testParam}&t=${Date.now()}`);
+      const url = `/jetshare/transaction/${offerId}?from=payment&payment_complete=true${testParam}&t=${Date.now()}`;
+      
+      // Set a cookie to remember the transaction
+      try {
+        document.cookie = `last_transaction=${offerId}; path=/; max-age=3600`;
+      } catch (e) {
+        console.warn('Could not set cookie:', e);
+      }
+      
+      router.push(url);
     } else {
       router.push('/jetshare/dashboard');
     }
@@ -244,6 +285,16 @@ function PaymentSuccessContent() {
   
   const goToDashboard = () => {
     router.push(`/jetshare/dashboard?booked=${offerId}&t=${Date.now()}`);
+  };
+  
+  const goToBoardingPass = () => {
+    if (offerId) {
+      // Preserve test mode flag for test transactions
+      const testParam = searchParams.get('test') === 'true' ? '&test=true' : '';
+      router.push(`/jetshare/boardingpass/${offerId}?${testParam}`);
+    } else {
+      router.push('/jetshare/dashboard?tab=bookings');
+    }
   };
   
   if (isLoading) {
@@ -261,6 +312,7 @@ function PaymentSuccessContent() {
       isRedirecting={isRedirecting}
       onViewDetails={viewTransaction}
       onDashboard={goToDashboard}
+      onBoardingPass={goToBoardingPass}
     />
   );
 }

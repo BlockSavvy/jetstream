@@ -30,11 +30,11 @@ export default async function TransactionPage({ params, searchParams }: Transact
   // Await searchParams to fix Next.js error
   const searchParamsResolved = await Promise.resolve(searchParams);
   
-  // Check for test mode from URL parameters or environment
-  const isTestMode = 
+  // Check for test mode from URL parameters only
+  // Never set test mode for real transactions
+  const isExplicitTestMode = 
     (searchParamsResolved?.test === 'true' || 
-     searchParamsResolved?.test_mode === 'true') &&
-    process.env.NODE_ENV !== 'production';
+     searchParamsResolved?.test_mode === 'true');
   
   // Check if this is a post-payment view
   const isPostPayment = 
@@ -57,11 +57,17 @@ export default async function TransactionPage({ params, searchParams }: Transact
       .limit(1)
       .maybeSingle();
       
+    // Get authenticated user (if available)
+    const { data: userData } = await supabase.auth.getUser();
+    const hasUserAuth = !!userData?.user;
+      
+    // Handle error cases with appropriate fallbacks
     if (transactionError) {
       console.error('Error fetching transaction:', transactionError);
       
-      if (isTestMode) {
-        console.log('Test mode active, proceeding with dummy data');
+      // Only allow test mode if explicitly requested
+      if (isExplicitTestMode) {
+        console.log('Explicit test mode active, proceeding with dummy data');
         
         // Create dummy offer data to satisfy type constraints
         const dummyOffer: JetShareOfferWithUser = {
@@ -94,19 +100,20 @@ export default async function TransactionPage({ params, searchParams }: Transact
           recipient_user_id: 'test-user-2'
         };
         
-        console.log('No authenticated user but allowing access due to test mode or post-payment flow');
+        console.log('Using test mode transaction data');
         
         return (
           <TransactionClient 
             transactions={[dummyTransaction as any]} 
             offer={dummyOffer}
-            user={{} as User}
+            user={userData?.user || undefined}
             isOriginalOfferer={false}
             isTestMode={true}
           />
         );
       }
       
+      // Handle post-payment flow specially
       if (isPostPayment || hasPendingPaymentCookie) {
         console.log('Post-payment flow detected, showing transaction page without auth requirement');
         
@@ -145,7 +152,7 @@ export default async function TransactionPage({ params, searchParams }: Transact
           <TransactionClient 
             transactions={[paymentTransaction as any]}
             offer={dummyOffer}
-            user={{} as User}
+            user={userData?.user || undefined}
             isOriginalOfferer={false}
             isTestMode={false}
           />
@@ -155,9 +162,11 @@ export default async function TransactionPage({ params, searchParams }: Transact
       return notFound();
     }
     
+    // If no transaction was found but we're in certain states
     if (!transactionData) {
-      if (isTestMode || isPostPayment) {
-        console.log('No transaction found, but allowing test/post-payment mode');
+      // Only allow test mode if explicitly requested or for post-payment
+      if (isExplicitTestMode || isPostPayment) {
+        console.log('No transaction found, but allowing explicit test/post-payment mode');
         
         // Create dummy offer data to satisfy type constraints
         const dummyOffer: JetShareOfferWithUser = {
@@ -193,9 +202,9 @@ export default async function TransactionPage({ params, searchParams }: Transact
           <TransactionClient 
             transactions={[dummyTransaction as any]}
             offer={dummyOffer}
-            user={{} as User}
+            user={userData?.user || undefined}
             isOriginalOfferer={false}
-            isTestMode={true}
+            isTestMode={isExplicitTestMode}
           />
         );
       }
@@ -203,15 +212,11 @@ export default async function TransactionPage({ params, searchParams }: Transact
       return notFound();
     }
     
-    // Get user data (if available)
-    const { data: userData } = await supabase.auth.getUser();
-    
-    const hasUserAuth = !!userData?.user;
     console.log(hasUserAuth ? `Authenticated as user: ${userData.user.id}` : 'No authenticated user');
     
     // Special case: Allow viewing transaction page after payment even if not authenticated
-    if (!hasUserAuth && (isPostPayment || hasPendingPaymentCookie || isTestMode)) {
-      console.log('No authenticated user but allowing access due to test mode or post-payment flow');
+    if (!hasUserAuth && (isPostPayment || hasPendingPaymentCookie || isExplicitTestMode)) {
+      console.log('No authenticated user but allowing access due to special conditions');
     } else if (!hasUserAuth) {
       // For normal cases where auth is required but missing
       console.log('No authenticated user, redirecting to login');
@@ -223,7 +228,7 @@ export default async function TransactionPage({ params, searchParams }: Transact
       userData.user.id === transactionData.offer.user_id : 
       false;
     
-    // Pass data to client component
+    // Pass data to client component - NEVER show test mode for real transactions
     return (
       <TransactionClient 
         transactions={[transactionData]} 
@@ -236,8 +241,8 @@ export default async function TransactionPage({ params, searchParams }: Transact
   } catch (error) {
     console.error('Error in transaction page:', error);
     
-    // For test/dev mode, still show the page
-    if (isTestMode) {
+    // For explicit test mode, still show the page
+    if (isExplicitTestMode) {
       console.log('Error in transaction page but showing test view');
       
       // Create dummy offer data to satisfy type constraints

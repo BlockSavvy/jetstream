@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
-import { ArrowLeft, CheckCircle, Clock, AlertCircle, Plane, Download, ExternalLink, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, AlertCircle, Plane, Download, ExternalLink, RefreshCw, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
+import BoardingPassButton from './BoardingPassButton';
 
 interface TransactionClientProps {
   offer: JetShareOfferWithUser;
@@ -75,8 +76,9 @@ export default function TransactionClient({
     setIsDownloading(true);
     
     try {
-      // Generate the receipt
-      const response = await fetch(`/api/jetshare/generateReceipt?transactionId=${transactionId}`);
+      // Generate the receipt - pass test flag if in test mode
+      const testParam = isTestMode || transactionId.startsWith('test-') ? '&test=true' : '';
+      const response = await fetch(`/api/jetshare/generateReceipt?transactionId=${transactionId}${testParam}`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -85,10 +87,24 @@ export default function TransactionClient({
       
       // Download the generated receipt
       window.open(data.downloadUrl, '_blank');
+      toast.success('Receipt downloaded successfully');
     } catch (err) {
       console.error('Error downloading receipt:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to download receipt';
       toast.error(errorMsg);
+      
+      // Special handling for auth errors in non-test mode
+      if (err instanceof Error && err.message.includes('Unauthorized') && !isTestMode) {
+        toast.info('Please sign in to download your receipt', {
+          description: 'You will be redirected to login',
+          duration: 5000
+        });
+        
+        // Redirect to login with return URL
+        setTimeout(() => {
+          router.push(`/auth/login?returnUrl=/jetshare/transaction/${offer.id}`);
+        }, 2000);
+      }
     } finally {
       setIsDownloading(false);
     }
@@ -242,38 +258,46 @@ export default function TransactionClient({
           </div>
         </CardContent>
         
-        <CardFooter className="flex justify-between border-t dark:border-gray-700 pt-6">
+        <CardFooter className="flex flex-col sm:flex-row sm:justify-between border-t dark:border-gray-700 pt-6 gap-4">
           <Button 
             variant="outline" 
-            className="text-sm dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="text-sm dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 w-full sm:w-auto"
             onClick={() => router.push('/jetshare/dashboard')}
           >
             Back to Dashboard
           </Button>
           
           {transaction.payment_status === 'completed' && (
-            <Button 
-              className="text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
-              disabled={isDownloading}
-              onClick={() => downloadReceipt(transaction.id)}
-            >
-              {isDownloading ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download Receipt
-                </>
-              )}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Button 
+                className="text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                disabled={isDownloading}
+                onClick={() => downloadReceipt(transaction.id)}
+              >
+                {isDownloading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Receipt
+                  </>
+                )}
+              </Button>
+              
+              <BoardingPassButton 
+                transactionId={transaction.id}
+                offerId={offer.id}
+                isTestMode={isTestMode}
+              />
+            </div>
           )}
           
           {transaction.payment_status === 'pending' && transaction.payment_method === 'fiat' && (
             <Button 
-              className="text-sm bg-amber-500 hover:bg-amber-600 text-white"
+              className="text-sm bg-amber-500 hover:bg-amber-600 text-white w-full sm:w-auto"
               onClick={() => router.push(`/jetshare/payment/${offer.id}`)}
             >
               Complete Payment
@@ -282,7 +306,7 @@ export default function TransactionClient({
           
           {transaction.payment_method === 'crypto' && transaction.payment_status === 'pending' && (
             <Button 
-              className="text-sm"
+              className="text-sm w-full sm:w-auto"
               variant="outline"
               onClick={() => window.open('https://commerce.coinbase.com', '_blank')}
             >

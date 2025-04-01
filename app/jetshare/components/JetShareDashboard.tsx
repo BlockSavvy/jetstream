@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import { JetShareOfferWithUser, JetShareTransactionWithDetails } from '@/types/jetshare';
 import { format } from 'date-fns';
-import { CheckCircle, Clock, AlertCircle, Plane, Users, CreditCard } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Plane, Users, CreditCard, Ticket, Wallet } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase';
@@ -461,17 +461,26 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
             
               {status === 'completed' && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
                   <span className="text-sm text-green-700 flex items-center">
                     <CheckCircle className="h-4 w-4 mr-1" />
                     Payment completed
                   </span>
-                  <Button size="sm" variant="outline" className="text-xs" onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/jetshare/transaction/${offer.id}`);
-                  }}>
-                    View Details
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="text-xs" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/jetshare/transaction/${offer.id}`);
+                    }}>
+                      View Details
+                    </Button>
+                    <Button size="sm" variant="secondary" className="text-xs" onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/jetshare/boardingpass/${offer.id}`);
+                    }}>
+                      <Ticket className="h-3 w-3 mr-1" />
+                      Boarding Pass
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

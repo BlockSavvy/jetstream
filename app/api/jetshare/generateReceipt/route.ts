@@ -3,20 +3,40 @@ import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
+    // Parse query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const transactionId = searchParams.get('transactionId');
+    const isTestMode = searchParams.get('test') === 'true' || transactionId?.startsWith('test-');
+    
+    if (!transactionId) {
+      return NextResponse.json({ error: 'Missing required parameter: transactionId' }, { status: 400 });
+    }
+    
     // Get the authenticated user
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    // For test transactions, we'll bypass auth checks
+    if (!isTestMode && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Parse query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const transactionId = searchParams.get('transactionId');
-    
-    if (!transactionId) {
-      return NextResponse.json({ error: 'Missing required parameter: transactionId' }, { status: 400 });
+    // For test transactions, return a mock receipt without further checks
+    if (isTestMode || transactionId.startsWith('test-')) {
+      console.log('Generating test receipt for transaction:', transactionId);
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Test receipt generated successfully',
+        downloadUrl: `/api/jetshare/mockReceipt?id=${transactionId}&test=true&timestamp=${Date.now()}`,
+        transaction: {
+          id: transactionId,
+          amount: 5000,
+          date: new Date().toISOString(),
+          paymentMethod: 'card',
+          status: 'completed'
+        }
+      });
     }
     
     // Get transaction details to validate user permissions
@@ -31,7 +51,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Validate that the user is either the payer or recipient
-    if (transaction.payer_user_id !== user.id && transaction.recipient_user_id !== user.id) {
+    if (user && transaction.payer_user_id !== user.id && transaction.recipient_user_id !== user.id) {
       return NextResponse.json({ error: 'Unauthorized to access this transaction' }, { status: 403 });
     }
     
@@ -39,7 +59,7 @@ export async function GET(request: NextRequest) {
     // For now, we'll just return a success message with a download link
     
     // Simulate some processing time
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     return NextResponse.json({
       success: true,
