@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getInferenceClient, Message } from '@/app/lib/ai/AIInferenceClient';
+import { getInferenceClient, Message, FunctionDefinition } from '@/app/lib/ai/AIInferenceClient';
 import { createClient } from '@/lib/supabase';
 
 // Helper function to handle streaming
@@ -30,6 +30,11 @@ function streamResponse(
       const errorMessage = { type: 'error', error: error.message };
       controller.enqueue(encoder.encode(`data: ${JSON.stringify(errorMessage)}\n\n`));
       controller.close();
+    },
+    onFunctionCall: (functionCall: { name: string; arguments: string }) => {
+      // Send function call message
+      const functionCallMessage = { type: 'function_call', function_call: functionCall };
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify(functionCallMessage)}\n\n`));
     }
   };
 }
@@ -42,7 +47,14 @@ export async function POST(request: NextRequest) {
     async start(controller) {
       try {
         // Parse the request body
-        const { messages, userId, contextData } = await request.json();
+        const { 
+          messages, 
+          userId, 
+          contextData, 
+          functions,
+          functionCall,
+          interactionType = 'text'
+        } = await request.json();
 
         // Validate input
         if (!messages || !Array.isArray(messages)) {
@@ -72,6 +84,7 @@ export async function POST(request: NextRequest) {
                 .from('concierge_conversations')
                 .update({ 
                   messages: messages,
+                  interaction_type: interactionType,
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', existingConversation.id);
@@ -82,6 +95,7 @@ export async function POST(request: NextRequest) {
                 .insert({
                   user_id: userId,
                   messages: messages,
+                  interaction_type: interactionType,
                   created_at: new Date().toISOString()
                 });
             }
@@ -105,10 +119,23 @@ export async function POST(request: NextRequest) {
           };
         }
 
+        // Prepare options with function calling if provided
+        const options: any = {};
+        
+        // Add function definitions if provided
+        if (functions && Array.isArray(functions) && functions.length > 0) {
+          options.functions = functions as FunctionDefinition[];
+          
+          if (functionCall) {
+            options.functionCall = functionCall;
+          }
+        }
+
         // Stream completion from the AI model
         await client.streamCompletion(
           processedMessages,
-          streamResponse(stream, controller, encoder)
+          streamResponse(stream, controller, encoder),
+          options
         );
       } catch (error) {
         console.error('Error in streaming concierge API:', error);
