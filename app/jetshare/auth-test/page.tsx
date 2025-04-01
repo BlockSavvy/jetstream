@@ -1,13 +1,33 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { dynamic } from '@/app/dynamic-ssr';
+import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 
-export default function AuthTestPage() {
+// Wrapper component to handle client-side rendering safely
+export default function AuthTestPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Authentication Test</CardTitle>
+            <CardDescription>Loading authentication state...</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <AuthTestPage />
+    </Suspense>
+  );
+}
+
+// Main component with client-side logic
+function AuthTestPage() {
   const { user, loading, refreshSession } = useAuth();
   const [tokenData, setTokenData] = useState<any>(null);
   const [instanceId, setInstanceId] = useState<string>('');
