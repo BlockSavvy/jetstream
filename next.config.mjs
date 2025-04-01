@@ -21,8 +21,9 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  // Disable static generation for all pages
-  staticPageGenerationTimeout: 0,
+  // Set reasonable timeout for static generation
+  staticPageGenerationTimeout: 120,
+  // Force all pages to be server-side rendered
   output: 'standalone',
 }
 
