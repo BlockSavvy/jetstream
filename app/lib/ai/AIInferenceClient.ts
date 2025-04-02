@@ -88,6 +88,15 @@ export interface AIInferenceClient {
     text: string,
     options?: VoiceOptions
   ): Promise<Blob>;
+  
+  /**
+   * Perform vector search using embeddings
+   */
+  vectorSearch?(
+    query: string,
+    tables?: string[],
+    includeHistorical?: boolean
+  ): Promise<Record<string, any[]>>;
 }
 
 /**

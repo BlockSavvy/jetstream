@@ -45,6 +45,18 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
     });
   }
 
+  /**
+   * Format functions for X.AI function calling
+   */
+  private formatFunctions(functions?: any[]): any[] | undefined {
+    if (!functions || functions.length === 0) return undefined;
+    
+    return functions.map(f => ({
+      type: "function",
+      function: f
+    }));
+  }
+
   async getCompletion(
     messages: Message[], 
     options?: AICompletionOptions
@@ -64,8 +76,10 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
         stream: false
       };
 
-      // Remove function calling for non-grok-3 models
-      // Function calling is only supported in grok-3
+      // Format functions for X.AI API if they exist
+      if (options?.functions) {
+        requestBody.tools = this.formatFunctions(options.functions);
+      }
       
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -84,9 +98,17 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
       const data = await response.json();
       const message = data.choices[0].message;
 
-      // Function calling won't be supported with grok-2-latest,
-      // but we'll keep the structure for future compatibility
+      // Handle function calling if present
       let functionCall: FunctionCall | undefined;
+      if (message.tool_calls && message.tool_calls.length > 0) {
+        const toolCall = message.tool_calls[0];
+        if (toolCall.type === 'function') {
+          functionCall = {
+            name: toolCall.function.name,
+            arguments: toolCall.function.arguments
+          };
+        }
+      }
 
       return {
         content: message.content || '',
@@ -118,8 +140,10 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
         stream: true
       };
 
-      // Remove function calling for non-grok-3 models
-      // Function calling is only supported in grok-3
+      // Format functions for X.AI API if they exist
+      if (options?.functions) {
+        requestBody.tools = this.formatFunctions(options.functions);
+      }
 
       // Call onStart callback if provided
       if (callbacks.onStart) {
@@ -148,6 +172,7 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
       const decoder = new TextDecoder('utf-8');
       let fullResponse = '';
       let functionCall: FunctionCall | undefined;
+      let buffer = ''; // Buffer for handling incomplete JSON chunks
 
       try {
         while (true) {
@@ -155,17 +180,54 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-
+          buffer += chunk;
+          
+          // Split by double newlines which is the SSE standard delimiter
+          const lines = buffer.split('\n\n');
+          
+          // Keep the last potentially incomplete line in the buffer
+          buffer = lines.pop() || '';
+          
           for (const line of lines) {
-            // Skip empty lines or non-data lines
-            if (!line || !line.startsWith('data: ')) continue;
+            // Skip empty lines
+            if (!line.trim()) continue;
+            
+            // Handle data prefix
+            if (!line.startsWith('data: ')) continue;
             
             // Handle [DONE] marker
             if (line === 'data: [DONE]') continue;
             
             try {
-              const data = JSON.parse(line.substring(6));
+              // Clean the data string to ensure it's valid JSON
+              const dataStr = line.substring(6).trim();
+              if (!dataStr) continue;
+              
+              // Try to parse the JSON safely
+              let data;
+              try {
+                data = JSON.parse(dataStr);
+              } catch (parseError) {
+                // If the JSON is invalid, try to fix common issues
+                // 1. Try to find where the valid JSON ends
+                const lastBrace = dataStr.lastIndexOf('}');
+                const lastBracket = dataStr.lastIndexOf(']');
+                const lastValidChar = Math.max(lastBrace, lastBracket);
+                
+                if (lastValidChar > 0) {
+                  try {
+                    // Try parsing just the valid portion
+                    data = JSON.parse(dataStr.substring(0, lastValidChar + 1));
+                  } catch (e) {
+                    // If still can't parse, skip this chunk
+                    console.error('Failed to repair JSON:', dataStr);
+                    continue;
+                  }
+                } else {
+                  // Can't find valid JSON ending
+                  continue;
+                }
+              }
               
               if (data.choices && data.choices.length > 0) {
                 const choice = data.choices[0];
@@ -180,23 +242,26 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
                 }
                 
                 // Handle function call
-                if (choice.delta && choice.delta.function_call) {
+                if (choice.delta && choice.delta.tool_calls) {
+                  const toolCall = choice.delta.tool_calls[0];
+                  
                   // Initialize function call if not exists
-                  if (!functionCall) {
+                  if (!functionCall && toolCall.function && toolCall.function.name) {
                     functionCall = {
-                      name: choice.delta.function_call.name || '',
-                      arguments: choice.delta.function_call.arguments || ''
+                      name: toolCall.function.name,
+                      arguments: toolCall.function.arguments || ''
                     };
-                  } else {
+                  } else if (functionCall && toolCall.function && toolCall.function.arguments) {
                     // Append to existing function call arguments
-                    if (choice.delta.function_call.arguments) {
-                      functionCall.arguments += choice.delta.function_call.arguments;
-                    }
+                    functionCall.arguments += toolCall.function.arguments;
                   }
                 }
               }
             } catch (e) {
+              // More detailed error logging for debugging
               console.error('Error parsing SSE data:', e);
+              console.error('Problematic line:', line);
+              // Continue processing other lines
             }
           }
         }
@@ -299,6 +364,37 @@ export class XAIGrokInferenceClient implements AIInferenceClient {
     } catch (error) {
       console.error('Error in text-to-speech:', error);
       throw new Error(`Text-to-speech error: ${(error as Error).message}`);
+    }
+  }
+
+  // Method to perform vector search directly from client
+  async vectorSearch(
+    query: string,
+    tables: string[] = ['airports', 'flights', 'jets', 'jetshare_offers'],
+    includeHistorical: boolean = false
+  ): Promise<Record<string, any[]>> {
+    try {
+      const response = await fetch('/api/concierge/vector-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          query,
+          tables,
+          includeHistorical
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Vector search failed: ${response.statusText}`);
+      }
+      
+      const { results } = await response.json();
+      return results || {};
+    } catch (error) {
+      console.error('Vector search error:', error);
+      return {};
     }
   }
 } 
