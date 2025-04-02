@@ -106,6 +106,26 @@ When a user wants to set a reminder or notification, collect:
 Be professional, concise, and helpful. Offer specific suggestions when possible.
 Remember that JetShare allows users to offer seats on their private jets and book seats on others' jets.`;
 
+// Define interface for confirmation card
+interface ConfirmationCardDetail {
+  label: string;
+  value: string;
+}
+
+interface ConfirmationCard {
+  title: string;
+  description: string;
+  details: ConfirmationCardDetail[];
+  confirmButton: string;
+  cancelButton: string;
+}
+
+interface FunctionCallWithCard {
+  name: string;
+  arguments: any;
+  confirmationCard?: ConfirmationCard;
+}
+
 export default function AIConcierge() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -119,6 +139,7 @@ export default function AIConcierge() {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [pendingFunctionCall, setPendingFunctionCall] = useState<FunctionCallWithCard | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -134,6 +155,18 @@ export default function AIConcierge() {
       loadConversation();
     }
   }, [user, isOpen]);
+
+  // Add welcome message when opening chat if no existing conversation
+  useEffect(() => {
+    if (isOpen && messages.length <= 1) {
+      // Only system prompt exists, add welcome message
+      const welcomeMessage: Message = {
+        role: 'assistant',
+        content: `Hello${user?.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your JetShare concierge. How can I help you today?`
+      };
+      setMessages(prev => [...prev, welcomeMessage]);
+    }
+  }, [isOpen, messages, user]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -359,90 +392,19 @@ export default function AIConcierge() {
     }
   };
 
-  // Extract function call details from assistant response
-  const extractFunctionCall = (text: string): { name: string; arguments: any } | null => {
-    // Check for JetShare offer creation intent
-    if (text.includes("I'll create a JetShare offer with these details") || 
-        text.includes("I have all the information needed to create your JetShare offer")) {
-      
-      // Try to extract offer details from the conversation
-      const departureMatcher = /(?:from|departure)[:\s]+([A-Za-z\s,]+?)(?:to|arrival|\.|,|\n)/i;
-      const arrivalMatcher = /(?:to|arrival)[:\s]+([A-Za-z\s,]+?)(?:on|date|\.|,|\n)/i;
-      const dateMatcher = /(?:on|date)[:\s]+([A-Za-z0-9\s,]+?)(?:with|jet|\.|,|\n)/i;
-      const jetMatcher = /(?:jet|aircraft)[:\s]+([A-Za-z0-9\s]+?)(?:for|cost|\.|,|\n)/i;
-      const costMatcher = /(?:cost|price)[:\s]+\$?([0-9,]+)/i;
-      const shareMatcher = /(?:share|offering)[:\s]+([0-9]+\s*(?:seats|%|percent|passengers)|half|all but one|all except one)/i;
-      
-      const departureMatch = text.match(departureMatcher);
-      const arrivalMatch = text.match(arrivalMatcher);
-      const dateMatch = text.match(dateMatcher);
-      const jetMatch = text.match(jetMatcher);
-      const costMatch = text.match(costMatcher);
-      const shareMatch = text.match(shareMatcher);
-      
-      if (departureMatch && arrivalMatch && dateMatch && costMatch) {
-        return {
-          name: "CreateJetShareOffer",
-          arguments: {
-            departure: departureMatch[1].trim(),
-            arrival: arrivalMatch[1].trim(),
-            flight_date: dateMatch[1].trim(),
-            jet_type: jetMatch ? jetMatch[1].trim() : "Not specified",
-            total_cost: parseInt(costMatch[1].replace(/,/g, '')),
-            share_amount: shareMatch ? shareMatch[1].trim() : "Not specified"
-          }
-        };
-      }
-    }
+  // Cancel a pending function call
+  const cancelFunctionCall = () => {
+    setPendingFunctionCall(null);
+  };
+
+  // Confirm and execute a pending function call
+  const confirmFunctionCall = async () => {
+    if (!pendingFunctionCall) return;
     
-    // Check for find JetShare offers intent
-    if (text.includes("I'll search for JetShare offers") || 
-        text.includes("Let me find flights for you") ||
-        text.includes("Here are the JetShare offers")) {
-      
-      const locationMatcher = /(?:to|from|in)[:\s]+([A-Za-z\s,]+?)(?:on|between|for|within|\.|,|\n)/i;
-      const dateRangeMatcher = /(?:on|between|during)[:\s]+([A-Za-z0-9\s,\-]+?)(?:for|price|\.|,|\n)/i;
-      const priceRangeMatcher = /(?:for|price|under|cost)[:\s]+\$?([0-9,\s\-]+)/i;
-      
-      const locationMatch = text.match(locationMatcher);
-      const dateRangeMatch = text.match(dateRangeMatcher);
-      const priceRangeMatch = text.match(priceRangeMatcher);
-      
-      if (locationMatch) {
-        return {
-          name: "FindJetShareOffer",
-          arguments: {
-            desired_location: locationMatch[1].trim(),
-            date_range: dateRangeMatch ? dateRangeMatch[1].trim() : "",
-            price_range: priceRangeMatch ? priceRangeMatch[1].trim() : ""
-          }
-        };
-      }
-    }
+    const functionCallToExecute = pendingFunctionCall;
+    setPendingFunctionCall(null);
     
-    // Check for schedule notification intent
-    if (text.includes("I'll remind you") || 
-        text.includes("I've scheduled a reminder") || 
-        text.includes("I'll notify you")) {
-      
-      const timeMatcher = /(?:on|at)[:\s]+([A-Za-z0-9\s,\-]+?)(?:about|to|\.|,|\n)/i;
-      const contentMatcher = /(?:about|to)[:\s]+([A-Za-z0-9\s,\-]+?)(?:\.|\n|$)/i;
-      
-      const timeMatch = text.match(timeMatcher);
-      const contentMatch = text.match(contentMatcher);
-      
-      if (timeMatch && contentMatch) {
-        return {
-          name: "ScheduleNotification",
-          arguments: {
-            notification_time: timeMatch[1].trim(),
-            message_content: contentMatch[1].trim()
-          }
-        };
-      }
-    }
-    
-    return null;
+    await handleFunctionCall(functionCallToExecute);
   };
 
   // Handle function call execution
@@ -593,6 +555,152 @@ export default function AIConcierge() {
     }
   };
 
+  // Extract function call details from assistant response
+  const extractFunctionCall = (text: string): FunctionCallWithCard | null => {
+    // Check for JetShare offer creation intent
+    if (text.includes("I'll create a JetShare offer with these details") || 
+        text.includes("I have all the information needed to create your JetShare offer")) {
+      
+      // Try to extract offer details from the conversation
+      const departureMatcher = /(?:from|departure)[:\s]+([A-Za-z\s,]+?)(?:to|arrival|\.|,|\n)/i;
+      const arrivalMatcher = /(?:to|arrival)[:\s]+([A-Za-z\s,]+?)(?:on|date|\.|,|\n)/i;
+      const dateMatcher = /(?:on|date)[:\s]+([A-Za-z0-9\s,]+?)(?:with|jet|\.|,|\n)/i;
+      const jetMatcher = /(?:jet|aircraft)[:\s]+([A-Za-z0-9\s]+?)(?:for|cost|\.|,|\n)/i;
+      const costMatcher = /(?:cost|price)[:\s]+\$?([0-9,]+)/i;
+      const shareMatcher = /(?:share|offering)[:\s]+([0-9]+\s*(?:seats|%|percent|passengers)|half|all but one|all except one)/i;
+      
+      const departureMatch = text.match(departureMatcher);
+      const arrivalMatch = text.match(arrivalMatcher);
+      const dateMatch = text.match(dateMatcher);
+      const jetMatch = text.match(jetMatcher);
+      const costMatch = text.match(costMatcher);
+      const shareMatch = text.match(shareMatcher);
+      
+      if (departureMatch && arrivalMatch && dateMatch && costMatch) {
+        const departure = departureMatch[1].trim();
+        const arrival = arrivalMatch[1].trim();
+        const flightDate = dateMatch[1].trim();
+        const jetType = jetMatch ? jetMatch[1].trim() : "Not specified";
+        const totalCost = parseInt(costMatch[1].replace(/,/g, ''));
+        const shareAmount = shareMatch ? shareMatch[1].trim() : "Not specified";
+        
+        // Format date for display
+        let formattedDate: string;
+        try {
+          const date = new Date(flightDate);
+          formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        } catch (e) {
+          formattedDate = flightDate;
+        }
+        
+        return {
+          name: "CreateJetShareOffer",
+          arguments: {
+            departure,
+            arrival,
+            flight_date: flightDate,
+            jet_type: jetType,
+            total_cost: totalCost,
+            share_amount: shareAmount
+          },
+          confirmationCard: {
+            title: "Create JetShare Offer",
+            description: `From ${departure} to ${arrival} on ${formattedDate}`,
+            details: [
+              { label: "Aircraft", value: jetType },
+              { label: "Total Cost", value: `$${totalCost.toLocaleString()}` },
+              { label: "Sharing", value: shareAmount }
+            ],
+            confirmButton: "Publish Offer",
+            cancelButton: "Cancel"
+          }
+        };
+      }
+    }
+    
+    // Check for find JetShare offers intent
+    if (text.includes("I'll search for JetShare offers") || 
+        text.includes("Let me find flights for you") ||
+        text.includes("Here are the JetShare offers")) {
+      
+      const locationMatcher = /(?:to|from|in)[:\s]+([A-Za-z\s,]+?)(?:on|between|for|within|\.|,|\n)/i;
+      const dateRangeMatcher = /(?:on|between|during)[:\s]+([A-Za-z0-9\s,\-]+?)(?:for|price|\.|,|\n)/i;
+      const priceRangeMatcher = /(?:for|price|under|cost)[:\s]+\$?([0-9,\s\-]+)/i;
+      
+      const locationMatch = text.match(locationMatcher);
+      const dateRangeMatch = text.match(dateRangeMatcher);
+      const priceRangeMatch = text.match(priceRangeMatcher);
+      
+      if (locationMatch) {
+        const location = locationMatch[1].trim();
+        const dateRange = dateRangeMatch ? dateRangeMatch[1].trim() : "";
+        const priceRange = priceRangeMatch ? priceRangeMatch[1].trim() : "";
+        
+        return {
+          name: "FindJetShareOffer",
+          arguments: {
+            desired_location: location,
+            date_range: dateRange,
+            price_range: priceRange
+          },
+          confirmationCard: {
+            title: "Find JetShare Offers",
+            description: `Search for flights${location ? ` to ${location}` : ''}`,
+            details: [
+              { label: "Location", value: location || "Any" },
+              { label: "Dates", value: dateRange || "Anytime" },
+              { label: "Price Range", value: priceRange ? `$${priceRange}` : "Any" }
+            ],
+            confirmButton: "Search Now",
+            cancelButton: "Cancel"
+          }
+        };
+      }
+    }
+    
+    // Check for schedule notification intent
+    if (text.includes("I'll remind you") || 
+        text.includes("I've scheduled a reminder") || 
+        text.includes("I'll notify you")) {
+      
+      const timeMatcher = /(?:on|at)[:\s]+([A-Za-z0-9\s,\-]+?)(?:about|to|\.|,|\n)/i;
+      const contentMatcher = /(?:about|to)[:\s]+([A-Za-z0-9\s,\-]+?)(?:\.|\n|$)/i;
+      
+      const timeMatch = text.match(timeMatcher);
+      const contentMatch = text.match(contentMatcher);
+      
+      if (timeMatch && contentMatch) {
+        const time = timeMatch[1].trim();
+        const content = contentMatch[1].trim();
+        
+        return {
+          name: "ScheduleNotification",
+          arguments: {
+            notification_time: time,
+            message_content: content
+          },
+          confirmationCard: {
+            title: "Schedule Reminder",
+            description: `Set a reminder for ${time}`,
+            details: [
+              { label: "When", value: time },
+              { label: "About", value: content }
+            ],
+            confirmButton: "Set Reminder",
+            cancelButton: "Cancel"
+          }
+        };
+      }
+    }
+    
+    return null;
+  };
+
   // Handle sending a message
   const handleSendMessage = async (textOverride?: string) => {
     const textToSend = textOverride || inputValue;
@@ -686,7 +794,12 @@ export default function AIConcierge() {
                 // Check if the assistant's response indicates a function should be called
                 const functionCall = extractFunctionCall(jsonData.content);
                 if (functionCall) {
-                  await handleFunctionCall(functionCall);
+                  // If we have a confirmation card, show it first instead of immediately executing
+                  if (functionCall.confirmationCard) {
+                    setPendingFunctionCall(functionCall);
+                  } else {
+                    await handleFunctionCall(functionCall);
+                  }
                 } else {
                   // Save the final conversation with the assistant response
                   saveConversation(newMessages, interactionType);
@@ -738,6 +851,13 @@ export default function AIConcierge() {
   const toggleVoiceMode = () => {
     setIsVoiceMode(prev => !prev);
   };
+
+  // Suggested message chips
+  const suggestedMessages = [
+    { text: "Create JetShare offer", action: () => setInputValue("I want to create a JetShare offer") },
+    { text: "Find flights", action: () => setInputValue("Find flights to New York") },
+    { text: "Set a reminder", action: () => setInputValue("Remind me to check flights tomorrow") }
+  ];
 
   return (
     <>
@@ -826,7 +946,7 @@ export default function AIConcierge() {
             <div 
               ref={chatContainerRef}
               className="flex-grow overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" 
-              style={{ overflowY: "auto", height: "calc(80vh - 120px)" }}
+              style={{ overflowY: "auto", height: "calc(80vh - 180px)" }}
             >
               {messages.map((message, index) => (
                 message.role !== 'system' && (
@@ -869,6 +989,36 @@ export default function AIConcierge() {
                 </div>
               )}
               
+              {/* Function call confirmation card */}
+              {pendingFunctionCall && pendingFunctionCall.confirmationCard && (
+                <div className="mx-auto my-4 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm p-4 max-w-[95%]">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm">{pendingFunctionCall.confirmationCard.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-xs mb-3">{pendingFunctionCall.confirmationCard.description}</p>
+                  <div className="space-y-2 mb-4">
+                    {pendingFunctionCall.confirmationCard.details.map((detail: {label: string; value: string}, i: number) => (
+                      <div key={i} className="flex justify-between text-xs">
+                        <span className="text-gray-500 dark:text-gray-400">{detail.label}:</span>
+                        <span className="font-medium text-gray-800 dark:text-gray-200">{detail.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <button 
+                      onClick={cancelFunctionCall}
+                      className="px-3 py-1 text-xs border dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      {pendingFunctionCall.confirmationCard.cancelButton}
+                    </button>
+                    <button 
+                      onClick={confirmFunctionCall}
+                      className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      {pendingFunctionCall.confirmationCard.confirmButton}
+                    </button>
+                  </div>
+                </div>
+              )}
+              
               {/* Voice indicator */}
               {isRecording && (
                 <div className="flex justify-center my-4">
@@ -903,6 +1053,19 @@ export default function AIConcierge() {
               )}
               
               <div ref={messagesEndRef} />
+            </div>
+
+            {/* Suggestion chips */}
+            <div className="px-4 py-2 border-t flex flex-wrap gap-2">
+              {suggestedMessages.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={suggestion.action}
+                  className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
+                >
+                  {suggestion.text}
+                </button>
+              ))}
             </div>
 
             {/* Input area */}
