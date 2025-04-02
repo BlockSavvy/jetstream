@@ -769,13 +769,13 @@ export default function AIConcierge() {
 
       {/* Concierge dialog */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center sm:items-center" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center sm:items-center" onClick={() => setIsOpen(false)}>
           <div 
             className="bg-white dark:bg-gray-800 w-full max-w-md sm:max-w-lg rounded-t-lg sm:rounded-lg shadow-xl flex flex-col max-h-[80vh] sm:max-h-[600px] animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="px-4 py-3 border-b flex justify-between items-center">
+            <div className="px-4 py-3 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
               <div className="flex items-center">
                 <h2 className="text-lg font-semibold">JetShare Concierge</h2>
                 <button
@@ -802,13 +802,13 @@ export default function AIConcierge() {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
                 aria-label="Close"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
+                  width="20"
+                  height="20"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -825,8 +825,8 @@ export default function AIConcierge() {
             {/* Chat messages */}
             <div 
               ref={chatContainerRef}
-              className="flex-grow overflow-y-auto p-4 space-y-4 h-[50vh] sm:h-[400px]" 
-              onClick={(e) => e.stopPropagation()}
+              className="flex-grow overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" 
+              style={{ overflowY: "auto", height: "calc(80vh - 120px)" }}
             >
               {messages.map((message, index) => (
                 message.role !== 'system' && (

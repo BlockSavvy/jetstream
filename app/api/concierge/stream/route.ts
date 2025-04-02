@@ -84,15 +84,16 @@ export async function POST(request: NextRequest) {
                 console.error('Error updating conversation:', updateError);
               }
             } else {
-              // Create new conversation
+              // Create new conversation - use upsert to handle RLS better
               const { error: insertError } = await supabase
                 .from('concierge_conversations')
-                .insert({
+                .upsert({
                   user_id: userId,
                   messages: messages,
                   interaction_type: interactionType || 'text',
-                  created_at: new Date().toISOString()
-                });
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
                 
               if (insertError) {
                 console.error('Error creating conversation:', insertError);

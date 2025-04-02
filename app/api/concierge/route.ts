@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         // Check if conversation exists - avoiding .single() to prevent 406 errors
         const { data: existingConversations, error: queryError } = await supabase
           .from('concierge_conversations')
-          .select('id, messages')
+          .select('id')
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(1);
@@ -69,15 +69,16 @@ export async function POST(request: NextRequest) {
             console.error('Error updating conversation:', updateError);
           }
         } else {
-          // Create new conversation
+          // Create new conversation - use upsert for better RLS handling
           const { error: insertError } = await supabase
             .from('concierge_conversations')
-            .insert({
+            .upsert({
               user_id: userId,
               messages: [...messages, { role: 'assistant', content: result.content }],
               interaction_type: interactionType,
-              created_at: new Date().toISOString()
-            });
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
             
           if (insertError) {
             console.error('Error creating conversation:', insertError);
