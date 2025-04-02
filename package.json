@@ -8,7 +8,17 @@
     "start": "next start",
     "lint": "next lint",
     "migrate": "node scripts/run-migrations.js",
-    "seed:jetshare": "node db/seeds/jetshare_seed.js"
+    "seed:jetshare": "node db/seeds/jetshare_seed.js",
+    "db:setup-vector": "psql -f migrations/vector_search_setup.sql $DATABASE_URL",
+    "db:setup-jetshare-embeddings": "psql -f migrations/jetshare_embeddings_setup.sql $DATABASE_URL",
+    "embeddings:airports": "tsx scripts/generate-embeddings.ts airports",
+    "embeddings:flights": "tsx scripts/generate-embeddings.ts flights",
+    "embeddings:jets": "tsx scripts/generate-embeddings.ts jets",
+    "embeddings:jetshare": "tsx scripts/generate-embeddings.ts jetshare_offers",
+    "embeddings:all": "npm run embeddings:airports && npm run embeddings:flights && npm run embeddings:jets && npm run embeddings:jetshare",
+    "embeddings:worker": "tsx scripts/embedding-worker.ts",
+    "embeddings:worker:continuous": "tsx scripts/embedding-worker.ts --continuous",
+    "embeddings:worker:production": "node scripts/embedding-worker.js --continuous --interval=600"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
@@ -87,11 +97,13 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/minimist": "^1.2.5",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.17",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
