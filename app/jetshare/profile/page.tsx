@@ -91,6 +91,17 @@ export default function JetShareProfilePage() {
         updatedData.full_name = `${formData.first_name} ${formData.last_name}`;
       }
 
+      // Log the data we're going to send
+      console.log('Updating profile with data:', {
+        first_name: updatedData.first_name,
+        last_name: updatedData.last_name,
+        full_name: updatedData.full_name,
+        phone_number: updatedData.phone,
+        bio: updatedData.bio,
+        company: updatedData.company,
+        position: updatedData.position
+      });
+
       const result = await updateProfile({
         first_name: updatedData.first_name,
         last_name: updatedData.last_name,
@@ -102,15 +113,23 @@ export default function JetShareProfilePage() {
       });
 
       if (result.error) {
-        toast.error(`Failed to update profile: ${result.error}`);
+        const errorMessage = result.error instanceof Error 
+          ? result.error.message 
+          : (typeof result.error === 'object' && result.error !== null)
+            ? JSON.stringify(result.error)
+            : 'Unknown error';
+        
+        console.error('Profile update failed with error:', result.error);
+        toast.error(`Failed to update profile: ${errorMessage}`);
       } else {
         toast.success('Profile updated successfully');
         setIsEditing(false);
         refreshProfile(); // Refresh profile data after update
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error updating profile:', error);
-      toast.error('An unexpected error occurred');
+      toast.error(`An unexpected error occurred: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }

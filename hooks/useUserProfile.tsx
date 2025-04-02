@@ -126,8 +126,13 @@ export function useUserProfile() {
       
       if (fetchError) {
         console.error('Error fetching current profile:', fetchError);
+        toast.error(`Error fetching profile: ${fetchError.message}`);
         return { error: fetchError };
       }
+      
+      // Log the current profile structure and the updates we're trying to apply
+      console.log('Current profile structure:', currentProfile);
+      console.log('Attempting to update with:', updates);
       
       // Filter updates to only include keys that exist in the current profile
       const safeUpdates: Record<string, any> = {};
@@ -136,7 +141,7 @@ export function useUserProfile() {
         // that we know should be in profiles (like first_name, last_name, etc.)
         const standardFields = ['first_name', 'last_name', 'full_name', 'avatar_url', 
                                'bio', 'phone_number', 'website', 'location', 
-                               'verification_status', 'profile_visibility'];
+                               'company', 'position', 'verification_status', 'profile_visibility'];
                                
         if (key in currentProfile || standardFields.includes(key)) {
           // @ts-ignore - we're being careful about the keys
@@ -145,6 +150,8 @@ export function useUserProfile() {
           console.warn(`Skipping update for field "${key}" as it doesn't exist in the profiles table`);
         }
       });
+      
+      console.log('Safe updates to apply:', safeUpdates);
       
       // Now update with only the fields that exist
       const { data, error } = await supabase
@@ -155,7 +162,7 @@ export function useUserProfile() {
         .single();
         
       if (error) {
-        toast.error('Failed to update profile');
+        toast.error(`Failed to update profile: ${error.message || error.code || JSON.stringify(error)}`);
         console.error('Error updating profile:', error);
         return { error };
       }
@@ -164,7 +171,8 @@ export function useUserProfile() {
       toast.success('Profile updated successfully');
       return { data };
     } catch (err) {
-      toast.error('An unexpected error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      toast.error(`An unexpected error occurred: ${errorMessage}`);
       console.error('Unexpected error updating profile:', err);
       return { error: err };
     } finally {

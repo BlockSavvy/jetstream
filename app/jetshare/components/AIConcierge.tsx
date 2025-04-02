@@ -4,6 +4,20 @@ import { useState, useRef, useEffect } from 'react';
 import { Message } from '@/app/lib/ai/AIInferenceClient';
 import { useAuth } from '@/components/auth-provider';
 import { createClient } from '@/lib/supabase';
+import { formatCurrency } from '@/lib/utils';
+import { enhanceWithDatabaseContext, formatDatabaseContext } from '@/app/lib/ai/databaseContext';
+
+// Enhanced interface for flight data display
+interface FlightData {
+  id: string;
+  departure: string;
+  arrival: string;
+  flight_date: string;
+  jet_type: string;
+  total_cost: number;
+  share_amount: string;
+  image_url?: string;
+}
 
 // Define function definitions for the AI to understand structured tasks
 const FUNCTION_DEFINITIONS = [
@@ -34,6 +48,33 @@ const FUNCTION_DEFINITIONS = [
         price_range: { type: "string", description: "Price range for the share" }
       },
       required: ["desired_location"]
+    }
+  },
+  {
+    name: "QueryDatabase",
+    description: "Query the database for specific information needed to answer user questions",
+    parameters: {
+      type: "object",
+      properties: {
+        table_name: { 
+          type: "string", 
+          description: "The table to query (airports, flights, jets, jetshare_offers, amenities)" 
+        },
+        query_fields: { 
+          type: "array", 
+          description: "Fields to return",
+          items: { type: "string" } 
+        },
+        filters: { 
+          type: "object", 
+          description: "Filter conditions for the query" 
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of results to return (default: 10, max: 50)"
+        }
+      },
+      required: ["table_name"]
     }
   },
   {
@@ -78,33 +119,46 @@ const FUNCTION_DEFINITIONS = [
 ];
 
 // Define the system prompt for the concierge with function calling guidance
-const SYSTEM_PROMPT = `You are the AI Concierge for JetShare, a private jet sharing service. 
-Your role is to assist users with creating flight sharing offers, finding flights, and managing their bookings.
+const SYSTEM_PROMPT = `
+You are the AI Concierge for JetShare, a premier private jet sharing service. Your role is to assist users with precision and professionalism in creating flight sharing offers, finding flights, and managing their bookings.
 
-When a user wants to create a JetShare offer, you MUST collect all of the following information:
+**Key Responsibilities:**
+- **Data Integrity:** You must ONLY reference real, verified data from our database. Do NOT fabricate or assume any details about flights, jets, airports, prices, amenities, or any other specific information related to our services.
+- **Database Knowledge:** You have access to comprehensive airport, flight, and jet information. When you need specific data that's not in your current context, use the QueryDatabase function to retrieve it.
+- **User Queries:** If the requested information is not available in the database, respond with "I don't see that information in our current database" to maintain transparency and avoid misinformation.
+
+**Database Access Guidelines:**
+- For questions about airports, use the airports table to look up codes, names, and locations
+- For questions about available flights, use the flights table
+- For questions about aircraft, use the jets table
+- Always verify information with database queries before providing definitive answers
+
+**Creating JetShare Offers:**
+When a user wants to create a JetShare offer, you are to collect and confirm the following details:
 - Departure location (city or airport)
 - Arrival location (city or airport)
 - Flight date and time
-- Type of jet (if they mention one specific jet)
+- Aircraft model (ensure it is available in our database)
 - Total cost of the flight
-- How much they want to share (percentage or number of seats)
+- Share amount (percentage or number of seats)
 
-Available jets include: G600, G550, Citation X, Phenom 300, Legacy 600, and Gulfstream G450.
-Each jet has different seat capacities: G600 (19 seats), G550 (16 seats), Citation X (8 seats), Phenom 300 (7 seats), Legacy 600 (13 seats), G450 (16 seats).
+Confirm all details back to the user with the message: "I'll create a JetShare offer with these details:" followed by a summary of the collected information in a clear and structured format.
 
-When you have all the information needed to create a JetShare offer, say: "I'll create a JetShare offer with these details:" followed by the details in a clear format.
-
-When a user asks to find flights or JetShare offers, collect:
+**Finding Flights or JetShare Offers:**
+When searching for flights or JetShare offers, gather:
 - Desired location (destination or origin)
-- Date range if provided
-- Price range if provided
+- Date range (if specified)
+- Price range (if specified)
 
-When a user wants to set a reminder or notification, collect:
-- When they want to be notified
-- What they want to be reminded about
+**General Inquiries:**
+For questions not directly related to our database (such as weather, events, or dining recommendations), provide helpful and accurate general information.
 
-Be professional, concise, and helpful. Offer specific suggestions when possible.
-Remember that JetShare allows users to offer seats on their private jets and book seats on others' jets.`;
+**Communication Style:**
+Maintain a professional, concise, and helpful demeanor. Offer specific suggestions and clear guidance to enhance user experience. Remember, JetShare enables users to offer seats on their private jets and book seats on others' jets, facilitating a unique sharing economy within private aviation.
+
+**Ethical Guidelines:**
+Always adhere to ethical communication practices, ensuring accuracy and reliability in every interaction. Avoid assumptions and ensure all provided information is backed by real data or clearly stated as general advice.
+`;
 
 // Define interface for confirmation card
 interface ConfirmationCardDetail {
@@ -126,6 +180,36 @@ interface FunctionCallWithCard {
   confirmationCard?: ConfirmationCard;
 }
 
+// Add FlightCard component for better flight visualization
+const FlightCard = ({ flight }: { flight: FlightData }) => {
+  return (
+    <div className="my-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow p-3 max-w-[95%]">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+            <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+          </svg>
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-gray-900 dark:text-gray-100">{flight.departure} → {flight.arrival}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{new Date(flight.flight_date).toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(flight.total_cost)}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{flight.jet_type}</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">Sharing: {flight.share_amount}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AIConcierge() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -140,6 +224,7 @@ export default function AIConcierge() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [pendingFunctionCall, setPendingFunctionCall] = useState<FunctionCallWithCard | null>(null);
+  const [foundFlights, setFoundFlights] = useState<FlightData[]>([]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -407,7 +492,51 @@ export default function AIConcierge() {
     await handleFunctionCall(functionCallToExecute);
   };
 
-  // Handle function call execution
+  // Enhanced function to fetch real flights from the database - improve with direct query
+  const fetchRecentFlights = async () => {
+    if (!user) return [];
+    
+    try {
+      console.log('Fetching real flights from database...');
+      // Use the direct API endpoint to get offers with status=open
+      const response = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch flights');
+      }
+      
+      const data = await response.json();
+      console.log('Fetched real flight data - raw response:', data);
+      
+      if (!data.offers || data.offers.length === 0) {
+        console.log('⚠️ No open flights found in the database');
+        return [];
+      }
+      
+      console.log('✅ Found', data.offers.length, 'open flights in the database');
+      data.offers.forEach((flight: any, index: number) => {
+        console.log(`Flight ${index + 1}:`, {
+          id: flight.id,
+          departure: flight.departure_location,
+          arrival: flight.arrival_location,
+          date: flight.flight_date,
+          cost: flight.total_flight_cost,
+          model: flight.aircraft_model,
+        });
+      });
+      
+      return data.offers || [];
+    } catch (error) {
+      console.error('Error fetching flights:', error);
+      return [];
+    }
+  };
+
+  // Enhanced function call handler with real database integration
   const handleFunctionCall = async (functionCall: { name: string; arguments: any }) => {
     if (!user) return;
     
@@ -423,22 +552,111 @@ export default function AIConcierge() {
       let endpoint = '';
       let functionResult = null;
       
+      // First, fetch real flight data to ensure the AI has accurate information
+      const recentFlights = await fetchRecentFlights();
+      
       switch (name) {
-        case 'CreateJetShareOffer':
-          endpoint = '/api/concierge/functions/create-jetshare-offer';
-          break;
+        case 'QueryDatabase':
+          // Use the specialized handler for database queries
+          return await handleDatabaseQuery(functionCall);
+          
         case 'FindJetShareOffer':
           endpoint = '/api/concierge/functions/find-jetshare-offer';
+          
+          // Pre-process the search query to match against actual flights
+          const { desired_location, date_range, price_range } = args;
+          
+          // Fetch flights directly from database to ensure we have the latest data
+          const flights = await fetchRecentFlights();
+          console.log('Processing flights for search:', flights);
+          
+          // Filter flights based on search criteria
+          const matchedFlights = flights.filter((flight: any) => {
+            console.log('Checking flight:', flight);
+            // Fix field name checks for consistency
+            const departureField = flight.departure || flight.departure_location;
+            const arrivalField = flight.arrival || flight.arrival_location;
+            const flightDateField = flight.flight_date || flight.departure_date;
+            const totalCostField = flight.total_cost || flight.total_flight_cost;
+            
+            const matchesLocation = 
+              !desired_location || 
+              (departureField?.toLowerCase().includes(desired_location.toLowerCase()) || 
+               arrivalField?.toLowerCase().includes(desired_location.toLowerCase()));
+            
+            // Simple date range filtering - can be enhanced with proper date parsing
+            const matchesDateRange = !date_range || 
+              (flightDateField && new Date(flightDateField) >= new Date());
+            
+            // Simple price range filtering
+            let matchesPrice = true;
+            if (price_range) {
+              const maxPrice = parseInt(price_range.replace(/[^0-9]/g, ''));
+              if (!isNaN(maxPrice)) {
+                matchesPrice = totalCostField <= maxPrice;
+              }
+            }
+            
+            console.log('Match results:', { 
+              matchesLocation, 
+              matchesDateRange, 
+              matchesPrice 
+            });
+            
+            return matchesLocation && matchesDateRange && matchesPrice;
+          });
+          
+          console.log('Matched flights:', matchedFlights);
+          
+          // Store matched flights for display
+          setFoundFlights(matchedFlights.map((flight: any) => {
+            const departureField = flight.departure || flight.departure_location;
+            const arrivalField = flight.arrival || flight.arrival_location;
+            const flightDateField = flight.flight_date || flight.departure_date;
+            const totalCostField = flight.total_cost || flight.total_flight_cost;
+            const shareAmountField = flight.share_amount || 
+              (flight.available_seats ? `${flight.available_seats} seats` : 'Not specified');
+            const jetTypeField = flight.jet_type || flight.aircraft_model || 'Not specified';
+            
+            return {
+              id: flight.id,
+              departure: departureField,
+              arrival: arrivalField,
+              flight_date: flightDateField,
+              jet_type: jetTypeField,
+              total_cost: totalCostField,
+              share_amount: shareAmountField
+            };
+          }));
+          
+          // Add the matched flights to the AI's response for reference
+          paramsWithUser.matched_flights = matchedFlights;
+          
           break;
+          
+        case 'CreateJetShareOffer':
+          endpoint = '/api/concierge/functions/create-jetshare-offer';
+          // Validate jet type against actual available options
+          const validJetTypes = ['G600', 'G550', 'Citation X', 'Phenom 300', 'Legacy 600', 'G450'];
+          if (paramsWithUser.jet_type && !validJetTypes.includes(paramsWithUser.jet_type)) {
+            paramsWithUser.jet_type = validJetTypes.find(jet => 
+              jet.toLowerCase().includes(paramsWithUser.jet_type.toLowerCase())
+            ) || 'G550'; // Default if not found
+          }
+          break;
+          
         case 'ScheduleNotification':
           endpoint = '/api/concierge/functions/schedule-notification';
           break;
+          
         case 'BookAmenities':
           endpoint = '/api/concierge/functions/book-amenities';
           break;
+          
         case 'ScheduleTransportation':
           endpoint = '/api/concierge/functions/schedule-transportation';
           break;
+          
         default:
           console.error(`Unknown function: ${name}`);
           return;
@@ -482,7 +700,11 @@ export default function AIConcierge() {
         body: JSON.stringify({
           messages: updatedMessages,
           userId: user.id,
-          interactionType
+          interactionType,
+          // Add recent flights data as context for the AI
+          contextData: {
+            recentFlights: recentFlights.slice(0, 5) // Limit to 5 for context size
+          }
         }),
       });
       
@@ -701,7 +923,7 @@ export default function AIConcierge() {
     return null;
   };
 
-  // Handle sending a message
+  // Enhanced send message function with additional context
   const handleSendMessage = async (textOverride?: string) => {
     const textToSend = textOverride || inputValue;
     if (textToSend.trim() === '' || isLoading) return;
@@ -717,21 +939,52 @@ export default function AIConcierge() {
     setIsLoading(true);
     setStreamingResponse('');
     
+    // Retrieve database context based on user query
+    let databaseContext = '';
+    try {
+      databaseContext = await enhanceWithDatabaseContext(textToSend);
+    } catch (error) {
+      console.error('Error enhancing with database context:', error);
+    }
+    
+    // Only add context message if we retrieved something useful
+    const messageList = [...messages];
+    if (databaseContext) {
+      const contextMessage: Message = {
+        role: 'system',
+        content: formatDatabaseContext(databaseContext)
+      };
+      messageList.push(contextMessage);
+    }
+    
+    messageList.push(userMessage);
+    
     // Determine interaction type
     const interactionType = isVoiceMode 
       ? (audioBlob ? 'multimodal' : 'voice')
       : 'text';
     
     // Save conversation with appropriate type
-    saveConversation([...messages, userMessage], interactionType);
+    saveConversation(messageList, interactionType);
     
     // Gather user context if available
-    let contextData = null;
+    let contextData: any = {};
     if (user) {
+      // Fetch real flight data to provide context
+      const recentFlights = await fetchRecentFlights();
+      console.log("AVAILABLE FLIGHTS FOR AI CONTEXT:", recentFlights);
+      
+      // If no flights are found, add specific instruction to the AI
+      const flightContextNote = recentFlights.length > 0 
+        ? `Current available flights: ${recentFlights.length}` 
+        : "IMPORTANT: There are currently NO available flights in the system. Do not make up any flights in your responses.";
+      
       contextData = {
         userId: user.id,
         email: user.email,
-        // Add more context data as needed
+        recentFlights: recentFlights.slice(0, 5), // Limit to 5 for context size
+        flightContextNote: flightContextNote,
+        databaseContext: databaseContext // Add database context to AI context
       };
     }
     
@@ -743,10 +996,11 @@ export default function AIConcierge() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          messages: messageList,
           userId: user?.id,
           contextData,
-          interactionType
+          interactionType,
+          functions: FUNCTION_DEFINITIONS // Pass function definitions to enable function calling
         }),
       });
       
@@ -852,12 +1106,85 @@ export default function AIConcierge() {
     setIsVoiceMode(prev => !prev);
   };
 
+  // Reset conversation
+  const resetConversation = () => {
+    console.log("Resetting conversation...");
+    setMessages([
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'assistant', content: `Hello${user?.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your JetShare concierge. How can I help you today?` }
+    ]);
+    setFoundFlights([]);
+    setPendingFunctionCall(null);
+    setInputValue('');
+    setStreamingResponse('');
+    setIsLoading(false);
+    
+    // Save the reset conversation to persist it
+    if (user) {
+      saveConversation([
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'assistant', content: `Hello${user?.email ? ` ${user.email.split('@')[0]}` : ''}! I'm your JetShare concierge. How can I help you today?` }
+      ], 'text');
+    }
+  };
+
   // Suggested message chips
   const suggestedMessages = [
     { text: "Create JetShare offer", action: () => setInputValue("I want to create a JetShare offer") },
     { text: "Find flights", action: () => setInputValue("Find flights to New York") },
     { text: "Set a reminder", action: () => setInputValue("Remind me to check flights tomorrow") }
   ];
+
+  // Add a function to handle QueryDatabase function calls
+  const handleDatabaseQuery = async (functionCall: { name: string; arguments: any }) => {
+    if (!user) return;
+    
+    try {
+      const { table_name, query_fields, filters, limit } = functionCall.arguments;
+      
+      // Call the database query API endpoint
+      const response = await fetch('/api/concierge/functions/query-database', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          table_name,
+          query_fields,
+          filters,
+          limit
+        }),
+      });
+      
+      const result = await response.json();
+      
+      // Add function result to messages
+      const functionResultMessage: Message = {
+        role: 'function',
+        name: 'QueryDatabase',
+        content: JSON.stringify(result),
+      };
+      
+      setMessages(prev => [...prev, functionResultMessage]);
+      
+      // Continue with existing code to get AI response to the function result
+      // ...
+      
+      return result;
+    } catch (error) {
+      console.error('Error executing QueryDatabase function:', error);
+      
+      // Add error result to messages
+      const errorMessage: Message = {
+        role: 'function',
+        name: 'QueryDatabase',
+        content: JSON.stringify({ error: 'Database query failed' }),
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      return { error: 'Database query failed' };
+    }
+  };
 
   return (
     <>
@@ -897,7 +1224,7 @@ export default function AIConcierge() {
             {/* Header */}
             <div className="px-4 py-3 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
               <div className="flex items-center">
-                <h2 className="text-lg font-semibold">JetShare Concierge</h2>
+              <h2 className="text-lg font-semibold">JetShare Concierge</h2>
                 <button
                   onClick={toggleVoiceMode}
                   className={`ml-3 p-1 rounded-full ${isVoiceMode ? 'bg-blue-100 text-blue-500' : 'text-gray-500'}`}
@@ -917,6 +1244,26 @@ export default function AIConcierge() {
                     <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                     <line x1="12" y1="19" x2="12" y2="22" />
+                  </svg>
+                </button>
+                <button
+                  onClick={resetConversation}
+                  className="ml-3 p-1 rounded-full text-gray-500 hover:text-blue-500 hover:bg-blue-100"
+                  title="Reset conversation"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
                   </svg>
                 </button>
               </div>
@@ -968,6 +1315,16 @@ export default function AIConcierge() {
                   </div>
                 )
               ))}
+              
+              {/* Display flight cards when flights are found */}
+              {foundFlights.length > 0 && (
+                <div className="w-full space-y-2 my-4 border-t pt-3 border-b pb-3">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Found {foundFlights.length} matching flights:</p>
+                  {foundFlights.map((flight) => (
+                    <FlightCard key={flight.id} flight={flight} />
+                  ))}
+                </div>
+              )}
               
               {/* Streaming response */}
               {streamingResponse && (
