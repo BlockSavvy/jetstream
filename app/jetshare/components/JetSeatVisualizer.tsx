@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, useRef, useCallback } from 'react';
 import { Rnd } from 'react-rnd';
 import { cn } from '@/lib/utils';
 
@@ -75,8 +75,36 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       height: 0,
     });
 
+    // Add a ref to track previous values and prevent unnecessary updates
+    const previousValueRef = useRef<{
+      x: number;
+      y: number;
+      orientation: 'horizontal' | 'vertical';
+    }>({
+      x: 0,
+      y: 0,
+      orientation: initialSplit?.splitOrientation || 'horizontal'
+    });
+
+    // Calculate the split ratio
+    const calculateSplitRatio = useCallback(() => {
+      const totalSeats = layout.rows * layout.seatsPerRow;
+      
+      if (splitOrientation === 'horizontal') {
+        const frontRows = Math.round(crosshairPosition.y / seatSize);
+        const frontSeats = frontRows * layout.seatsPerRow;
+        const frontPercentage = Math.round((frontSeats / totalSeats) * 100);
+        return `${frontPercentage}/${100 - frontPercentage}`;
+      } else {
+        const leftCols = Math.round(crosshairPosition.x / seatSize);
+        const leftSeats = leftCols * layout.rows;
+        const leftPercentage = Math.round((leftSeats / totalSeats) * 100);
+        return `${leftPercentage}/${100 - leftPercentage}`;
+      }
+    }, [layout, crosshairPosition, seatSize, splitOrientation]);
+
     // Calculate seat allocation based on crosshair position
-    const calculateSeatAllocation = () => {
+    const calculateSeatAllocation = useCallback(() => {
       const seats: SplitConfiguration['allocatedSeats'] = {
         front: [],
         back: [],
@@ -109,41 +137,44 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       }
 
       return seats;
-    };
-
-    // Calculate the split ratio
-    const calculateSplitRatio = () => {
-      const totalSeats = layout.rows * layout.seatsPerRow;
-      
-      if (splitOrientation === 'horizontal') {
-        const frontRows = Math.round(crosshairPosition.y / seatSize);
-        const frontSeats = frontRows * layout.seatsPerRow;
-        const frontPercentage = Math.round((frontSeats / totalSeats) * 100);
-        return `${frontPercentage}/${100 - frontPercentage}`;
-      } else {
-        const leftCols = Math.round(crosshairPosition.x / seatSize);
-        const leftSeats = leftCols * layout.rows;
-        const leftPercentage = Math.round((leftSeats / totalSeats) * 100);
-        return `${leftPercentage}/${100 - leftPercentage}`;
-      }
-    };
+    }, [layout, crosshairPosition, seatSize]);
 
     // Prepare configuration object for the onChange callback
-    const prepareConfiguration = (): SplitConfiguration => {
+    const prepareConfiguration = useCallback((): SplitConfiguration => {
       return {
         jetId,
         splitOrientation,
         splitRatio: calculateSplitRatio(),
         allocatedSeats: calculateSeatAllocation(),
       };
-    };
+    }, [jetId, splitOrientation, calculateSplitRatio, calculateSeatAllocation]);
 
-    // Update the parent component with the current configuration
-    const updateParentComponent = () => {
-      if (onChange) {
-        onChange(prepareConfiguration());
+    // Update the updateParentComponent function to use memoization with useCallback
+    const updateParentComponent = useCallback(() => {
+      if (!onChange) return;
+      
+      // Only call onChange if values have actually changed
+      const currentX = crosshairPosition.x;
+      const currentY = crosshairPosition.y;
+      
+      if (
+        previousValueRef.current.x === currentX &&
+        previousValueRef.current.y === currentY &&
+        previousValueRef.current.orientation === splitOrientation
+      ) {
+        return; // Skip update if values haven't changed
       }
-    };
+      
+      // Update reference values
+      previousValueRef.current = {
+        x: currentX,
+        y: currentY,
+        orientation: splitOrientation
+      };
+      
+      // Call the onChange callback with the current configuration
+      onChange(prepareConfiguration());
+    }, [crosshairPosition, splitOrientation, onChange]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -209,10 +240,15 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       });
     }, [layout]);
 
-    // Notify parent component when crosshair position changes
+    // Replace the problematic useEffect with a more controlled version
     useEffect(() => {
-      updateParentComponent();
-    }, [crosshairPosition, splitOrientation]);
+      // Use setTimeout to debounce updates and break potential update cycles
+      const timer = setTimeout(() => {
+        updateParentComponent();
+      }, 100); // Add a small debounce delay
+      
+      return () => clearTimeout(timer);
+    }, [crosshairPosition, splitOrientation, updateParentComponent]);
 
     // Initialize with initial split if provided
     useEffect(() => {
