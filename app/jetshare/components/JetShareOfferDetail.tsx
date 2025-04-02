@@ -20,6 +20,7 @@ import {
 import { format } from 'date-fns';
 import { Plane, Calendar, DollarSign, Users, Info, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
+import JetSeatVisualizer, { SplitConfiguration } from './JetSeatVisualizer';
 
 interface JetShareOfferDetailProps {
   offer: JetShareOfferWithUser;
@@ -36,6 +37,9 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
   
   // Format the date in a human-readable format
   const formattedDate = format(new Date(offer.flight_date), 'MMMM d, yyyy');
+
+  // Extract split configuration if available
+  const splitConfiguration: SplitConfiguration | null = offer.split_configuration || null;
 
   const handleDeleteOffer = async () => {
     setIsDeleting(true);
@@ -248,6 +252,50 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
             </div>
           )}
         </CardFooter>
+      </Card>
+      
+      {/* Add Seat Configuration Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            Seat Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {splitConfiguration ? (
+            <div>
+              <div className="mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-0">
+                    <span className="font-medium">Split Type:</span> {splitConfiguration.splitOrientation === 'horizontal' ? 'Front/Back' : 'Left/Right'}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <span className="font-medium">Ratio:</span> {splitConfiguration.splitRatio}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Allocated Seats:</span> {' '}
+                  {splitConfiguration.splitOrientation === 'horizontal' 
+                    ? `${splitConfiguration.allocatedSeats.front?.length || 0} front, ${splitConfiguration.allocatedSeats.back?.length || 0} back` 
+                    : `${splitConfiguration.allocatedSeats.left?.length || 0} left, ${splitConfiguration.allocatedSeats.right?.length || 0} right`}
+                </p>
+              </div>
+              
+              <div className="mt-4">
+                <JetSeatVisualizer 
+                  jetId={offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet'}
+                  initialSplit={splitConfiguration}
+                  readOnly={true}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-gray-500 dark:text-gray-400">No seat configuration available for this offer.</p>
+            </div>
+          )}
+        </CardContent>
       </Card>
       
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import AircraftModelSelector from './AircraftModelSelector';
+import JetSeatVisualizer, { SplitConfiguration } from './JetSeatVisualizer';
 
 // Define form schema with zod
 const formSchema = z.object({
@@ -70,7 +71,8 @@ const formSchema = z.object({
     z.number().int().positive({
       message: "Requested share amount must be a positive integer",
     })
-  ]).transform(val => typeof val === 'string' ? parseInt(val) || 0 : val)
+  ]).transform(val => typeof val === 'string' ? parseInt(val) || 0 : val),
+  seat_split_configuration: z.any().optional()
 });
 
 // Additional validation to ensure requested amount <= total cost
@@ -170,6 +172,11 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
 
   // Add a state to track if we're in edit mode
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Add state for seat visualizer
+  const [showSeatVisualizer, setShowSeatVisualizer] = useState(false);
+  const [splitConfiguration, setSplitConfiguration] = useState<SplitConfiguration | null>(null);
+  const [selectedJetId, setSelectedJetId] = useState<string>('default-jet');
 
   // Check for authentication on load
   useEffect(() => {
@@ -277,6 +284,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       available_seats: 4, // Default to half the seats
       total_flight_cost: 25000, // Default value
       requested_share_amount: 12500, // Default to 50
+      seat_split_configuration: null // Default to null
     },
   });
   
@@ -376,8 +384,20 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
           total_seats: offer.total_seats,
           available_seats: offer.available_seats,
           total_flight_cost: offer.total_flight_cost,
-          requested_share_amount: offer.requested_share_amount
+          requested_share_amount: offer.requested_share_amount,
+          seat_split_configuration: offer.split_configuration || null
         });
+        
+        // Set the split configuration if it exists
+        if (offer.split_configuration) {
+          setSplitConfiguration(offer.split_configuration);
+        }
+        
+        // Generate a pseudo jet id based on the model
+        if (offer.aircraft_model) {
+          const pseudoJetId = offer.aircraft_model.toLowerCase().replace(/\s+/g, '-');
+          setSelectedJetId(pseudoJetId);
+        }
         
         toast.success('Offer details loaded successfully');
       } catch (error) {
@@ -398,356 +418,66 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   
   // Handle form submission
   const onSubmit = async (values: z.infer<typeof enhancedFormSchema>) => {
-    // Validate available seats one more time before submission
-    if (values.available_seats > values.total_seats) {
-      form.setError('available_seats', {
-        type: 'manual',
-        message: 'Available seats cannot exceed total seats',
-      });
-      return;
-    }
-
-    // Validate that total_flight_cost is a valid number
-    const totalCost = Number(values.total_flight_cost);
-    if (isNaN(totalCost) || totalCost <= 0) {
-      form.setError('total_flight_cost', {
-        type: 'manual',
-        message: 'Total flight cost must be a positive number',
-      });
-      return;
-    }
-
-    // Validate that requested_share_amount is valid
-    const shareAmount = Number(values.requested_share_amount);
-    if (isNaN(shareAmount) || shareAmount <= 0 || shareAmount > totalCost) {
-      form.setError('requested_share_amount', {
-        type: 'manual',
-        message: 'Requested share amount must be positive and not exceed total cost',
-      });
-      return;
-    }
-
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
     
     try {
-      // If the user is still null at this point, we should check the session again
+      // Check if user is logged in
       if (!user) {
-        console.log('User is still null, attempting to get user ID from session');
-        // Attempt to get user ID from the session
-        const { data } = await supabase.auth.getSession();
-        const sessionUserId = data.session?.user?.id;
-        
-        // Format the date for the API
-        const formattedValues = {
-          ...values,
-          // Ensure numbers are properly formatted as integers
-          total_flight_cost: Number(values.total_flight_cost),
-          requested_share_amount: Number(values.requested_share_amount),
-          total_seats: Number(values.total_seats),
-          available_seats: Number(values.available_seats),
-          flight_date: values.flight_date.toISOString(),
-          status: 'open',
-          matched_user_id: null,
-          // Include user ID from session if available, or null if not
-          user_id: sessionUserId || null
-        };
-        
-        // Prepare request headers
-        const headers: Record<string, string> = {
+        toast.error('You must be logged in to create an offer');
+        return;
+      }
+      
+      // Collect the form data
+      const formData = {
+        ...values,
+        user_id: user.id,
+        status: 'open',
+        created_at: new Date().toISOString(),
+        split_configuration: splitConfiguration
+      };
+      
+      // Endpoint and method depend on whether we're editing or creating
+      const endpoint = editOfferId 
+        ? `/api/jetshare/updateOffer?id=${editOfferId}` 
+        : '/api/jetshare/createOffer';
+      
+      const method = editOfferId ? 'PUT' : 'POST';
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
           'Content-Type': 'application/json',
-        };
-        
-        // Determine if we're creating or updating
-        const endpoint = isEditMode 
-          ? `/api/jetshare/updateOffer?id=${editOfferId}` 
-          : '/api/jetshare/createOffer';
-        const method = isEditMode ? 'PUT' : 'POST';
-        
-        // Submit the form data using API endpoint
-        const response = await fetch(endpoint, {
-          method,
-          headers,
-          credentials: 'include', // Include cookies for authentication
-          body: JSON.stringify(formattedValues),
-        });
-        
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-          // Handle different error scenarios
-          if (response.status === 401) {
-            // Auth error
-            if (responseData.code === 'AUTH_TOKEN_EXPIRED') {
-              toast.error('Your session has expired. Attempting to refresh...', {
-                duration: 5000,
-                description: 'Please wait a moment'
-              });
-              
-              // Try to refresh the session before redirecting
-              try {
-                const { data } = await supabase.auth.refreshSession();
-                if (data.session) {
-                  // Session refreshed, retry submission
-                  toast.success('Session refreshed');
-                  setIsSubmitting(false);
-                  // Wait a moment for auth state to update
-                  setTimeout(() => onSubmit(values), 1000);
-                  return;
-                } else {
-                  // If refresh failed, then redirect
-                  toast.error('Unable to refresh session. Please sign in again.', {
-                    duration: 5000,
-                    description: 'After signing in, you will be returned to this page'
-                  });
-                }
-              } catch (refreshError) {
-                console.error('Error refreshing session:', refreshError);
-                toast.error('Unable to refresh your session. Please sign in again.', {
-                  duration: 5000,
-                  description: 'After signing in, you will be returned to this page'
-                });
-              }
-            } else if (responseData.code === 'INVALID_USER_ID') {
-              toast.error('Authentication error. Please try again in a regular browser window.', {
-                duration: 5000,
-                description: 'Private browsing may limit functionality'
-              });
-            } else {
-              toast.error('Authentication error. Please sign in again.', {
-                duration: 5000
-              });
-            }
-            
-            // If we got a redirect URL, use it
-            if (responseData.redirectUrl) {
-              console.log('Redirecting to:', responseData.redirectUrl);
-              router.push(responseData.redirectUrl);
-              return;
-            }
-            
-            // Default redirect
-            router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
-            return;
-          } else if (response.status === 400) {
-            // Validation error
-            toast.error('Please check your form inputs', {
-              description: responseData.message || 'Some fields need correction'
-            });
-            // Highlight specific form errors if possible
-            if (responseData.details) {
-              Object.entries(responseData.details).forEach(([field, message]) => {
-                if (form.getValues(field as any) !== undefined) {
-                  form.setError(field as any, { 
-                    type: 'manual', 
-                    message: message as string 
-                  });
-                }
-              });
-            }
-            return;
-          } else {
-            // Generic server error
-            toast.error(responseData.message || 'Failed to create offer. Please try again.', {
-              duration: 5000
-            });
-          }
-          
-          throw new Error(responseData.message || 'Failed to create offer');
-        }
-        
-        // Show success message
-        toast.success(isEditMode 
-          ? 'Flight share offer updated successfully!' 
-          : 'Flight share offer created successfully!', {
-          description: isEditMode 
-            ? 'Your offer has been updated' 
-            : 'Your offer is now live and visible to potential matches'
-        });
-        
-        // Redirect to the listings page
-        router.push('/jetshare/listings');
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save offer');
+      }
+      
+      const data = await response.json();
+      
+      // Show success message
+      toast.success(
+        editOfferId
+          ? `JetShare offer updated successfully`
+          : `JetShare offer created successfully`
+      );
+      
+      // Redirect to the appropriate page
+      if (editOfferId) {
+        router.push(`/jetshare/offer/${editOfferId}`);
+      } else if (data.offer && data.offer.id) {
+        router.push(`/jetshare/offer/${data.offer.id}`);
       } else {
-        // User is available, use their ID for the submission
-        const formattedValues = {
-          ...values,
-          // Ensure numbers are properly formatted as integers
-          total_flight_cost: Number(values.total_flight_cost),
-          requested_share_amount: Number(values.requested_share_amount),
-          total_seats: Number(values.total_seats),
-          available_seats: Number(values.available_seats),
-          flight_date: values.flight_date.toISOString(),
-          status: 'open',
-          matched_user_id: null,
-          // Use the user ID from the user object
-          user_id: user.id
-        };
-        
-        // Get fresh auth session with token
-        let token = null;
-        
-        // In normal browsing mode, try to get a token
-        if (!isAuthenticating) {
-          const { data: sessionData } = await supabase.auth.getSession();
-          token = sessionData?.session?.access_token;
-          
-          // If no token is found, try refreshing the session
-          if (!token) {
-            console.log('No auth token available, attempting to refresh session...');
-            const { data: refreshData } = await supabase.auth.refreshSession();
-            token = refreshData?.session?.access_token;
-          }
-        }
-
-        // Prepare request headers
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        
-        // Add auth token if available (may not be in private browsing)
-        if (token) {
-          console.log('Submitting offer with auth token:', token.substring(0, 10) + '...');
-          headers['Authorization'] = `Bearer ${token}`;
-        } else {
-          console.log('Submitting offer without auth token (private browsing mode)');
-        }
-        
-        // Determine if we're creating or updating
-        const endpoint = isEditMode 
-          ? `/api/jetshare/updateOffer?id=${editOfferId}` 
-          : '/api/jetshare/createOffer';
-        const method = isEditMode ? 'PUT' : 'POST';
-        
-        // Submit the form data using API endpoint
-        const response = await fetch(endpoint, {
-          method,
-          headers,
-          credentials: 'include', // Include cookies for authentication
-          body: JSON.stringify(formattedValues),
-        });
-        
-        const responseData = await response.json();
-        
-        if (!response.ok) {
-          // Handle different error scenarios
-          if (response.status === 401) {
-            // Auth error
-            if (responseData.code === 'AUTH_TOKEN_EXPIRED') {
-              toast.error('Your session has expired. Attempting to refresh...', {
-                duration: 5000,
-                description: 'Please wait a moment'
-              });
-              
-              // Try to refresh the session before redirecting
-              try {
-                const { data } = await supabase.auth.refreshSession();
-                if (data.session) {
-                  // Session refreshed, retry submission
-                  toast.success('Session refreshed');
-                  setIsSubmitting(false);
-                  // Wait a moment for auth state to update
-                  setTimeout(() => onSubmit(values), 1000);
-                  return;
-                } else {
-                  // If refresh failed, then redirect
-                  toast.error('Unable to refresh session. Please sign in again.', {
-                    duration: 5000,
-                    description: 'After signing in, you will be returned to this page'
-                  });
-                }
-              } catch (refreshError) {
-                console.error('Error refreshing session:', refreshError);
-                toast.error('Unable to refresh your session. Please sign in again.', {
-                  duration: 5000,
-                  description: 'After signing in, you will be returned to this page'
-                });
-              }
-            } else if (responseData.code === 'INVALID_USER_ID') {
-              toast.error('Authentication error. Please try again in a regular browser window.', {
-                duration: 5000,
-                description: 'Private browsing may limit functionality'
-              });
-            } else {
-              toast.error('Authentication error. Please sign in again.', {
-                duration: 5000
-              });
-            }
-            
-            // If we got a redirect URL, use it
-            if (responseData.redirectUrl) {
-              console.log('Redirecting to:', responseData.redirectUrl);
-              router.push(responseData.redirectUrl);
-              return;
-            }
-            
-            // Default redirect
-            router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
-            return;
-          } else if (response.status === 400) {
-            // Validation error
-            toast.error('Please check your form inputs', {
-              description: responseData.message || 'Some fields need correction'
-            });
-            // Highlight specific form errors if possible
-            if (responseData.details) {
-              Object.entries(responseData.details).forEach(([field, message]) => {
-                if (form.getValues(field as any) !== undefined) {
-                  form.setError(field as any, { 
-                    type: 'manual', 
-                    message: message as string 
-                  });
-                }
-              });
-            }
-            return;
-          } else {
-            // Generic server error
-            toast.error(responseData.message || 'Failed to create offer. Please try again.', {
-              duration: 5000
-            });
-          }
-          
-          throw new Error(responseData.message || 'Failed to create offer');
-        }
-        
-        // Show success message
-        toast.success(isEditMode 
-          ? 'Flight share offer updated successfully!' 
-          : 'Flight share offer created successfully!', {
-          description: isEditMode 
-            ? 'Your offer has been updated' 
-            : 'Your offer is now live and visible to potential matches'
-        });
-        
-        // Redirect to the listings page
-        router.push('/jetshare/listings');
+        router.push('/jetshare/dashboard?tab=offers');
       }
     } catch (error) {
-      console.error('Error creating offer:', error);
-      
-      // Provide a more descriptive error message
-      let errorMessage = 'Failed to create offer';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-        
-        // Add more context for specific errors
-        if (errorMessage.includes('profile')) {
-          errorMessage = 'Unable to create offer: Your user profile is missing. Please try signing out and back in.';
-        } else if (errorMessage.includes('foreign key')) {
-          errorMessage = 'Unable to create offer: There was a database constraint error. Please try again or contact support.';
-        } else if (errorMessage.includes('authenticate') || errorMessage.includes('auth')) {
-          errorMessage = 'Authentication failed. Please sign in again to create an offer.';
-        }
-      }
-      
-      toast.error(errorMessage);
-      
-      // If auth error, redirect to login
-      if (error instanceof Error && 
-          (error.message.includes('auth') || 
-           error.message.includes('sign') || 
-           error.message.includes('JWT'))) {
-        router.push('/auth/login?returnUrl=' + encodeURIComponent(window.location.href));
-      }
+      console.error('Error saving offer:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save offer');
     } finally {
       setIsSubmitting(false);
     }
@@ -835,6 +565,22 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const selectArrivalLocation = (location: string) => {
     form.setValue("arrival_location", location);
     setShowArrivalResults(false);
+  };
+  
+  // Effect to handle seat split when model changes
+  useEffect(() => {
+    const aircraftModel = form.watch('aircraft_model');
+    if (aircraftModel) {
+      // Generate a pseudo jet id based on the model (in a real app you'd use the actual jet id)
+      const pseudoJetId = aircraftModel.toLowerCase().replace(/\s+/g, '-');
+      setSelectedJetId(pseudoJetId);
+    }
+  }, [form.watch('aircraft_model')]);
+
+  // Function to handle seat split configuration changes
+  const handleSplitConfigurationChange = (config: SplitConfiguration) => {
+    setSplitConfiguration(config);
+    form.setValue('seat_split_configuration', config);
   };
   
   // Show loading state while authentication is in progress
@@ -1226,19 +972,69 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
           )}
         />
         
-        <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 sm:py-4 md:py-6 h-auto text-lg" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Creating offer...
-            </>
+        {/* After the available_seats field, add a seat configuration section */}
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg mt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium">Seat Split Configuration</h3>
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowSeatVisualizer(!showSeatVisualizer)}
+            >
+              {showSeatVisualizer ? 'Hide Visualizer' : 'Configure Seats'}
+            </Button>
+          </div>
+          
+          {splitConfiguration ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              <p>Split: <span className="font-medium">{splitConfiguration.splitOrientation === 'horizontal' ? 'Front/Back' : 'Left/Right'}</span></p>
+              <p>Ratio: <span className="font-medium">{splitConfiguration.splitRatio}</span></p>
+              <p>
+                Allocated seats: <span className="font-medium">
+                  {splitConfiguration.splitOrientation === 'horizontal' 
+                    ? `${splitConfiguration.allocatedSeats.front?.length || 0} front, ${splitConfiguration.allocatedSeats.back?.length || 0} back` 
+                    : `${splitConfiguration.allocatedSeats.left?.length || 0} left, ${splitConfiguration.allocatedSeats.right?.length || 0} right`}
+                </span>
+              </p>
+            </div>
           ) : (
-            <>
-              Create Flight Share Offer
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Configure how you want to split the seats for sharing. This helps travelers understand exactly which seats they're booking.
+            </p>
           )}
-        </Button>
+          
+          {showSeatVisualizer && (
+            <div className="mt-4">
+              <JetSeatVisualizer 
+                jetId={selectedJetId}
+                onChange={handleSplitConfigurationChange}
+                initialSplit={splitConfiguration || undefined}
+              />
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-end gap-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push('/jetshare/dashboard?tab=offers')}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting || isAuthenticating}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {editOfferId ? 'Updating...' : 'Creating...'}
+              </>
+            ) : (
+              <>{editOfferId ? 'Update Offer' : 'Create Offer'}</>
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

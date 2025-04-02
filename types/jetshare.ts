@@ -23,6 +23,17 @@ export interface JetShareOffer {
   available_seats?: number;
   created_at: string;
   updated_at: string;
+  split_configuration?: {
+    jetId: string;
+    splitOrientation: 'horizontal' | 'vertical';
+    splitRatio: string;
+    allocatedSeats: {
+      front?: string[];
+      back?: string[];
+      left?: string[];
+      right?: string[];
+    };
+  };
 }
 
 // Define JetShare transaction type

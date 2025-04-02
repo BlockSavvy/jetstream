@@ -11,7 +11,8 @@ const updateOfferSchema = z.object({
   requested_share_amount: z.number().positive(),
   aircraft_model: z.string().optional(),
   total_seats: z.number().positive().optional(),
-  available_seats: z.number().positive().optional()
+  available_seats: z.number().positive().optional(),
+  split_configuration: z.any().optional()
 });
 
 export async function POST(request: NextRequest) {
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
         aircraft_model,
         total_seats,
         available_seats,
+        split_configuration: body.split_configuration || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', offer_id)

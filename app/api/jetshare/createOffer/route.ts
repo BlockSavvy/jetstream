@@ -215,7 +215,8 @@ export async function POST(request: Request) {
           total_flight_cost,
           requested_share_amount,
           status,
-          matched_user_id: null
+          matched_user_id: null,
+          split_configuration: body.split_configuration || null
         }
       ])
       .select()
