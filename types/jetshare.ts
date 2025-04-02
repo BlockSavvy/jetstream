@@ -27,6 +27,7 @@ export interface JetShareOffer {
     jetId: string;
     splitOrientation: 'horizontal' | 'vertical';
     splitRatio: string;
+    splitPercentage?: number;
     allocatedSeats: {
       front?: string[];
       back?: string[];

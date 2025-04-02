@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,6 +39,7 @@ import {
 import { Check, ChevronsUpDown } from "lucide-react";
 import AircraftModelSelector from './AircraftModelSelector';
 import JetSeatVisualizer, { SplitConfiguration } from './JetSeatVisualizer';
+import type { JetSeatVisualizerRef } from './JetSeatVisualizer';
 
 // Define form schema with zod
 const formSchema = z.object({
@@ -177,6 +178,11 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const [showSeatVisualizer, setShowSeatVisualizer] = useState(false);
   const [splitConfiguration, setSplitConfiguration] = useState<SplitConfiguration | null>(null);
   const [selectedJetId, setSelectedJetId] = useState<string>('default-jet');
+  // Add state for the share ratio (percentage)
+  const [shareRatio, setShareRatio] = useState<number>(50);
+  
+  // Add ref for the visualizer component
+  const visualizerRef = useRef<JetSeatVisualizerRef>(null);
 
   // Check for authentication on load
   useEffect(() => {
@@ -333,10 +339,11 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   // Watch total flight cost to calculate the share amount
   const totalFlightCost = form.watch('total_flight_cost');
   const requestedShareAmount = form.watch('requested_share_amount');
+  const aircraftModel = form.watch('aircraft_model');
   
   // Calculate share percentage safely
   const sharePercentage = (totalFlightCost && requestedShareAmount && totalFlightCost > 0) 
-    ? Math.min(100, Math.max(0, Math.round((Number(requestedShareAmount) / Number(totalFlightCost) * 100))))
+    ? Math.min(99, Math.max(1, Math.round((Number(requestedShareAmount) / Number(totalFlightCost) * 100))))
     : 50;
   
   // Update share amount when total cost or percentage changes
@@ -347,6 +354,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     
     const newAmount = Math.round(Number(totalFlightCost) * (percentage / 100));
     form.setValue('requested_share_amount', newAmount > 0 ? newAmount : 1);
+    setShareRatio(percentage);
+    
+    // Also update the visualizer if it exists
+    if (visualizerRef.current) {
+      visualizerRef.current.updateRatio(percentage);
+    }
   };
   
   // Add a new useEffect to fetch offer details when in edit mode
@@ -569,18 +582,35 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   
   // Effect to handle seat split when model changes
   useEffect(() => {
-    const aircraftModel = form.watch('aircraft_model');
     if (aircraftModel) {
       // Generate a pseudo jet id based on the model (in a real app you'd use the actual jet id)
       const pseudoJetId = aircraftModel.toLowerCase().replace(/\s+/g, '-');
       setSelectedJetId(pseudoJetId);
     }
-  }, [form.watch('aircraft_model')]);
+  }, [aircraftModel]);
+
+  // Listen for share percentage changes from the form
+  useEffect(() => {
+    if (sharePercentage !== shareRatio) {
+      setShareRatio(sharePercentage);
+      
+      // Also update the visualizer if it exists
+      if (visualizerRef.current) {
+        visualizerRef.current.updateRatio(sharePercentage);
+      }
+    }
+  }, [sharePercentage, shareRatio]);
 
   // Function to handle seat split configuration changes
   const handleSplitConfigurationChange = (config: SplitConfiguration) => {
     setSplitConfiguration(config);
     form.setValue('seat_split_configuration', config);
+    
+    // Update the share ratio in the form
+    if (config.splitPercentage !== shareRatio) {
+      setShareRatio(config.splitPercentage);
+      updateShareAmount(config.splitPercentage);
+    }
   };
   
   // Show loading state while authentication is in progress
@@ -766,13 +796,15 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         </div>
 
         {/* Aircraft Details Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Aircraft Model with Autocomplete */}
+        <div className="space-y-4 mb-8">
+          <h2 className="text-xl font-semibold">Aircraft Details</h2>
+          
+          {/* Aircraft Model */}
           <FormField
             control={form.control}
             name="aircraft_model"
             render={({ field }) => (
-              <FormItem className="flex flex-col">
+              <FormItem>
                 <FormLabel htmlFor="aircraft_model">Aircraft Model</FormLabel>
                 <FormControl>
                   <AircraftModelSelector
@@ -780,202 +812,76 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     value={field.value}
                     onChange={(value, seatCapacity) => {
                       field.onChange(value);
-                      
-                      // If seat capacity is provided, update related fields
+                      // Update total seats if seat capacity is provided
                       if (seatCapacity) {
                         form.setValue('total_seats', seatCapacity);
-                        // Set available seats to half or a reasonable value
-                        const newAvailableSeats = Math.ceil(seatCapacity / 2);
-                        form.setValue('available_seats', newAvailableSeats);
+                        form.setValue('available_seats', Math.floor(seatCapacity / 2));
                       }
                     }}
-                    disabled={isSubmitting}
                   />
                 </FormControl>
-                <FormDescription>
-                  Select the aircraft model for your flight share
-                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          {/* Total Seats */}
-          <FormField
-            control={form.control}
-            name="total_seats"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="total_seats">Total Seats</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          
+          {/* Total Seats and Available Seats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="total_seats"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="total_seats">Total Seats</FormLabel>
+                  <FormControl>
                     <Input
                       id="total_seats"
                       type="number"
                       min={1}
-                      placeholder="8"
-                      className="pl-10"
                       {...field}
                       onChange={(e) => {
                         const value = parseInt(e.target.value);
-                        field.onChange(isNaN(value) ? 1 : Math.max(1, value));
+                        field.onChange(value);
                         
-                        // Update available seats to maintain 50/50 split (rounded down)
-                        const newAvailableSeats = Math.max(1, Math.floor(value / 2));
-                        form.setValue('available_seats', newAvailableSeats);
+                        // Update available seats to not exceed total
+                        const currentAvailable = form.getValues('available_seats');
+                        if (currentAvailable > value) {
+                          form.setValue('available_seats', value);
+                        }
                       }}
                     />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Total seats in the aircraft (minimum 1)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Available Seats */}
-          <FormField
-            control={form.control}
-            name="available_seats"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="available_seats">Available Seats</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="available_seats"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="available_seats">Available Seats</FormLabel>
+                  <FormControl>
                     <Input
                       id="available_seats"
                       type="number"
                       min={1}
-                      max={form.watch('total_seats')}
-                      placeholder="4"
-                      className="pl-10"
+                      max={totalSeats || 999}
                       {...field}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        const totalSeats = form.watch('total_seats');
-                        
-                        // Ensure value is at least 1 and no more than total seats
-                        field.onChange(isNaN(value) ? 1 : Math.min(Math.max(1, value), totalSeats));
-                      }}
                     />
-                  </div>
-                </FormControl>
-                <FormDescription>
-                  Number of seats available for sharing (cannot exceed total seats)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
         
-        {/* Total Flight Cost */}
-        <FormField
-          control={form.control}
-          name="total_flight_cost"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="total_flight_cost">Total Flight Cost</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="total_flight_cost"
-                    type="number"
-                    min={1}
-                    step="1"
-                    placeholder="25000"
-                    className="pl-10"
-                    {...field}
-                    onChange={(e) => {
-                      const rawValue = e.target.value;
-                      // Only allow positive integers or clear the field
-                      const value = rawValue === '' ? '' : Math.floor(Math.abs(parseFloat(rawValue)));
-                      
-                      // Set the raw integer value directly to avoid floating point issues
-                      field.onChange(value === '' ? '' : value);
-                      
-                      // Only update share amount if we have a valid positive number
-                      if (value && typeof value === 'number' && value > 0) {
-                        // Calculate platform fee (7.5% is the default handling fee)
-                        const platformFee = value * 0.075;
-                        
-                        // Preserve the current percentage if available, otherwise default to 50
-                        const currentPercentage = totalFlightCost && totalFlightCost > 0 
-                          ? (requestedShareAmount / totalFlightCost * 100)
-                          : 50;
-                          
-                        // Calculate new share amount based on the percentage
-                        const newShareAmount = Math.round(value * (currentPercentage / 100));
-                        
-                        // Ensure the share amount is valid
-                        const validShareAmount = Math.min(value, Math.max(1, newShareAmount));
-                        form.setValue('requested_share_amount', validShareAmount);
-                      }
-                    }}
-                  />
-                </div>
-              </FormControl>
-              <FormDescription>
-                Enter the total cost of your private jet flight
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* Desired Cost Offset */}
-        <FormField
-          control={form.control}
-          name="requested_share_amount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="requested_share_amount_slider">Desired Cost Offset</FormLabel>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Percentage: {sharePercentage}
-                  </span>
-                  <span className="font-medium">
-                    ${typeof field.value === 'number' ? field.value.toLocaleString() : Number(field.value).toLocaleString()}
-                  </span>
-                </div>
-                <FormControl>
-                  <Slider
-                    id="requested_share_amount_slider"
-                    defaultValue={[50]}
-                    max={100}
-                    min={1}
-                    step={1}
-                    value={[sharePercentage]}
-                    onValueChange={(values) => {
-                      updateShareAmount(values[0]);
-                    }}
-                    className="cursor-pointer"
-                  />
-                </FormControl>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0%</span>
-                  <span>50%</span>
-                  <span>100%</span>
-                </div>
-              </div>
-              <FormDescription>
-                Select how much of your total cost you'd like to offset by sharing
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {/* After the available_seats field, add a seat configuration section */}
-        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-lg mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Seat Split Configuration</h3>
+        {/* Seat Configuration Section */}
+        <div className="space-y-4 mb-8 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Seat Split Configuration</h2>
             <Button 
               type="button" 
               variant="outline" 
@@ -986,8 +892,32 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
             </Button>
           </div>
           
-          {splitConfiguration ? (
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Define how you want to split the seats for sharing. This helps travelers understand exactly which seats they're booking.
+          </p>
+          
+          {/* Seat Split Ratio Slider */}
+          <div className="mt-4">
+            <FormLabel htmlFor="share-ratio">Share Ratio ({shareRatio}%/{100 - shareRatio}%)</FormLabel>
+            <Slider 
+              id="share-ratio"
+              defaultValue={[50]} 
+              max={99} 
+              min={1} 
+              step={1} 
+              value={[shareRatio]}
+              onValueChange={(values) => updateShareAmount(values[0])}
+              className="mt-2"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>You: 1%</span>
+              <span>50/50</span>
+              <span>You: 99%</span>
+            </div>
+          </div>
+          
+          {splitConfiguration && !showSeatVisualizer && (
+            <div className="text-sm text-gray-600 dark:text-gray-400 mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
               <p>Split: <span className="font-medium">{splitConfiguration.splitOrientation === 'horizontal' ? 'Front/Back' : 'Left/Right'}</span></p>
               <p>Ratio: <span className="font-medium">{splitConfiguration.splitRatio}</span></p>
               <p>
@@ -998,24 +928,101 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 </span>
               </p>
             </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Configure how you want to split the seats for sharing. This helps travelers understand exactly which seats they're booking.
-            </p>
           )}
           
           {showSeatVisualizer && (
             <div className="mt-4">
               <JetSeatVisualizer 
+                ref={visualizerRef}
                 jetId={selectedJetId}
                 onChange={handleSplitConfigurationChange}
                 initialSplit={splitConfiguration || undefined}
+                totalSeats={totalSeats}
+                seatRatio={shareRatio}
+                onRatioChange={(ratio) => updateShareAmount(ratio)}
               />
             </div>
           )}
         </div>
         
-        <div className="flex justify-end gap-4">
+        {/* Cost details section */}
+        <div className="space-y-4 mb-8">
+          <h2 className="text-xl font-semibold">Cost Details</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="total_flight_cost"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="total_flight_cost">Total Flight Cost ($)</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="total_flight_cost"
+                        type="number"
+                        min={1}
+                        className="pl-10"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(parseInt(e.target.value) || 0);
+                          
+                          // Update share amount to maintain percentage
+                          if (e.target.value) {
+                            updateShareAmount(shareRatio);
+                          }
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="requested_share_amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="requested_share_amount">Requested Share Amount ($)</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="requested_share_amount"
+                        type="number"
+                        min={1}
+                        max={totalFlightCost || 999999999}
+                        className="pl-10"
+                        {...field}
+                        onChange={(e) => {
+                          const requestedAmount = parseInt(e.target.value) || 0;
+                          field.onChange(requestedAmount);
+                          
+                          // Update share ratio if total cost is available
+                          if (totalFlightCost > 0) {
+                            const newRatio = Math.min(99, Math.max(1, Math.round((requestedAmount / totalFlightCost) * 100)));
+                            setShareRatio(newRatio);
+                            
+                            // Also update visualizer
+                            if (visualizerRef.current) {
+                              visualizerRef.current.updateRatio(newRatio);
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        
+        <div className="flex justify-end gap-4 mt-6">
           <Button
             type="button"
             variant="outline"

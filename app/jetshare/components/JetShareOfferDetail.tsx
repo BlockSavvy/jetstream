@@ -39,7 +39,13 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
   const formattedDate = format(new Date(offer.flight_date), 'MMMM d, yyyy');
 
   // Extract split configuration if available
-  const splitConfiguration: SplitConfiguration | null = offer.split_configuration || null;
+  const splitConfiguration: SplitConfiguration | null = offer.split_configuration ? {
+    ...offer.split_configuration,
+    // Add splitPercentage if it's missing - parse it from splitRatio or default to 50
+    splitPercentage: offer.split_configuration.splitPercentage || 
+      (offer.split_configuration.splitRatio ? 
+        parseInt(offer.split_configuration.splitRatio.split('/')[0]) : 50)
+  } : null;
 
   const handleDeleteOffer = async () => {
     setIsDeleting(true);
@@ -254,49 +260,68 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
         </CardFooter>
       </Card>
       
-      {/* Add Seat Configuration Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            Seat Configuration
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {splitConfiguration ? (
-            <div>
-              <div className="mb-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-0">
-                    <span className="font-medium">Split Type:</span> {splitConfiguration.splitOrientation === 'horizontal' ? 'Front/Back' : 'Left/Right'}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    <span className="font-medium">Ratio:</span> {splitConfiguration.splitRatio}
-                  </p>
+      {/* Seat Configuration Card */}
+      {splitConfiguration && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2" />
+              Seat Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2">
+                <div className="mb-2 sm:mb-0">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Split Type:</span>
+                  <span className="ml-2 font-medium">{splitConfiguration.splitOrientation === 'horizontal' ? 'Front/Back' : 'Left/Right'}</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">Allocated Seats:</span> {' '}
-                  {splitConfiguration.splitOrientation === 'horizontal' 
-                    ? `${splitConfiguration.allocatedSeats.front?.length || 0} front, ${splitConfiguration.allocatedSeats.back?.length || 0} back` 
-                    : `${splitConfiguration.allocatedSeats.left?.length || 0} left, ${splitConfiguration.allocatedSeats.right?.length || 0} right`}
-                </p>
+                <div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Ratio:</span>
+                  <span className="ml-2 font-medium">{splitConfiguration.splitRatio}</span>
+                </div>
               </div>
               
-              <div className="mt-4">
-                <JetSeatVisualizer 
-                  jetId={offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet'}
-                  initialSplit={splitConfiguration}
-                  readOnly={true}
-                />
+              <div className="py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Seats Allocation:</span>
+                {splitConfiguration.splitOrientation === 'horizontal' ? (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="bg-blue-100 dark:bg-blue-900 px-3 py-1 rounded-full text-sm">
+                      <span className="font-semibold">Front: </span>
+                      <span>{splitConfiguration.allocatedSeats.front?.length || 0} seats</span>
+                    </div>
+                    <div className="bg-amber-100 dark:bg-amber-900 px-3 py-1 rounded-full text-sm">
+                      <span className="font-semibold">Back: </span>
+                      <span>{splitConfiguration.allocatedSeats.back?.length || 0} seats</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="bg-blue-100 dark:bg-blue-900 px-3 py-1 rounded-full text-sm">
+                      <span className="font-semibold">Left: </span>
+                      <span>{splitConfiguration.allocatedSeats.left?.length || 0} seats</span>
+                    </div>
+                    <div className="bg-amber-100 dark:bg-amber-900 px-3 py-1 rounded-full text-sm">
+                      <span className="font-semibold">Right: </span>
+                      <span>{splitConfiguration.allocatedSeats.right?.length || 0} seats</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500 dark:text-gray-400">No seat configuration available for this offer.</p>
+            
+            <div className="mt-4">
+              <JetSeatVisualizer 
+                jetId={offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet'}
+                initialSplit={splitConfiguration}
+                readOnly={true}
+                showControls={false}
+                totalSeats={offer.total_seats}
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
       
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
