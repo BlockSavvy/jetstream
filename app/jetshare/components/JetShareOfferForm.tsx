@@ -587,6 +587,17 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     setShowArrivalResults(false);
   };
   
+  // Add a notification when aircraft model changes
+  const notifyModelChange = (model: string, seats: number) => {
+    toast.success(
+      <div className="flex flex-col">
+        <span className="font-medium">{model} selected</span>
+        <span className="text-xs">Aircraft has {seats} seats</span>
+      </div>,
+      { duration: 2000 }
+    );
+  };
+
   // Effect to handle seat split when model changes
   useEffect(() => {
     if (aircraftModel) {
@@ -596,6 +607,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       
       // If we're showing the visualizer, reset it to ensure it reflects the new aircraft
       if (showSeatVisualizer && visualizerRef.current) {
+        // Add loading notification
+        toast.info("Loading aircraft configuration...", { id: "loading-jet-config" });
+        
         // Close and reopen to trigger a fresh fetch of the layout
         visualizerRef.current.closeVisualizer();
         
@@ -603,12 +617,47 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         setTimeout(() => {
           if (visualizerRef.current) {
             visualizerRef.current.openVisualizer();
+            
+            // Update the visualizer with current ratio
+            visualizerRef.current.updateRatio(shareRatio);
+            
+            // Remove loading notification
+            toast.dismiss("loading-jet-config");
           }
-        }, 200);
+        }, 500);
       }
     }
-  }, [aircraftModel, showSeatVisualizer]);
+  }, [aircraftModel, showSeatVisualizer, shareRatio]);
 
+  // Handle showing the seat visualizer
+  const toggleSeatVisualizer = () => {
+    const newVisibility = !showSeatVisualizer;
+    setShowSeatVisualizer(newVisibility);
+    
+    // If showing the visualizer, ensure it's correctly initialized
+    if (newVisibility && visualizerRef.current) {
+      // Short delay to ensure state updates first
+      setTimeout(() => {
+        if (visualizerRef.current) {
+          // Update the visualizer with current ratio
+          visualizerRef.current.updateRatio(shareRatio);
+          
+          // Also notify the user about the seats configuration
+          const totalSeats = form.watch('total_seats');
+          if (totalSeats > 0) {
+            toast.info(
+              <div className="flex flex-col">
+                <span className="font-medium">Seat Configuration Ready</span>
+                <span className="text-xs">{totalSeats} seats available to configure</span>
+              </div>,
+              { duration: 3000 }
+            );
+          }
+        }
+      }, 300);
+    }
+  };
+  
   // Listen for share percentage changes from the form
   useEffect(() => {
     if (sharePercentage !== shareRatio) {
@@ -621,12 +670,74 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     }
   }, [sharePercentage, shareRatio]);
 
+  // Add debug logging
+  const debugLog = (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[JetShareOfferForm] ${message}`, data || '');
+    }
+  };
+
+  // Sync visualizer layout info with form
+  const syncLayoutWithForm = () => {
+    if (visualizerRef.current) {
+      try {
+        const layoutInfo = visualizerRef.current.getLayoutInfo();
+        debugLog('Got layout info', layoutInfo);
+        
+        // Update total seats if different
+        const currentTotalSeats = form.getValues('total_seats');
+        if (layoutInfo.totalSeats !== currentTotalSeats) {
+          debugLog(`Updating total seats: ${currentTotalSeats} -> ${layoutInfo.totalSeats}`);
+          form.setValue('total_seats', layoutInfo.totalSeats);
+          
+          // Adjust available seats proportionally
+          const currentAvailable = form.getValues('available_seats');
+          const newAvailable = Math.min(
+            layoutInfo.totalSeats,
+            Math.round((currentAvailable / currentTotalSeats) * layoutInfo.totalSeats) || Math.floor(layoutInfo.totalSeats / 2)
+          );
+          debugLog(`Updating available seats: ${currentAvailable} -> ${newAvailable}`);
+          form.setValue('available_seats', newAvailable);
+          
+          // Update the share ratio
+          const ratio = shareRatio || 50;
+          updateShareAmount(ratio);
+          
+          toast.info(
+            <div className="flex flex-col">
+              <span className="font-medium">Layout Updated</span>
+              <span className="text-xs">{layoutInfo.totalSeats} seats available ({layoutInfo.rows} rows × {layoutInfo.seatsPerRow} per row)</span>
+            </div>,
+            { duration: 3000 }
+          );
+        }
+      } catch (error) {
+        console.error('Error getting layout info:', error);
+      }
+    }
+  };
+
+  // Add a check for layout info when visualizer is shown
+  useEffect(() => {
+    if (showSeatVisualizer && visualizerRef.current) {
+      // Delay to ensure visualizer is fully loaded
+      const timer = setTimeout(() => {
+        syncLayoutWithForm();
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showSeatVisualizer]);
+  
   // Function to handle seat split configuration changes
   const handleSplitConfigurationChange = (config: SplitConfiguration) => {
     console.log('Visualizer sent new configuration:', config);
     
     setSplitConfiguration(config);
     form.setValue('seat_split_configuration', config);
+    
+    // Sync layout info whenever the configuration changes
+    syncLayoutWithForm();
     
     // Update the share ratio in the form if different
     if (config.splitPercentage !== shareRatio) {
@@ -839,6 +950,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       if (seatCapacity) {
                         form.setValue('total_seats', seatCapacity);
                         form.setValue('available_seats', Math.floor(seatCapacity / 2));
+                        
+                        // Notify the user about the selected model
+                        notifyModelChange(value, seatCapacity);
                       }
                     }}
                   />
@@ -909,21 +1023,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               type="button" 
               variant="outline" 
               size="sm"
-              onClick={() => {
-                const newVisibility = !showSeatVisualizer;
-                setShowSeatVisualizer(newVisibility);
-                
-                // If showing the visualizer, ensure it's correctly initialized
-                if (newVisibility && visualizerRef.current) {
-                  // Short delay to ensure state updates first
-                  setTimeout(() => {
-                    if (visualizerRef.current) {
-                      // Update the visualizer with current ratio
-                      visualizerRef.current.updateRatio(shareRatio);
-                    }
-                  }, 100);
-                }
-              }}
+              onClick={toggleSeatVisualizer}
             >
               {showSeatVisualizer ? 'Hide Visualizer' : 'Configure Seats'}
             </Button>

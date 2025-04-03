@@ -49,12 +49,94 @@ export type JetSeatVisualizerRef = {
   openVisualizer: () => void;
   closeVisualizer: () => void;
   updateRatio: (ratio: number) => void;
+  getLayoutInfo: () => {
+    totalSeats: number;
+    rows: number;
+    seatsPerRow: number;
+    layoutType: string;
+    jetId: string;
+  };
 };
 
 // Helper function to generate seat IDs
 const generateSeatId = (row: number, col: number) => {
   const rowLetter = String.fromCharCode(65 + row); // A, B, C, etc.
   return `${rowLetter}${col + 1}`;
+};
+
+// Add a status message component
+const StatusMessage = ({ isLoading, error, onRetry }: { isLoading: boolean; error: string | null; onRetry?: () => void }) => {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mb-2"></div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading jet configuration...</p>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="text-red-500 dark:text-red-400 text-center p-4">
+        <p className="mb-2">{error}</p>
+        {onRetry && (
+          <button
+            className="px-3 py-1 text-sm bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-md"
+            onClick={onRetry}
+          >
+            Try Again
+          </button>
+        )}
+      </div>
+    );
+  }
+  
+  return null;
+};
+
+// Add a seat split summary component
+const SeatSplitSummary = ({ 
+  splitConfiguration, 
+  totalSeats,
+  splitOrientation,
+  splitPercentage
+}: { 
+  splitConfiguration: SplitConfiguration | null;
+  totalSeats: number;
+  splitOrientation: 'horizontal' | 'vertical';
+  splitPercentage: number;
+}) => {
+  const firstSectionCount = Math.round((splitPercentage / 100) * totalSeats);
+  const secondSectionCount = totalSeats - firstSectionCount;
+  
+  return (
+    <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3 mb-4 text-sm">
+      <div className="flex justify-between items-center mb-2">
+        <span className="font-medium">Seat Split Summary</span>
+        <span className="bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md text-xs">
+          Total Seats: {totalSeats}
+        </span>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded p-2">
+          <span className="text-xs font-medium block mb-1">
+            {splitOrientation === 'horizontal' ? 'Front Section' : 'Left Section'}
+          </span>
+          <span className="text-lg font-bold">{firstSectionCount} seats</span>
+          <span className="text-xs text-gray-500 block">{splitPercentage}%</span>
+        </div>
+        
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2">
+          <span className="text-xs font-medium block mb-1">
+            {splitOrientation === 'horizontal' ? 'Back Section' : 'Right Section'}
+          </span>
+          <span className="text-lg font-bold">{secondSectionCount} seats</span>
+          <span className="text-xs text-gray-500 block">{100 - splitPercentage}%</span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // Main component implementation
@@ -349,14 +431,32 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       closeVisualizer: () => setIsVisible(false),
       updateRatio: (ratio: number) => {
         setSplitPercentage(ratio);
+      },
+      getLayoutInfo: () => {
+        const totalSeats = layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length);
+        return {
+          totalSeats,
+          rows: layout.rows,
+          seatsPerRow: layout.seatsPerRow,
+          layoutType: layout.layoutType,
+          jetId: jetId
+        };
       }
     }));
+
+    // Add debug logging
+    const debugLog = (message: string, data?: any) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[JetSeatVisualizer] ${message}`, data || '');
+      }
+    };
 
     // Fetch layout data when jetId changes
     useEffect(() => {
       const fetchLayoutData = async () => {
         if (!jetId) return;
 
+        debugLog(`Fetching layout for jet ID: ${jetId}`);
         setIsLoading(true);
         setError(null);
 
@@ -369,13 +469,16 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           }
           
           const data = await response.json();
+          debugLog('Received jet layout data:', data);
           
           if (data.seatLayout) {
             setLayout(data.seatLayout);
+            debugLog('Applied layout:', data.seatLayout);
             
             // Save skip positions if available
             if (data.seatLayout.seatMap?.skipPositions) {
               setSkipPositions(data.seatLayout.seatMap.skipPositions);
+              debugLog('Applied skip positions:', data.seatLayout.seatMap.skipPositions);
             } else {
               setSkipPositions([]);
             }
@@ -390,6 +493,14 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       };
 
       fetchLayoutData();
+      
+      // Expose fetchLayoutData for retrying
+      (window as any).fetchLayoutData = fetchLayoutData;
+      
+      return () => {
+        // Cleanup
+        delete (window as any).fetchLayoutData;
+      };
     }, [jetId]);
 
     // Update dimensions when layout changes or component mounts
@@ -585,27 +696,34 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
               <button
                 type="button"
                 className={cn(
-                  "px-3 py-1 rounded-md text-sm",
+                  "px-3 py-1 rounded-md text-sm flex items-center",
                   splitOrientation === 'horizontal'
-                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium"
                     : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
                 )}
                 onClick={() => setOrientation('horizontal')}
                 disabled={readOnly}
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 10a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1z" />
+                  <path d="M10 5a1 1 0 0 1 1 1v8a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1z" />
+                </svg>
                 Front/Back Split
               </button>
               <button
                 type="button"
                 className={cn(
-                  "px-3 py-1 rounded-md text-sm",
+                  "px-3 py-1 rounded-md text-sm flex items-center",
                   splitOrientation === 'vertical'
-                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-medium"
                     : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
                 )}
                 onClick={() => setOrientation('vertical')}
                 disabled={readOnly}
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 10a1 1 0 0 1 1-1h8a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1z" />
+                </svg>
                 Left/Right Split
               </button>
             </div>
@@ -616,8 +734,23 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                 : `Split Ratio: ${calculateSplitRatio()} (Left/Right)`}
             </div>
 
+            {/* Show seat split summary */}
+            {!isLoading && !error && (
+              <SeatSplitSummary 
+                splitConfiguration={prepareConfiguration()}
+                totalSeats={layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length)}
+                splitOrientation={splitOrientation}
+                splitPercentage={splitPercentage}
+              />
+            )}
+
             {/* Split percentage slider */}
             <div className="w-full mt-4 px-2">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs">1%</span>
+                <span className="text-xs font-medium">{splitPercentage}%</span>
+                <span className="text-xs">99%</span>
+              </div>
               <Slider
                 defaultValue={[splitPercentage]}
                 max={99}
@@ -629,29 +762,47 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                <span>1%</span>
-                <span>50%</span>
-                <span>99%</span>
+                <span>{splitOrientation === 'horizontal' ? 'Minimal Front' : 'Minimal Left'}</span>
+                <span>50/50</span>
+                <span>{splitOrientation === 'horizontal' ? 'Minimal Back' : 'Minimal Right'}</span>
               </div>
             </div>
           </div>
         )}
 
-        {isLoading ? (
-          <div className="flex items-center justify-center w-full h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
-          </div>
-        ) : error ? (
-          <div className="text-red-500 dark:text-red-400 text-center">
-            {error}
-            <button
-              className="block mx-auto mt-2 text-sm underline"
-              onClick={() => setLayout({ rows: 6, seatsPerRow: 4, layoutType: 'standard' })}
-            >
-              Use Default Layout
-            </button>
-          </div>
-        ) : (
+        <StatusMessage 
+          isLoading={isLoading} 
+          error={error} 
+          onRetry={() => {
+            setIsLoading(true);
+            setError(null);
+            // Use the function from the current effect scope
+            const fetchJetData = async () => {
+              if (!jetId) return;
+              try {
+                const response = await fetch(`/api/jets/${jetId}`);
+                if (!response.ok) throw new Error('Failed to fetch jet layout data');
+                const data = await response.json();
+                if (data.seatLayout) {
+                  setLayout(data.seatLayout);
+                  if (data.seatLayout.seatMap?.skipPositions) {
+                    setSkipPositions(data.seatLayout.seatMap.skipPositions);
+                  } else {
+                    setSkipPositions([]);
+                  }
+                }
+              } catch (err) {
+                console.error('Error fetching jet layout:', err);
+                setError('Failed to load jet configuration');
+              } finally {
+                setIsLoading(false);
+              }
+            };
+            fetchJetData();
+          }} 
+        />
+
+        {!isLoading && !error && (
           <div 
             className="relative border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
             style={{ 
@@ -661,7 +812,17 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
               maxHeight: '60vh'
             }}
           >
-            {/* Seats grid */}
+            {/* Show jet model and configuration info */}
+            <div className="absolute top-2 left-2 right-2 z-10 flex justify-between items-center">
+              <div className="bg-white/80 dark:bg-black/50 backdrop-blur-sm text-xs px-2 py-1 rounded">
+                {layout.layoutType === 'luxury' ? 'Luxury Layout' : 'Standard Layout'}
+              </div>
+              <div className="bg-white/80 dark:bg-black/50 backdrop-blur-sm text-xs px-2 py-1 rounded">
+                {layout.rows} rows × {layout.seatsPerRow} seats
+              </div>
+            </div>
+
+            {/* Seats grid with improved styling */}
             <div className="absolute top-0 left-0 w-full h-full grid" 
               style={{ 
                 gridTemplateColumns: `repeat(${layout.seatsPerRow}, 1fr)`,
@@ -721,22 +882,22 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                     isInFirstSection = colIdx < colsInFirstSection;
                   }
                   
-                  let seatColor = "bg-gray-200 dark:bg-gray-700";
-                  if (splitOrientation === 'horizontal') {
-                    seatColor = isInFirstSection ? "bg-blue-100 dark:bg-blue-900" : "bg-amber-100 dark:bg-amber-900";
-                  } else {
-                    seatColor = isInFirstSection ? "bg-blue-100 dark:bg-blue-900" : "bg-amber-100 dark:bg-amber-900";
-                  }
-                  
+                  // Improved seat styling
                   return (
                     <div
                       key={`seat-${rowIdx}-${colIdx}`}
                       className={cn(
-                        "border border-gray-300 dark:border-gray-600 flex items-center justify-center rounded-md m-1",
-                        seatColor
+                        "m-1 flex items-center justify-center rounded-lg transition-colors duration-200",
+                        isInFirstSection 
+                          ? "bg-blue-100 text-blue-900 border border-blue-300 dark:bg-blue-900/70 dark:text-blue-100 dark:border-blue-700"
+                          : "bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-900/70 dark:text-amber-100 dark:border-amber-700",
+                        layout.layoutType === 'luxury' ? "shadow-sm" : ""
                       )}
                     >
-                      <span className="text-xs font-medium">{seatId}</span>
+                      <span className={cn(
+                        "font-medium",
+                        layout.layoutType === 'luxury' ? "text-sm" : "text-xs"
+                      )}>{seatId}</span>
                     </div>
                   );
                 })
@@ -772,7 +933,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                   />
                 )}
 
-                {/* Draggable handle */}
+                {/* Draggable handle with improved design */}
                 <Rnd
                   position={{
                     x: splitOrientation === 'vertical' ? crosshairPosition.x - 10 : gridDimensions.width / 2 - 10,
@@ -785,8 +946,8 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                   dragAxis={splitOrientation === 'horizontal' ? 'y' : 'x'}
                   disableDragging={readOnly}
                 >
-                  <div className="w-full h-full rounded-full bg-red-500 flex items-center justify-center cursor-move shadow-md">
-                    <div className="w-2/3 h-2/3 rounded-full bg-white" />
+                  <div className="w-full h-full rounded-full bg-red-500 flex items-center justify-center cursor-move shadow-md ring-2 ring-white dark:ring-gray-800">
+                    <div className="w-2/3 h-2/3 rounded-full bg-white dark:bg-gray-200" />
                   </div>
                 </Rnd>
               </>
