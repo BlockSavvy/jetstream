@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
+import { add, format } from 'date-fns';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +8,8 @@ export async function POST(req: NextRequest) {
     const { 
       desired_location, 
       date_range, 
-      price_range, 
+      price_range,
+      time_of_day,
       user_id,
       matched_flights // This can be passed from the frontend if available
     } = await req.json();
@@ -15,7 +17,8 @@ export async function POST(req: NextRequest) {
     console.log("Search parameters:", { 
       desired_location, 
       date_range, 
-      price_range, 
+      price_range,
+      time_of_day,
       user_id,
       matched_flights_count: matched_flights?.length || 0
     });
@@ -49,8 +52,8 @@ export async function POST(req: NextRequest) {
       if (date_range) {
         console.log(`Applying date filter: "${date_range}"`);
         // Simplistic handling - could be improved with proper date parsing
-        const today = new Date().toISOString();
-        query = query.gte('flight_date', today);
+        const today = new Date();
+        query = query.gte('flight_date', today.toISOString());
         
         // If we can extract a max date from date_range, use it
         // This is a simplified approach - a more robust date parser would be better
@@ -66,6 +69,33 @@ export async function POST(req: NextRequest) {
           const nextWeek = new Date();
           nextWeek.setDate(nextWeek.getDate() + 7);
           query = query.lte('flight_date', nextWeek.toISOString());
+        }
+      }
+
+      // Apply time of day filter if provided
+      if (time_of_day) {
+        console.log(`Applying time of day filter: "${time_of_day}"`);
+        // Make sure the query includes departure_time filter
+        
+        // Only apply time filter if we have departure_time column
+        if (time_of_day.includes('morning')) {
+          // Morning: 6am-12pm
+          query = query.gte('departure_time', format(new Date().setHours(6, 0, 0, 0), "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+                       .lte('departure_time', format(new Date().setHours(11, 59, 59, 999), "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+        } else if (time_of_day.includes('afternoon')) {
+          // Afternoon: 12pm-5pm
+          query = query.gte('departure_time', format(new Date().setHours(12, 0, 0, 0), "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+                       .lte('departure_time', format(new Date().setHours(16, 59, 59, 999), "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+        } else if (time_of_day.includes('evening')) {
+          // Evening: 5pm-9pm
+          query = query.gte('departure_time', format(new Date().setHours(17, 0, 0, 0), "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+                       .lte('departure_time', format(new Date().setHours(20, 59, 59, 999), "yyyy-MM-dd'T'HH:mm:ss'Z'"));
+        } else if (time_of_day.includes('night')) {
+          // Night: 9pm-6am
+          query = query.or(
+            `departure_time.gte.${format(new Date().setHours(21, 0, 0, 0), "yyyy-MM-dd'T'HH:mm:ss'Z'")},` +
+            `departure_time.lte.${format(new Date().setHours(5, 59, 59, 999), "yyyy-MM-dd'T'HH:mm:ss'Z'")}`
+          );
         }
       }
 
@@ -104,19 +134,29 @@ export async function POST(req: NextRequest) {
     const formattedFlights = flights.map((flight: any) => {
       // Map field names correctly from database (departure_location instead of departure)
       // Handle both field naming conventions for compatibility
+      const departureTime = flight.departure_time || flight.flight_date;
+      
+      // Format the departure time to a user-friendly string
+      const formattedTime = departureTime ? 
+        new Date(departureTime).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }) : 'Not specified';
+      
       return {
         id: flight.id,
         departure: flight.departure_location || flight.departure,
         arrival: flight.arrival_location || flight.arrival,
         flight_date: flight.flight_date,
+        departure_time: departureTime,
         formatted_date: new Date(flight.flight_date).toLocaleDateString('en-US', {
           weekday: 'short',
           month: 'short',
           day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+          year: 'numeric'
         }),
+        formatted_time: formattedTime,
         jet_type: flight.aircraft_model || flight.jet_type || 'Not specified',
         total_cost: flight.total_flight_cost || flight.total_cost,
         formatted_cost: (flight.total_flight_cost || flight.total_cost) ? 
@@ -140,6 +180,10 @@ export async function POST(req: NextRequest) {
       searchSummary += ` for ${date_range}`;
     }
     
+    if (time_of_day) {
+      searchSummary += ` in the ${time_of_day}`;
+    }
+    
     if (price_range) {
       searchSummary += ` with price range of ${price_range}`;
     }
@@ -158,6 +202,7 @@ export async function POST(req: NextRequest) {
       search_criteria: {
         desired_location,
         date_range,
+        time_of_day,
         price_range
       }
     });

@@ -170,6 +170,7 @@ Status: ${record.status}
 From: ${record.departure_location} (${departureAirport?.city || 'Unknown'}, ${departureAirport?.country || 'Unknown'})
 To: ${record.arrival_location} (${arrivalAirport?.city || 'Unknown'}, ${arrivalAirport?.country || 'Unknown'})
 Date: ${record.flight_date}
+Time: ${record.departure_time ? new Date(record.departure_time).toLocaleString() : 'Not specified'}
 Aircraft: ${record.aircraft_model || 'Not specified'}
 Total Cost: $${record.total_flight_cost}
 Available Seats: ${record.available_seats} of ${record.total_seats}
@@ -189,7 +190,7 @@ Created: ${record.created_at}
         throw new Error(`Failed to fetch ${table} ${id}: ${fetchError?.message || 'Record not found'}`);
       }
       
-      // Basic formatting without joined data
+      // Update the basic formatting fallback for JetShare offers
       return `
 JetShare Offer Information:
 ID: ${record.id}
@@ -197,6 +198,7 @@ Status: ${record.status}
 From: ${record.departure_location}
 To: ${record.arrival_location}
 Date: ${record.flight_date}
+Time: ${record.departure_time ? new Date(record.departure_time).toLocaleString() : 'Not specified'}
 Aircraft: ${record.aircraft_model || 'Not specified'}
 Total Cost: $${record.total_flight_cost}
 Available Seats: ${record.available_seats}

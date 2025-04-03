@@ -29,12 +29,13 @@ const FUNCTION_DEFINITIONS = [
       properties: {
         departure: { type: "string", description: "Departure location (city or airport)" },
         arrival: { type: "string", description: "Arrival location (city or airport)" },
-        flight_date: { type: "string", description: "Date and time of flight (ISO format or natural language)" },
+        flight_date: { type: "string", description: "Date of flight (ISO format or natural language)" },
+        departure_time: { type: "string", description: "Time of departure (e.g., '14:30', '2:30 PM')" },
         jet_type: { type: "string", description: "Type of jet (G600, G550, Citation X, Phenom 300, Legacy 600, G450)" },
         total_cost: { type: "number", description: "Total cost of the flight in USD" },
         share_amount: { type: "string", description: "Number of seats or percentage to share" }
       },
-      required: ["departure", "arrival", "flight_date", "total_cost", "share_amount"]
+      required: ["departure", "arrival", "flight_date", "departure_time", "total_cost", "share_amount"]
     }
   },
   {
@@ -45,6 +46,7 @@ const FUNCTION_DEFINITIONS = [
       properties: {
         desired_location: { type: "string", description: "Destination or origin location" },
         date_range: { type: "string", description: "Date range for the flight" },
+        time_of_day: { type: "string", description: "Time of day preference (morning, afternoon, evening, night)" },
         price_range: { type: "string", description: "Price range for the share" }
       },
       required: ["desired_location"]
@@ -133,11 +135,19 @@ You are the AI Concierge for JetShare, a premier private jet sharing service. Yo
 - For questions about aircraft, use the jets table
 - Always verify information with database queries before providing definitive answers
 
+**Date and Time Handling:**
+- All JetShare offers have a departure_time field in UTC format
+- Users may ask for flights like "tomorrow evening" or "after 3 PM Friday"
+- When you see time-based queries (e.g., "Any jets leaving Friday afternoon?"), interpret these phrases into time ranges and pass them to your database queries
+- Morning: 6am-12pm, Afternoon: 12pm-5pm, Evening: 5pm-9pm, Night: 9pm-6am
+- For day-based queries, generate appropriate date ranges accordingly
+- When creating offers, always ask users for both a date AND a specific departure time
+
 **Creating JetShare Offers:**
 When a user wants to create a JetShare offer, you are to collect and confirm the following details:
 - Departure location (city or airport)
 - Arrival location (city or airport)
-- Flight date and time
+- Flight date and time (MUST get both date AND specific time of departure)
 - Aircraft model (ensure it is available in our database)
 - Total cost of the flight
 - Share amount (percentage or number of seats)
@@ -148,6 +158,7 @@ Confirm all details back to the user with the message: "I'll create a JetShare o
 When searching for flights or JetShare offers, gather:
 - Desired location (destination or origin)
 - Date range (if specified)
+- Time of day (if specified, e.g., "afternoon", "evening")
 - Price range (if specified)
 
 **General Inquiries:**
@@ -564,7 +575,7 @@ export default function AIConcierge() {
           endpoint = '/api/concierge/functions/find-jetshare-offer';
           
           // Pre-process the search query to match against actual flights
-          const { desired_location, date_range, price_range } = args;
+          const { desired_location, date_range, time_of_day, price_range } = args;
           
           // Fetch flights directly from database to ensure we have the latest data
           const flights = await fetchRecentFlights();
@@ -868,6 +879,7 @@ export default function AIConcierge() {
           arguments: {
             desired_location: location,
             date_range: dateRange,
+            time_of_day: "",
             price_range: priceRange
           },
           confirmationCard: {

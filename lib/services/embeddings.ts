@@ -1,6 +1,7 @@
 import { CohereEmbeddings } from '@langchain/cohere';
 import { EnrichedProfile, TravelHistory, UserPreferences } from '../types/matching.types';
 import { Flight } from '@/app/flights/types';
+import { JetShareOffer } from '@/types/jetshare';
 import axios from 'axios';
 
 // Initialize Cohere embeddings with API key
@@ -77,6 +78,72 @@ export function generateUserProfileText(profile: EnrichedProfile): string {
 }
 
 /**
+ * Generates a text representation of JetShare offer for embedding
+ */
+export function generateJetShareOfferText(offer: JetShareOffer | any): string {
+  let offerText = `JetShare offer from ${offer.departure_location} to ${offer.arrival_location}.`;
+  offerText += ` Flight date: ${new Date(offer.flight_date).toLocaleDateString()}.`;
+  
+  // Include departure time information
+  if (offer.departure_time) {
+    const departureTime = new Date(offer.departure_time);
+    offerText += ` Departure time: ${departureTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${departureTime.toLocaleDateString()}.`;
+    offerText += ` Readable departure: ${departureTime.toLocaleString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })}.`;
+  }
+  
+  // Add aircraft model information
+  if (offer.aircraft_model) {
+    offerText += ` Aircraft: ${offer.aircraft_model}.`;
+  }
+  
+  // Add seating information
+  if (offer.total_seats) {
+    offerText += ` Total seats: ${offer.total_seats}.`;
+  }
+  
+  if (offer.available_seats) {
+    offerText += ` Available seats: ${offer.available_seats}.`;
+  }
+  
+  // Add cost information
+  offerText += ` Total flight cost: ${offer.total_flight_cost ? '$' + offer.total_flight_cost : 'Not specified'}.`;
+  offerText += ` Requested share amount: ${offer.requested_share_amount ? '$' + offer.requested_share_amount : 'Not specified'}.`;
+  
+  // Add status
+  offerText += ` Status: ${offer.status || 'open'}.`;
+  
+  // Add split configuration details if available
+  if (offer.split_configuration) {
+    offerText += ` Split configuration: ${offer.split_configuration.splitOrientation || 'Not specified'} split with ratio ${offer.split_configuration.splitRatio || 'Not specified'}.`;
+    
+    if (offer.split_configuration.allocatedSeats) {
+      const seats = offer.split_configuration.allocatedSeats;
+      if (seats.front && seats.front.length > 0) {
+        offerText += ` Front seats: ${seats.front.join(', ')}.`;
+      }
+      if (seats.back && seats.back.length > 0) {
+        offerText += ` Back seats: ${seats.back.join(', ')}.`;
+      }
+      if (seats.left && seats.left.length > 0) {
+        offerText += ` Left seats: ${seats.left.join(', ')}.`;
+      }
+      if (seats.right && seats.right.length > 0) {
+        offerText += ` Right seats: ${seats.right.join(', ')}.`;
+      }
+    }
+  }
+  
+  return offerText;
+}
+
+/**
  * Generates a text representation of flight for embedding
  */
 export function generateFlightText(flight: Flight): string {
@@ -102,6 +169,16 @@ export function generateFlightText(flight: Flight): string {
   }
   
   return flightText;
+}
+
+/**
+ * Generates embeddings for a JetShare offer
+ */
+export async function generateJetShareOfferEmbedding(offer: JetShareOffer): Promise<number[]> {
+  const embeddings = getCohereEmbeddings();
+  const offerText = generateJetShareOfferText(offer);
+  const result = await embeddings.embedDocuments([offerText]);
+  return result[0];
 }
 
 /**

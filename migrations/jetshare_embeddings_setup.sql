@@ -80,6 +80,7 @@ BEGIN
     'From: ' || offer_record.departure_location,
     'To: ' || offer_record.arrival_location,
     'Date: ' || offer_record.flight_date::text,
+    'Departure Time: ' || offer_record.departure_time::text,
     'Aircraft: ' || offer_record.aircraft_model,
     'Total Cost: $' || offer_record.total_flight_cost::text,
     'Available Seats: ' || offer_record.available_seats::text,
@@ -104,6 +105,7 @@ BEGIN
       NEW.departure_location != OLD.departure_location OR
       NEW.arrival_location != OLD.arrival_location OR
       NEW.flight_date != OLD.flight_date OR
+      NEW.departure_time != OLD.departure_time OR
       NEW.aircraft_model != OLD.aircraft_model OR
       NEW.total_flight_cost != OLD.total_flight_cost OR
       NEW.available_seats != OLD.available_seats OR
