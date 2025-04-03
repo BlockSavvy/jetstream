@@ -352,14 +352,21 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       return;
     }
     
-    const newAmount = Math.round(Number(totalFlightCost) * (percentage / 100));
+    // Ensure percentage is between 1-99
+    const boundedPercentage = Math.max(1, Math.min(99, percentage));
+    
+    const newAmount = Math.round(Number(totalFlightCost) * (boundedPercentage / 100));
     form.setValue('requested_share_amount', newAmount > 0 ? newAmount : 1);
-    setShareRatio(percentage);
+    
+    // Update the state
+    setShareRatio(boundedPercentage);
     
     // Also update the visualizer if it exists
     if (visualizerRef.current) {
-      visualizerRef.current.updateRatio(percentage);
+      visualizerRef.current.updateRatio(boundedPercentage);
     }
+    
+    console.log(`Updated share amount to ${newAmount} (${boundedPercentage}%)`);
   };
   
   // Add a new useEffect to fetch offer details when in edit mode
@@ -616,11 +623,14 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
 
   // Function to handle seat split configuration changes
   const handleSplitConfigurationChange = (config: SplitConfiguration) => {
+    console.log('Visualizer sent new configuration:', config);
+    
     setSplitConfiguration(config);
     form.setValue('seat_split_configuration', config);
     
-    // Update the share ratio in the form
+    // Update the share ratio in the form if different
     if (config.splitPercentage !== shareRatio) {
+      console.log(`Updating share ratio from ${shareRatio} to ${config.splitPercentage}`);
       setShareRatio(config.splitPercentage);
       updateShareAmount(config.splitPercentage);
     }
@@ -899,7 +909,21 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               type="button" 
               variant="outline" 
               size="sm"
-              onClick={() => setShowSeatVisualizer(!showSeatVisualizer)}
+              onClick={() => {
+                const newVisibility = !showSeatVisualizer;
+                setShowSeatVisualizer(newVisibility);
+                
+                // If showing the visualizer, ensure it's correctly initialized
+                if (newVisibility && visualizerRef.current) {
+                  // Short delay to ensure state updates first
+                  setTimeout(() => {
+                    if (visualizerRef.current) {
+                      // Update the visualizer with current ratio
+                      visualizerRef.current.updateRatio(shareRatio);
+                    }
+                  }, 100);
+                }
+              }}
             >
               {showSeatVisualizer ? 'Hide Visualizer' : 'Configure Seats'}
             </Button>
@@ -911,7 +935,20 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
           
           {/* Seat Split Ratio Slider */}
           <div className="mt-4">
-            <FormLabel htmlFor="share-ratio">Share Ratio ({shareRatio}%/{100 - shareRatio}%)</FormLabel>
+            <div className="flex items-center justify-between mb-2">
+              <FormLabel htmlFor="share-ratio" className="text-sm font-medium">
+                Share Ratio
+              </FormLabel>
+              <div className="bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full text-sm font-medium">
+                {shareRatio}% / {100 - shareRatio}%
+              </div>
+            </div>
+            
+            <div className="flex justify-between mb-2">
+              <div className="bg-blue-100 dark:bg-blue-900 h-2 rounded-l-full" style={{ width: `${shareRatio}%` }}></div>
+              <div className="bg-amber-100 dark:bg-amber-900 h-2 rounded-r-full" style={{ width: `${100 - shareRatio}%` }}></div>
+            </div>
+            
             <Slider 
               id="share-ratio"
               defaultValue={[50]} 
@@ -919,7 +956,10 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               min={1} 
               step={1} 
               value={[shareRatio]}
-              onValueChange={(values) => updateShareAmount(values[0])}
+              onValueChange={(values) => {
+                console.log(`Slider changed to ${values[0]}%`);
+                updateShareAmount(values[0]);
+              }}
               className="mt-2"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">

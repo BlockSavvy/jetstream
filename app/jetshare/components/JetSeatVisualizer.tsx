@@ -543,7 +543,34 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
 
     // Toggle split orientation
     const toggleSplitOrientation = () => {
-      setSplitOrientation(prev => (prev === 'horizontal' ? 'vertical' : 'horizontal'));
+      if (isUpdatingRef.current) return;
+      
+      isUpdatingRef.current = true;
+      setSplitOrientation(prev => {
+        const newOrientation = prev === 'horizontal' ? 'vertical' : 'horizontal';
+        
+        // After changing orientation, we need to update the parent component
+        setTimeout(() => {
+          updateParentComponent();
+          isUpdatingRef.current = false;
+        }, 50);
+        
+        return newOrientation;
+      });
+    };
+
+    // Set the orientation directly
+    const setOrientation = (orientation: 'horizontal' | 'vertical') => {
+      if (isUpdatingRef.current || orientation === splitOrientation) return;
+      
+      isUpdatingRef.current = true;
+      setSplitOrientation(orientation);
+      
+      // After changing orientation, we need to update the parent component
+      setTimeout(() => {
+        updateParentComponent();
+        isUpdatingRef.current = false;
+      }, 50);
     };
 
     if (!isVisible) return null;
@@ -563,7 +590,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                     : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
                 )}
-                onClick={() => setSplitOrientation('horizontal')}
+                onClick={() => setOrientation('horizontal')}
                 disabled={readOnly}
               >
                 Front/Back Split
@@ -576,7 +603,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                     : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
                 )}
-                onClick={() => setSplitOrientation('vertical')}
+                onClick={() => setOrientation('vertical')}
                 disabled={readOnly}
               >
                 Left/Right Split
