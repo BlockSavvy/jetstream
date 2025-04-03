@@ -583,11 +583,24 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   // Effect to handle seat split when model changes
   useEffect(() => {
     if (aircraftModel) {
-      // Generate a pseudo jet id based on the model (in a real app you'd use the actual jet id)
+      // Generate a pseudo jet id based on the model
       const pseudoJetId = aircraftModel.toLowerCase().replace(/\s+/g, '-');
       setSelectedJetId(pseudoJetId);
+      
+      // If we're showing the visualizer, reset it to ensure it reflects the new aircraft
+      if (showSeatVisualizer && visualizerRef.current) {
+        // Close and reopen to trigger a fresh fetch of the layout
+        visualizerRef.current.closeVisualizer();
+        
+        // Small delay to ensure state updates before reopening
+        setTimeout(() => {
+          if (visualizerRef.current) {
+            visualizerRef.current.openVisualizer();
+          }
+        }, 200);
+      }
     }
-  }, [aircraftModel]);
+  }, [aircraftModel, showSeatVisualizer]);
 
   // Listen for share percentage changes from the form
   useEffect(() => {

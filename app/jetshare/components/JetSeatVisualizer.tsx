@@ -10,6 +10,11 @@ export interface SeatLayout {
   rows: number;
   seatsPerRow: number;
   layoutType: 'standard' | 'luxury' | 'custom';
+  totalSeats?: number;
+  seatMap?: {
+    skipPositions?: number[][];
+    customPositions?: { row: number; col: number; id: string }[];
+  };
 }
 
 export interface SplitConfiguration {
@@ -72,7 +77,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
     );
 
     // State for loading layout data
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // State for visibility
@@ -114,6 +119,9 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       percentage: initialSplit?.splitPercentage || 50
     });
 
+    // Add state to track seats that should be skipped (not displayed)
+    const [skipPositions, setSkipPositions] = useState<number[][]>([]);
+
     // Calculate the split ratio
     const calculateSplitRatio = useCallback(() => {
       // Use the percentage directly for a cleaner calculation
@@ -129,27 +137,51 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         right: [],
       };
 
-      const totalSeatsCount = layout.rows * layout.seatsPerRow;
+      // Get actual number of seats (accounting for skipped positions)
+      const actualTotalSeats = layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length);
       let firstSectionCount = 0;
       
       if (splitOrientation === 'horizontal') {
         // Calculate how many seats should be in the front section based on percentage
-        firstSectionCount = Math.round((splitPercentage / 100) * totalSeatsCount);
+        firstSectionCount = Math.round((splitPercentage / 100) * actualTotalSeats);
         
         // Ensure we don't end up with 0 seats in either section
-        firstSectionCount = Math.max(1, Math.min(firstSectionCount, totalSeatsCount - 1));
+        firstSectionCount = Math.max(1, Math.min(firstSectionCount, actualTotalSeats - 1));
         
-        // Calculate row split position based on the adjusted count
-        const rowsInFirstSection = Math.ceil(firstSectionCount / layout.seatsPerRow);
+        // We need to dynamically calculate how many rows this represents
+        let frontSeatCount = 0;
+        let rowsInFirstSection = 0;
+        
+        // Count seats row by row until we reach the target count
+        for (let row = 0; row < layout.rows && frontSeatCount < firstSectionCount; row++) {
+          let seatsInThisRow = 0;
+          for (let col = 0; col < layout.seatsPerRow; col++) {
+            // Skip this position if it's in the skipPositions array
+            if (!isSkippedPosition(row, col)) {
+              seatsInThisRow++;
+            }
+          }
+          frontSeatCount += seatsInThisRow;
+          rowsInFirstSection++;
+        }
+        
+        // Calculate actual allocation of seats
+        let frontCount = 0;
+        let backCount = 0;
         
         for (let row = 0; row < layout.rows; row++) {
           for (let col = 0; col < layout.seatsPerRow; col++) {
+            // Skip this position if it's in the skipPositions array
+            if (isSkippedPosition(row, col)) continue;
+            
             const seatId = generateSeatId(row, col);
             
-            if (row < rowsInFirstSection && seats.front!.length < firstSectionCount) {
+            if (row < rowsInFirstSection && frontCount < firstSectionCount) {
               seats.front!.push(seatId);
+              frontCount++;
             } else {
               seats.back!.push(seatId);
+              backCount++;
             }
             
             // Handle left/right allocation for completeness
@@ -162,16 +194,37 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         }
       } else {
         // Vertical split (left/right)
-        firstSectionCount = Math.round((splitPercentage / 100) * totalSeatsCount);
+        firstSectionCount = Math.round((splitPercentage / 100) * actualTotalSeats);
         
         // Ensure we don't end up with 0 seats in either section
-        firstSectionCount = Math.max(1, Math.min(firstSectionCount, totalSeatsCount - 1));
+        firstSectionCount = Math.max(1, Math.min(firstSectionCount, actualTotalSeats - 1));
         
-        // Calculate column split position based on the adjusted count
-        const colsInFirstSection = Math.ceil(firstSectionCount / layout.rows);
+        // Calculate column split position (more complex with skip positions)
+        let leftSeatCount = 0;
+        let colsInFirstSection = 0;
+        
+        // Count seats column by column until we reach the target count
+        for (let col = 0; col < layout.seatsPerRow && leftSeatCount < firstSectionCount; col++) {
+          let seatsInThisCol = 0;
+          for (let row = 0; row < layout.rows; row++) {
+            // Skip this position if it's in the skipPositions array
+            if (!isSkippedPosition(row, col)) {
+              seatsInThisCol++;
+            }
+          }
+          leftSeatCount += seatsInThisCol;
+          colsInFirstSection++;
+        }
+        
+        // Calculate actual allocation of seats
+        let leftCount = 0;
+        let rightCount = 0;
         
         for (let row = 0; row < layout.rows; row++) {
           for (let col = 0; col < layout.seatsPerRow; col++) {
+            // Skip this position if it's in the skipPositions array
+            if (isSkippedPosition(row, col)) continue;
+            
             const seatId = generateSeatId(row, col);
             
             // Handle front/back allocation for completeness
@@ -181,17 +234,24 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
               seats.back!.push(seatId);
             }
             
-            if (col < colsInFirstSection && seats.left!.length < firstSectionCount) {
+            if (col < colsInFirstSection && leftCount < firstSectionCount) {
               seats.left!.push(seatId);
+              leftCount++;
             } else {
               seats.right!.push(seatId);
+              rightCount++;
             }
           }
         }
       }
 
       return seats;
-    }, [layout, splitPercentage, splitOrientation]);
+    }, [layout, splitPercentage, splitOrientation, skipPositions]);
+
+    // Function to check if a position should be skipped
+    const isSkippedPosition = useCallback((row: number, col: number): boolean => {
+      return skipPositions.some(pos => pos[0] === row && pos[1] === col);
+    }, [skipPositions]);
 
     // Prepare configuration object for the onChange callback
     const prepareConfiguration = useCallback((): SplitConfiguration => {
@@ -223,12 +283,28 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       
       isUpdatingRef.current = true;
       
-      const totalSeats = layout.rows * layout.seatsPerRow;
+      // Get actual number of seats (accounting for skipped positions)
+      const actualTotalSeats = layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length);
       
       if (splitOrientation === 'horizontal') {
         // Calculate how many rows should be in the front section
-        const frontSeatCount = Math.round((splitPercentage / 100) * totalSeats);
-        const rowsInFront = Math.ceil(frontSeatCount / layout.seatsPerRow);
+        const frontSeatCount = Math.round((splitPercentage / 100) * actualTotalSeats);
+        
+        // Count seats row by row to find the split position
+        let currentSeatCount = 0;
+        let rowsInFront = 0;
+        
+        for (let row = 0; row < layout.rows && currentSeatCount < frontSeatCount; row++) {
+          let seatsInThisRow = 0;
+          for (let col = 0; col < layout.seatsPerRow; col++) {
+            if (!isSkippedPosition(row, col)) {
+              seatsInThisRow++;
+            }
+          }
+          currentSeatCount += seatsInThisRow;
+          rowsInFront++;
+        }
+        
         const yPosition = Math.min(rowsInFront * seatSize, gridDimensions.height);
         
         setCrosshairPosition(prev => ({
@@ -237,8 +313,23 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         }));
       } else {
         // Calculate how many columns should be in the left section
-        const leftSeatCount = Math.round((splitPercentage / 100) * totalSeats);
-        const colsInLeft = Math.ceil(leftSeatCount / layout.rows);
+        const leftSeatCount = Math.round((splitPercentage / 100) * actualTotalSeats);
+        
+        // Count seats column by column to find the split position
+        let currentSeatCount = 0;
+        let colsInLeft = 0;
+        
+        for (let col = 0; col < layout.seatsPerRow && currentSeatCount < leftSeatCount; col++) {
+          let seatsInThisCol = 0;
+          for (let row = 0; row < layout.rows; row++) {
+            if (!isSkippedPosition(row, col)) {
+              seatsInThisCol++;
+            }
+          }
+          currentSeatCount += seatsInThisCol;
+          colsInLeft++;
+        }
+        
         const xPosition = Math.min(colsInLeft * seatSize, gridDimensions.width);
         
         setCrosshairPosition(prev => ({
@@ -250,7 +341,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 50);
-    }, [splitPercentage, splitOrientation, layout, seatSize, gridDimensions]);
+    }, [splitPercentage, splitOrientation, layout, seatSize, gridDimensions, skipPositions, isSkippedPosition]);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -281,6 +372,13 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           
           if (data.seatLayout) {
             setLayout(data.seatLayout);
+            
+            // Save skip positions if available
+            if (data.seatLayout.seatMap?.skipPositions) {
+              setSkipPositions(data.seatLayout.seatMap.skipPositions);
+            } else {
+              setSkipPositions([]);
+            }
           }
         } catch (err) {
           console.error('Error fetching jet layout:', err);
@@ -393,18 +491,42 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         y,
       }));
       
-      // Update the percentage based on crosshair position
-      const totalSeats = layout.rows * layout.seatsPerRow;
+      // Get actual number of seats (accounting for skipped positions)
+      const actualTotalSeats = layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length);
       
       if (splitOrientation === 'horizontal') {
+        // Find the row at crosshair position
         const rowAtCrosshair = Math.round(y / seatSize);
-        const seatsInFront = Math.min(rowAtCrosshair * layout.seatsPerRow, totalSeats - 1);
-        const newPercentage = Math.round((seatsInFront / totalSeats) * 100);
+        
+        // Count seats up to that row
+        let seatsInFront = 0;
+        for (let row = 0; row < Math.min(rowAtCrosshair, layout.rows); row++) {
+          for (let col = 0; col < layout.seatsPerRow; col++) {
+            if (!isSkippedPosition(row, col)) {
+              seatsInFront++;
+            }
+          }
+        }
+        
+        // Calculate percentage
+        const newPercentage = Math.round((seatsInFront / actualTotalSeats) * 100);
         setSplitPercentage(Math.max(1, Math.min(99, newPercentage))); // Ensure between 1-99%
       } else {
+        // Find the column at crosshair position
         const colAtCrosshair = Math.round(x / seatSize);
-        const seatsInLeft = Math.min(colAtCrosshair * layout.rows, totalSeats - 1);
-        const newPercentage = Math.round((seatsInLeft / totalSeats) * 100);
+        
+        // Count seats up to that column
+        let seatsInLeft = 0;
+        for (let col = 0; col < Math.min(colAtCrosshair, layout.seatsPerRow); col++) {
+          for (let row = 0; row < layout.rows; row++) {
+            if (!isSkippedPosition(row, col)) {
+              seatsInLeft++;
+            }
+          }
+        }
+        
+        // Calculate percentage
+        const newPercentage = Math.round((seatsInLeft / actualTotalSeats) * 100);
         setSplitPercentage(Math.max(1, Math.min(99, newPercentage))); // Ensure between 1-99%
       }
       
@@ -521,21 +643,55 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
             >
               {Array.from({ length: layout.rows }).map((_, rowIdx) =>
                 Array.from({ length: layout.seatsPerRow }).map((_, colIdx) => {
+                  // Skip rendering this seat if it's in skipPositions
+                  if (isSkippedPosition(rowIdx, colIdx)) {
+                    return <div key={`empty-${rowIdx}-${colIdx}`} className="m-1"></div>;
+                  }
+                  
                   const seatId = generateSeatId(rowIdx, colIdx);
                   
                   // Determine if the seat is in the first section based on the split percentage
                   let isInFirstSection = false;
-                  const totalSeatsCount = layout.rows * layout.seatsPerRow;
+                  const totalSeatsCount = layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length);
                   const firstSectionCount = Math.round((splitPercentage / 100) * totalSeatsCount);
                   
+                  // Calculate which seats are in the first section (more complex with skipPositions)
                   if (splitOrientation === 'horizontal') {
-                    const rowsInFirstSection = Math.ceil(firstSectionCount / layout.seatsPerRow);
-                    isInFirstSection = rowIdx < rowsInFirstSection && 
-                      (rowIdx * layout.seatsPerRow + colIdx < firstSectionCount);
+                    // Count seats row by row to find the split position
+                    let frontSeatCount = 0;
+                    let rowsInFirstSection = 0;
+                    
+                    for (let row = 0; row < layout.rows && frontSeatCount < firstSectionCount; row++) {
+                      let seatsInThisRow = 0;
+                      for (let col = 0; col < layout.seatsPerRow; col++) {
+                        if (!isSkippedPosition(row, col)) {
+                          seatsInThisRow++;
+                        }
+                      }
+                      frontSeatCount += seatsInThisRow;
+                      rowsInFirstSection++;
+                    }
+                    
+                    // This seat is in the first section if its row is before the split
+                    isInFirstSection = rowIdx < rowsInFirstSection;
                   } else {
-                    const colsInFirstSection = Math.ceil(firstSectionCount / layout.rows);
-                    isInFirstSection = colIdx < colsInFirstSection && 
-                      (colIdx * layout.rows + rowIdx < firstSectionCount);
+                    // Count seats column by column to find the split position
+                    let leftSeatCount = 0;
+                    let colsInFirstSection = 0;
+                    
+                    for (let col = 0; col < layout.seatsPerRow && leftSeatCount < firstSectionCount; col++) {
+                      let seatsInThisCol = 0;
+                      for (let row = 0; row < layout.rows; row++) {
+                        if (!isSkippedPosition(row, col)) {
+                          seatsInThisCol++;
+                        }
+                      }
+                      leftSeatCount += seatsInThisCol;
+                      colsInFirstSection++;
+                    }
+                    
+                    // This seat is in the first section if its column is before the split
+                    isInFirstSection = colIdx < colsInFirstSection;
                   }
                   
                   let seatColor = "bg-gray-200 dark:bg-gray-700";
