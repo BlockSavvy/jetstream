@@ -153,12 +153,13 @@ export async function POST(request: Request) {
       available_seats,
       total_flight_cost,
       requested_share_amount,
-      status = 'open'
+      status = 'open',
+      departure_time
     } = body;
     
     // Validate required fields
     if (!flight_date || !departure_location || !arrival_location || !aircraft_model || 
-        !total_seats || !available_seats || !total_flight_cost || !requested_share_amount) {
+        !total_seats || !available_seats || !total_flight_cost || !requested_share_amount || !departure_time) {
       console.error('Missing required fields in createOffer', body);
       return NextResponse.json(
         { 
@@ -166,7 +167,7 @@ export async function POST(request: Request) {
           code: 'VALIDATION_ERROR',
           details: {
             requiredFields: ['flight_date', 'departure_location', 'arrival_location', 'aircraft_model', 
-                           'total_seats', 'available_seats', 'total_flight_cost', 'requested_share_amount'],
+                           'total_seats', 'available_seats', 'total_flight_cost', 'requested_share_amount', 'departure_time'],
             receivedFields: Object.keys(body || {})
           }
         },
@@ -207,6 +208,7 @@ export async function POST(request: Request) {
         {
           user_id: user.id,
           flight_date,
+          departure_time,
           departure_location,
           arrival_location,
           aircraft_model,

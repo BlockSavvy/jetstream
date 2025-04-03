@@ -242,4 +242,48 @@ export async function batchEncode(texts: string[]): Promise<number[][]> {
     console.error('Error generating batch embeddings:', error);
     throw new Error('Failed to generate batch embeddings');
   }
+}
+
+/**
+ * Generates a text representation of JetShare offer for embedding
+ */
+export function generateJetShareOfferText(offer: any): string {
+  let offerText = `JetShare offer from ${offer.departure_location} to ${offer.arrival_location}.`;
+  offerText += ` Flight date: ${new Date(offer.flight_date).toLocaleDateString()}.`;
+  
+  // Include departure time information
+  if (offer.departure_time) {
+    const departureTime = new Date(offer.departure_time);
+    offerText += ` Departure time: ${departureTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${departureTime.toLocaleDateString()}.`;
+    offerText += ` Readable departure: ${departureTime.toLocaleString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })}.`;
+  }
+  
+  offerText += ` Total cost: $${offer.total_flight_cost}. Share amount: $${offer.requested_share_amount}.`;
+  
+  if (offer.aircraft_model) {
+    offerText += ` Aircraft: ${offer.aircraft_model}.`;
+  }
+  
+  if (offer.total_seats && offer.available_seats) {
+    offerText += ` ${offer.available_seats} of ${offer.total_seats} seats available.`;
+  }
+  
+  return offerText;
+}
+
+/**
+ * Generates embeddings for a JetShare offer
+ */
+export async function generateJetShareOfferEmbedding(offer: any): Promise<number[]> {
+  const embeddings = getCohereEmbeddings();
+  const offerText = generateJetShareOfferText(offer);
+  const result = await embeddings.embedDocuments([offerText]);
+  return result[0];
 } 

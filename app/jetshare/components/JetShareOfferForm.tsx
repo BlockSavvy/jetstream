@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,13 +38,17 @@ import {
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import AircraftModelSelector from './AircraftModelSelector';
-import JetSeatVisualizer, { SplitConfiguration } from './JetSeatVisualizer';
+import JetSeatVisualizer, { SeatConfiguration } from './JetSeatVisualizer';
 import type { JetSeatVisualizerRef } from './JetSeatVisualizer';
+import { FormDateTimePicker } from "@/components/ui/form-date-time-picker";
 
 // Define form schema with zod
 const formSchema = z.object({
   flight_date: z.date({
-    required_error: "Flight date and time is required",
+    required_error: "Flight date is required",
+  }),
+  departure_time: z.date({
+    required_error: "Departure time is required",
   }),
   departure_location: z.string().min(2, {
     message: "Departure location must be at least 2 characters",
@@ -174,9 +178,23 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   // Add a state to track if we're in edit mode
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // Define a compatibility interface for the old split configuration format
+  interface OldSplitConfiguration {
+    jetId: string;
+    splitOrientation: 'horizontal' | 'vertical';
+    splitRatio: string;
+    splitPercentage: number;
+    allocatedSeats: {
+      front?: string[];
+      back?: string[];
+      left?: string[];
+      right?: string[];
+    };
+  }
+
   // Add state for seat visualizer
   const [showSeatVisualizer, setShowSeatVisualizer] = useState(false);
-  const [splitConfiguration, setSplitConfiguration] = useState<SplitConfiguration | null>(null);
+  const [splitConfiguration, setSplitConfiguration] = useState<OldSplitConfiguration | null>(null);
   const [selectedJetId, setSelectedJetId] = useState<string>('default-jet');
   // Add state for the share ratio (percentage)
   const [shareRatio, setShareRatio] = useState<number>(50);
@@ -283,6 +301,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     resolver: zodResolver(enhancedFormSchema),
     defaultValues: {
       flight_date: addHours(new Date(), 24), // Default to tomorrow
+      departure_time: addHours(new Date(), 24), // Default to tomorrow same time
       departure_location: "",
       arrival_location: "",
       aircraft_model: "",
@@ -347,7 +366,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     : 50;
   
   // Update share amount when total cost or percentage changes
-  const updateShareAmount = (percentage: number) => {
+  const updateShareAmount = useCallback((percentage: number) => {
     if (!totalFlightCost || isNaN(Number(totalFlightCost)) || Number(totalFlightCost) <= 0) {
       return;
     }
@@ -356,18 +375,17 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     const boundedPercentage = Math.max(1, Math.min(99, percentage));
     
     const newAmount = Math.round(Number(totalFlightCost) * (boundedPercentage / 100));
-    form.setValue('requested_share_amount', newAmount > 0 ? newAmount : 1);
+    form.setValue('requested_share_amount', newAmount > 0 ? newAmount : 1, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
     
-    // Update the state
-    setShareRatio(boundedPercentage);
-    
-    // Also update the visualizer if it exists
-    if (visualizerRef.current) {
-      visualizerRef.current.updateRatio(boundedPercentage);
+    // Update the state only if it's different
+    if (shareRatio !== boundedPercentage) {
+      setShareRatio(boundedPercentage);
+      console.log(`Updated share amount to ${newAmount} (${boundedPercentage}%)`);
     }
-    
-    console.log(`Updated share amount to ${newAmount} (${boundedPercentage}%)`);
-  };
+  }, [totalFlightCost, form, shareRatio]);
   
   // Add a new useEffect to fetch offer details when in edit mode
   useEffect(() => {
@@ -398,6 +416,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         // Populate form with offer details
         form.reset({
           flight_date: new Date(offer.flight_date),
+          departure_time: offer.departure_time ? new Date(offer.departure_time) : new Date(offer.flight_date),
           departure_location: offer.departure_location,
           arrival_location: offer.arrival_location,
           aircraft_model: offer.aircraft_model || '',
@@ -410,7 +429,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         
         // Set the split configuration if it exists
         if (offer.split_configuration) {
-          setSplitConfiguration(offer.split_configuration);
+          setSplitConfiguration(offer.split_configuration as OldSplitConfiguration);
         }
         
         // Generate a pseudo jet id based on the model
@@ -613,13 +632,22 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         // Close and reopen to trigger a fresh fetch of the layout
         visualizerRef.current.closeVisualizer();
         
+        // Reset any existing split configuration to ensure we start fresh with the new aircraft
+        setSplitConfiguration(null);
+        
         // Small delay to ensure state updates before reopening
         setTimeout(() => {
           if (visualizerRef.current) {
             visualizerRef.current.openVisualizer();
             
-            // Update the visualizer with current ratio
-            visualizerRef.current.updateRatio(shareRatio);
+            // Force synchronization with the form's total seats value
+            const currentTotalSeats = form.getValues('total_seats');
+            if (currentTotalSeats && currentTotalSeats > 0) {
+              // Force layout update with current seat count
+              if (visualizerRef.current) {
+                visualizerRef.current.clearSelection();
+              }
+            }
             
             // Remove loading notification
             toast.dismiss("loading-jet-config");
@@ -627,7 +655,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         }, 500);
       }
     }
-  }, [aircraftModel, showSeatVisualizer, shareRatio]);
+  }, [aircraftModel, showSeatVisualizer]);
 
   // Handle showing the seat visualizer
   const toggleSeatVisualizer = () => {
@@ -636,25 +664,25 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     
     // If showing the visualizer, ensure it's correctly initialized
     if (newVisibility && visualizerRef.current) {
-      // Short delay to ensure state updates first
-      setTimeout(() => {
-        if (visualizerRef.current) {
-          // Update the visualizer with current ratio
-          visualizerRef.current.updateRatio(shareRatio);
-          
-          // Also notify the user about the seats configuration
-          const totalSeats = form.watch('total_seats');
-          if (totalSeats > 0) {
+      // Get the current total seats from the form
+      const currentTotalSeats = form.getValues('total_seats');
+      
+      // Reset the visualizer if needed
+      if (currentTotalSeats > 0 && visualizerRef.current) {
+        // Short delay to ensure state updates first
+        setTimeout(() => {
+          if (visualizerRef.current) {
+            // Also notify the user about the seats configuration
             toast.info(
               <div className="flex flex-col">
                 <span className="font-medium">Seat Configuration Ready</span>
-                <span className="text-xs">{totalSeats} seats available to configure</span>
+                <span className="text-xs">{currentTotalSeats} seats available to configure</span>
               </div>,
               { duration: 3000 }
             );
           }
-        }
-      }, 300);
+        }, 300);
+      }
     }
   };
   
@@ -662,11 +690,6 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   useEffect(() => {
     if (sharePercentage !== shareRatio) {
       setShareRatio(sharePercentage);
-      
-      // Also update the visualizer if it exists
-      if (visualizerRef.current) {
-        visualizerRef.current.updateRatio(sharePercentage);
-      }
     }
   }, [sharePercentage, shareRatio]);
 
@@ -729,22 +752,154 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     }
   }, [showSeatVisualizer]);
   
-  // Function to handle seat split configuration changes
-  const handleSplitConfigurationChange = (config: SplitConfiguration) => {
+  // Function to convert from SeatConfiguration to OldSplitConfiguration
+  const convertToOldFormat = (seatConfig: SeatConfiguration): OldSplitConfiguration => {
+    // Default to horizontal split for backward compatibility
+    const splitOrientation: 'horizontal' | 'vertical' = 'horizontal';
+    
+    // Calculate ratio based on selection percentage
+    const splitRatio = `${seatConfig.selectionPercentage}/${100-seatConfig.selectionPercentage}`;
+    
+    // Create allocatedSeats with all selected seats in front section for horizontal split
+    const allocatedSeats = {
+      front: [...seatConfig.selectedSeats],
+      back: [] as string[],
+      left: [] as string[],
+      right: [] as string[]
+    };
+    
+    return {
+      jetId: seatConfig.jetId,
+      splitOrientation,
+      splitRatio,
+      splitPercentage: seatConfig.selectionPercentage,
+      allocatedSeats
+    };
+  };
+
+  // Function to convert from OldSplitConfiguration to SeatConfiguration
+  const convertToNewFormat = (oldConfig: OldSplitConfiguration): SeatConfiguration => {
+    return {
+      jetId: oldConfig.jetId,
+      selectedSeats: [
+        ...(oldConfig.allocatedSeats.front || []),
+        ...(oldConfig.allocatedSeats.left || [])
+      ],
+      totalSeats: form.watch('total_seats') || 0,
+      totalSelected: (
+        (oldConfig.allocatedSeats.front?.length || 0) + 
+        (oldConfig.allocatedSeats.left?.length || 0)
+      ),
+      selectionPercentage: oldConfig.splitPercentage
+    };
+  };
+
+  // Function to handle seat configuration changes
+  const handleSplitConfigurationChange = (config: SeatConfiguration) => {
     console.log('Visualizer sent new configuration:', config);
     
-    setSplitConfiguration(config);
-    form.setValue('seat_split_configuration', config);
+    // Convert the new format to the old format for backward compatibility
+    const oldFormatConfig = convertToOldFormat(config);
     
-    // Sync layout info whenever the configuration changes
-    syncLayoutWithForm();
+    setSplitConfiguration(oldFormatConfig);
+    form.setValue('seat_split_configuration', oldFormatConfig);
     
-    // Update the share ratio in the form if different
-    if (config.splitPercentage !== shareRatio) {
-      console.log(`Updating share ratio from ${shareRatio} to ${config.splitPercentage}`);
-      setShareRatio(config.splitPercentage);
-      updateShareAmount(config.splitPercentage);
+    // Update the share ratio based on the seat selection percentage
+    const newRatio = config.selectionPercentage > 0 ? config.selectionPercentage : shareRatio;
+    
+    if (newRatio !== shareRatio) {
+      console.log(`Updating share ratio from ${shareRatio} to ${newRatio}`);
+      setShareRatio(newRatio);
+      
+      // Update the form's requested share amount based on the new ratio
+      updateShareAmount(newRatio);
+      
+      // Update the slider UI to reflect the new ratio
+      const slider = document.getElementById('share-ratio');
+      if (slider) {
+        // Attempt to programmatically update the slider
+        try {
+          const event = new Event('input', { bubbles: true });
+          Object.defineProperty(event, 'target', { value: slider });
+          slider.dispatchEvent(event);
+        } catch (error) {
+          console.error('Error updating slider:', error);
+        }
+      }
     }
+  };
+  
+  // Update the visualizer when total seats changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      // Handle changes to total seats
+      if (name === 'total_seats' && showSeatVisualizer && visualizerRef.current) {
+        const newTotalSeats = value.total_seats as number;
+        
+        if (newTotalSeats > 0) {
+          // Small delay to ensure state updates
+          setTimeout(() => {
+            if (visualizerRef.current) {
+              // Reset the visualizer with the new total seats
+              visualizerRef.current.closeVisualizer();
+              
+              // Reset any existing split configuration
+              setSplitConfiguration(null);
+              
+              // Small delay to ensure state updates
+              setTimeout(() => {
+                if (visualizerRef.current) {
+                  visualizerRef.current.openVisualizer();
+                  toast.info(
+                    <div className="flex flex-col">
+                      <span className="font-medium">Seat Configuration Updated</span>
+                      <span className="text-xs">{newTotalSeats} seats available to configure</span>
+                    </div>,
+                    { duration: 2000 }
+                  );
+                }
+              }, 300);
+            }
+          }, 100);
+        }
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, showSeatVisualizer]);
+  
+  // Function to update seat selection based on ratio
+  const updateSeatSelectionByRatio = (ratio: number) => {
+    if (!visualizerRef.current || !totalSeats) return;
+
+    // Get layout info from visualizer
+    const layoutInfo = visualizerRef.current.getLayoutInfo();
+    if (!layoutInfo || !layoutInfo.totalSeats) return;
+
+    // Calculate how many seats should be selected based on ratio
+    const totalSeatsCount = layoutInfo.totalSeats;
+    const targetSeatCount = Math.max(0, Math.min(
+      totalSeatsCount, 
+      Math.round((ratio / 100) * totalSeatsCount)
+    ));
+
+    // Get all possible seat IDs
+    const allSeatIds: string[] = [];
+    for (let row = 0; row < layoutInfo.rows; row++) {
+      for (let col = 0; col < layoutInfo.seatsPerRow; col++) {
+        const rowLetter = String.fromCharCode(65 + row); // A, B, C, etc.
+        allSeatIds.push(`${rowLetter}${col + 1}`);
+      }
+    }
+
+    // Take the first N seats (could be improved to select specific sections)
+    const seatsToSelect = allSeatIds.slice(0, targetSeatCount);
+    
+    // Update the visualizer
+    visualizerRef.current.selectSeats(seatsToSelect);
+    
+    // Log what happened
+    console.log(`Updated selection to ${seatsToSelect.length} seats based on ratio ${ratio}%`);
   };
   
   // Show loading state while authentication is in progress
@@ -788,50 +943,59 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md">
-        {/* Flight Date and Time */}
-        <FormField
-          control={form.control}
-          name="flight_date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel htmlFor="flight_date">Flight Date & Time</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      id="flight_date"
-                      variant="outline"
-                      className={cn(
-                        "pl-3 text-left font-normal w-full md:w-auto",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Select date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    initialFocus
-                    disabled={(date) => date < new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                Select the date of your flight (future dates only)
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Flight Date and Departure Time */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="flight_date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel htmlFor="flight_date">Flight Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        id="flight_date"
+                        variant="outline"
+                        className={cn(
+                          "pl-3 text-left font-normal w-full",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Select date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Select the date of your flight (future dates only)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormDateTimePicker
+            name="departure_time"
+            label="Departure Time"
+            description="Select the specific departure time"
+            placeholder="Select time"
+          />
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Departure Location with Autocomplete */}
@@ -1034,19 +1198,34 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
           </p>
           
           {/* Seat Split Ratio Slider */}
-          <div className="mt-4">
+          <div className="mt-6">
             <div className="flex items-center justify-between mb-2">
-              <FormLabel htmlFor="share-ratio" className="text-sm font-medium">
+              <FormLabel htmlFor="share-ratio" className="text-sm font-medium tracking-wide">
                 Share Ratio
               </FormLabel>
-              <div className="bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="bg-gradient-to-r from-blue-600/20 to-blue-900/40 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-semibold shadow-inner border border-blue-500/10">
                 {shareRatio}% / {100 - shareRatio}%
               </div>
             </div>
             
-            <div className="flex justify-between mb-2">
-              <div className="bg-blue-100 dark:bg-blue-900 h-2 rounded-l-full" style={{ width: `${shareRatio}%` }}></div>
-              <div className="bg-amber-100 dark:bg-amber-900 h-2 rounded-r-full" style={{ width: `${100 - shareRatio}%` }}></div>
+            {/* Premium visualization bar */}
+            <div className="h-3 rounded-full bg-gray-800/50 p-0.5 border border-gray-700/50 shadow-inner mb-3 relative overflow-hidden">
+              <div className="flex h-full rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-l-full transition-all duration-300 ease-out shadow-md"
+                  style={{ width: `${shareRatio}%` }}
+                />
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-r-full transition-all duration-300 ease-out shadow-md"
+                  style={{ width: `${100 - shareRatio}%` }}
+                />
+              </div>
+              
+              {/* Split indicator line */}
+              <div 
+                className="absolute top-[-5px] bottom-[-5px] w-0.5 bg-white shadow-lg z-10 transition-all duration-300 ease-out"
+                style={{ left: `calc(${shareRatio}% - 1px)` }}
+              />
             </div>
             
             <Slider 
@@ -1057,12 +1236,18 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               step={1} 
               value={[shareRatio]}
               onValueChange={(values) => {
-                console.log(`Slider changed to ${values[0]}%`);
-                updateShareAmount(values[0]);
+                const newRatio = values[0];
+                console.log(`Slider changed to ${newRatio}%`);
+                updateShareAmount(newRatio);
+                
+                // Update seat selection based on ratio
+                if (visualizerRef.current && showSeatVisualizer) {
+                  updateSeatSelectionByRatio(newRatio);
+                }
               }}
               className="mt-2"
             />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-gray-400 mt-1 px-1 font-medium">
               <span>You: 1%</span>
               <span>50/50</span>
               <span>You: 99%</span>
@@ -1089,10 +1274,8 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 ref={visualizerRef}
                 jetId={selectedJetId}
                 onChange={handleSplitConfigurationChange}
-                initialSplit={splitConfiguration || undefined}
-                totalSeats={totalSeats}
-                seatRatio={shareRatio}
-                onRatioChange={(ratio) => updateShareAmount(ratio)}
+                initialSelection={splitConfiguration ? convertToNewFormat(splitConfiguration) : undefined}
+                totalSeats={form.getValues('total_seats')}
               />
             </div>
           )}
@@ -1158,11 +1341,6 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                           if (totalFlightCost > 0) {
                             const newRatio = Math.min(99, Math.max(1, Math.round((requestedAmount / totalFlightCost) * 100)));
                             setShareRatio(newRatio);
-                            
-                            // Also update visualizer
-                            if (visualizerRef.current) {
-                              visualizerRef.current.updateRatio(newRatio);
-                            }
                           }
                         }}
                       />

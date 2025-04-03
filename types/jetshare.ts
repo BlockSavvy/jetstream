@@ -12,6 +12,7 @@ export interface JetShareOffer {
   id: string;
   user_id: string;
   flight_date: string;
+  departure_time: string;
   departure_location: string;
   arrival_location: string;
   total_flight_cost: number;
@@ -65,6 +66,7 @@ export interface JetShareSettings {
 // Define input types for API requests
 export interface CreateJetShareOfferInput {
   flight_date: string;
+  departure_time: string;
   departure_location: string;
   arrival_location: string;
   total_flight_cost: number;

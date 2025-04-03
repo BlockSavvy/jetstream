@@ -95,12 +95,14 @@ function ConciergeChat() {
 When integrating with the AI Concierge, use these prompt examples to help the AI understand and describe seat configurations:
 
 **For describing configurations:**
+
 ```
 The jet has a {splitOrientation} split with a {splitRatio} ratio. 
 This means there are {front.length} seats in the front section and {back.length} seats in the back section.
 ```
 
 **For suggesting the visualizer:**
+
 ```
 I can help you visualize this better. Would you like me to open the seat configuration tool so you can see exactly how the seats are arranged?
 ```
@@ -122,6 +124,7 @@ The seat configuration is stored in a JSON-friendly format that's compatible wit
 ```
 
 This structure enables several powerful features:
+
 - AI Concierge can describe the configuration conversationally
 - Configuration can be embedded and used for intelligent matching
 - Users can understand exactly which seats they're sharing
@@ -129,6 +132,7 @@ This structure enables several powerful features:
 ## Error Handling
 
 The component handles various error states gracefully:
+
 - If jet data cannot be fetched, it will use default values
 - If layout information is incomplete, it provides reasonable fallbacks
 - The component displays appropriate error messages when needed
@@ -145,4 +149,4 @@ The component handles various error states gracefully:
 - Support for custom seat layouts beyond the standard grid
 - Enhanced visualization of luxury jet configurations
 - Mobile gesture optimizations for drag interactions
-- Direct integration with specific jet model specifications 
+- Direct integration with specific jet model specifications
