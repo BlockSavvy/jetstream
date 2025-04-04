@@ -14,11 +14,13 @@ Both branches contain identical UI components and API endpoints, with the only d
 ### 1. AI Inference Clients
 
 **OpenAI Implementation**: `app/lib/ai/OpenAIInferenceClient.ts`
+
 - Implements the AIInferenceClient interface for OpenAI GPT-4 Turbo
 - Handles both streaming and non-streaming completions
 - Supports multiple OpenAI models (gpt-4-turbo, gpt-4, gpt-3.5-turbo)
 
 **xAI Grok Implementation**: `app/lib/ai/XAIGrokInferenceClient.ts`
+
 - Implements the AIInferenceClient interface for xAI Grok-3
 - Handles both streaming and non-streaming completions
 - Supports multiple Grok models (grok-3, grok-2-latest, grok-1)
@@ -26,6 +28,7 @@ Both branches contain identical UI components and API endpoints, with the only d
 ### 2. Frontend Components
 
 **AIConcierge UI**: `app/jetshare/components/AIConcierge.tsx`
+
 - Floating button in bottom-right corner for launching the concierge
 - Slide-up drawer for chat interface
 - Real-time streaming responses
@@ -35,6 +38,7 @@ Both branches contain identical UI components and API endpoints, with the only d
 ### 3. Backend API Routes
 
 **Main API Endpoints**:
+
 - `/api/concierge/route.ts`: Main non-streaming API endpoint
 - `/api/concierge/stream/route.ts`: Streaming API endpoint for real-time responses
 - `/api/concierge/schedule/route.ts`: API for scheduling tasks and reminders
@@ -42,6 +46,7 @@ Both branches contain identical UI components and API endpoints, with the only d
 ### 4. Database Schema
 
 **Migration File**: `migrations/concierge_tables.sql`
+
 - `concierge_conversations`: Stores conversation history
 - `concierge_scheduled_tasks`: Stores scheduled tasks and reminders
 - Includes RLS policies for security
@@ -74,13 +79,12 @@ Both branches contain identical UI components and API endpoints, with the only d
 
 2. **Environment Variables**:
    - For OpenAI implementation:
-     ```
+
      OPENAI_API_KEY=your_openai_api_key
-     ```
+
    - For xAI Grok implementation:
-     ```
+
      XAI_GROK_API_KEY=your_xai_grok_api_key
-     ```
 
 ## Testing Instructions
 
@@ -124,4 +128,4 @@ Both branches contain identical UI components and API endpoints, with the only d
 - Both implementations use the same abstraction layer for AI inference
 - The architecture is designed for easy switching between different LLM providers
 - Security is enforced through Supabase Row Level Security policies
-- Mobile-first design ensures good performance on smaller screens 
+- Mobile-first design ensures good performance on smaller screens

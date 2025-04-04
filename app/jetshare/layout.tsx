@@ -336,7 +336,7 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
   }, [user, authLoading, needsAuth, router, loading, pathname, isPaymentPath]);
   
   return (
-    <main className={`min-h-screen bg-background ${isMobile ? 'jetstream-mobile' : ''}`}>
+    <main className={`min-h-screen bg-background dark ${isMobile ? 'jetstream-mobile' : ''}`}>
       <JetShareHeader />
       <div className={`jetshare-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
         {(!needsAuth || user || loading) ? children : null}

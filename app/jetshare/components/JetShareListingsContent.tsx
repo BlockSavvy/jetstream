@@ -24,7 +24,8 @@ import {
   Users,
   MoreVertical,
   LoaderCircle,
-  RefreshCw
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +71,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@supabase/supabase-js';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatTime } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -873,9 +874,15 @@ export default function JetShareListingsContent() {
             <div>
               <CardTitle className="text-lg">{offer.departure_location} to {offer.arrival_location}</CardTitle>
               <CardDescription>
-                <div className="flex items-center mt-1">
-                  <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
-                  <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
+                <div className="flex flex-col mt-1">
+                  <div className="flex items-center">
+                    <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
+                    <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center mt-1">
+                    <Clock className="h-3.5 w-3.5 mr-1 opacity-70" />
+                    <span>{offer.departure_time ? formatTime(offer.departure_time) : formatTime(offer.flight_date)}</span>
+                  </div>
                 </div>
               </CardDescription>
             </div>

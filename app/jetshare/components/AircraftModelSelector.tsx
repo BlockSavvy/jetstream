@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Check, ChevronsUpDown, Loader2, Search, X, Plane } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,6 +17,8 @@ import {
 } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Combobox } from '@headlessui/react';
+import { createPortal } from 'react-dom';
 
 // Types for aircraft models
 interface AircraftModel {
@@ -31,23 +35,32 @@ interface AircraftModel {
   is_popular?: boolean;
 }
 
-interface AircraftModelSelectorProps {
+// Server-friendly props interface
+export interface AircraftModelSelectorProps {
   value: string;
-  onChange: (value: string, seatCapacity?: number) => void;
-  onCustomChange?: (value: string) => void;
   disabled?: boolean;
   className?: string;
   id?: string;
+  onChangeValue?: string; // Serializable placeholder
+  onChangeSeatCapacity?: number; // Serializable placeholder
+  onCustomChangeValue?: string; // Serializable placeholder
 }
 
-export default function AircraftModelSelector({
+// Client-only props interface with function handlers
+interface ClientAircraftModelSelectorProps extends Omit<AircraftModelSelectorProps, 'onChangeValue' | 'onChangeSeatCapacity' | 'onCustomChangeValue'> {
+  onChange: (value: string, seatCapacity?: number) => void;
+  onCustomChange?: (value: string) => void;
+}
+
+// The actual component implementation
+function AircraftModelSelectorImpl({
   value,
   onChange,
   onCustomChange,
   disabled = false,
   className,
   id,
-}: AircraftModelSelectorProps) {
+}: ClientAircraftModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -59,6 +72,62 @@ export default function AircraftModelSelector({
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [directFetchAttempted, setDirectFetchAttempted] = useState(false);
+  
+  // Refs for positioning dropdown correctly
+  const inputRef = useRef<HTMLDivElement>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 0
+  });
+  
+  // Add state for portal container
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  
+  // Initialize portal container on mount
+  useEffect(() => {
+    // Check if document is available (only in browser)
+    if (typeof document !== 'undefined') {
+      // Create or find the portal container
+      let container = document.getElementById('dropdown-portal-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'dropdown-portal-container';
+        container.style.position = 'absolute';
+        container.style.top = '0';
+        container.style.left = '0';
+        container.style.width = '100%';
+        container.style.height = '0';
+        container.style.overflow = 'visible';
+        container.style.zIndex = '9999';
+        container.style.pointerEvents = 'none';
+        document.body.appendChild(container);
+      }
+      setPortalContainer(container);
+    }
+    
+    // Cleanup function to remove the container when component unmounts
+    return () => {
+      if (typeof document !== 'undefined' && !document.getElementById('keep-dropdown-portal')) {
+        const container = document.getElementById('dropdown-portal-container');
+        if (container && container.parentNode) {
+          container.parentNode.removeChild(container);
+        }
+      }
+    };
+  }, []);
+  
+  // Calculate dropdown position when opened
+  useEffect(() => {
+    if (open && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 4, // 4px gap
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [open]);
   
   // Separate function for direct fetch in case we need to retry 
   const directFetchAircraftModels = async () => {
@@ -314,9 +383,12 @@ export default function AircraftModelSelector({
   // Check if current value is "Other" and show custom input
   useEffect(() => {
     const isCustomModel = value && !aircraftModels.some(model => model.display_name === value);
-    setShowCustomInput(!!isCustomModel);
-    if (isCustomModel) {
+    // Special case for "Other (Custom Aircraft)" or any custom model not in our list
+    if (value === 'Other (Custom Aircraft)' || value === 'Custom Aircraft' || isCustomModel) {
+      setShowCustomInput(true);
       setCustomValue(value);
+    } else {
+      setShowCustomInput(false);
     }
   }, [value, aircraftModels]);
   
@@ -387,348 +459,255 @@ export default function AircraftModelSelector({
     }
   }, [aircraftModels, filteredModels, isLoading]);
   
+  // Add a debug log function to track image loading
+  const debugImageLoading = (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[ImageDebug] ${message}`, data || '');
+    }
+  };
+
+  // Modify the image error handling to limit retries
+  const getJetImagePath = (model: AircraftModel): string => {
+    // Extract manufacturer and model components for path construction
+    const manufacturer = model.manufacturer.toLowerCase();
+    const manufacturerFirstWord = manufacturer.split(' ')[0];
+    const displayName = model.display_name.toLowerCase().replace(/\s+/g, '-');
+    const modelName = model.model.toLowerCase().replace(/\s+/g, '-');
+    
+    // Special case map for known model paths
+    const specialCaseMap: Record<string, string> = {
+      'king-air-350i': '/images/jets/beechcraft/king-air-350i.jpg', // Note: no 'beechcraft-' prefix
+      'global-7500': '/images/jets/bombardier/global-7500.jpg',
+      'global-6000': '/images/jets/bombardier/global-6000.jpg',
+      'global-5000': '/images/jets/bombardier/global-5000.jpg',
+      'challenger-350': '/images/jets/bombardier/challenger-350.jpg',
+      'challenger-650': '/images/jets/bombardier/challenger-650.jpg',
+      'g650': '/images/jets/gulfstream/g650.jpg',
+      'citation-latitude': '/images/jets/cessna/citation-latitude.jpg',
+      'phenom-300e': '/images/jets/embraer/phenom-300e.jpg'
+    };
+    
+    // Check special case map first
+    if (specialCaseMap[modelName]) {
+      debugImageLoading(`Using special case path for ${modelName}`, specialCaseMap[modelName]);
+      return specialCaseMap[modelName];
+    }
+    
+    if (specialCaseMap[displayName]) {
+      debugImageLoading(`Using special case path for ${displayName}`, specialCaseMap[displayName]);
+      return specialCaseMap[displayName];
+    }
+    
+    // Default path construction
+    return `/images/jets/${manufacturerFirstWord}/${modelName}.jpg`;
+  };
+  
   return (
-    <div className={className}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
+    <div className={cn("relative w-full", className)}>
+      <Combobox
+        value={value}
+        onChange={(newValue: string) => {
+          const model = aircraftModels.find(m => m.display_name === newValue);
+          onChange(newValue, model?.seat_capacity);
+        }}
+      >
+        <div ref={inputRef} className="relative w-full cursor-default overflow-hidden rounded-lg border border-gray-600 dark:border-gray-600 text-left focus:outline-none">
+          <Combobox.Input
             id={id}
-            className={cn(
-              "w-full justify-between font-normal",
-              !value && "text-muted-foreground"
-            )}
-            disabled={disabled || isLoading}
+            className="w-full pl-3 pr-10 py-2 text-white dark:text-white bg-gray-700/70 dark:bg-gray-700/90 border-none focus:ring-0 outline-none font-medium"
+            placeholder="Select aircraft model"
+            displayValue={(selected: string) => selected || ""}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 100)} // Delay to allow for selection
+            autoComplete="off"
+          />
+          <Combobox.Button 
+            className="absolute inset-y-0 right-0 flex items-center pr-2"
+            onClick={() => setOpen(!open)}
           >
-            {isLoading ? (
-              <div className="flex items-center">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>Loading aircraft models...</span>
-              </div>
-            ) : error ? (
-              <div className="flex items-center text-red-500">
-                <span>{error}</span>
-              </div>
-            ) : showCustomInput ? (
-              <span>{customValue || 'Custom Aircraft'}</span>
-            ) : value ? (
-              <div className="flex items-center">
-                {(() => {
-                  const selectedModel = aircraftModels.find(m => m.display_name === value);
-                  if (selectedModel?.image_url) {
-                    return (
-                      <div className="mr-2 h-5 w-5 relative overflow-hidden rounded-sm">
-                        <Image 
-                          src={selectedModel.thumbnail_url || selectedModel.image_url || "/images/placeholder-jet.jpg"}
-                          alt={selectedModel.display_name}
-                          width={20}
-                          height={20}
-                          className="object-cover"
-                          onError={(e) => {
-                            // Fall back to a placeholder image
-                            (e.target as HTMLImageElement).src = "/images/placeholder-jet.jpg";
-                          }}
-                        />
-                      </div>
-                    );
+            <ChevronsUpDown
+              className="h-4 w-4 text-gray-400 dark:text-gray-400"
+              aria-hidden="true"
+            />
+          </Combobox.Button>
+        </div>
+        {open && (
+          <>
+            {portalContainer && createPortal(
+              <div 
+                className="pointer-events-auto fixed top-0 left-0 w-full h-full z-[99999]"
+                onClick={(e) => {
+                  // Close dropdown when clicking outside
+                  if (e.target === e.currentTarget) {
+                    setOpen(false);
                   }
-                  return null;
-                })()}
-                <span>{value}</span>
-              </div>
-            ) : (
-              <span>Select an aircraft model</span>
-            )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
-          <Command shouldFilter={false}>
-            <div className="flex items-center border-b px-3">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-              <CommandInput 
-                placeholder="Search aircraft..." 
-                value={search}
-                onValueChange={setSearch}
-                className="flex-1"
-              />
-              {search && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => setSearch('')}
-                  className="h-6 w-6"
+                }}
+                style={{backgroundColor: 'rgba(0,0,0,0.01)'}}
+              >
+                <div 
+                  className="absolute shadow-xl border border-gray-700 rounded-md overflow-hidden"
+                  style={{
+                    top: `${dropdownPosition.top}px`,
+                    left: `${dropdownPosition.left}px`,
+                    width: `${dropdownPosition.width}px`,
+                    maxHeight: '60vh',
+                    overflowY: 'auto',
+                    backgroundColor: '#1f2937', // gray-800
+                    zIndex: 99999
+                  }}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            
-            {/* Manufacturer filter buttons */}
-            {manufacturers.length > 0 && (
-              <div className="px-2 py-2 border-b flex gap-1 flex-wrap">
-                <Badge 
-                  variant={selectedManufacturer === null ? "default" : "outline"}
-                  className="cursor-pointer hover:bg-accent"
-                  onClick={() => setSelectedManufacturer(null)}
-                >
-                  All
-                </Badge>
-                {manufacturers.map(manufacturer => (
-                  <Badge 
-                    key={manufacturer}
-                    variant={selectedManufacturer === manufacturer ? "default" : "outline"}
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => setSelectedManufacturer(prev => prev === manufacturer ? null : manufacturer)}
-                  >
-                    {manufacturer}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            
-            <CommandEmpty>
-              {search ? (
-                <>
-                  <p className="py-3 px-4 text-center text-sm">No matching aircraft found</p>
-                  <CommandItem 
-                    value="custom"
-                    onSelect={() => handleSelect('custom')}
-                    className="border-t cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>Use "{search}" as custom model</span>
-                      <span className="text-xs opacity-70">Custom</span>
-                    </div>
-                  </CommandItem>
-                </>
-              ) : (
-                <div className="py-6 text-center">
-                  <p className="text-sm text-muted-foreground mb-4">No aircraft models available</p>
-                  {error && (
-                    <Button 
-                      onClick={directFetchAircraftModels} 
-                      variant="outline" 
-                      size="sm"
-                      className="mx-auto"
-                    >
-                      <Loader2 className="mr-2 h-4 w-4" /> Retry Loading Models
-                    </Button>
-                  )}
-                </div>
-              )}
-            </CommandEmpty>
-            
-            <CommandList>
-              <ScrollArea className="h-[300px] overflow-auto">
-                {/* Debug information - will help diagnose issue */}
-                <div className="px-4 py-2 text-xs text-muted-foreground border-b">
-                  <div>Models loaded: {aircraftModels.length}</div>
-                  <div>Filtered models: {filteredModels.length}</div>
-                  <div>Search term: {search || "none"}</div>
-                  <div>Selected manufacturer: {selectedManufacturer || "none"}</div>
-                </div>
-
-                {/* Always show models if they're loaded, regardless of filters */}
-                {aircraftModels.length > 0 && filteredModels.length === 0 && !search && !selectedManufacturer && (
-                  <CommandGroup heading="All Available Models">
-                    {aircraftModels.map(model => (
-                      <CommandItem
-                        key={model.id}
-                        value={model.display_name}
-                        onSelect={() => handleSelect(model.display_name)}
-                        className="flex items-center justify-between cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-100 dark:bg-gray-800">
-                            <Plane className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{model.display_name}</span>
-                            <span className="text-xs text-muted-foreground">{model.seat_capacity} seats</span>
-                          </div>
-                        </div>
-                        
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === model.display_name ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-
-                {/* Fallback: Show all models if no filters are applied and popular section is empty */}
-                {aircraftModels.length > 0 && (!search && !selectedManufacturer) && 
-                 !aircraftModels.some(model => model.is_popular) && (
-                  <CommandGroup heading="All Aircraft Models">
-                    {aircraftModels.map(model => (
-                      <CommandItem
-                        key={model.id}
-                        value={model.display_name}
-                        onSelect={() => handleSelect(model.display_name)}
-                        className="flex items-center justify-between cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          {(model.image_url || model.thumbnail_url) ? (
-                            <div className="h-8 w-12 relative overflow-hidden rounded-sm">
-                              <Image 
-                                src={model.thumbnail_url || model.image_url || "/images/placeholder-jet.jpg"}
-                                alt={model.display_name}
-                                fill
-                                className="object-cover"
-                                onError={(e) => {
-                                  // Fall back to a placeholder image
-                                  (e.target as HTMLImageElement).src = "/images/placeholder-jet.jpg";
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-100 dark:bg-gray-800">
-                              <Plane className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <span className="font-medium">{model.display_name}</span>
-                            <span className="text-xs text-muted-foreground">{model.seat_capacity} seats</span>
-                          </div>
-                        </div>
-                        
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === model.display_name ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-
-                {/* Popular models section */}
-                {!search && !selectedManufacturer && aircraftModels.some(model => model.is_popular) && (
-                  <CommandGroup heading="Popular Models">
-                    {aircraftModels
-                      .filter(model => model.is_popular)
-                      .map(model => (
-                        <CommandItem
+                  <div className="bg-gray-800 dark:bg-gray-800">
+                    {isLoading && (
+                      <div className="relative cursor-default select-none py-3 px-4 text-gray-300 dark:text-gray-300 flex items-center">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin text-amber-500" />
+                        <span>Loading aircraft models...</span>
+                      </div>
+                    )}
+                    
+                    {error && (
+                      <div className="relative cursor-default select-none py-3 px-4 text-red-400 dark:text-red-400">
+                        <span>Error: {error}</span>
+                      </div>
+                    )}
+                    
+                    {!isLoading && !error && filteredModels.length === 0 && search !== '' && (
+                      <div className="relative cursor-default select-none py-3 px-4 text-gray-300 dark:text-gray-300">
+                        <span>No aircraft models found.</span>
+                      </div>
+                    )}
+                    
+                    <div className="max-h-60 overflow-auto">
+                      {filteredModels.map((model) => (
+                        <div
                           key={model.id}
-                          value={model.display_name}
-                          onSelect={() => handleSelect(model.display_name)}
-                          className="flex items-center justify-between cursor-pointer"
+                          className={`relative cursor-pointer select-none py-3 pl-10 pr-4 hover:bg-gray-700 ${
+                            value === model.display_name ? 'bg-gray-700/60 text-amber-500' : 'text-gray-200'
+                          }`}
+                          onClick={() => {
+                            const newValue = model.display_name;
+                            onChange(newValue, model?.seat_capacity);
+                            setOpen(false);
+                          }}
                         >
-                          <div className="flex items-center gap-2">
-                            {(model.image_url || model.thumbnail_url) ? (
-                              <div className="h-8 w-12 relative overflow-hidden rounded-sm">
-                                <Image 
-                                  src={model.thumbnail_url || model.image_url || "/images/placeholder-jet.jpg"}
+                          <div className="flex items-center">
+                            {/* Aircraft image */}
+                            <div className="mr-3 h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-700/50">
+                              {model.image_url || model.thumbnail_url ? (
+                                <img
+                                  src={model.thumbnail_url || model.image_url}
                                   alt={model.display_name}
-                                  fill
-                                  className="object-cover"
-                                  onError={(e) => {
-                                    // Fall back to a placeholder image
-                                    (e.target as HTMLImageElement).src = "/images/placeholder-jet.jpg";
+                                  className="h-full w-full object-cover"
+                                  onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                    e.currentTarget.src = "/images/placeholder-jet.jpg";
                                   }}
                                 />
-                              </div>
-                            ) : (
-                              <div className="h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-100 dark:bg-gray-800">
-                                <Plane className="h-5 w-5 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="flex flex-col">
-                              <span className="font-medium">{model.display_name}</span>
-                              <span className="text-xs text-muted-foreground">{model.seat_capacity} seats</span>
+                              ) : (
+                                // Attempt to find the image by trying multiple possible paths based on manufacturer and model
+                                (() => {
+                                  const imagePath = getJetImagePath(model);
+                                  return (
+                                    <img
+                                      src={imagePath}
+                                      alt={model.display_name}
+                                      className="h-full w-full object-cover"
+                                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                                        const target = e.target as HTMLImageElement;
+                                        const currentPath = target.src;
+                                        
+                                        // Prevent infinite retries by tracking attempts
+                                        const attempts = parseInt(target.dataset.attempts || '0', 10) + 1;
+                                        target.dataset.attempts = attempts.toString();
+                                        
+                                        // Stop after 3 attempts and use placeholder
+                                        if (attempts >= 3) {
+                                          debugImageLoading(`Max attempts reached for ${model.display_name}, using placeholder`, currentPath);
+                                          target.src = "/images/placeholder-jet.jpg";
+                                          target.onerror = null; // Prevent further errors
+                                          return;
+                                        }
+                                        
+                                        // Special handling for specific models to avoid loops
+                                        if (model.display_name === 'Beechcraft King Air 350i' || 
+                                            model.display_name === 'King Air 350i' ||
+                                            model.model === 'King Air 350i') {
+                                          debugImageLoading(`Special case for King Air 350i`, model.display_name);
+                                          target.src = "/images/placeholder-jet.jpg";
+                                          target.onerror = null; // Prevent further errors
+                                          return;
+                                        }
+                                        
+                                        // Special handling for "Other" models to prevent loops
+                                        if (model.display_name === 'Other (Custom Aircraft)' || 
+                                            model.manufacturer.toLowerCase() === 'other') {
+                                          debugImageLoading(`Using placeholder for custom aircraft`, model.display_name);
+                                          target.src = "/images/placeholder-jet.jpg";
+                                          target.onerror = null; // Prevent further errors
+                                          return;
+                                        }
+                                        
+                                        // Generate potential fallback paths in order of preference
+                                        const fallbackPaths = [
+                                          `/images/jets/${model.manufacturer.toLowerCase()}/${model.model.toLowerCase()}.jpg`,
+                                          `/images/jets/${model.manufacturer.toLowerCase()}/${model.display_name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+                                          `/images/jets/${model.manufacturer.toLowerCase().split(' ')[0]}/${model.model.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+                                          `/images/jets/${model.manufacturer.toLowerCase().split(' ')[0]}/${model.display_name.toLowerCase().replace(/\s+/g, '-')}.jpg`,
+                                          `/images/placeholder-jet.jpg`
+                                        ];
+                                        
+                                        // Find the current path index in our fallbacks
+                                        let currentIndex = fallbackPaths.findIndex(path => 
+                                          currentPath.endsWith(path));
+                                        
+                                        // If not found in fallbacks or it's the last path, use placeholder
+                                        if (currentIndex === -1 || currentIndex === fallbackPaths.length - 1) {
+                                          debugImageLoading(`Using placeholder after fallback attempts for ${model.display_name}`, { currentPath, attempts });
+                                          target.src = "/images/placeholder-jet.jpg";
+                                          target.onerror = null; // Prevent further errors
+                                        } else {
+                                          // Try the next fallback path
+                                          const nextPath = fallbackPaths[currentIndex + 1];
+                                          debugImageLoading(`Trying next path for ${model.display_name}`, { from: currentPath, to: nextPath, attempts });
+                                          target.src = nextPath;
+                                        }
+                                      }}
+                                    />
+                                  );
+                                })()
+                              )}
+                            </div>
+                            <div>
+                              <span
+                                className={`block truncate font-medium ${
+                                  value === model.display_name ? 'text-amber-400 drop-shadow-sm' : ''
+                                }`}
+                              >
+                                {model.display_name}
+                              </span>
+                              <span className="text-xs text-gray-400 dark:text-gray-400">
+                                {model.seat_capacity} seats
+                              </span>
                             </div>
                           </div>
                           
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              value === model.display_name ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
-                )}
-                
-                {/* All models or filtered models */}
-                {(search || selectedManufacturer) && filteredModels.length > 0 && (
-                  <CommandGroup heading={search || selectedManufacturer ? 'Search Results' : 'All Models'}>
-                    {filteredModels.map(model => (
-                      <CommandItem
-                        key={model.id}
-                        value={model.display_name}
-                        onSelect={() => handleSelect(model.display_name)}
-                        className="flex items-center justify-between cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          {(model.image_url || model.thumbnail_url) ? (
-                            <div className="h-8 w-12 relative overflow-hidden rounded-sm">
-                              <Image 
-                                src={model.thumbnail_url || model.image_url || "/images/placeholder-jet.jpg"}
-                                alt={model.display_name}
-                                fill
-                                className="object-cover"
-                                onError={(e) => {
-                                  // Fall back to a placeholder image
-                                  (e.target as HTMLImageElement).src = "/images/placeholder-jet.jpg";
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <div className="h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-100 dark:bg-gray-800">
-                              <Plane className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <span className="font-medium">{model.display_name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {model.seat_capacity} seats
-                              {model.range_nm && ` • ${model.range_nm} nm range`}
+                          {value === model.display_name && (
+                            <span
+                              className="absolute inset-y-0 left-0 flex items-center pl-3 text-amber-500"
+                            >
+                              <Check className="h-4 w-4" aria-hidden="true" />
                             </span>
-                          </div>
-                        </div>
-                        
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            value === model.display_name ? "opacity-100" : "opacity-0"
                           )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )}
-                
-                {/* Custom option */}
-                <CommandGroup heading="Custom">
-                  <CommandItem 
-                    value="custom"
-                    onSelect={() => handleSelect('custom')}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>Other (Custom Aircraft)</span>
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          showCustomInput ? "opacity-100" : "opacity-0"
-                        )}
-                      />
+                        </div>
+                      ))}
                     </div>
-                  </CommandItem>
-                </CommandGroup>
-              </ScrollArea>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                  </div>
+                </div>
+              </div>,
+              portalContainer
+            )}
+          </>
+        )}
+      </Combobox>
       
       {/* Custom input field that appears when "Other" is selected */}
       {showCustomInput && (
@@ -744,4 +723,56 @@ export default function AircraftModelSelector({
       {error && rescueButton}
     </div>
   );
+}
+
+// Public API - This is the component that gets exported and used
+export default function AircraftModelSelector(props: AircraftModelSelectorProps) {
+  // Use a client-side effect to handle the non-serializable callbacks
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure component only renders on client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Don't render until client-side to avoid hydration issues
+  if (!mounted) {
+    return <div className={props.className || "w-full h-10 bg-gray-700/70 rounded-lg animate-pulse"} />;
+  }
+  
+  // Transform serializable props to actual function handlers
+  const clientProps: ClientAircraftModelSelectorProps = {
+    ...props,
+    onChange: (value: string, seatCapacity?: number) => {
+      // Handle onChange in the client component
+      // For state management, you would typically use this with a useState hook in the parent
+      if (window) {
+        // Dispatch a custom event that can be listened to by parent components
+        window.dispatchEvent(new CustomEvent('aircraftModelChange', { 
+          detail: { value, seatCapacity } 
+        }));
+      }
+      
+      // Alternative approach: Use local storage for simple state persistence
+      try {
+        localStorage.setItem('selectedAircraftModel', value);
+        if (seatCapacity) {
+          localStorage.setItem('selectedAircraftCapacity', seatCapacity.toString());
+        }
+      } catch (e) {
+        console.error('Failed to store aircraft selection: ', e);
+      }
+    },
+    onCustomChange: props.onCustomChangeValue ? 
+      (value: string) => {
+        if (window) {
+          window.dispatchEvent(new CustomEvent('aircraftCustomChange', { 
+            detail: { value } 
+          }));
+        }
+      } : 
+      undefined
+  };
+  
+  return <AircraftModelSelectorImpl {...clientProps} />;
 } 

@@ -46,14 +46,23 @@ export async function POST(request: NextRequest) {
       return result;
     };
     
-    // Generate 5 sample offers with different dates
+    // Generate 5 sample offers with different dates and times
     for (let i = 0; i < 5; i++) {
       const flightDate = addDays(new Date(), 3 + i * 2);
+      
+      // Create a realistic departure time (between 6am and 8pm)
+      const hourOffset = Math.floor(Math.random() * 14) + 6; // Random hour between 6 and 20
+      const minuteOptions = [0, 15, 30, 45];
+      const minuteOffset = minuteOptions[Math.floor(Math.random() * minuteOptions.length)];
+      
+      const departureTime = new Date(flightDate);
+      departureTime.setHours(hourOffset, minuteOffset, 0, 0);
       
       // Create dummy test data that looks realistic
       const testOffer = {
         user_id: user.id,
         flight_date: flightDate.toISOString(),
+        departure_time: departureTime.toISOString(),
         departure_location: ['New York', 'Los Angeles', 'Chicago', 'Miami', 'Boston'][i % 5],
         arrival_location: ['London', 'Paris', 'Tokyo', 'Dubai', 'Singapore'][i % 5],
         total_flight_cost: 15000 + (i * 5000), // Varying costs

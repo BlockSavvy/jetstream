@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 
 // Global refresh lock to prevent multiple simultaneous refreshes
 let refreshInProgress = false;
@@ -35,6 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [sessionError, setSessionError] = useState<AuthSessionError | null>(null);
   const supabase = createClient();
+  const router = useRouter();
+  const { toast } = useToast();
 
   // Session refresh function
   const refreshSession = async (): Promise<boolean> => {
@@ -232,47 +236,112 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Initialize auth state on mount
+  // Function to handle session restoration
+  const handleSessionRestoration = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      setUser(session.user);
+      setLoading(false);
+      toast({
+        title: "Session restored",
+        description: "Your session has been restored successfully.",
+      });
+    } else {
+      setLoading(false);
+      
+      // Check if we're on a protected page before redirecting
+      // This prevents unnecessary redirects on public pages
+      const currentPath = window.location.pathname;
+      const protectedRoutes = [
+        '/dashboard',
+        '/jetshare/offer',
+        '/jetshare/offers',
+        '/account',
+        '/admin'
+      ];
+      
+      // Only redirect if on a protected route
+      const isProtectedRoute = protectedRoutes.some(route => 
+        currentPath.startsWith(route)
+      );
+      
+      if (isProtectedRoute) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to access this page.",
+          variant: "destructive",
+        });
+        
+        // Redirect to login with returnUrl
+        router.push(`/auth/login?returnUrl=${encodeURIComponent(currentPath)}`);
+      }
+    }
+  };
+
+  // Update the useEffect that tracks auth state:
   useEffect(() => {
-    const initializeAuth = async () => {
+    // Get initial session
+    const getInitialSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        setLoading(true);
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
-          setSessionError({ message: error.message });
-        } else if (data.session) {
-          setUser(data.session.user);
-          setSession(data.session);
+          setLoading(false);
+          return;
         }
-      } catch (e) {
-        console.error('Error initializing auth:', e);
-        setSessionError({ message: 'Failed to initialize authentication.' });
-      } finally {
+        
+        if (session) {
+          setUser(session.user);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Unexpected error getting session:', error);
         setLoading(false);
       }
     };
-
-    // Set up auth state listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log('Auth state changed:', event);
-        
-        if (newSession) {
-          setUser(newSession.user);
-          setSession(newSession);
-        } else if (event === 'SIGNED_OUT') {
+    
+    // Call the function
+    getInitialSession();
+    
+    // Set up the auth state change listener 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+          // User signed in
+          setUser(session.user);
+          localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+        } else {
+          // User signed out
           setUser(null);
-          setSession(null);
+          localStorage.removeItem('supabase.auth.token');
         }
+        setLoading(false);
       }
     );
-
-    initializeAuth();
-
-    // Clean up listener on unmount
+    
+    // Set up a visibility change listener to handle tab/window focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // When tab becomes visible again, check session
+        handleSessionRestoration();
+      }
+    };
+    
+    // Add event listener for page visibility
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Add event listener for page loads (after refresh)
+    window.addEventListener('load', handleSessionRestoration);
+    
+    // Cleanup
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription?.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('load', handleSessionRestoration);
     };
   }, []);
 

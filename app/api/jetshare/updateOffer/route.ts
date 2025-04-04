@@ -7,12 +7,30 @@ const updateOfferSchema = z.object({
   departure_location: z.string().min(1),
   arrival_location: z.string().min(1),
   flight_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  departure_time: z.string().datetime(),
   total_flight_cost: z.number().positive(),
   requested_share_amount: z.number().positive(),
   aircraft_model: z.string().optional(),
   total_seats: z.number().positive().optional(),
-  available_seats: z.number().positive().optional()
+  available_seats: z.number().positive().optional(),
+  split_configuration: z.any().optional(),
+  jet_id: z.string().uuid().optional()
 });
+
+interface UpdateOfferData {
+  flight_date?: string;
+  departure_time?: string;
+  departure_location?: string;
+  arrival_location?: string;
+  aircraft_model?: string;
+  jet_id?: string;
+  total_seats?: number;
+  available_seats?: number;
+  total_flight_cost?: number;
+  requested_share_amount?: number;
+  split_configuration?: any;
+  updated_at: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,11 +60,13 @@ export async function POST(request: NextRequest) {
       departure_location, 
       arrival_location, 
       flight_date, 
+      departure_time,
       total_flight_cost, 
       requested_share_amount,
       aircraft_model,
       total_seats,
-      available_seats
+      available_seats,
+      jet_id
     } = body;
     
     // Get the offer to verify ownership and status
@@ -82,19 +102,24 @@ export async function POST(request: NextRequest) {
     }
     
     // Update the offer
+    const updateData: UpdateOfferData = {
+      flight_date,
+      departure_time,
+      departure_location,
+      arrival_location,
+      aircraft_model,
+      jet_id: jet_id || null,
+      total_seats,
+      available_seats,
+      total_flight_cost,
+      requested_share_amount,
+      split_configuration: body.split_configuration || null,
+      updated_at: new Date().toISOString()
+    };
+    
     const { data: updatedOffer, error: updateError } = await supabase
       .from('jetshare_offers')
-      .update({
-        departure_location,
-        arrival_location,
-        flight_date,
-        total_flight_cost,
-        requested_share_amount,
-        aircraft_model,
-        total_seats,
-        available_seats,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', offer_id)
       .select()
       .single();
