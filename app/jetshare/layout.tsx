@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 const PROTECTED_ROUTES = [
   '/jetshare/dashboard',
   '/jetshare/listings/manage',
-  '/jetshare/offer'
+  '/jetshare/offer/edit',
+  '/jetshare/offer/new'
 ];
 
 export default function JetShareLayout({ children }: { children: ReactNode }) {
@@ -33,7 +34,10 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
   // Determine if current path needs authentication
   const isPaymentPath = pathname ? pathname.startsWith('/jetshare/payment/') : false;
   const isDashboardPath = pathname ? pathname.startsWith('/jetshare/dashboard') : false;
-  const isOfferPath = pathname ? pathname.startsWith('/jetshare/offer') : false;
+  const isOfferPath = pathname ? (
+    pathname.startsWith('/jetshare/offer/') && 
+    (pathname.includes('/new') || pathname.includes('/edit'))
+  ) : false;
   
   // NEVER require auth for payment paths - they'll handle their own auth
   const needsAuth = pathname ? (
