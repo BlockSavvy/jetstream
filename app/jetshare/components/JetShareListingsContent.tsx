@@ -97,6 +97,13 @@ interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
     manufacturer?: string;
     model?: string;
     image_url?: string;
+    images?: string[];
+    category?: string;
+    capacity?: number;
+    range_nm?: number;
+    cruise_speed_kts?: number;
+    tail_number?: string;
+    description?: string;
     [key: string]: any;
   };
 }
@@ -877,99 +884,55 @@ export default function JetShareListingsContent() {
   
   // Function to get a valid jet image URL with fallbacks
   const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
-    const aircraft_model = offer.aircraft_model || '';
-    
+    // Log debug information
     console.log('Offer debug for image URL:', {
       id: offer.id,
-      aircraft_model,
+      aircraft_model: offer.aircraft_model || '',
       jet_id: offer.jet_id,
-      image_url: offer.image_url,
       has_jet: !!offer.jet,
       jet_details: offer.jet ? {
         id: offer.jet.id,
-        manufacturer: offer.jet.manufacturer,
         model: offer.jet.model,
-        image_url: offer.jet.image_url
+        manufacturer: offer.jet.manufacturer,
+        image_url: offer.jet.image_url,
+        has_images_array: !!offer.jet.images && offer.jet.images.length > 0
       } : null
     });
     
-    // First, check if the offer has a direct image_url property
+    // Use proper cascading fallbacks in order of preference:
+    
+    // 1. First, check if the offer has a direct image_url property
     if (offer.image_url) {
       console.log(`Using direct image_url from offer: ${offer.image_url}`);
       return offer.image_url;
     }
     
-    // Second, check if the offer has a jet object with image_url
-    if (offer.jet && offer.jet.image_url) {
-      console.log(`Using image_url from jet object: ${offer.jet.image_url}`);
-      return offer.jet.image_url;
-    }
-    
-    // Third, try to construct a URL from the aircraft_model property
-    if (aircraft_model) {
-      // Map common model names to known image files
-      const modelImageMap: Record<string, string> = {
-        'PC-12NGX': '/images/jets/pilatus/PC24.jpg',
-        'PC-12': '/images/jets/pilatus/PC24.jpg',
-        'PC-24': '/images/jets/pilatus/PC24.jpg',
-        'King Air 350i': '/images/jets/beechcraft/KingAir350.jpg',
-        'King Air': '/images/jets/beechcraft/KingAir350.jpg',
-        'Gulfstream': '/images/jets/gulfstream/g600.jpg',
-        'Gulfstream G650': '/images/jets/gulfstream/g600.jpg',
-      };
-      
-      // Check if we have a direct mapping for this model
-      const modelName = aircraft_model.trim();
-      if (modelImageMap[modelName]) {
-        console.log(`Using mapped image path for ${modelName}: ${modelImageMap[modelName]}`);
-        return modelImageMap[modelName];
+    // 2. Next, try to get the image from the jet relation
+    if (offer.jet) {
+      // 2a. Check for direct image_url on the jet
+      if (offer.jet.image_url) {
+        console.log(`Using image_url from jet object: ${offer.jet.image_url}`);
+        return offer.jet.image_url;
       }
       
-      // Try manufacturer detection (less likely to work but worth a try)
-      const manufacturerDetectionMap: Record<string, string> = {
-        'Pilatus': 'pilatus',
-        'PC': 'pilatus',
-        'Beechcraft': 'beechcraft',
-        'King': 'beechcraft',
-        'Gulfstream': 'gulfstream',
-        'G': 'gulfstream',
-        'Cessna': 'cessna',
-        'Citation': 'cessna',
-        'Bombardier': 'bombardier',
-        'Learjet': 'bombardier',
-        'Challenger': 'bombardier',
-        'Global': 'bombardier',
-        'Embraer': 'embraer',
-        'Phenom': 'embraer',
-        'Legacy': 'embraer',
-        'Dassault': 'dassault',
-        'Falcon': 'dassault',
-        'HondaJet': 'hondajet',
-        'Honda': 'hondajet',
-      };
-      
-      // Try to find a manufacturer match
-      let manufacturer = '';
-      const modelWords = aircraft_model.split(' ');
-      for (const word of modelWords) {
-        if (manufacturerDetectionMap[word]) {
-          manufacturer = manufacturerDetectionMap[word];
-          break;
-        }
+      // 2b. Check for images array on the jet
+      if (offer.jet.images && offer.jet.images.length > 0) {
+        console.log(`Using first image from jet.images array: ${offer.jet.images[0]}`);
+        return offer.jet.images[0];
       }
       
-      // If we found a manufacturer, try common filenames
-      if (manufacturer) {
-        // Try simplified name with just the first segment (e.g., "PC24" from "PC-24 NGX")
-        const simplifiedName = modelName.split(' ')[0].replace(/[^\w]/g, '');
-        const simplifiedUrl = `/images/jets/${manufacturer}/${simplifiedName}.jpg`;
-        console.log(`Using simplified path: ${simplifiedUrl}`);
-        return simplifiedUrl;
+      // 2c. Construct path from manufacturer and model if available
+      if (offer.jet.manufacturer && offer.jet.model) {
+        const manufacturer = offer.jet.manufacturer.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const model = offer.jet.model.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const path = `/images/jets/${manufacturer}/${model}.jpg`;
+        console.log(`Constructed path from jet manufacturer/model: ${path}`);
+        return path;
       }
     }
     
-    // Final fallback
-    console.log('No image path found, using placeholder');
+    // 3. Final fallback - use the placeholder image
+    console.log('No suitable image found, using placeholder');
     return '/images/placeholder-jet.jpg';
   };
   

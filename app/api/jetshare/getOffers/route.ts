@@ -172,11 +172,18 @@ export async function GET(request: NextRequest) {
               last_name,
               avatar_url
             ),
-            jets:jet_id (
+            jet:jet_id (
               id,
               manufacturer,
               model,
-              image_url
+              image_url,
+              images,
+              category,
+              capacity,
+              range_nm,
+              cruise_speed_kts,
+              tail_number,
+              description
             )
           `;
         }
