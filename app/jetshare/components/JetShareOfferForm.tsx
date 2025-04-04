@@ -421,99 +421,28 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     });
   }, [jetImagePath, jetInteriorPath, showInteriorImage, selectedTab]);
   
-  // Check for authentication on load
+  // Modify the auth check useEffect to be more reliable and prevent redirect loops
   useEffect(() => {
     // Wait for auth to complete loading
     if (authLoading) {
+      setIsAuthenticating(true);
       return;
     }
     
     // Auth has loaded, update state
     setIsAuthenticating(false);
     
-    // If no authenticated user, redirect to login
+    // If no authenticated user, simply redirect to login
     if (!user) {
-      console.log('JetShareOfferForm: No authenticated user, redirecting to login');
-      toast.error('Please sign in to create a flight share offer');
+      console.log('JetShareOfferForm: No authenticated user detected');
       
       // Encode the current URL to return after login
       const returnUrl = encodeURIComponent(window.location.pathname);
-      router.push(`/auth/login?returnUrl=${returnUrl}`);
+      router.replace(`/auth/login?returnUrl=${returnUrl}`);
     } else {
       console.log('JetShareOfferForm: User authenticated, can proceed', user.id);
-      
-      // Private browsing session handling - enable direct form submission without session validation
-      // This bypasses the session check in private browsing scenarios or when cookies are blocked
-      
-      // Add some state to track if we're working with private browsing or limited cookie scenarios
-      // This will allow us to continue anyway if we have a user object but no proper session
-      
-      let privateMode = false;
-      try {
-        // Try to detect private browsing mode by testing localStorage access (not 100% reliable)
-        localStorage.setItem('__test_private_mode', '1');
-        localStorage.removeItem('__test_private_mode');
-        
-        // If we suspect private browsing due to limited cookies, set a flag
-        if (!document.cookie) {
-          console.log('JetShareOfferForm: Limited or no cookies available - possible private browsing');
-          privateMode = true;
-        }
-      } catch (e) {
-        console.log('JetShareOfferForm: Storage access failed - likely private browsing');
-        privateMode = true;
-      }
-      
-      if (privateMode) {
-        console.log('JetShareOfferForm: Operating in private browsing compatibility mode');
-        // In private mode, we'll rely solely on the user object from auth context
-        // No additional session validation to avoid redirect loops
-        return;
-      }
-      
-      // Only perform session validation in normal browsing mode where it's expected to work
-      const checkSession = async () => {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (!sessionData?.session?.access_token) {
-            console.log('JetShareOfferForm: No valid session token found, trying to refresh...');
-            
-            // Try to refresh the session before showing an error
-            const { data: refreshData } = await supabase.auth.refreshSession();
-            if (refreshData?.session?.access_token) {
-              console.log('JetShareOfferForm: Session refreshed successfully');
-              return; // Session refresh worked, no need to redirect
-            }
-            
-            // Only show error after refresh attempt fails
-            console.error('JetShareOfferForm: No valid session token found after refresh attempt');
-            toast.error('Your session needs to be refreshed. Redirecting to login...', {
-              duration: 3000,
-              action: {
-                label: 'Cancel',
-                onClick: () => {
-                  console.log('JetShareOfferForm: User canceled redirect - continuing in limited mode');
-                  // User chose to continue anyway - we'll try to work with what we have
-                }
-              }
-            });
-            
-            // Delay the redirect slightly to allow the user to see the toast and potentially cancel
-            // This also increases chances of the refresh working in the background
-            setTimeout(() => {
-              router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
-            }, 3000);
-          } else {
-            console.log('JetShareOfferForm: Valid session token found');
-          }
-        } catch (err) {
-          console.error('Error checking session:', err);
-        }
-      };
-      
-      checkSession();
     }
-  }, [user, authLoading, router, supabase.auth]);
+  }, [user, authLoading, router]);
   
   // Initialize form with default values
   const form = useForm<z.infer<typeof enhancedFormSchema>>({
