@@ -120,33 +120,71 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const jetId = params.id;
+    // Get the jet ID from params - properly await any promises
+    const jetId = params?.id || 'default';
+    
+    // If the ID is undefined, return an error
+    if (!jetId) {
+      console.error('No jet ID provided in params');
+      return NextResponse.json({
+        error: 'No jet ID provided',
+        seatLayout: AIRCRAFT_LAYOUTS['default']
+      }, { status: 400 });
+    }
+    
+    // Log for debugging
+    console.log(`Fetching jet data for ID: ${jetId}`);
+    
+    // If the ID is 'default', use the default layout immediately
+    if (jetId === 'default') {
+      return NextResponse.json({
+        id: jetId,
+        seatLayout: AIRCRAFT_LAYOUTS['default']
+      });
+    }
     
     // Create Supabase client
     const supabase = await createClient();
     
-    // Fetch the jet data from the jets table
-    const { data: jet, error } = await supabase
-      .from('jets')
-      .select('*')
-      .eq('id', jetId)
-      .single();
-    
     // Normalize the jetId to match our template keys
     const normalizedJetId = jetId.toLowerCase().replace(/\s+/g, '-');
     
-    // Check if we have a predefined layout for this aircraft
+    // First check if we have a predefined layout
     const hasTemplate = normalizedJetId in AIRCRAFT_LAYOUTS;
+    
+    // Fetch the jet data from the jets table if it might be a UUID
+    let jet = null;
+    let error = null;
+    
+    // Only try database lookup if jetId looks like a valid ID, not a templated key
+    if (!hasTemplate && (jetId.includes('-') && jetId.length > 10)) {
+      try {
+        // Fetch from database
+        const result = await supabase
+          .from('jets')
+          .select('*')
+          .eq('id', jetId)
+          .single();
+          
+        jet = result.data;
+        error = result.error;
+      } catch (e) {
+        // Handle database errors
+        console.error('Database error fetching jet:', e);
+        error = e;
+      }
+    }
     
     // Get either the predefined layout or use the default
     const layoutTemplate = hasTemplate 
       ? AIRCRAFT_LAYOUTS[normalizedJetId] 
       : AIRCRAFT_LAYOUTS['default'];
     
-    if (error) {
-      console.error('Error fetching jet data:', error);
+    if (error || !jet) {
+      // If the jet doesn't exist in the database, check if we still have a layout template
+      console.error('Error fetching jet data or jet not found:', error);
       
-      // If the jet doesn't exist, return layout data from our templates
+      // Return predefined layout data if we have it
       return NextResponse.json({
         id: jetId,
         seatLayout: layoutTemplate
