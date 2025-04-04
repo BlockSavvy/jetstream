@@ -20,6 +20,7 @@ export interface JetShareOffer {
   status: JetShareOfferStatus;
   matched_user_id?: string;
   aircraft_model?: string;
+  jet_id?: string;
   total_seats?: number;
   available_seats?: number;
   created_at: string;
