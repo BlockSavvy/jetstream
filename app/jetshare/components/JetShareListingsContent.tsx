@@ -92,13 +92,6 @@ interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
   isOwnOffer?: boolean;
   image_url?: string;
   jet_id?: string;
-  jets?: {
-    id?: string;
-    manufacturer?: string;
-    model?: string;
-    image_url?: string;
-    [key: string]: any;
-  };
   jet?: {
     id?: string;
     manufacturer?: string;
@@ -892,18 +885,11 @@ export default function JetShareListingsContent() {
       jet_id: offer.jet_id,
       image_url: offer.image_url,
       has_jet: !!offer.jet,
-      has_jets: !!offer.jets,
       jet_details: offer.jet ? {
         id: offer.jet.id,
         manufacturer: offer.jet.manufacturer,
         model: offer.jet.model,
         image_url: offer.jet.image_url
-      } : null,
-      jets_details: offer.jets ? {
-        id: offer.jets.id,
-        manufacturer: offer.jets.manufacturer,
-        model: offer.jets.model,
-        image_url: offer.jets.image_url
       } : null
     });
     
@@ -919,13 +905,7 @@ export default function JetShareListingsContent() {
       return offer.jet.image_url;
     }
     
-    // Third, check if the offer has a jets object with image_url (from the join)
-    if (offer.jets && offer.jets.image_url) {
-      console.log(`Using image_url from jets relation: ${offer.jets.image_url}`);
-      return offer.jets.image_url;
-    }
-    
-    // Fourth, try to construct a URL from the aircraft_model property
+    // Third, try to construct a URL from the aircraft_model property
     if (aircraft_model) {
       // Map common model names to known image files
       const modelImageMap: Record<string, string> = {
@@ -934,6 +914,8 @@ export default function JetShareListingsContent() {
         'PC-24': '/images/jets/pilatus/PC24.jpg',
         'King Air 350i': '/images/jets/beechcraft/KingAir350.jpg',
         'King Air': '/images/jets/beechcraft/KingAir350.jpg',
+        'Gulfstream': '/images/jets/gulfstream/g600.jpg',
+        'Gulfstream G650': '/images/jets/gulfstream/g600.jpg',
       };
       
       // Check if we have a direct mapping for this model
