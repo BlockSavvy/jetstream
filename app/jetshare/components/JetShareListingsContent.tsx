@@ -91,7 +91,18 @@ import { useAuth } from '@/components/auth-provider';
 interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
   isOwnOffer?: boolean;
   image_url?: string;
+  jet_id?: string;
+  jets?: {
+    id?: string;
+    manufacturer?: string;
+    model?: string;
+    image_url?: string;
+    [key: string]: any;
+  };
   jet?: {
+    id?: string;
+    manufacturer?: string;
+    model?: string;
     image_url?: string;
     [key: string]: any;
   };
@@ -873,11 +884,27 @@ export default function JetShareListingsContent() {
   
   // Function to get a valid jet image URL with fallbacks
   const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
+    const aircraft_model = offer.aircraft_model || '';
+    
     console.log('Offer debug for image URL:', {
       id: offer.id,
-      aircraft_model: offer.aircraft_model,
+      aircraft_model,
+      jet_id: offer.jet_id,
       image_url: offer.image_url,
-      has_jet: !!offer.jet
+      has_jet: !!offer.jet,
+      has_jets: !!offer.jets,
+      jet_details: offer.jet ? {
+        id: offer.jet.id,
+        manufacturer: offer.jet.manufacturer,
+        model: offer.jet.model,
+        image_url: offer.jet.image_url
+      } : null,
+      jets_details: offer.jets ? {
+        id: offer.jets.id,
+        manufacturer: offer.jets.manufacturer,
+        model: offer.jets.model,
+        image_url: offer.jets.image_url
+      } : null
     });
     
     // First, check if the offer has a direct image_url property
@@ -892,8 +919,14 @@ export default function JetShareListingsContent() {
       return offer.jet.image_url;
     }
     
-    // Third, try to construct a URL from the aircraft_model property
-    if (offer.aircraft_model) {
+    // Third, check if the offer has a jets object with image_url (from the join)
+    if (offer.jets && offer.jets.image_url) {
+      console.log(`Using image_url from jets relation: ${offer.jets.image_url}`);
+      return offer.jets.image_url;
+    }
+    
+    // Fourth, try to construct a URL from the aircraft_model property
+    if (aircraft_model) {
       // Map common model names to known image files
       const modelImageMap: Record<string, string> = {
         'PC-12NGX': '/images/jets/pilatus/PC24.jpg',
@@ -904,7 +937,7 @@ export default function JetShareListingsContent() {
       };
       
       // Check if we have a direct mapping for this model
-      const modelName = offer.aircraft_model.trim();
+      const modelName = aircraft_model.trim();
       if (modelImageMap[modelName]) {
         console.log(`Using mapped image path for ${modelName}: ${modelImageMap[modelName]}`);
         return modelImageMap[modelName];
@@ -935,13 +968,11 @@ export default function JetShareListingsContent() {
       
       // Try to find a manufacturer match
       let manufacturer = '';
-      if (typeof offer.aircraft_model === 'string') {
-        const modelWords = offer.aircraft_model.split(' ');
-        for (const word of modelWords) {
-          if (manufacturerDetectionMap[word]) {
-            manufacturer = manufacturerDetectionMap[word];
-            break;
-          }
+      const modelWords = aircraft_model.split(' ');
+      for (const word of modelWords) {
+        if (manufacturerDetectionMap[word]) {
+          manufacturer = manufacturerDetectionMap[word];
+          break;
         }
       }
       
