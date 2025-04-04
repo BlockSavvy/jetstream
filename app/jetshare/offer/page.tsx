@@ -1,10 +1,11 @@
 'use client';
 
 import JetShareOfferForm from '../components/JetShareOfferForm';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function JetShareOfferPage() {
+// Extract a component that uses searchParams to properly handle suspense
+function JetShareOfferContent() {
   const [airports, setAirports] = useState([]);
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
@@ -54,5 +55,18 @@ export default function JetShareOfferPage() {
         <JetShareOfferForm airportsList={airports} editOfferId={editId} />
       </div>
     </div>
+  );
+}
+
+// Main page component with suspense boundary
+export default function JetShareOfferPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-2 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+      </div>
+    }>
+      <JetShareOfferContent />
+    </Suspense>
   );
 } 
