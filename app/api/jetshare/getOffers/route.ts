@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
       userId,
       matchedUserId,
       viewMode,
+      includeJetDetails,
       instanceId: searchParams.get('instance_id') ? '00000000...' : null
     });
 

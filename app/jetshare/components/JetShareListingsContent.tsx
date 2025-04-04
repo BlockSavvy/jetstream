@@ -894,29 +894,65 @@ export default function JetShareListingsContent() {
     
     // Third, try to construct a URL from the aircraft_model property
     if (offer.aircraft_model) {
-      // Clean model name for URL path
-      const modelPath = offer.aircraft_model.toLowerCase().replace(/\s+/g, '-');
+      // Map common model names to known image files
+      const modelImageMap: Record<string, string> = {
+        'PC-12NGX': '/images/jets/pilatus/PC24.jpg',
+        'PC-12': '/images/jets/pilatus/PC24.jpg',
+        'PC-24': '/images/jets/pilatus/PC24.jpg',
+        'King Air 350i': '/images/jets/beechcraft/KingAir350.jpg',
+        'King Air': '/images/jets/beechcraft/KingAir350.jpg',
+      };
       
-      // Try manufacturer folder first
+      // Check if we have a direct mapping for this model
+      const modelName = offer.aircraft_model.trim();
+      if (modelImageMap[modelName]) {
+        console.log(`Using mapped image path for ${modelName}: ${modelImageMap[modelName]}`);
+        return modelImageMap[modelName];
+      }
+      
+      // Try manufacturer detection (less likely to work but worth a try)
+      const manufacturerDetectionMap: Record<string, string> = {
+        'Pilatus': 'pilatus',
+        'PC': 'pilatus',
+        'Beechcraft': 'beechcraft',
+        'King': 'beechcraft',
+        'Gulfstream': 'gulfstream',
+        'G': 'gulfstream',
+        'Cessna': 'cessna',
+        'Citation': 'cessna',
+        'Bombardier': 'bombardier',
+        'Learjet': 'bombardier',
+        'Challenger': 'bombardier',
+        'Global': 'bombardier',
+        'Embraer': 'embraer',
+        'Phenom': 'embraer',
+        'Legacy': 'embraer',
+        'Dassault': 'dassault',
+        'Falcon': 'dassault',
+        'HondaJet': 'hondajet',
+        'Honda': 'hondajet',
+      };
+      
+      // Try to find a manufacturer match
       let manufacturer = '';
       if (typeof offer.aircraft_model === 'string') {
-        const parts = offer.aircraft_model.split(' ');
-        if (parts.length > 0) {
-          manufacturer = parts[0].toLowerCase();
+        const modelWords = offer.aircraft_model.split(' ');
+        for (const word of modelWords) {
+          if (manufacturerDetectionMap[word]) {
+            manufacturer = manufacturerDetectionMap[word];
+            break;
+          }
         }
       }
       
-      // Attempt with manufacturer folder first
+      // If we found a manufacturer, try common filenames
       if (manufacturer) {
-        const manufacturerUrl = `/images/jets/${manufacturer}/${modelPath}.jpg`;
-        console.log(`Using constructed path with manufacturer: ${manufacturerUrl}`);
-        return manufacturerUrl;
+        // Try simplified name with just the first segment (e.g., "PC24" from "PC-24 NGX")
+        const simplifiedName = modelName.split(' ')[0].replace(/[^\w]/g, '');
+        const simplifiedUrl = `/images/jets/${manufacturer}/${simplifiedName}.jpg`;
+        console.log(`Using simplified path: ${simplifiedUrl}`);
+        return simplifiedUrl;
       }
-      
-      // Fall back to direct model path
-      const directModelUrl = `/images/jets/${modelPath}.jpg`;
-      console.log(`Using constructed direct model path: ${directModelUrl}`);
-      return directModelUrl;
     }
     
     // Final fallback
