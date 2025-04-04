@@ -51,6 +51,7 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import TimePickerDemo from "@/components/ui/time-picker-demo";
+import LocationAutocomplete from './LocationAutocomplete';
 
 // Define form schema with zod
 const formSchema = z.object({
@@ -288,7 +289,40 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const supabase = createClientComponentClient();
   const { user, loading: authLoading } = useAuth();
   
-  // Add state for section navigation
+  // Add state for airports data
+  const [airports, setAirports] = useState<Airport[]>([]);
+  const [isLoadingAirports, setIsLoadingAirports] = useState(false);
+  
+  // Add a useEffect to fetch airports from our API
+  useEffect(() => {
+    const fetchAirports = async () => {
+      try {
+        setIsLoadingAirports(true);
+        const response = await fetch('/api/airports');
+        if (!response.ok) {
+          throw new Error('Failed to fetch airports');
+        }
+        const data = await response.json();
+        setAirports(data);
+        console.log(`Loaded ${data.length} airports for autocomplete`);
+      } catch (error) {
+        console.error('Error fetching airports:', error);
+        // We'll fall back to the popular airports list if this fails
+      } finally {
+        setIsLoadingAirports(false);
+      }
+    };
+
+    // Only fetch if we don't already have airports and airportsList (props) is empty
+    if (airports.length === 0 && (!airportsList || airportsList.length === 0)) {
+      fetchAirports();
+    } else if (airportsList && airportsList.length > 0 && airports.length === 0) {
+      // If airportsList is provided via props, use that
+      setAirports(airportsList);
+    }
+  }, [airports.length, airportsList]);
+  
+  // Add section navigation state
   const [activeSection, setActiveSection] = useState(0);
   const swiperRef = useRef<any>(null);
   const sections = ["Flight Details", "Aircraft Selection", "Seat Configuration", "Cost Details"];
@@ -1261,6 +1295,32 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     selectionPercentage: shareRatio
   };
   
+  // Listen for location autocomplete events
+  useEffect(() => {
+    const handleLocationChange = (event: CustomEvent<{ name: string; value: string }>) => {
+      if (event.detail.name === 'departure_location') {
+        form.setValue('departure_location', event.detail.value, { shouldValidate: true });
+      } else if (event.detail.name === 'arrival_location') {
+        form.setValue('arrival_location', event.detail.value, { shouldValidate: true });
+      }
+    };
+    
+    const handleLocationBlur = (event: CustomEvent<{ name: string; value: string }>) => {
+      if (event.detail.name === 'departure_location' || event.detail.name === 'arrival_location') {
+        form.trigger(event.detail.name as any);
+      }
+    };
+    
+    // Add event listeners with type casting
+    window.addEventListener('locationChange', handleLocationChange as EventListener);
+    window.addEventListener('locationBlur', handleLocationBlur as EventListener);
+    
+    return () => {
+      window.removeEventListener('locationChange', handleLocationChange as EventListener);
+      window.removeEventListener('locationBlur', handleLocationBlur as EventListener);
+    };
+  }, [form]);
+  
   // Show loading state while authentication is in progress
   if (isAuthenticating || authLoading) {
     return (
@@ -1410,10 +1470,15 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       <FormItem>
                         <FormLabel className="text-white">Departure Location</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g. Los Angeles (LAX)" 
-                            {...field}
-                            className="bg-gray-900/70 border-gray-700 text-white h-14" 
+                          <LocationAutocomplete
+                            value={field.value}
+                            name="departure_location"
+                            placeholder="Enter departure location (city or airport)"
+                            popularLocations={POPULAR_AIRPORTS}
+                            airports={airports}
+                            className="bg-gray-900/70"
+                            variant="departure"
+                            error={form.formState.errors.departure_location?.message}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1428,10 +1493,15 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       <FormItem>
                         <FormLabel className="text-white">Arrival Location</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g. New York (JFK)" 
-                            {...field}
-                            className="bg-gray-900/70 border-gray-700 text-white h-14" 
+                          <LocationAutocomplete
+                            value={field.value}
+                            name="arrival_location"
+                            placeholder="Enter arrival location (city or airport)"
+                            popularLocations={POPULAR_AIRPORTS}
+                            airports={airports}
+                            className="bg-gray-900/70"
+                            variant="arrival"
+                            error={form.formState.errors.arrival_location?.message}
                           />
                         </FormControl>
                         <FormMessage />
