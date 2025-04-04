@@ -106,6 +106,14 @@ export interface JetShareOfferWithUser extends JetShareOffer {
     email?: string;
     avatar_url?: string;
   };
+  // Add the jet/aircraft information for image display
+  jet?: {
+    id?: string;
+    manufacturer?: string;
+    model?: string;
+    image_url?: string;
+    [key: string]: any;
+  };
 }
 
 // Define JetShare transaction with offer and user details

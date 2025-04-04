@@ -274,6 +274,9 @@ export default function JetShareListingsContent() {
       // Construct the API URL with query parameters
       let url = `/api/jetshare/getOffers?status=${status}&viewMode=${viewMode}`;
       
+      // Add parameter to request jet details
+      url += '&include_aircraft_details=true';
+      
       // Always append a timestamp to bust cache
       url += `&t=${Date.now()}`;
       
@@ -407,11 +410,19 @@ export default function JetShareListingsContent() {
           // Mark offers created by current user
           const isOwnOffer = authUserId && offer.user_id === authUserId;
           
+          // Extract image URL from jet relation if available
+          let imageUrl = null;
+          if (offer.jet && offer.jet.image_url) {
+            imageUrl = offer.jet.image_url;
+            console.log(`Extracted image URL from jet relation: ${imageUrl}`);
+          }
+          
           // Check if user info is missing and provide defaults
           if (!offer.user) {
             return {
               ...offer,
               isOwnOffer,
+              image_url: imageUrl,
               user: {
                 id: offer.user_id,
                 first_name: "Jet",
@@ -421,7 +432,8 @@ export default function JetShareListingsContent() {
           }
           return {
             ...offer,
-            isOwnOffer
+            isOwnOffer,
+            image_url: imageUrl
           };
         });
         
@@ -861,17 +873,54 @@ export default function JetShareListingsContent() {
   
   // Function to get a valid jet image URL with fallbacks
   const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
-    // If offer has an image_url property, use that directly
+    console.log('Offer debug for image URL:', {
+      id: offer.id,
+      aircraft_model: offer.aircraft_model,
+      image_url: offer.image_url,
+      has_jet: !!offer.jet
+    });
+    
+    // First, check if the offer has a direct image_url property
     if (offer.image_url) {
+      console.log(`Using direct image_url from offer: ${offer.image_url}`);
       return offer.image_url;
     }
     
-    // If offer has a jet with image_url, use that
+    // Second, check if the offer has a jet object with image_url
     if (offer.jet && offer.jet.image_url) {
+      console.log(`Using image_url from jet object: ${offer.jet.image_url}`);
       return offer.jet.image_url;
     }
     
-    // Fallback to placeholder
+    // Third, try to construct a URL from the aircraft_model property
+    if (offer.aircraft_model) {
+      // Clean model name for URL path
+      const modelPath = offer.aircraft_model.toLowerCase().replace(/\s+/g, '-');
+      
+      // Try manufacturer folder first
+      let manufacturer = '';
+      if (typeof offer.aircraft_model === 'string') {
+        const parts = offer.aircraft_model.split(' ');
+        if (parts.length > 0) {
+          manufacturer = parts[0].toLowerCase();
+        }
+      }
+      
+      // Attempt with manufacturer folder first
+      if (manufacturer) {
+        const manufacturerUrl = `/images/jets/${manufacturer}/${modelPath}.jpg`;
+        console.log(`Using constructed path with manufacturer: ${manufacturerUrl}`);
+        return manufacturerUrl;
+      }
+      
+      // Fall back to direct model path
+      const directModelUrl = `/images/jets/${modelPath}.jpg`;
+      console.log(`Using constructed direct model path: ${directModelUrl}`);
+      return directModelUrl;
+    }
+    
+    // Final fallback
+    console.log('No image path found, using placeholder');
     return '/images/placeholder-jet.jpg';
   };
   

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     const viewMode = searchParams.get('viewMode') || 'marketplace';
     const forceUserId = searchParams.get('force_user_id');
     const requestId = searchParams.get('rid') || 'unknown-rid';
+    const includeJetDetails = searchParams.get('include_aircraft_details') === 'true';
     
     // Log the parameters for debugging
     console.log('[API /jetshare/getOffers] Function execution started.');
@@ -146,11 +147,22 @@ export async function GET(request: NextRequest) {
         // Create a service client directly
         const serviceClient = createSBClient(supabaseServiceUrl, supabaseServiceKey);
         
-        // Updated marketplace query
-        // Ensure we're showing all open offers, ordered by newest first
-        let query = serviceClient
-          .from('jetshare_offers')
-          .select(`
+        // Define the base fields to select
+        let selectFields = `
+          *,
+          user:user_id (
+            id,
+            email,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `;
+        
+        // Add aircraft details if requested
+        if (includeJetDetails) {
+          console.log('[API /jetshare/getOffers] Including jet details in query');
+          selectFields = `
             *,
             user:user_id (
               id,
@@ -158,8 +170,22 @@ export async function GET(request: NextRequest) {
               first_name,
               last_name,
               avatar_url
+            ),
+            jet:aircraft_model (
+              id,
+              manufacturer,
+              model,
+              display_name,
+              image_url
             )
-          `)
+          `;
+        }
+        
+        // Updated marketplace query
+        // Ensure we're showing all open offers, ordered by newest first
+        let query = serviceClient
+          .from('jetshare_offers')
+          .select(selectFields)
           .order('created_at', { ascending: false });
 
         // Apply status filter if provided
@@ -189,7 +215,7 @@ export async function GET(request: NextRequest) {
 
         // Add debug information for the first few offers (if any)
         if (offersData && offersData.length > 0) {
-          const sampleOffers = offersData.slice(0, 3).map(offer => ({
+          const sampleOffers = offersData.slice(0, 3).map((offer: any) => ({
             id: offer.id,
             status: offer.status,
             created_at: offer.created_at,
