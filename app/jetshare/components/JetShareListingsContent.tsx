@@ -90,6 +90,11 @@ import { useAuth } from '@/components/auth-provider';
 // Update the JetShareOfferWithUser type to include the isOwnOffer flag
 interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
   isOwnOffer?: boolean;
+  image_url?: string;
+  jet?: {
+    image_url?: string;
+    [key: string]: any;
+  };
 }
 
 // Type for user profile with verification status
@@ -854,14 +859,47 @@ export default function JetShareListingsContent() {
     setSearchTerm('');
   };
   
+  // Function to get a valid jet image URL with fallbacks
+  const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
+    // If offer has an image_url property, use that directly
+    if (offer.image_url) {
+      return offer.image_url;
+    }
+    
+    // If offer has a jet with image_url, use that
+    if (offer.jet && offer.jet.image_url) {
+      return offer.jet.image_url;
+    }
+    
+    // Fallback to placeholder
+    return '/images/placeholder-jet.jpg';
+  };
+  
   // Render flight share cards
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
     <Card 
       key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
-      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative"
       onClick={() => !offer.isOwnOffer && handleOfferAccept(offer)}
     >
-      <div className="relative">
+      {/* Add background image based on aircraft model */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 z-0"
+        style={{ 
+          backgroundImage: `url(${getJetImageUrl(offer)})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'brightness(0.7) contrast(1.1)'
+        }}
+        aria-hidden="true"
+      />
+      {/* Add semi-transparent gradient overlay for better text readability */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-b from-gray-900/70 via-gray-800/60 to-gray-900/80 z-0"
+        aria-hidden="true"
+      />
+      
+      <div className="relative z-10">
         {offer.isOwnOffer && (
           <div className="absolute top-0 right-0 m-2 z-10">
             <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 font-semibold">
