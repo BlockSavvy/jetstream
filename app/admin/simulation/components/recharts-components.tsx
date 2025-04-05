@@ -17,7 +17,7 @@ import {
 } from 'recharts';
 
 // Area chart component for demand vs capacity visualization
-export function AreaChart({ data }: { data: any[] }) {
+export function AreaChartComponent({ data }: { data: any[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsAreaChart
@@ -56,7 +56,7 @@ export function AreaChart({ data }: { data: any[] }) {
 }
 
 // Pie chart component for flight type distribution visualization
-export function PieChart({ data, colors }: { data: any[], colors: string[] }) {
+export function PieChartComponent({ data, colors }: { data: any[], colors: string[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsPieChart>
@@ -82,7 +82,7 @@ export function PieChart({ data, colors }: { data: any[], colors: string[] }) {
 }
 
 // Bar chart component for route demand visualization
-export function BarChart({ data }: { data: any[] }) {
+export function BarChartComponent({ data }: { data: any[] }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsBarChart
@@ -103,11 +103,4 @@ export function BarChart({ data }: { data: any[] }) {
       </RechartsBarChart>
     </ResponsiveContainer>
   );
-}
-
-// Export all chart components
-export default {
-  AreaChart,
-  PieChart,
-  BarChart
-}; 
+} 

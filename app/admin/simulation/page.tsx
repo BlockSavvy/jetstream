@@ -49,11 +49,30 @@ import {
   TrendingUp
 } from "lucide-react";
 
-// Dynamically import recharts components to prevent SSR issues
-const RechartComponents = dynamic(() => import('./components/recharts-components'), {
-  ssr: false,
-  loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
-});
+// Dynamically import each chart component separately
+const DynamicAreaChart = dynamic(
+  () => import('./components/recharts-components').then(mod => mod.AreaChartComponent),
+  {
+    ssr: false,
+    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
+  }
+);
+
+const DynamicPieChart = dynamic(
+  () => import('./components/recharts-components').then(mod => mod.PieChartComponent),
+  {
+    ssr: false,
+    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
+  }
+);
+
+const DynamicBarChart = dynamic(
+  () => import('./components/recharts-components').then(mod => mod.BarChartComponent),
+  {
+    ssr: false,
+    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
+  }
+);
 
 /**
  * Admin Simulation Page
@@ -336,7 +355,7 @@ export default function AdminSimulationPage() {
                   <CardContent>
                     <div className="h-[300px]">
                       {/* Dynamically imported chart component */}
-                      <RechartComponents.AreaChart data={demandData} />
+                      <DynamicAreaChart data={demandData} />
                     </div>
                   </CardContent>
                 </Card>
@@ -353,10 +372,7 @@ export default function AdminSimulationPage() {
                   <CardContent>
                     <div className="h-[300px]">
                       {/* Dynamically imported chart component */}
-                      <RechartComponents.PieChart 
-                        data={flightTypeData} 
-                        colors={COLORS} 
-                      />
+                      <DynamicPieChart data={flightTypeData} colors={COLORS} />
                     </div>
                   </CardContent>
                 </Card>
@@ -373,7 +389,7 @@ export default function AdminSimulationPage() {
                   <CardContent>
                     <div className="h-[300px]">
                       {/* Dynamically imported chart component */}
-                      <RechartComponents.BarChart data={routeDemandData} />
+                      <DynamicBarChart data={routeDemandData} />
                     </div>
                   </CardContent>
                 </Card>
