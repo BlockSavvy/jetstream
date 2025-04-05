@@ -29,7 +29,8 @@ interface AdminLayoutProps {
 
 const navItems = [
   { href: '/admin/overview', label: 'Overview', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { href: '/admin/offers', label: 'Offers', icon: <Plane className="h-5 w-5" /> },
+  { href: '/admin/offers', label: 'Flight Offers', icon: <Plane className="h-5 w-5" /> },
+  { href: '/admin/jetshare', label: 'JetShare Offers', icon: <Users className="h-5 w-5 mr-1" /> },
   { href: '/admin/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
   { href: '/admin/jets', label: 'Jets', icon: <Plane className="h-5 w-5 rotate-45" /> },
   { href: '/admin/crews', label: 'Crews', icon: <Users className="h-5 w-5" /> },
@@ -114,7 +115,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Desktop Sidebar */}
-      <aside className="fixed inset-y-0 z-10 hidden w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 md:flex md:flex-col">
+      <aside className="fixed inset-y-0 z-50 hidden w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 md:flex md:flex-col">
         <div className="flex h-14 items-center border-b border-gray-200 dark:border-gray-800 px-4">
           <Link href="/admin" className="flex items-center gap-2 font-semibold">
             <Settings className="h-6 w-6 text-amber-500" />
@@ -158,7 +159,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
       
       {/* Mobile header */}
-      <div className="md:hidden flex h-14 items-center border-b border-gray-200 dark:border-gray-800 px-4 sticky top-0 z-30 bg-white dark:bg-gray-950">
+      <div className="md:hidden flex h-14 items-center border-b border-gray-200 dark:border-gray-800 px-4 sticky top-0 z-50 bg-white dark:bg-gray-950">
         <Button variant="outline" size="icon" className="mr-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           <span className="sr-only">Toggle menu</span>
@@ -183,7 +184,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-20 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
+        <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileMenuOpen(false)}>
           <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-950 p-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <Link href="/admin" className="flex items-center gap-2 font-semibold">
@@ -217,7 +218,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col flex-1 md:pl-64">
         {/* Desktop header */}
-        <header className="sticky top-0 z-20 hidden h-14 items-center border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-6 md:flex">
+        <header className="sticky top-0 z-40 hidden h-14 items-center border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-6 md:flex">
           <div className="flex flex-1 items-center justify-end gap-4">
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5" />
@@ -234,7 +235,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
         
         {/* Page content */}
-        <main className="flex-1 p-6 pt-16 md:pt-6">{children}</main>
+        <main className="flex-1 p-6 pt-20 md:pt-6">{children}</main>
       </div>
     </div>
   );

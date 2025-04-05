@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   UserRound, 
@@ -35,9 +34,12 @@ import {
   XCircle,
   Eye,
   Edit,
-  UserCog
+  UserCog,
+  KeyRound
 } from "lucide-react";
 import { createClient } from '@/lib/supabase';
+import { EnhancedBadge } from '../components/enhanced-badge';
+import { ActionTooltip } from '../components/action-tooltip';
 
 // Define the User type to match your profiles table
 interface User {
@@ -214,13 +216,13 @@ export default function AdminUsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={
-                          user.user_type === 'admin' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300' : 
-                          user.user_type === 'owner' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' :
-                          'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                        <EnhancedBadge className={
+                          user.user_type === 'admin' ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800' : 
+                          user.user_type === 'owner' ? 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-800' :
+                          'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800'
                         }>
                           {user.user_type || 'User'}
-                        </Badge>
+                        </EnhancedBadge>
                       </TableCell>
                       <TableCell>
                         {user.verification_status === 'verified' ? (
@@ -238,15 +240,26 @@ export default function AdminUsersPage() {
                       <TableCell>{user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <UserCog className="h-4 w-4" />
-                          </Button>
+                          <ActionTooltip label="View User Profile">
+                            <Button variant="ghost" size="icon">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                          <ActionTooltip label="Edit User Details">
+                            <Button variant="ghost" size="icon">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                          <ActionTooltip label="Manage Permissions">
+                            <Button variant="ghost" size="icon">
+                              <UserCog className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
+                          <ActionTooltip label="Reset Password">
+                            <Button variant="ghost" size="icon">
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                          </ActionTooltip>
                         </div>
                       </TableCell>
                     </TableRow>
