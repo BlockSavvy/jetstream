@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getJetShareOffers, JetShareOffer } from '../utils/data-fetching';
 import {
   Card,
@@ -43,7 +43,8 @@ export default function AdminJetSharePage() {
   // Use UI context for dialog management
   const { openJetShareStatus, setRefreshOffers } = useUi();
 
-  const fetchOffers = async () => {
+  // Memoize the fetchOffers function to prevent infinite re-renders
+  const fetchOffers = useCallback(async () => {
     try {
       const data = await getJetShareOffers();
       setOffers(data);
@@ -53,13 +54,7 @@ export default function AdminJetSharePage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchOffers();
-    // Register the fetchOffers function with the UI context
-    setRefreshOffers(fetchOffers);
-  }, [setRefreshOffers]);
+  }, []);
 
   // Handlers for dialogs and actions
   const handleRefresh = async () => {
@@ -68,6 +63,16 @@ export default function AdminJetSharePage() {
     setIsRefreshing(false);
     toast.success('Offers refreshed');
   };
+
+  // Register the fetchOffers function with context only once after component mounts
+  useEffect(() => {
+    fetchOffers();
+    
+    // Store the memoized function in context
+    setRefreshOffers(fetchOffers);
+    
+    // No need to include fetchOffers in the dependency array since it's memoized
+  }, [setRefreshOffers, fetchOffers]);
 
   // Helper functions to format data
   const formatCurrency = (amount: number) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -77,7 +77,8 @@ export default function AdminUsersPage() {
     setRefreshUsers
   } = useUi();
 
-  const fetchUsers = async () => {
+  // Memoize the fetchUsers function to prevent infinite re-renders
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       // Create the Supabase client
@@ -102,13 +103,17 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  // Register the fetchUsers function with context only once after component mounts
   useEffect(() => {
     fetchUsers();
-    // Register the fetchUsers function with the UI context
+    
+    // Store the memoized function in context
     setRefreshUsers(fetchUsers);
-  }, [setRefreshUsers]);
+    
+    // No need to include fetchUsers in the dependency array since it's memoized
+  }, [setRefreshUsers, fetchUsers]);
 
   // Handler for refresh button
   const handleRefresh = async () => {
