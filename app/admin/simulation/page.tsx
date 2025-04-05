@@ -30,6 +30,9 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import dynamic from 'next/dynamic';
+
+// Import icons
 import { 
   BarChart, 
   Play, 
@@ -45,21 +48,12 @@ import {
   BarChart3,
   TrendingUp
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart as RechartBarChart,
-  Bar,
-  PieChart as RechartPieChart,
-  Pie,
-  Legend,
-  Cell
-} from 'recharts';
+
+// Dynamically import recharts components to prevent SSR issues
+const RechartComponents = dynamic(() => import('./components/recharts-components'), {
+  ssr: false,
+  loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
+});
 
 /**
  * Admin Simulation Page
@@ -341,39 +335,8 @@ export default function AdminSimulationPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart
-                          data={demandData}
-                          margin={{
-                            top: 10,
-                            right: 30,
-                            left: 0,
-                            bottom: 0,
-                          }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Area 
-                            type="monotone" 
-                            dataKey="capacity" 
-                            stackId="1" 
-                            stroke="#8884d8" 
-                            fill="#8884d8" 
-                            name="Capacity"
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="demand" 
-                            stackId="2" 
-                            stroke="#ffc658" 
-                            fill="#ffc658" 
-                            name="Demand"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
+                      {/* Dynamically imported chart component */}
+                      <RechartComponents.AreaChart data={demandData} />
                     </div>
                   </CardContent>
                 </Card>
@@ -389,26 +352,11 @@ export default function AdminSimulationPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartPieChart>
-                          <Pie
-                            data={flightTypeData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {flightTypeData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </RechartPieChart>
-                      </ResponsiveContainer>
+                      {/* Dynamically imported chart component */}
+                      <RechartComponents.PieChart 
+                        data={flightTypeData} 
+                        colors={COLORS} 
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -424,24 +372,8 @@ export default function AdminSimulationPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <RechartBarChart
-                          data={routeDemandData}
-                          margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                          }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
-                          <Bar dataKey="demand" fill="#8884d8" name="Demand" />
-                        </RechartBarChart>
-                      </ResponsiveContainer>
+                      {/* Dynamically imported chart component */}
+                      <RechartComponents.BarChart data={routeDemandData} />
                     </div>
                   </CardContent>
                 </Card>

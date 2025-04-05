@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { UiProvider } from './components/ui-context';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
-import { JetCreateDialog } from './components/dialogs/jet-create-dialog';
 
 export default function AdminLayout({
   children,
@@ -33,9 +32,6 @@ export default function AdminLayout({
             {children}
           </main>
         </div>
-        
-        {/* Only include dialogs that we've created so far */}
-        <JetCreateDialog />
         
         {/* Global toast notification container */}
         <Toaster position="top-right" />

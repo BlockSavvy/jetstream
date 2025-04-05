@@ -1,5 +1,6 @@
-import { createClient } from '@/lib/supabase-server';
-import { NextRequest, NextResponse } from 'next/server';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 
 // Define interface for aircraft layout template
 interface AircraftLayout {
@@ -116,128 +117,105 @@ const AIRCRAFT_LAYOUTS: AircraftLayoutsMap = {
 };
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } }
 ) {
   try {
-    // Get the jet ID from params - properly await any promises
-    const jetId = params?.id || 'default';
+    const jet_id = context.params.id;
     
-    // If the ID is undefined, return an error
-    if (!jetId) {
-      console.error('No jet ID provided in params');
-      return NextResponse.json({
-        error: 'No jet ID provided',
-        seatLayout: AIRCRAFT_LAYOUTS['default']
-      }, { status: 400 });
+    // Initialize Supabase client
+    const supabase = createServerComponentClient({ cookies });
+    
+    // Get jet data
+    const { data: jet, error: jetError } = await supabase
+      .from('jets')
+      .select(`
+        *,
+        owner:owner_id(id, first_name, last_name, email, avatar_url)
+      `)
+      .eq('id', jet_id)
+      .single();
+    
+    if (jetError) {
+      console.error('Error fetching jet:', jetError);
+      return NextResponse.json({ error: 'Failed to fetch jet' }, { status: 500 });
     }
     
-    // Log for debugging
-    console.log(`Fetching jet data for ID: ${jetId}`);
-    
-    // If the ID is 'default', use the default layout immediately
-    if (jetId === 'default') {
-      return NextResponse.json({
-        id: jetId,
-        seatLayout: AIRCRAFT_LAYOUTS['default']
-      });
+    if (!jet) {
+      return NextResponse.json({ error: 'Jet not found' }, { status: 404 });
     }
     
-    // Create Supabase client
-    const supabase = await createClient();
+    // Get jet interior data
+    const { data: interior, error: interiorError } = await supabase
+      .from('jet_interiors')
+      .select('*')
+      .eq('jet_id', jet_id)
+      .maybeSingle();
     
-    // Normalize the jetId to match our template keys
-    const normalizedJetId = jetId.toLowerCase().replace(/\s+/g, '-');
-    
-    // First check if we have a predefined layout
-    const hasTemplate = normalizedJetId in AIRCRAFT_LAYOUTS;
-    
-    // Fetch the jet data from the jets table if it might be a UUID
-    let jet = null;
-    let error = null;
-    
-    // Only try database lookup if jetId looks like a valid ID, not a templated key
-    if (!hasTemplate && (jetId.includes('-') && jetId.length > 10)) {
-      try {
-        // Fetch from database
-        const result = await supabase
-          .from('jets')
-          .select('*')
-          .eq('id', jetId)
-          .single();
-          
-        jet = result.data;
-        error = result.error;
-      } catch (e) {
-        // Handle database errors
-        console.error('Database error fetching jet:', e);
-        error = e;
-      }
+    if (interiorError) {
+      console.error('Error fetching jet interior:', interiorError);
+      // Continue without interior data
     }
     
-    // Get either the predefined layout or use the default
-    const layoutTemplate = hasTemplate 
-      ? AIRCRAFT_LAYOUTS[normalizedJetId] 
-      : AIRCRAFT_LAYOUTS['default'];
+    // Get jet seat layout data
+    const { data: seatLayoutData, error: layoutError } = await supabase
+      .from('jet_seat_layouts')
+      .select('layout')
+      .eq('jet_id', jet_id)
+      .maybeSingle();
     
-    if (error || !jet) {
-      // If the jet doesn't exist in the database, check if we still have a layout template
-      console.error('Error fetching jet data or jet not found:', error);
+    if (layoutError) {
+      console.error('Error fetching seat layout:', layoutError);
+      // Continue without seat layout data
+    }
+    
+    // Create a default seat layout based on capacity if no custom layout exists
+    let seatLayout = null;
+    
+    if (seatLayoutData?.layout) {
+      // Use the stored layout
+      seatLayout = seatLayoutData.layout;
+    } else {
+      // Create a default layout based on capacity
+      const capacity = jet.capacity || (interior?.seats || 4);
+      let rows = 0;
+      let seatsPerRow = 0;
       
-      // Return predefined layout data if we have it
-      return NextResponse.json({
-        id: jetId,
-        seatLayout: layoutTemplate
-      });
-    }
-    
-    // Extract or generate seat layout information
-    let seatLayout = layoutTemplate;
-    
-    // If the jet has a seat_layout field, use that to override template
-    if (jet.seat_layout) {
-      try {
-        // Parse the seat layout if it's stored as JSON string
-        if (typeof jet.seat_layout === 'string') {
-          const parsedLayout = JSON.parse(jet.seat_layout);
-          seatLayout = {
-            ...layoutTemplate, // Start with template as base
-            ...parsedLayout,   // Override with stored values
-          };
-        } else {
-          // Otherwise assume it's already an object
-          seatLayout = {
-            ...layoutTemplate, // Start with template as base
-            ...jet.seat_layout, // Override with stored values
-          };
-        }
-      } catch (parseError) {
-        console.error('Error parsing seat layout:', parseError);
-        // Keep using the template layout
+      // Calculate a reasonable layout
+      if (capacity <= 4) {
+        rows = 2;
+        seatsPerRow = 2;
+      } else if (capacity <= 8) {
+        rows = 2;
+        seatsPerRow = 4;
+      } else if (capacity <= 12) {
+        rows = 3;
+        seatsPerRow = 4;
+      } else if (capacity <= 16) {
+        rows = 4;
+        seatsPerRow = 4;
+      } else {
+        rows = 5;
+        seatsPerRow = 4;
       }
-    } else if (jet.capacity) {
-      // If no layout but capacity exists, update the template's totalSeats
+      
       seatLayout = {
-        ...layoutTemplate,
-        totalSeats: jet.capacity
+        rows,
+        seatsPerRow,
+        layoutType: 'standard',
+        totalSeats: capacity,
+        skipPositions: []
       };
     }
     
-    // Return the jet data with formatted seat layout
+    // Return combined data
     return NextResponse.json({
-      id: jet.id,
-      model: jet.model,
-      manufacturer: jet.manufacturer,
-      capacity: jet.capacity,
+      jet,
+      interior: interior || null,
       seatLayout
     });
-    
   } catch (error) {
-    console.error('Error in GET /api/jets/[id]:', error);
-    
-    // Return a default response in case of error
-    return NextResponse.json({
-      seatLayout: AIRCRAFT_LAYOUTS['default']
-    }, { status: 500 });
+    console.error('Error processing request:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 
