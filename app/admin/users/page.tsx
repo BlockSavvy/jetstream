@@ -35,24 +35,19 @@ import {
   Eye,
   Edit,
   UserCog,
-  KeyRound
+  KeyRound,
+  RefreshCw
 } from "lucide-react";
 import { createClient } from '@/lib/supabase';
 import { EnhancedBadge } from '../components/enhanced-badge';
 import { ActionTooltip } from '../components/action-tooltip';
-
-// Define the User type to match your profiles table
-interface User {
-  id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  avatar_url?: string;
-  user_type?: string;
-  verification_status?: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import { UserEditDialog } from '../components/dialogs/user-edit-dialog';
+import { UserRoleDialog } from '../components/dialogs/user-role-dialog';
+import { UserPasswordResetDialog } from '../components/dialogs/user-password-reset';
+import { UserViewDialog } from '../components/dialogs/user-view-dialog';
+import { toast } from 'sonner';
+import { User } from '../utils/data-fetching';
+import { useUi } from '../components/ui-context';
 
 /**
  * Admin Users Management Page
@@ -71,34 +66,57 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [verificationFilter, setVerificationFilter] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Use the UI context for dialog management
+  const { 
+    openUserView, 
+    openUserEdit, 
+    openUserRole, 
+    openUserPasswordReset,
+    setRefreshUsers
+  } = useUi();
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      // Create the Supabase client
+      const supabase = createClient();
+      
+      // Fetch profiles from the database
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to load users');
+        return;
+      }
+      
+      setUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchUsers() {
-      try {
-        // Create the Supabase client
-        const supabase = createClient();
-        
-        // Fetch profiles from the database
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching users:', error);
-          return;
-        }
-        
-        setUsers(data || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchUsers();
-  }, []);
+    // Register the fetchUsers function with the UI context
+    setRefreshUsers(fetchUsers);
+  }, [setRefreshUsers]);
+
+  // Handler for refresh button
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchUsers();
+    setIsRefreshing(false);
+    toast.success('User list refreshed');
+  };
 
   // Filter users based on search query, role, and verification status
   const filteredUsers = users.filter(user => {
@@ -126,10 +144,20 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">User Management</h1>
-        <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-          <UserRound className="mr-2 h-4 w-4" />
-          Add New User
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+            <UserRound className="mr-2 h-4 w-4" />
+            Add New User
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
@@ -241,22 +269,38 @@ export default function AdminUsersPage() {
                       <TableCell>
                         <div className="flex space-x-2">
                           <ActionTooltip label="View User Profile">
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openUserView(user)}
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
                           </ActionTooltip>
                           <ActionTooltip label="Edit User Details">
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openUserEdit(user)}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                           </ActionTooltip>
                           <ActionTooltip label="Manage Permissions">
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openUserRole(user)}
+                            >
                               <UserCog className="h-4 w-4" />
                             </Button>
                           </ActionTooltip>
                           <ActionTooltip label="Reset Password">
-                            <Button variant="ghost" size="icon">
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              onClick={() => openUserPasswordReset(user)}
+                            >
                               <KeyRound className="h-4 w-4" />
                             </Button>
                           </ActionTooltip>
@@ -276,6 +320,12 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Dialogs - now using context, no need to pass props */}
+      <UserViewDialog />
+      <UserEditDialog />
+      <UserRoleDialog />
+      <UserPasswordResetDialog />
     </div>
   );
 } 

@@ -172,20 +172,51 @@ export async function getJets(): Promise<Jet[]> {
 export async function getCrews(): Promise<Crew[]> {
   const supabase = createClient();
   
-  const { data, error } = await supabase
+  // First, fetch the crews without trying to join with user profiles
+  const { data: crewsData, error: crewsError } = await supabase
     .from('pilots_crews')
-    .select(`
-      *,
-      user:user_id(id, first_name, last_name, email, avatar_url)
-    `)
+    .select('*')
     .order('created_at', { ascending: false });
   
-  if (error) {
-    console.error('Error fetching crews:', error);
-    throw error;
+  if (crewsError) {
+    console.error('Error fetching crews:', crewsError);
+    throw crewsError;
+  }
+
+  // If we have crew data and there are user_ids, fetch the corresponding users
+  if (crewsData && crewsData.length > 0) {
+    // Collect all user IDs that are not null
+    const userIds = crewsData
+      .map(crew => crew.user_id)
+      .filter(id => id !== null && id !== undefined);
+    
+    // If we have user IDs, fetch the corresponding user data
+    if (userIds.length > 0) {
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, avatar_url')
+        .in('id', userIds);
+      
+      if (usersError) {
+        console.error('Error fetching crew users:', usersError);
+        // Continue anyway, we'll just return crews without user data
+      }
+      
+      // If we got user data, join it with the crews
+      if (usersData && usersData.length > 0) {
+        return crewsData.map(crew => {
+          const user = usersData.find(user => user.id === crew.user_id);
+          return {
+            ...crew,
+            user: user ? [user] : undefined
+          };
+        });
+      }
+    }
   }
   
-  return data || [];
+  // If we have no user data or no crews, just return the crews as is
+  return crewsData || [];
 }
 
 /**

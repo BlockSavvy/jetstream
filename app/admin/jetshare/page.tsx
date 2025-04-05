@@ -17,9 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Plane, ArrowRight, User, DollarSign, Calendar, Eye } from "lucide-react";
+import { Plane, ArrowRight, User, DollarSign, Calendar, Eye, Tag, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EnhancedBadge } from '../components/enhanced-badge';
+import { ActionTooltip } from '../components/action-tooltip';
+import { JetShareStatusDialog } from '../components/dialogs/jetshare-status-dialog';
+import { toast } from 'sonner';
+import { useUi } from '../components/ui-context';
 
 /**
  * Admin JetShare Offers Page
@@ -34,21 +38,36 @@ import { Button } from "@/components/ui/button";
 export default function AdminJetSharePage() {
   const [offers, setOffers] = useState<JetShareOffer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Use UI context for dialog management
+  const { openJetShareStatus, setRefreshOffers } = useUi();
+
+  const fetchOffers = async () => {
+    try {
+      const data = await getJetShareOffers();
+      setOffers(data);
+    } catch (error) {
+      console.error('Error fetching JetShare offers:', error);
+      toast.error('Failed to load offers');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchOffers() {
-      try {
-        const data = await getJetShareOffers();
-        setOffers(data);
-      } catch (error) {
-        console.error('Error fetching JetShare offers:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchOffers();
-  }, []);
+    // Register the fetchOffers function with the UI context
+    setRefreshOffers(fetchOffers);
+  }, [setRefreshOffers]);
+
+  // Handlers for dialogs and actions
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchOffers();
+    setIsRefreshing(false);
+    toast.success('Offers refreshed');
+  };
 
   // Helper functions to format data
   const formatCurrency = (amount: number) => {
@@ -68,13 +87,6 @@ export default function AdminJetSharePage() {
     });
   };
 
-  // Status badge color mapping
-  const statusColors = {
-    open: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    accepted: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full p-8">
@@ -88,8 +100,13 @@ export default function AdminJetSharePage() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">JetShare Offers</h1>
         <div className="flex space-x-2">
-          <Button variant="outline">
-            Filter
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
           <Button className="bg-amber-500 hover:bg-amber-600 text-black">
             <Plane className="mr-2 h-4 w-4" />
@@ -148,12 +165,9 @@ export default function AdminJetSharePage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={
-                        statusColors[offer.status as keyof typeof statusColors] || 
-                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
-                      }>
+                      <EnhancedBadge status={offer.status}>
                         {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
-                      </Badge>
+                      </EnhancedBadge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
@@ -171,10 +185,22 @@ export default function AdminJetSharePage() {
                       {formatDate(offer.created_at)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
+                      <div className="flex space-x-2">
+                        <ActionTooltip label="View Details">
+                          <Button variant="ghost" size="icon">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
+                        <ActionTooltip label="Change Status">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openJetShareStatus(offer)}
+                          >
+                            <Tag className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -231,6 +257,9 @@ export default function AdminJetSharePage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Include dialog component without props */}
+      <JetShareStatusDialog />
     </div>
   );
 } 
