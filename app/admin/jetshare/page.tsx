@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getFlightOffers, Flight } from '../utils/data-fetching';
+import { getJetShareOffers, JetShareOffer } from '../utils/data-fetching';
 import {
   Card,
   CardContent,
@@ -18,38 +18,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Plane, 
-  ArrowRight, 
-  Calendar, 
-  DollarSign, 
-  Users,
-  Timer,
-  Eye
-} from "lucide-react";
+import { Plane, ArrowRight, User, DollarSign, Calendar, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Admin Flight Offers Management Page
+ * Admin JetShare Offers Page
  * 
- * Displays and allows management of all flight offers in the system:
- * - Lists all flight offers with key details
- * - Shows status and pricing information
+ * Displays and allows management of all JetShare offers in the system.
+ * - Lists all offers with key details
+ * - Shows offer status and user information
  * - Provides actions for managing offers
  * 
  * Data is fetched directly from Supabase.
  */
-export default function AdminFlightOffersPage() {
-  const [offers, setOffers] = useState<Flight[]>([]);
+export default function AdminJetSharePage() {
+  const [offers, setOffers] = useState<JetShareOffer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchOffers() {
       try {
-        const data = await getFlightOffers();
+        const data = await getJetShareOffers();
         setOffers(data);
       } catch (error) {
-        console.error('Error fetching flight offers:', error);
+        console.error('Error fetching JetShare offers:', error);
       } finally {
         setLoading(false);
       }
@@ -76,20 +68,11 @@ export default function AdminFlightOffersPage() {
     });
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   // Status badge color mapping
   const statusColors = {
-    scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-    boarding: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
-    in_air: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
-    completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-    cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+    open: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+    accepted: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    completed: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
   };
 
   if (loading) {
@@ -103,30 +86,36 @@ export default function AdminFlightOffersPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Flight Offers</h1>
-        <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-          <Plane className="mr-2 h-4 w-4" />
-          Add New Flight
-        </Button>
+        <h1 className="text-3xl font-bold">JetShare Offers</h1>
+        <div className="flex space-x-2">
+          <Button variant="outline">
+            Filter
+          </Button>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-black">
+            <Plane className="mr-2 h-4 w-4" />
+            Export Data
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Flights</CardTitle>
+          <CardTitle>All JetShare Offers</CardTitle>
           <CardDescription>
-            Manage all flight offers and schedules
+            View and manage all seat-sharing flight offers
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Route</TableHead>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Aircraft</TableHead>
+                <TableHead>Flight Route</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Created By</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Seats</TableHead>
-                <TableHead>Price</TableHead>
+                <TableHead>Cost</TableHead>
+                <TableHead>Requested</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -136,34 +125,24 @@ export default function AdminFlightOffersPage() {
                   <TableRow key={offer.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-1">
-                        <span>{offer.origin?.code || offer.origin_airport}</span>
+                        <span>{offer.departure_location}</span>
                         <ArrowRight className="h-3 w-3" />
-                        <span>{offer.destination?.code || offer.destination_airport}</span>
-                        <div className="ml-1 text-xs text-gray-500">
-                          {offer.origin?.city && offer.destination?.city ? 
-                            `${offer.origin.city} to ${offer.destination.city}` : ''}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-3 w-3 text-gray-500" />
-                          <span>{formatDate(offer.departure_time)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Timer className="h-3 w-3 text-gray-500" />
-                          <span className="text-xs">{formatTime(offer.departure_time)}</span>
-                        </div>
+                        <span>{offer.arrival_location}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Plane className="h-3 w-3 text-gray-500" />
+                        <Calendar className="h-3 w-3 text-gray-500" />
+                        <span>{formatDate(offer.flight_date)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <User className="h-3 w-3 text-gray-500" />
                         <span>
-                          {offer.jet ? 
-                            `${offer.jet.manufacturer || ''} ${offer.jet.model || ''}`.trim() || offer.jet.tail_number : 
-                            'N/A'
+                          {Array.isArray(offer.user) && offer.user.length > 0 ? 
+                            `${offer.user[0].first_name || ''} ${offer.user[0].last_name || ''}`.trim() : 
+                            'Unknown User'
                           }
                         </span>
                       </div>
@@ -173,22 +152,23 @@ export default function AdminFlightOffersPage() {
                         statusColors[offer.status as keyof typeof statusColors] || 
                         'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                       }>
-                        {offer.status.split('_').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')}
+                        {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3 text-gray-500" />
-                        <span>{offer.available_seats}</span>
+                        <DollarSign className="h-3 w-3 text-gray-500" />
+                        <span>{formatCurrency(offer.total_flight_cost)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
                         <DollarSign className="h-3 w-3 text-gray-500" />
-                        <span>{formatCurrency(offer.base_price)}</span>
+                        <span>{formatCurrency(offer.requested_share_amount)}</span>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(offer.created_at)}
                     </TableCell>
                     <TableCell>
                       <Button variant="ghost" size="sm">
@@ -200,8 +180,8 @@ export default function AdminFlightOffersPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
-                    No flight offers found.
+                  <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                    No JetShare offers found.
                   </TableCell>
                 </TableRow>
               )}
@@ -210,59 +190,43 @@ export default function AdminFlightOffersPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Flights</CardTitle>
+            <CardTitle className="text-sm font-medium">Open Offers</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {offers.length}
+              {offers.filter(o => o.status === 'open').length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              All scheduled flights
+              Awaiting matches
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
+            <CardTitle className="text-sm font-medium">Accepted Offers</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {offers.filter(o => ['scheduled', 'boarding'].includes(o.status)).length}
+              {offers.filter(o => o.status === 'accepted').length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Scheduled or boarding
+              Matched and confirmed
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium">Completed Offers</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {offers.filter(o => o.status === 'in_air').length}
+              {offers.filter(o => o.status === 'completed').length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Currently in air
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Average Price</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {offers.length > 0 ? 
-                formatCurrency(offers.reduce((sum, o) => sum + o.base_price, 0) / offers.length) : 
-                '$0'
-              }
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Per flight
+              Flights completed
             </p>
           </CardContent>
         </Card>

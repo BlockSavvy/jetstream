@@ -1,288 +1,167 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import { useState, useEffect } from 'react';
+import { getJets, Jet } from '../utils/data-fetching';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Search, 
-  Filter, 
   Plane, 
-  PlaneTakeoff, 
-  Calendar, 
-  Ruler, 
-  GaugeCircle,
-  Users,
-  Eye,
+  User, 
+  Briefcase, 
+  MapPin, 
+  Star,
+  Calendar,
   Edit,
-  Trash,
-  Plus
+  Gauge
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * Admin Jets Management Page
  * 
- * Provides an interface for administrators to manage jet inventory:
- * - View all jets with key specifications and status
- * - Search and filter jets by type, status, and capacity
- * - Add, edit, or remove jets from the system
+ * Displays and allows management of all jets in the system:
+ * - Lists all jets with key specifications
+ * - Shows current availability status
+ * - Provides actions for managing jets
  * 
- * This page uses placeholder data and will be integrated with the jets database.
+ * Data is fetched directly from Supabase.
  */
 export default function AdminJetsPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [jets, setJets] = useState<Jet[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Placeholder jets data
-  const jets = [
-    { 
-      id: 'j-001', 
-      model: 'Gulfstream G650', 
-      registration: 'N650JS', 
-      type: 'Long Range', 
-      capacity: 14, 
-      range: 7000, 
-      speed: 950, 
-      status: 'available', 
-      lastMaintenance: '2023-09-10',
-      nextMaintenance: '2023-12-10',
-      location: 'New York'
-    },
-    { 
-      id: 'j-002', 
-      model: 'Bombardier Global 7500', 
-      registration: 'N7500B', 
-      type: 'Ultra Long Range', 
-      capacity: 19, 
-      range: 7700, 
-      speed: 925, 
-      status: 'maintenance', 
-      lastMaintenance: '2023-10-05',
-      nextMaintenance: '2023-10-20',
-      location: 'Chicago'
-    },
-    { 
-      id: 'j-003', 
-      model: 'Cessna Citation X', 
-      registration: 'N100CX', 
-      type: 'Super-Midsize', 
-      capacity: 9, 
-      range: 3460, 
-      speed: 972, 
-      status: 'in-flight', 
-      lastMaintenance: '2023-08-22',
-      nextMaintenance: '2023-11-22',
-      location: 'In Transit (LAX → MIA)'
-    },
-    { 
-      id: 'j-004', 
-      model: 'Dassault Falcon 8X', 
-      registration: 'N888DF', 
-      type: 'Long Range', 
-      capacity: 12, 
-      range: 6450, 
-      speed: 892, 
-      status: 'available', 
-      lastMaintenance: '2023-09-30',
-      nextMaintenance: '2023-12-30',
-      location: 'London'
-    },
-    { 
-      id: 'j-005', 
-      model: 'Embraer Phenom 300', 
-      registration: 'N300EP', 
-      type: 'Light', 
-      capacity: 7, 
-      range: 2010, 
-      speed: 834, 
-      status: 'scheduled', 
-      lastMaintenance: '2023-09-15',
-      nextMaintenance: '2023-12-15',
-      location: 'Miami'
-    },
-  ];
-
-  // Filter jets based on search query, status filter, and type filter
-  const filteredJets = jets.filter(jet => {
-    const matchesSearch = 
-      searchQuery === '' || 
-      jet.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jet.registration.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jet.location.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = 
-      statusFilter === 'all' || 
-      jet.status === statusFilter;
-    
-    const matchesType = 
-      typeFilter === 'all' || 
-      jet.type === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  // Function to get status badge color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'in-flight':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'scheduled':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+  useEffect(() => {
+    async function fetchJets() {
+      try {
+        const data = await getJets();
+        setJets(data);
+      } catch (error) {
+        console.error('Error fetching jets:', error);
+      } finally {
+        setLoading(false);
+      }
     }
+
+    fetchJets();
+  }, []);
+
+  // Status badge color mapping
+  const statusColors = {
+    available: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+    maintenance: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300',
+    unavailable: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full p-8">
+        <div className="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Jets Inventory</h1>
+        <h1 className="text-3xl font-bold">Jets Management</h1>
         <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-          <Plus className="mr-2 h-4 w-4" />
+          <Plane className="mr-2 h-4 w-4" />
           Add New Jet
         </Button>
       </div>
 
-      <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by model, registration, location..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <div className="flex items-center">
-              <Filter className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Status" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="in-flight">In Flight</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-            <SelectItem value="scheduled">Scheduled</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[180px]">
-            <div className="flex items-center">
-              <Plane className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Jet Type" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Light">Light</SelectItem>
-            <SelectItem value="Midsize">Midsize</SelectItem>
-            <SelectItem value="Super-Midsize">Super-Midsize</SelectItem>
-            <SelectItem value="Long Range">Long Range</SelectItem>
-            <SelectItem value="Ultra Long Range">Ultra Long Range</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Jets</CardTitle>
+          <CardTitle>Fleet</CardTitle>
           <CardDescription>
-            Manage all jets in the fleet inventory
+            Manage all jets in your fleet
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Model</TableHead>
-                <TableHead>Registration</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead>Aircraft</TableHead>
+                <TableHead>Tail Number</TableHead>
+                <TableHead>Owner</TableHead>
+                <TableHead>Home Base</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Capacity</TableHead>
                 <TableHead>Range (nm)</TableHead>
-                <TableHead>Speed (km/h)</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredJets.length > 0 ? (
-                filteredJets.map((jet) => (
+              {jets.length > 0 ? (
+                jets.map((jet) => (
                   <TableRow key={jet.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center space-x-2">
                         <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-1">
-                          <Plane className="h-5 w-5 text-gray-500" />
+                          <Plane className="h-4 w-4 text-amber-500" />
                         </div>
-                        <span>{jet.model}</span>
+                        <div>
+                          <div>{jet.manufacturer} {jet.model}</div>
+                          <div className="text-xs text-gray-500">{jet.year}</div>
+                        </div>
                       </div>
                     </TableCell>
-                    <TableCell>{jet.registration}</TableCell>
-                    <TableCell>{jet.type}</TableCell>
+                    <TableCell>{jet.tail_number}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Users className="h-3 w-3 text-gray-500" />
-                        <span>{jet.capacity} pax</span>
+                        <User className="h-3 w-3 text-gray-500" />
+                        <span>
+                          {Array.isArray(jet.owner) && jet.owner.length > 0 ? 
+                            `${jet.owner[0].first_name || ''} ${jet.owner[0].last_name || ''}`.trim() : 
+                            'Unknown Owner'
+                          }
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-1">
-                        <Ruler className="h-3 w-3 text-gray-500" />
-                        <span>{jet.range} nm</span>
+                        <MapPin className="h-3 w-3 text-gray-500" />
+                        <span>{jet.home_base_airport}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-1">
-                        <GaugeCircle className="h-3 w-3 text-gray-500" />
-                        <span>{jet.speed} km/h</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(jet.status)}>
-                        {jet.status}
+                      <Badge className={
+                        statusColors[jet.status as keyof typeof statusColors] || 
+                        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                      }>
+                        {jet.status.charAt(0).toUpperCase() + jet.status.slice(1)}
                       </Badge>
                     </TableCell>
-                    <TableCell>{jet.location}</TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                      <div className="flex items-center space-x-1">
+                        <Briefcase className="h-3 w-3 text-gray-500" />
+                        <span>{jet.capacity} seats</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Gauge className="h-3 w-3 text-gray-500" />
+                        <span>{jet.range_nm.toLocaleString()} nm</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-1">
                         <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Calendar className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -290,8 +169,8 @@ export default function AdminJetsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-4 text-muted-foreground">
-                    No jets found matching your filters.
+                  <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
+                    No jets found.
                   </TableCell>
                 </TableRow>
               )}
@@ -299,6 +178,50 @@ export default function AdminJetsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Available Jets</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {jets.filter(jet => jet.status === 'available').length}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ready for booking
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">In Maintenance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {jets.filter(jet => jet.status === 'maintenance').length}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Under scheduled service
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Average Capacity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {jets.length > 0 
+                ? Math.round(jets.reduce((sum, jet) => sum + jet.capacity, 0) / jets.length) 
+                : 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Seats per aircraft
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 } 

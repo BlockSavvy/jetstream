@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { getDashboardMetrics, getRecentJetShareOffers, DashboardMetrics } from '../utils/data-fetching';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -31,10 +33,39 @@ import {
  * - Flight data visualization
  * - User growth trends
  * 
- * Charts use placeholder data which will be replaced with real data integration.
+ * Data is fetched directly from Supabase.
  */
 export default function AdminOverviewPage() {
-  // Placeholder data - will be replaced with real API data
+  // State for metrics and offers
+  const [metrics, setMetrics] = useState<DashboardMetrics>({
+    userCount: 0,
+    jetShareCount: 0,
+    jetsCount: 0,
+    crewCount: 0
+  });
+  const [recentOffers, setRecentOffers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch data when component mounts
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const metricsData = await getDashboardMetrics();
+        const offersData = await getRecentJetShareOffers(5);
+        
+        setMetrics(metricsData);
+        setRecentOffers(offersData || []);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, []);
+  
+  // Mock data for charts - will be replaced with actual data in future iterations
   const userData = [
     { name: 'Jan', users: 400 },
     { name: 'Feb', users: 600 },
@@ -55,6 +86,14 @@ export default function AdminOverviewPage() {
     { name: 'Jul', jetShare: 60, directFlights: 70 },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full p-8">
+        <div className="animate-spin h-8 w-8 border-4 border-amber-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -69,38 +108,38 @@ export default function AdminOverviewPage() {
             <UsersRound className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,543</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">{metrics.userCount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Platform user count</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Offers</CardTitle>
+            <CardTitle className="text-sm font-medium">Active JetShare Offers</CardTitle>
             <Plane className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">127</div>
-            <p className="text-xs text-muted-foreground">+5% from last week</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Flights</CardTitle>
-            <TrendingUp className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">89</div>
-            <p className="text-xs text-muted-foreground">+18% from last month</p>
+            <div className="text-2xl font-bold">{metrics.jetShareCount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Open JetShare offers</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Available Jets</CardTitle>
+            <TrendingUp className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.jetsCount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Jets ready for booking</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Crew Members</CardTitle>
             <Timer className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42</div>
-            <p className="text-xs text-muted-foreground">-3% from last week</p>
+            <div className="text-2xl font-bold">{metrics.crewCount.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Available crew members</p>
           </CardContent>
         </Card>
       </div>
@@ -178,26 +217,45 @@ export default function AdminOverviewPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="col-span-2">
           <CardHeader>
-            <CardTitle>Active Locations</CardTitle>
-            <CardDescription>Top cities with active flight offers</CardDescription>
+            <CardTitle>Recent JetShare Offers</CardTitle>
+            <CardDescription>Latest offers submitted by users</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
-              {[
-                { city: 'New York', count: 32 },
-                { city: 'London', count: 28 },
-                { city: 'Dubai', count: 25 },
-                { city: 'Paris', count: 22 },
-                { city: 'Tokyo', count: 18 }
-              ].map((item, i) => (
-                <li key={i} className="flex justify-between items-center">
-                  <span>{item.city}</span>
-                  <span className="text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
-                    {item.count} offers
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {recentOffers.length > 0 ? (
+              <ul className="space-y-4">
+                {recentOffers.map((offer) => (
+                  <li key={offer.id} className="flex items-start space-x-3">
+                    <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded-full">
+                      <Plane className="h-4 w-4"/>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">
+                        {offer.departure_location} → {offer.arrival_location}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(offer.flight_date).toLocaleDateString()} • 
+                        Created by {offer.user && offer.user[0] ? `${offer.user[0].first_name || 'Unknown'} ${offer.user[0].last_name || ''}` : 'Unknown User'}
+                      </p>
+                      <div className="mt-1">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          offer.status === 'open' 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                            : offer.status === 'accepted' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                        }`}>
+                          {offer.status.charAt(0).toUpperCase() + offer.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                No recent offers found.
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card>
