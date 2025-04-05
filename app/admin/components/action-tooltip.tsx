@@ -4,11 +4,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ReactNode } from "react";
 
 interface ActionTooltipProps {
-  children: ReactNode;
   label: string;
+  children: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
 }
@@ -19,11 +18,11 @@ interface ActionTooltipProps {
  * A tooltip component specifically designed for action buttons in the admin dashboard.
  * Provides helpful context for icon-only buttons.
  */
-export function ActionTooltip({
-  children,
+export function ActionTooltip({ 
   label,
+  children,
   side = "top",
-  align = "center"
+  align = "center" 
 }: ActionTooltipProps) {
   return (
     <TooltipProvider>
@@ -31,12 +30,8 @@ export function ActionTooltip({
         <TooltipTrigger asChild>
           {children}
         </TooltipTrigger>
-        <TooltipContent 
-          side={side} 
-          align={align}
-          className="bg-black text-white border-black text-xs py-1 px-2"
-        >
-          {label}
+        <TooltipContent side={side} align={align}>
+          <p className="font-semibold text-xs">{label}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
