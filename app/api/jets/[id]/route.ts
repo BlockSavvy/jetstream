@@ -118,10 +118,10 @@ const AIRCRAFT_LAYOUTS: AircraftLayoutsMap = {
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const jet_id = context.params.id;
+    const jet_id = params.id;
     
     // Initialize Supabase client
     const supabase = createServerComponentClient({ cookies });

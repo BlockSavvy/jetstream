@@ -3,15 +3,15 @@ import { createClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    console.log('Fetching crew with ID:', context.params?.id);
+    console.log('Fetching crew with ID:', params?.id);
     
     // Use the existing createClient function
     const supabase = await createClient();
     
-    const id = context.params?.id;
+    const id = params?.id;
     
     if (!id) {
       console.error('No crew ID provided');
@@ -167,13 +167,13 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Use the existing createClient function
     const supabase = await createClient();
     
-    const id = context.params?.id;
+    const id = params?.id;
     
     if (!id) {
       return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
@@ -250,13 +250,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Use the existing createClient function
     const supabase = await createClient();
     
-    const id = context.params?.id;
+    const id = params?.id;
     
     if (!id) {
       return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
