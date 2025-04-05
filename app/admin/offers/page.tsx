@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getFlightOffers, Flight } from '../utils/data-fetching';
 import {
   Card,
@@ -25,9 +25,15 @@ import {
   DollarSign, 
   Users,
   Timer,
-  Eye
+  Eye,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FlightViewDialog } from '../components/dialogs/flight-view-dialog';
+import { FlightCreateDialog } from '../components/dialogs/flight-create-dialog';
+import { useUi } from '../components/ui-context';
+import { toast } from 'sonner';
 
 /**
  * Admin Flight Offers Management Page
@@ -42,21 +48,44 @@ import { Button } from "@/components/ui/button";
 export default function AdminFlightOffersPage() {
   const [offers, setOffers] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Use UI context for dialog management
+  const { 
+    openFlightView, 
+    openFlightCreate, 
+    setRefreshFlights 
+  } = useUi();
 
-  useEffect(() => {
-    async function fetchOffers() {
-      try {
-        const data = await getFlightOffers();
-        setOffers(data);
-      } catch (error) {
-        console.error('Error fetching flight offers:', error);
-      } finally {
-        setLoading(false);
-      }
+  // Memoize the fetch function to prevent re-renders
+  const fetchFlights = useCallback(async () => {
+    try {
+      const data = await getFlightOffers();
+      setOffers(data);
+    } catch (error) {
+      console.error('Error fetching flight offers:', error);
+      toast.error('Failed to load flight offers');
+    } finally {
+      setLoading(false);
     }
-
-    fetchOffers();
   }, []);
+
+  // Handlers for dialogs and actions
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchFlights();
+    setIsRefreshing(false);
+    toast.success('Flight offers refreshed');
+  };
+
+  // Register the fetch function with context
+  useEffect(() => {
+    fetchFlights();
+    
+    // Store the memoized function in context
+    setRefreshFlights(fetchFlights);
+    
+  }, [fetchFlights, setRefreshFlights]);
 
   // Helper functions to format data
   const formatCurrency = (amount: number) => {
@@ -104,10 +133,23 @@ export default function AdminFlightOffersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Flight Offers</h1>
-        <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-          <Plane className="mr-2 h-4 w-4" />
-          Add New Flight
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button 
+            className="bg-amber-500 hover:bg-amber-600 text-black"
+            onClick={openFlightCreate}
+          >
+            <Plane className="mr-2 h-4 w-4" />
+            Add New Flight
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -191,7 +233,11 @@ export default function AdminFlightOffersPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => openFlightView(offer)}
+                      >
                         <Eye className="h-4 w-4 mr-1" />
                         Details
                       </Button>
@@ -267,6 +313,10 @@ export default function AdminFlightOffersPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Include dialog components */}
+      <FlightViewDialog />
+      <FlightCreateDialog />
     </div>
   );
 } 
