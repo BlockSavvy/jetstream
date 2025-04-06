@@ -10,7 +10,88 @@
 import { createClient } from '@/lib/supabase-server';
 import * as pinecone from '@/lib/services/pinecone';
 import * as embeddings from '@/lib/services/embeddings';
-import type { JetShareOffer, Flight, SimulationLog, Crew, User } from '@/types/app';
+
+// Define interface types locally to avoid import errors
+interface JetShareOffer {
+  id: string;
+  created_by: string;
+  departure_location: string;
+  arrival_location: string;
+  flight_date: string;
+  departure_time?: string;
+  aircraft_model?: string;
+  total_seats?: number;
+  available_seats: number;
+  total_flight_cost: number;
+  requested_share_amount: number;
+  has_ai_matching?: boolean;
+  details?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface Flight {
+  id: string;
+  flight_number?: string;
+  origin_airport: string;
+  destination_airport: string;
+  departure_time: string;
+  arrival_time: string;
+  base_price: number;
+  available_seats: number;
+  status?: string;
+  created_at: string;
+  updated_at?: string;
+  jets?: any;
+  amenities?: string[];
+}
+
+interface Crew {
+  id: string;
+  name: string;
+  bio?: string;
+  image_url?: string;
+  role?: string;
+  average_rating?: number;
+  reviews_count?: number;
+  availability_status?: string;
+  certifications?: string[];
+  created_at: string;
+  updated_at?: string;
+  crew_specializations?: any[];
+}
+
+interface User {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  bio?: string;
+  role?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface SimulationLog {
+  id: string;
+  sim_type: string;
+  start_date: string;
+  end_date: string;
+  virtual_users: number;
+  ai_matching_enabled: boolean;
+  input_parameters?: any;
+  results_summary?: any;
+  triggered_by_user_id?: string;
+  agent_instruction_summary?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface PineconeMatch {
+  id: string;
+  score: number;
+  metadata?: Record<string, any>;
+}
 
 /**
  * Search for similar JetShare offers based on a natural language query
@@ -34,7 +115,7 @@ export async function getSimilarOffers(query: string, limit: number = 5): Promis
     }
     
     // Extract the offer IDs from the results
-    const offerIds = results.matches.map(match => match.id);
+    const offerIds = results.matches.map((match: PineconeMatch) => match.id);
     
     // Fetch the full offer details from Supabase
     const supabase = await createClient();
@@ -51,7 +132,7 @@ export async function getSimilarOffers(query: string, limit: number = 5): Promis
     // Sort the offers to match the order of the search results
     const offersMap = new Map(data.map(offer => [offer.id, offer]));
     const sortedOffers = offerIds
-      .map(id => offersMap.get(id))
+      .map((id: string) => offersMap.get(id))
       .filter(Boolean) as JetShareOffer[];
     
     return sortedOffers;
@@ -83,7 +164,7 @@ export async function findMatchingCrews(query: string, limit: number = 5): Promi
     }
     
     // Extract the crew IDs from the results
-    const crewIds = results.matches.map(match => match.id);
+    const crewIds = results.matches.map((match: PineconeMatch) => match.id);
     
     // Fetch the full crew details from Supabase
     const supabase = await createClient();
@@ -103,7 +184,7 @@ export async function findMatchingCrews(query: string, limit: number = 5): Promi
     // Sort the crews to match the order of the search results
     const crewsMap = new Map(data.map(crew => [crew.id, crew]));
     const sortedCrews = crewIds
-      .map(id => crewsMap.get(id))
+      .map((id: string) => crewsMap.get(id))
       .filter(Boolean) as Crew[];
     
     return sortedCrews;
@@ -168,7 +249,7 @@ export async function findRelatedSimulations(query: string, limit: number = 5): 
     }
     
     // Extract the simulation IDs from the results
-    const simulationIds = results.matches.map(match => match.id);
+    const simulationIds = results.matches.map((match: PineconeMatch) => match.id);
     
     // Fetch the full simulation details from Supabase
     const supabase = await createClient();
@@ -185,7 +266,7 @@ export async function findRelatedSimulations(query: string, limit: number = 5): 
     // Sort the simulations to match the order of the search results
     const simulationsMap = new Map(data.map(sim => [sim.id, sim]));
     const sortedSimulations = simulationIds
-      .map(id => simulationsMap.get(id))
+      .map((id: string) => simulationsMap.get(id))
       .filter(Boolean) as SimulationLog[];
     
     return sortedSimulations;
@@ -217,7 +298,7 @@ export async function findFlights(query: string, limit: number = 5): Promise<Fli
     }
     
     // Extract the flight IDs from the results
-    const flightIds = results.matches.map(match => match.id);
+    const flightIds = results.matches.map((match: PineconeMatch) => match.id);
     
     // Fetch the full flight details from Supabase
     const supabase = await createClient();
@@ -237,7 +318,7 @@ export async function findFlights(query: string, limit: number = 5): Promise<Fli
     // Sort the flights to match the order of the search results
     const flightsMap = new Map(data.map(flight => [flight.id, flight]));
     const sortedFlights = flightIds
-      .map(id => flightsMap.get(id))
+      .map((id: string) => flightsMap.get(id))
       .filter(Boolean) as Flight[];
     
     return sortedFlights;
@@ -313,7 +394,7 @@ async function enrichUserProfile(supabase: any, profile: any): Promise<any> {
       .eq('user_id', profile.id);
     
     if (interests && interests.length > 0) {
-      enriched.interestsAndHobbies = interests.map(i => i.interest);
+      enriched.interestsAndHobbies = interests.map((i: any) => i.interest);
     }
   } catch (e) {
     console.log(`No interests found for user ${profile.id}`);
@@ -327,7 +408,7 @@ async function enrichUserProfile(supabase: any, profile: any): Promise<any> {
       .eq('user_id', profile.id);
     
     if (history && history.length > 0) {
-      enriched.travelHistory = history.map(h => ({
+      enriched.travelHistory = history.map((h: any) => ({
         origin: h.origin,
         destination: h.destination,
         date: h.travel_date
@@ -390,7 +471,7 @@ export async function searchAcrossAllTypes(
     // Process and diversify results
     const typeGroups = new Map<string, Array<any>>();
     
-    results.matches.forEach(match => {
+    results.matches.forEach((match: PineconeMatch) => {
       const objectType = match.metadata?.object_type || 'unknown';
       
       if (!typeGroups.has(objectType)) {

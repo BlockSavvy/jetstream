@@ -9,11 +9,10 @@ import { Pinecone, PineconeRecord } from '@pinecone-database/pinecone';
 import { PineconeStore } from '@langchain/pinecone';
 import { Document } from '@langchain/core/documents';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { PineconeClient } from '@pinecone-database/pinecone';
 import { EnrichedProfile } from '../types/matching.types';
 import { Flight } from '@/app/flights/types';
 import { v4 as uuidv4 } from 'uuid';
-import { getCohereEmbeddings, generateUserEmbedding, generateFlightEmbedding } from './embeddings';
+import * as embeddings from './embeddings';
 import axios from 'axios';
 
 // Initialize Pinecone client
@@ -75,15 +74,15 @@ export async function getPineconeIndex() {
 
   // Create the index if it doesn't exist
   if (!indexExists) {
+    // Using the standardized Pinecone API format
+    // Check your Pinecone SDK version for the exact structure
     await pinecone.createIndex({
       name: PINECONE_INDEX_NAME,
       spec: {
         serverless: {
           cloud: 'aws',
           region: 'us-west-2'
-        },
-        dimension: 1024, // Cohere embed-english-v3.0 dimensions
-        metric: 'cosine',
+        }
       }
     });
 
@@ -264,7 +263,7 @@ export function createFlightDocument(flight: Flight, embedding: number[]): Docum
     arrivalTime: flight.arrival_time,
     price: flight.base_price.toString(),
     seats: flight.available_seats.toString(),
-    jetModel: flight.jets.model,
+    jetModel: flight.jets?.model,
     type: 'flight',
   };
   
@@ -272,140 +271,6 @@ export function createFlightDocument(flight: Flight, embedding: number[]): Docum
     pageContent: JSON.stringify(flight),
     metadata,
   });
-}
-
-/**
- * Upserts a user profile to Pinecone
- */
-export async function upsertUserProfile(profile: EnrichedProfile): Promise<string> {
-  try {
-    const index = await getPineconeIndex();
-    const embedding = await generateUserEmbedding(profile);
-    const document = createUserDocument(profile, embedding);
-    
-    // Use user ID as the vector ID
-    const id = profile.id;
-    
-    // Upsert vector to Pinecone
-    await index.upsert([{
-      id: id,
-      values: embedding,
-      metadata: document.metadata,
-    }]);
-    
-    return id;
-  } catch (error) {
-    console.error('Error upserting user profile to Pinecone:', error);
-    throw error;
-  }
-}
-
-/**
- * Upserts a flight to Pinecone
- */
-export async function upsertFlight(flight: Flight): Promise<string> {
-  try {
-    const index = await getPineconeIndex();
-    const embedding = await generateFlightEmbedding(flight);
-    const document = createFlightDocument(flight, embedding);
-    
-    // Use flight ID as the vector ID
-    const id = flight.id;
-    
-    // Upsert vector to Pinecone
-    await index.upsert([{
-      id: id,
-      values: embedding,
-      metadata: document.metadata,
-    }]);
-    
-    return id;
-  } catch (error) {
-    console.error('Error upserting flight to Pinecone:', error);
-    throw error;
-  }
-}
-
-/**
- * Finds similar users based on an embedding query
- */
-export async function findSimilarUsers(
-  queryEmbedding: number[], 
-  topK: number = 10, 
-  filter?: object
-): Promise<any[]> {
-  try {
-    const index = await getPineconeIndex();
-    
-    const queryRequest = {
-      vector: queryEmbedding,
-      topK: topK,
-      includeMetadata: true,
-      includeValues: false,
-      namespace: USERS_NAMESPACE,
-      ...(filter && { filter }),
-    };
-    
-    const results = await index.query(queryRequest);
-    return results.matches || [];
-  } catch (error) {
-    console.error('Error querying similar users from Pinecone:', error);
-    throw error;
-  }
-}
-
-/**
- * Finds similar flights based on an embedding query
- */
-export async function findSimilarFlights(
-  queryEmbedding: number[], 
-  topK: number = 10, 
-  filter?: object
-): Promise<any[]> {
-  try {
-    const index = await getPineconeIndex();
-    
-    const queryRequest = {
-      vector: queryEmbedding,
-      topK: topK,
-      includeMetadata: true,
-      includeValues: false,
-      namespace: FLIGHTS_NAMESPACE,
-      ...(filter && { filter }),
-    };
-    
-    const results = await index.query(queryRequest);
-    return results.matches || [];
-  } catch (error) {
-    console.error('Error querying similar flights from Pinecone:', error);
-    throw error;
-  }
-}
-
-/**
- * Removes a user profile from the vector database
- */
-export async function removeUserProfile(userId: string): Promise<void> {
-  try {
-    const index = await getPineconeIndex();
-    await index.deleteMany([userId]); // Delete the vector by ID
-  } catch (error) {
-    console.error('Error removing user profile from Pinecone:', error);
-    throw error;
-  }
-}
-
-/**
- * Removes a flight from the vector database
- */
-export async function removeFlight(flightId: string): Promise<void> {
-  try {
-    const index = await getPineconeIndex();
-    await index.deleteMany([flightId]); // Delete the vector by ID
-  } catch (error) {
-    console.error('Error removing flight from Pinecone:', error);
-    throw error;
-  }
 }
 
 /**

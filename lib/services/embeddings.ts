@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase-server';
 import * as cohere from 'cohere-ai';
 
 // Initialize Cohere embeddings with API key
-const cohereApiKey = process.env.COHERE_API_KEY || 'gjiwLcvAkdZkvSVgMAG4OP4lQC1klq86nDEZ0vZa';
+const cohereApiKey = process.env.COHERE_API_KEY || '';
 
 /**
  * Creates a CohereEmbeddings instance if not already created
@@ -26,391 +26,305 @@ export function getCohereEmbeddings(): CohereEmbeddings {
 /**
  * Generates a text representation of user profile for embedding
  */
-export function generateUserProfileText(profile: EnrichedProfile): string {
-  const preferences = profile.preferences || {};
-  const professionalDetails = profile.professionalDetails || {};
-  
-  let profileText = `User ${profile.firstName || 'Anonymous'} ${profile.lastName || ''}`.trim() + '.';
-  
-  if (profile.bio) {
-    profileText += ` Bio: ${profile.bio}.`;
-  }
-  
-  if (professionalDetails.industry) {
-    profileText += ` Works in ${professionalDetails.industry}`;
-    if (professionalDetails.jobTitle) {
-      profileText += ` as ${professionalDetails.jobTitle}`;
+export function generateUserProfileText(profile: any): string {
+  // Check if this is an EnrichedProfile from the matching.types
+  if (profile.preferences || profile.professionalDetails) {
+    const preferences = profile.preferences || {};
+    const professionalDetails = profile.professionalDetails || {};
+    
+    let profileText = `User ${profile.firstName || 'Anonymous'} ${profile.lastName || ''}`.trim() + '.';
+    
+    if (profile.bio) {
+      profileText += ` Bio: ${profile.bio}.`;
     }
-    if (professionalDetails.company) {
-      profileText += ` at ${professionalDetails.company}`;
+    
+    if (professionalDetails.industry) {
+      profileText += ` Works in ${professionalDetails.industry}`;
+      if (professionalDetails.jobTitle) {
+        profileText += ` as ${professionalDetails.jobTitle}`;
+      }
+      if (professionalDetails.company) {
+        profileText += ` at ${professionalDetails.company}`;
+      }
+      profileText += `.`;
     }
-    profileText += `.`;
+    
+    if (professionalDetails.expertise && professionalDetails.expertise.length > 0) {
+      profileText += ` Has expertise in ${professionalDetails.expertise.join(', ')}.`;
+    }
+    
+    if (profile.interestsAndHobbies && profile.interestsAndHobbies.length > 0) {
+      profileText += ` Interests include ${profile.interestsAndHobbies.join(', ')}.`;
+    }
+    
+    if (preferences.preferredDestinations && preferences.preferredDestinations.length > 0) {
+      profileText += ` Prefers traveling to ${preferences.preferredDestinations.join(', ')}.`;
+    }
+    
+    if (preferences.travelInterests && preferences.travelInterests.length > 0) {
+      profileText += ` Interested in ${preferences.travelInterests.join(', ')} when traveling.`;
+    }
+    
+    if (preferences.tripTypes && preferences.tripTypes.length > 0) {
+      profileText += ` Usually travels for ${preferences.tripTypes.join(', ')}.`;
+    }
+    
+    if (preferences.languages && preferences.languages.length > 0) {
+      profileText += ` Speaks ${preferences.languages.join(', ')}.`;
+    }
+    
+    // Add travel history if available
+    if (profile.travelHistory && profile.travelHistory.length > 0) {
+      profileText += ` Has traveled from ${Array.from(new Set(profile.travelHistory.map((h: any) => h.origin))).join(', ')} to ${Array.from(new Set(profile.travelHistory.map((h: any) => h.destination))).join(', ')}.`;
+    }
+    
+    return profileText;
+  } else {
+    // Regular user profile format for the newer UI
+    let text = `User Profile\n`;
+    
+    if (profile.firstName && profile.lastName) {
+      text += `Name: ${profile.firstName} ${profile.lastName}\n`;
+    } else if (profile.first_name && profile.last_name) {
+      text += `Name: ${profile.first_name} ${profile.last_name}\n`;
+    }
+    
+    if (profile.bio) {
+      text += `Bio: ${profile.bio}\n`;
+    }
+    
+    if (profile.role) {
+      text += `Role: ${profile.role}\n`;
+    }
+    
+    // Add preferences if available
+    if (profile.preferences) {
+      const prefs = profile.preferences;
+      
+      if (prefs.preferredDestinations && prefs.preferredDestinations.length > 0) {
+        text += `Preferred Destinations: ${prefs.preferredDestinations.join(', ')}\n`;
+      }
+      
+      if (prefs.travelInterests && prefs.travelInterests.length > 0) {
+        text += `Travel Interests: ${prefs.travelInterests.join(', ')}\n`;
+      }
+      
+      if (prefs.tripTypes && prefs.tripTypes.length > 0) {
+        text += `Trip Types: ${prefs.tripTypes.join(', ')}\n`;
+      }
+      
+      if (prefs.languages && prefs.languages.length > 0) {
+        text += `Languages: ${prefs.languages.join(', ')}\n`;
+      }
+    }
+    
+    // Add professional details if available
+    if (profile.professionalDetails) {
+      const prof = profile.professionalDetails;
+      
+      if (prof.industry) {
+        text += `Industry: ${prof.industry}\n`;
+      }
+      
+      if (prof.jobTitle) {
+        text += `Job Title: ${prof.jobTitle}\n`;
+      }
+      
+      if (prof.company) {
+        text += `Company: ${prof.company}\n`;
+      }
+      
+      if (prof.expertise && prof.expertise.length > 0) {
+        text += `Expertise: ${prof.expertise.join(', ')}\n`;
+      }
+    }
+    
+    // Add interests and hobbies if available
+    if (profile.interestsAndHobbies && profile.interestsAndHobbies.length > 0) {
+      text += `Interests and Hobbies: ${profile.interestsAndHobbies.join(', ')}\n`;
+    }
+    
+    // Add travel history if available
+    if (profile.travelHistory && profile.travelHistory.length > 0) {
+      text += `Travel History:\n`;
+      
+      profile.travelHistory.forEach((trip: any) => {
+        const date = trip.date ? new Date(trip.date).toLocaleDateString() : 'Unknown date';
+        text += `- ${trip.origin || 'Unknown'} to ${trip.destination || 'Unknown'} (${date})\n`;
+      });
+    }
+    
+    return text;
   }
-  
-  if (professionalDetails.expertise && professionalDetails.expertise.length > 0) {
-    profileText += ` Has expertise in ${professionalDetails.expertise.join(', ')}.`;
-  }
-  
-  if (profile.interestsAndHobbies && profile.interestsAndHobbies.length > 0) {
-    profileText += ` Interests include ${profile.interestsAndHobbies.join(', ')}.`;
-  }
-  
-  if (preferences.preferredDestinations && preferences.preferredDestinations.length > 0) {
-    profileText += ` Prefers traveling to ${preferences.preferredDestinations.join(', ')}.`;
-  }
-  
-  if (preferences.travelInterests && preferences.travelInterests.length > 0) {
-    profileText += ` Interested in ${preferences.travelInterests.join(', ')} when traveling.`;
-  }
-  
-  if (preferences.tripTypes && preferences.tripTypes.length > 0) {
-    profileText += ` Usually travels for ${preferences.tripTypes.join(', ')}.`;
-  }
-  
-  if (preferences.languages && preferences.languages.length > 0) {
-    profileText += ` Speaks ${preferences.languages.join(', ')}.`;
-  }
-  
-  // Add travel history if available
-  if (profile.travelHistory && profile.travelHistory.length > 0) {
-    profileText += ` Has traveled from ${Array.from(new Set(profile.travelHistory.map(h => h.origin))).join(', ')} to ${Array.from(new Set(profile.travelHistory.map(h => h.destination))).join(', ')}.`;
-  }
-  
-  return profileText;
 }
 
 /**
  * Generates a text representation of flight for embedding
  */
-export function generateFlightText(flight: Flight): string {
-  const origin = flight.origin || { code: flight.origin_airport, name: flight.origin_airport };
-  const destination = flight.destination || { code: flight.destination_airport, name: flight.destination_airport };
-  
-  let flightText = `Flight from ${origin.name || origin.code} to ${destination.name || destination.code}.`;
-  flightText += ` Departure: ${flight.departure_time}. Arrival: ${flight.arrival_time}.`;
-  flightText += ` Available seats: ${flight.available_seats}. Price: ${flight.base_price}.`;
-  
-  if (flight.jets) {
-    flightText += ` Jet: ${flight.jets.manufacturer} ${flight.jets.model}, capacity: ${flight.jets.capacity}.`;
+export function generateFlightText(flight: any): string {
+  // Check if this is a Flight from the flights.types
+  if (flight.origin && flight.destination) {
+    const origin = flight.origin || { code: flight.origin_airport, name: flight.origin_airport };
+    const destination = flight.destination || { code: flight.destination_airport, name: flight.destination_airport };
     
-    if (flight.jets.amenities) {
-      const amenities = Array.isArray(flight.jets.amenities) 
-        ? flight.jets.amenities.join(', ')
-        : typeof flight.jets.amenities === 'object' && flight.jets.amenities !== null
-          ? Object.keys(flight.jets.amenities).join(', ')
-          : String(flight.jets.amenities);
-          
-      flightText += ` Amenities: ${amenities}.`;
-    }
-  }
-  
-  return flightText;
-}
-
-/**
- * Generates embeddings for a user profile
- */
-export async function generateUserEmbedding(profile: EnrichedProfile): Promise<number[]> {
-  const embeddings = getCohereEmbeddings();
-  const profileText = generateUserProfileText(profile);
-  const result = await embeddings.embedDocuments([profileText]);
-  return result[0];
-}
-
-/**
- * Generates embeddings for a flight
- */
-export async function generateFlightEmbedding(flight: Flight): Promise<number[]> {
-  const embeddings = getCohereEmbeddings();
-  const flightText = generateFlightText(flight);
-  const result = await embeddings.embedDocuments([flightText]);
-  return result[0];
-}
-
-/**
- * Generates embeddings for a travel query
- */
-export async function generateQueryEmbedding(queryText: string): Promise<number[]> {
-  const embeddings = getCohereEmbeddings();
-  const result = await embeddings.embedDocuments([queryText]);
-  return result[0];
-}
-
-/**
- * Calculates cosine similarity between two embeddings
- */
-export function calculateSimilarity(embedding1: number[], embedding2: number[]): number {
-  if (embedding1.length !== embedding2.length) {
-    throw new Error('Embeddings must have the same dimensions');
-  }
-  
-  let dotProduct = 0;
-  let magnitude1 = 0;
-  let magnitude2 = 0;
-  
-  for (let i = 0; i < embedding1.length; i++) {
-    dotProduct += embedding1[i] * embedding2[i];
-    magnitude1 += Math.pow(embedding1[i], 2);
-    magnitude2 += Math.pow(embedding2[i], 2);
-  }
-  
-  magnitude1 = Math.sqrt(magnitude1);
-  magnitude2 = Math.sqrt(magnitude2);
-  
-  if (magnitude1 === 0 || magnitude2 === 0) {
-    return 0;
-  }
-  
-  return dotProduct / (magnitude1 * magnitude2);
-}
-
-/**
- * Embeddings service for JetStream
- * Handles generation of vector embeddings for AI matching using Cohere.ai
- */
-
-// Cohere API endpoint for embeddings
-const COHERE_API_ENDPOINT = 'https://api.cohere.ai/v1/embed';
-
-/**
- * Generate embeddings for a text using Cohere API
- * @param text The text to generate embeddings for
- * @returns Promise<number[]> The embedding vector
- */
-export async function encode(text: string): Promise<number[]> {
-  try {
-    // Prepare the request to Cohere API
-    const response = await axios.post(
-      COHERE_API_ENDPOINT,
-      {
-        texts: [text],
-        model: 'embed-english-v3.0',
-        truncate: 'END'
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${cohereApiKey}`,
-          'Content-Type': 'application/json'
-        }
+    let flightText = `Flight from ${origin.name || origin.code} to ${destination.name || destination.code}.`;
+    flightText += ` Departure: ${flight.departure_time}. Arrival: ${flight.arrival_time}.`;
+    flightText += ` Available seats: ${flight.available_seats}. Price: ${flight.base_price}.`;
+    
+    if (flight.jets) {
+      flightText += ` Jet: ${flight.jets.manufacturer} ${flight.jets.model}, capacity: ${flight.jets.capacity}.`;
+      
+      if (flight.jets.amenities) {
+        const amenities = Array.isArray(flight.jets.amenities) 
+          ? flight.jets.amenities.join(', ')
+          : typeof flight.jets.amenities === 'object' && flight.jets.amenities !== null
+            ? Object.keys(flight.jets.amenities).join(', ')
+            : String(flight.jets.amenities);
+            
+        flightText += ` Amenities: ${amenities}.`;
       }
-    );
-
-    // Extract the embedding vector from the response
-    if (response.data && response.data.embeddings && response.data.embeddings.length > 0) {
-      return response.data.embeddings[0];
     }
-
-    throw new Error('Failed to generate embeddings');
-  } catch (error) {
-    console.error('Error generating embeddings:', error);
-    throw new Error('Failed to generate embeddings');
-  }
-}
-
-/**
- * Batch encode multiple texts at once for efficiency
- * @param texts Array of texts to encode
- * @returns Promise<number[][]> Array of embedding vectors
- */
-export async function batchEncode(texts: string[]): Promise<number[][]> {
-  try {
-    // Handle empty array case
-    if (!texts || texts.length === 0) {
-      return [];
-    }
-
-    // Prepare the request to Cohere API
-    const response = await axios.post(
-      COHERE_API_ENDPOINT,
-      {
-        texts: texts,
-        model: 'embed-english-v3.0',
-        truncate: 'END'
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${cohereApiKey}`,
-          'Content-Type': 'application/json'
-        }
+    
+    return flightText;
+  } else {
+    // Format for the newer UI
+    // Format dates if available
+    const departureTime = flight.departure_time 
+      ? new Date(flight.departure_time).toLocaleString()
+      : 'Unknown';
+    
+    const arrivalTime = flight.arrival_time
+      ? new Date(flight.arrival_time).toLocaleString()
+      : 'Unknown';
+    
+    let text = `Flight\n`;
+    text += `From: ${flight.origin_airport || 'Unknown'}\n`;
+    text += `To: ${flight.destination_airport || 'Unknown'}\n`;
+    text += `Departure: ${departureTime}\n`;
+    text += `Arrival: ${arrivalTime}\n`;
+    
+    if (flight.jets) {
+      text += `Aircraft: ${flight.jets.manufacturer} ${flight.jets.model}\n`;
+      
+      if (flight.jets.seat_capacity) {
+        text += `Capacity: ${flight.jets.seat_capacity} seats\n`;
       }
-    );
-
-    // Extract the embedding vectors from the response
-    if (response.data && response.data.embeddings) {
-      return response.data.embeddings;
     }
-
-    throw new Error('Failed to generate batch embeddings');
-  } catch (error) {
-    console.error('Error generating batch embeddings:', error);
-    throw new Error('Failed to generate batch embeddings');
+    
+    if (flight.base_price) {
+      text += `Base Price: $${flight.base_price.toLocaleString()}\n`;
+    }
+    
+    if (flight.available_seats !== undefined) {
+      text += `Available Seats: ${flight.available_seats}\n`;
+    }
+    
+    if (flight.flight_number) {
+      text += `Flight Number: ${flight.flight_number}\n`;
+    }
+    
+    if (flight.amenities && flight.amenities.length > 0) {
+      text += `Amenities: ${flight.amenities.join(', ')}\n`;
+    }
+    
+    if (flight.status) {
+      text += `Status: ${flight.status}\n`;
+    }
+    
+    return text;
   }
 }
-
-/**
- * Generates a text representation of JetShare offer for embedding
- */
-export function generateJetShareOfferText(offer: any): string {
-  let offerText = `JetShare offer from ${offer.departure_location} to ${offer.arrival_location}.`;
-  offerText += ` Flight date: ${new Date(offer.flight_date).toLocaleDateString()}.`;
-  
-  // Include departure time information
-  if (offer.departure_time) {
-    const departureTime = new Date(offer.departure_time);
-    offerText += ` Departure time: ${departureTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${departureTime.toLocaleDateString()}.`;
-    offerText += ` Readable departure: ${departureTime.toLocaleString('en-US', { 
-      weekday: 'long', 
-      month: 'long', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZoneName: 'short'
-    })}.`;
-  }
-  
-  offerText += ` Total cost: $${offer.total_flight_cost}. Share amount: $${offer.requested_share_amount}.`;
-  
-  if (offer.aircraft_model) {
-    offerText += ` Aircraft: ${offer.aircraft_model}.`;
-  }
-  
-  if (offer.total_seats && offer.available_seats) {
-    offerText += ` ${offer.available_seats} of ${offer.total_seats} seats available.`;
-  }
-  
-  return offerText;
-}
-
-/**
- * Generates embeddings for a JetShare offer
- */
-export async function generateJetShareOfferEmbedding(offer: any): Promise<number[]> {
-  const embeddings = getCohereEmbeddings();
-  const offerText = generateJetShareOfferText(offer);
-  const result = await embeddings.embedDocuments([offerText]);
-  return result[0];
-}
-
-/**
- * JetStream Embeddings Service
- * 
- * This service provides functions for:
- * 1. Generating standardized text formats for different entity types
- * 2. Creating embedding vectors using Cohere/OpenAI
- * 3. Supporting the CLI batch processing tool
- */
-
-// Set up Cohere client
-const COHERE_API_KEY = process.env.COHERE_API_KEY || '';
-cohere.init(COHERE_API_KEY);
 
 /**
  * Generate a text representation of a JetShare offer for embedding
  */
 export function generateJetShareOfferText(offer: any): string {
-  // Format the flight date and time if available
-  let formattedDate = 'Unknown date and time';
-  if (offer.flight_date) {
-    const date = new Date(offer.flight_date);
-    formattedDate = date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric'
-    });
-  }
-
-  // Format departure time if available
-  if (offer.departure_time) {
-    const departureTime = new Date(offer.departure_time);
-    formattedDate += ` at ${departureTime.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })}`;
-  }
-
-  let text = `JetShare Flight Offer\n`;
-  text += `From: ${offer.departure_location || 'Unknown'}\n`;
-  text += `To: ${offer.arrival_location || 'Unknown'}\n`;
-  text += `Date and Time: ${formattedDate}\n`;
-  
-  if (offer.aircraft_model) {
-    text += `Aircraft: ${offer.aircraft_model}\n`;
-  }
-  
-  if (offer.total_flight_cost) {
-    text += `Total Cost: $${offer.total_flight_cost.toLocaleString()}\n`;
-  }
-  
-  if (offer.requested_share_amount) {
-    text += `Share Cost: $${offer.requested_share_amount.toLocaleString()}\n`;
-  }
-  
-  if (offer.total_seats !== undefined && offer.available_seats !== undefined) {
-    text += `Seats: ${offer.available_seats} available out of ${offer.total_seats} total\n`;
-  } else if (offer.available_seats !== undefined) {
-    text += `Available Seats: ${offer.available_seats}\n`;
-  }
-  
-  if (offer.details) {
-    text += `Additional Details: ${offer.details}\n`;
-  }
-  
-  if (offer.has_ai_matching) {
-    text += `AI Matching: Enabled\n`;
-  }
-
-  return text;
-}
-
-/**
- * Generate a text representation of a flight for embedding
- */
-export function generateFlightText(flight: any): string {
-  // Format dates if available
-  const departureTime = flight.departure_time 
-    ? new Date(flight.departure_time).toLocaleString()
-    : 'Unknown';
-  
-  const arrivalTime = flight.arrival_time
-    ? new Date(flight.arrival_time).toLocaleString()
-    : 'Unknown';
-  
-  let text = `Flight\n`;
-  text += `From: ${flight.origin_airport || 'Unknown'}\n`;
-  text += `To: ${flight.destination_airport || 'Unknown'}\n`;
-  text += `Departure: ${departureTime}\n`;
-  text += `Arrival: ${arrivalTime}\n`;
-  
-  if (flight.jets) {
-    text += `Aircraft: ${flight.jets.manufacturer} ${flight.jets.model}\n`;
-    
-    if (flight.jets.seat_capacity) {
-      text += `Capacity: ${flight.jets.seat_capacity} seats\n`;
+  // Determine which format to use based on the offer's properties
+  if (offer.departure_location && offer.arrival_location) {
+    // Format the flight date and time if available
+    let formattedDate = 'Unknown date and time';
+    if (offer.flight_date) {
+      const date = new Date(offer.flight_date);
+      formattedDate = date.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric'
+      });
     }
+
+    // Format departure time if available
+    if (offer.departure_time) {
+      const departureTime = new Date(offer.departure_time);
+      formattedDate += ` at ${departureTime.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`;
+    }
+
+    let text = `JetShare Flight Offer\n`;
+    text += `From: ${offer.departure_location || 'Unknown'}\n`;
+    text += `To: ${offer.arrival_location || 'Unknown'}\n`;
+    text += `Date and Time: ${formattedDate}\n`;
+    
+    if (offer.aircraft_model) {
+      text += `Aircraft: ${offer.aircraft_model}\n`;
+    }
+    
+    if (offer.total_flight_cost) {
+      text += `Total Cost: $${offer.total_flight_cost.toLocaleString()}\n`;
+    }
+    
+    if (offer.requested_share_amount) {
+      text += `Share Cost: $${offer.requested_share_amount.toLocaleString()}\n`;
+    }
+    
+    if (offer.total_seats !== undefined && offer.available_seats !== undefined) {
+      text += `Seats: ${offer.available_seats} available out of ${offer.total_seats} total\n`;
+    } else if (offer.available_seats !== undefined) {
+      text += `Available Seats: ${offer.available_seats}\n`;
+    }
+    
+    if (offer.details) {
+      text += `Additional Details: ${offer.details}\n`;
+    }
+    
+    if (offer.has_ai_matching) {
+      text += `AI Matching: Enabled\n`;
+    }
+
+    return text;
+  } else {
+    // Original format (not expected anymore)
+    let offerText = `JetShare offer from ${offer.departure_location} to ${offer.arrival_location}.`;
+    offerText += ` Flight date: ${new Date(offer.flight_date).toLocaleDateString()}.`;
+    
+    // Include departure time information
+    if (offer.departure_time) {
+      const departureTime = new Date(offer.departure_time);
+      offerText += ` Departure time: ${departureTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${departureTime.toLocaleDateString()}.`;
+      offerText += ` Readable departure: ${departureTime.toLocaleString('en-US', { 
+        weekday: 'long', 
+        month: 'long', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        timeZoneName: 'short'
+      })}.`;
+    }
+    
+    offerText += ` Total cost: $${offer.total_flight_cost}. Share amount: $${offer.requested_share_amount}.`;
+    
+    if (offer.aircraft_model) {
+      offerText += ` Aircraft: ${offer.aircraft_model}.`;
+    }
+    
+    if (offer.total_seats && offer.available_seats) {
+      offerText += ` ${offer.available_seats} of ${offer.total_seats} seats available.`;
+    }
+    
+    return offerText;
   }
-  
-  if (flight.base_price) {
-    text += `Base Price: $${flight.base_price.toLocaleString()}\n`;
-  }
-  
-  if (flight.available_seats !== undefined) {
-    text += `Available Seats: ${flight.available_seats}\n`;
-  }
-  
-  if (flight.flight_number) {
-    text += `Flight Number: ${flight.flight_number}\n`;
-  }
-  
-  if (flight.amenities && flight.amenities.length > 0) {
-    text += `Amenities: ${flight.amenities.join(', ')}\n`;
-  }
-  
-  if (flight.status) {
-    text += `Status: ${flight.status}\n`;
-  }
-  
-  return text;
 }
 
 /**
@@ -449,84 +363,6 @@ export function generateCrewText(crew: any): string {
   
   if (crew.certifications && crew.certifications.length > 0) {
     text += `Certifications: ${crew.certifications.join(', ')}\n`;
-  }
-  
-  return text;
-}
-
-/**
- * Generate a text representation of a user profile for embedding
- */
-export function generateUserProfileText(profile: any): string {
-  let text = `User Profile\n`;
-  
-  if (profile.firstName && profile.lastName) {
-    text += `Name: ${profile.firstName} ${profile.lastName}\n`;
-  }
-  
-  if (profile.bio) {
-    text += `Bio: ${profile.bio}\n`;
-  }
-  
-  if (profile.role) {
-    text += `Role: ${profile.role}\n`;
-  }
-  
-  // Add preferences if available
-  if (profile.preferences) {
-    const prefs = profile.preferences;
-    
-    if (prefs.preferredDestinations && prefs.preferredDestinations.length > 0) {
-      text += `Preferred Destinations: ${prefs.preferredDestinations.join(', ')}\n`;
-    }
-    
-    if (prefs.travelInterests && prefs.travelInterests.length > 0) {
-      text += `Travel Interests: ${prefs.travelInterests.join(', ')}\n`;
-    }
-    
-    if (prefs.tripTypes && prefs.tripTypes.length > 0) {
-      text += `Trip Types: ${prefs.tripTypes.join(', ')}\n`;
-    }
-    
-    if (prefs.languages && prefs.languages.length > 0) {
-      text += `Languages: ${prefs.languages.join(', ')}\n`;
-    }
-  }
-  
-  // Add professional details if available
-  if (profile.professionalDetails) {
-    const prof = profile.professionalDetails;
-    
-    if (prof.industry) {
-      text += `Industry: ${prof.industry}\n`;
-    }
-    
-    if (prof.jobTitle) {
-      text += `Job Title: ${prof.jobTitle}\n`;
-    }
-    
-    if (prof.company) {
-      text += `Company: ${prof.company}\n`;
-    }
-    
-    if (prof.expertise && prof.expertise.length > 0) {
-      text += `Expertise: ${prof.expertise.join(', ')}\n`;
-    }
-  }
-  
-  // Add interests and hobbies if available
-  if (profile.interestsAndHobbies && profile.interestsAndHobbies.length > 0) {
-    text += `Interests and Hobbies: ${profile.interestsAndHobbies.join(', ')}\n`;
-  }
-  
-  // Add travel history if available
-  if (profile.travelHistory && profile.travelHistory.length > 0) {
-    text += `Travel History:\n`;
-    
-    profile.travelHistory.forEach((trip: any) => {
-      const date = trip.date ? new Date(trip.date).toLocaleDateString() : 'Unknown date';
-      text += `- ${trip.origin || 'Unknown'} to ${trip.destination || 'Unknown'} (${date})\n`;
-    });
   }
   
   return text;
@@ -625,13 +461,24 @@ export function generateEmbeddingInput(entity: any, entityType: string): string 
  */
 export async function encode(text: string): Promise<number[]> {
   try {
-    const response = await cohere.embed({
-      texts: [text],
-      model: 'embed-english-v3.0',
-    });
+    // Use axios directly since cohere-ai package might not have the right methods
+    const response = await axios.post(
+      'https://api.cohere.ai/v1/embed',
+      {
+        texts: [text],
+        model: 'embed-english-v3.0',
+        truncate: 'END'
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${cohereApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
     
-    if (response.body && response.body.embeddings && response.body.embeddings.length > 0) {
-      return response.body.embeddings[0];
+    if (response.data && response.data.embeddings && response.data.embeddings.length > 0) {
+      return response.data.embeddings[0];
     }
     
     throw new Error('No embeddings returned from Cohere');
@@ -678,6 +525,44 @@ export async function encodeWithOpenAI(text: string): Promise<number[]> {
   } catch (error) {
     console.error('Error creating OpenAI embedding:', error);
     throw error;
+  }
+}
+
+/**
+ * Batch encode multiple texts at once for efficiency
+ */
+export async function batchEncode(texts: string[]): Promise<number[][]> {
+  try {
+    // Handle empty array case
+    if (!texts || texts.length === 0) {
+      return [];
+    }
+
+    // Use axios directly for the Cohere API
+    const response = await axios.post(
+      'https://api.cohere.ai/v1/embed',
+      {
+        texts: texts,
+        model: 'embed-english-v3.0',
+        truncate: 'END'
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${cohereApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // Extract the embedding vectors from the response
+    if (response.data && response.data.embeddings) {
+      return response.data.embeddings;
+    }
+
+    throw new Error('Failed to generate batch embeddings');
+  } catch (error) {
+    console.error('Error generating batch embeddings:', error);
+    throw new Error('Failed to generate batch embeddings');
   }
 }
 
@@ -751,7 +636,9 @@ export function preparePineconeRecord(
         email: entity.email,
         full_name: typeof entity.firstName === 'string' && typeof entity.lastName === 'string'
           ? `${entity.firstName} ${entity.lastName}`.trim()
-          : '',
+          : typeof entity.first_name === 'string' && typeof entity.last_name === 'string'
+            ? `${entity.first_name} ${entity.last_name}`.trim()
+            : '',
         role: entity.role || 'user',
         interests: Array.isArray(entity.interestsAndHobbies) 
           ? entity.interestsAndHobbies.join(', ') 
