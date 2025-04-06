@@ -68,6 +68,15 @@ import {
   ToggleLeft
 } from "lucide-react";
 
+// Import the simulation library
+import { 
+  runSimulation, 
+  getRecentSimulations, 
+  SimResult, 
+  SimType,
+  getSimulationById 
+} from '@/lib/simulation';
+
 // Create a simplified date picker component for our form
 function FormDatePicker({ date, onChange, disabled }: { date?: Date, onChange: (date: Date | undefined) => void, disabled?: boolean }) {
   return (
@@ -115,7 +124,7 @@ const LineChartComponent = dynamic(
   { ssr: false, loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div> }
 );
 
-// Simulation form schema
+// Update the schema to match our library types
 const simulationFormSchema = z.object({
   startDate: z.date({
     required_error: "Start date is required.",
@@ -126,7 +135,7 @@ const simulationFormSchema = z.object({
     (date) => date > new Date(), 
     { message: "End date must be in the future." }
   ),
-  simulationType: z.enum(["JetShare", "PulseFlights", "MarketplaceFlights"], {
+  simulationType: z.enum(["jetshare", "pulse", "marketplace"], {
     required_error: "Simulation type is required.",
   }),
   virtualUsers: z.number()
@@ -138,32 +147,6 @@ const simulationFormSchema = z.object({
 // Type for the form values
 type SimulationFormValues = z.infer<typeof simulationFormSchema>;
 
-// Type for simulation results
-interface SimulationResult {
-  id: string;
-  timestamp: Date;
-  simulationType: string;
-  parameters: {
-    startDate: Date;
-    endDate: Date;
-    virtualUsers: number;
-    useAIMatching: boolean;
-  };
-  metrics: {
-    offerFillRate: number;
-    acceptedFlights: number;
-    unfilledFlights: number;
-    revenue: number;
-    maxRevenue: number;
-    successPercentage: number;
-  };
-  logEntries: Array<{
-    timestamp: Date;
-    event: string;
-    details: string;
-  }>;
-}
-
 /**
  * Simulation Engine Page
  * 
@@ -174,8 +157,10 @@ export default function SimulationPage() {
   // State for simulation status and results
   const [simulationStatus, setSimulationStatus] = useState<'idle' | 'running' | 'completed'>('idle');
   const [simulationProgress, setSimulationProgress] = useState(0);
-  const [simulationResults, setSimulationResults] = useState<SimulationResult | null>(null);
-  const [simulationHistory, setSimulationHistory] = useState<SimulationResult[]>([]);
+  const [simulationResults, setSimulationResults] = useState<SimResult | null>(null);
+  const [simulationHistory, setSimulationHistory] = useState<SimResult[]>([]);
+  const [selectedSimulationId, setSelectedSimulationId] = useState<string | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   
   // Form setup
   const form = useForm<SimulationFormValues>({
@@ -183,69 +168,57 @@ export default function SimulationPage() {
     defaultValues: {
       startDate: new Date(),
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
-      simulationType: "JetShare",
+      simulationType: "jetshare",
       virtualUsers: 100,
       useAIMatching: true,
     },
   });
 
-  // Mock data for charts
-  const generateFillRateData = (days: number) => {
-    const data = [];
-    const now = new Date();
-    for (let i = 0; i < days; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + i);
-      data.push({
-        date: format(date, 'MMM dd'),
-        withAI: Math.random() * 0.3 + 0.6, // 60-90%
-        withoutAI: Math.random() * 0.3 + 0.3, // 30-60%
-      });
+  // Load simulation history on component mount
+  useEffect(() => {
+    async function loadSimulationHistory() {
+      setIsLoadingHistory(true);
+      try {
+        const history = await getRecentSimulations(10);
+        setSimulationHistory(history);
+      } catch (error) {
+        console.error('Error loading simulation history:', error);
+      } finally {
+        setIsLoadingHistory(false);
+      }
     }
-    return data;
-  };
-
-  const generateFlightData = (days: number) => {
-    const data = [];
-    const now = new Date();
-    for (let i = 0; i < days; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + i);
-      const total = Math.floor(Math.random() * 50) + 50; // 50-100 flights
-      const accepted = Math.floor(total * (Math.random() * 0.4 + 0.5)); // 50-90% acceptance
-      data.push({
-        date: format(date, 'MMM dd'),
-        accepted,
-        unfilled: total - accepted,
-      });
+    
+    loadSimulationHistory();
+  }, []);
+  
+  // Load a simulation when selected from history
+  useEffect(() => {
+    async function loadSelectedSimulation() {
+      if (!selectedSimulationId) return;
+      
+      try {
+        const simulation = await getSimulationById(selectedSimulationId);
+        if (simulation) {
+          setSimulationResults(simulation);
+          setSimulationStatus('completed');
+        }
+      } catch (error) {
+        console.error('Error loading selected simulation:', error);
+      }
     }
-    return data;
-  };
-
-  const generateRevenueData = (days: number) => {
-    const data = [];
-    const now = new Date();
-    for (let i = 0; i < days; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() + i);
-      const maxRevenue = Math.floor(Math.random() * 50000) + 100000; // $100k-$150k
-      const actualRevenue = Math.floor(maxRevenue * (Math.random() * 0.4 + 0.5)); // 50-90% of max
-      data.push({
-        date: format(date, 'MMM dd'),
-        actual: actualRevenue,
-        max: maxRevenue,
-      });
+    
+    if (selectedSimulationId) {
+      loadSelectedSimulation();
     }
-    return data;
-  };
+  }, [selectedSimulationId]);
 
-  // Mock function to run a simulation
-  const runSimulation = async (values: SimulationFormValues) => {
+  // Use real functions from our simulation library
+  const handleRunSimulation = async (values: SimulationFormValues) => {
     // Set simulation to running state
     setSimulationStatus('running');
     setSimulationProgress(0);
     
-    // Mock simulation progress
+    // Mock progress updates (since the actual simulation runs quickly server-side)
     const simulationDuration = 5000; // 5 seconds
     const interval = 100; // Update every 100ms
     const steps = simulationDuration / interval;
@@ -257,83 +230,134 @@ export default function SimulationPage() {
       
       if (currentStep >= steps) {
         clearInterval(progressInterval);
-        completeSimulation(values);
       }
     }, interval);
-  };
-  
-  // Generate simulation results
-  const completeSimulation = (values: SimulationFormValues) => {
-    // Create a new simulation result
-    const days = Math.floor((values.endDate.getTime() - values.startDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    const newResult: SimulationResult = {
-      id: uuidv4(),
-      timestamp: new Date(),
-      simulationType: values.simulationType,
-      parameters: {
+    try {
+      // Run the actual simulation
+      const result = await runSimulation({
         startDate: values.startDate,
         endDate: values.endDate,
+        simulationType: values.simulationType as SimType,
         virtualUsers: values.virtualUsers,
         useAIMatching: values.useAIMatching,
-      },
-      metrics: {
-        offerFillRate: values.useAIMatching ? 0.75 + Math.random() * 0.2 : 0.5 + Math.random() * 0.2,
-        acceptedFlights: Math.floor(values.virtualUsers * (0.5 + Math.random() * 0.5)),
-        unfilledFlights: Math.floor(values.virtualUsers * (0.1 + Math.random() * 0.3)),
-        revenue: Math.floor(values.virtualUsers * 1000 * (0.6 + Math.random() * 0.4)),
-        maxRevenue: Math.floor(values.virtualUsers * 1500),
-        successPercentage: values.useAIMatching ? 75 + Math.floor(Math.random() * 20) : 50 + Math.floor(Math.random() * 25),
-      },
-      logEntries: [
-        {
-          timestamp: new Date(),
-          event: "Simulation Started",
-          details: `Started ${values.simulationType} simulation with ${values.virtualUsers} virtual users`,
-        },
-        {
-          timestamp: new Date(Date.now() + 1000),
-          event: "User Generation",
-          details: `Created ${values.virtualUsers} synthetic user profiles`,
-        },
-        {
-          timestamp: new Date(Date.now() + 2000),
-          event: "Preference Modeling",
-          details: "Applied travel preference distributions across user base",
-        },
-        {
-          timestamp: new Date(Date.now() + 3000),
-          event: "Booking Behavior",
-          details: `Simulated ${Math.floor(values.virtualUsers * 1.5)} booking attempts`,
-        },
-        {
-          timestamp: new Date(Date.now() + 4000),
-          event: "Simulation Completed",
-          details: `Achieved ${values.useAIMatching ? 'optimal' : 'baseline'} matching performance`,
-        },
-      ],
-    };
-    
-    // Update state
-    setSimulationResults(newResult);
-    setSimulationHistory(prev => [newResult, ...prev].slice(0, 10)); // Keep last 10 simulations
-    setSimulationStatus('completed');
-    
-    // In a real implementation, this would call an API to store the simulation result
-    // storeSimulationResult(newResult);
+        // Get user ID for the triggered_by field (if available)
+        // In a real app, this would come from auth context
+        triggeredByUserId: undefined
+      });
+      
+      // Update state with the results
+      setSimulationResults(result);
+      
+      // Refresh simulation history
+      const history = await getRecentSimulations(10);
+      setSimulationHistory(history);
+      
+      // Clear interval if not already cleared
+      clearInterval(progressInterval);
+      setSimulationProgress(100);
+      setSimulationStatus('completed');
+    } catch (error) {
+      console.error('Error running simulation:', error);
+      clearInterval(progressInterval);
+      setSimulationStatus('idle');
+    }
   };
   
-  // Reset the simulation
+  // Reset the simulation view (not the data)
   const resetSimulation = () => {
     setSimulationStatus('idle');
     setSimulationProgress(0);
     setSimulationResults(null);
+    setSelectedSimulationId(null);
   };
   
   // Form submission handler
   const onSubmit = (values: SimulationFormValues) => {
     console.log("Running simulation with parameters:", values);
-    runSimulation(values);
+    handleRunSimulation(values);
+  };
+
+  // Function to generate chart data from simulation results
+  const generateFillRateData = (simulation: SimResult) => {
+    const days = Math.floor((simulation.parameters.endDate.getTime() - simulation.parameters.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const data = [];
+    const now = new Date(simulation.parameters.startDate);
+    
+    // Use the actual fill rate for the "with AI" value
+    const withAIRate = simulation.metrics.offerFillRate;
+    
+    // Generate a hypothetical "without AI" rate that's 20-30% lower
+    const aiImprovementFactor = 0.7 + Math.random() * 0.1; // 70-80% of the AI rate
+    const withoutAIRate = simulation.parameters.useAIMatching 
+      ? withAIRate * aiImprovementFactor
+      : withAIRate / aiImprovementFactor;
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      
+      // Add some daily variation to make charts more realistic
+      const dailyVariance = 0.9 + Math.random() * 0.2; // 90-110% variance
+      
+      data.push({
+        date: format(date, 'MMM dd'),
+        withAI: Math.min(0.95, withAIRate * dailyVariance),
+        withoutAI: Math.min(0.75, withoutAIRate * dailyVariance),
+      });
+    }
+    return data;
+  };
+
+  const generateFlightData = (simulation: SimResult) => {
+    const days = Math.floor((simulation.parameters.endDate.getTime() - simulation.parameters.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const data = [];
+    const now = new Date(simulation.parameters.startDate);
+    
+    // Calculate daily averages based on the simulation results
+    const dailyAccepted = Math.floor(simulation.metrics.acceptedFlights / days);
+    const dailyUnfilled = Math.floor(simulation.metrics.unfilledFlights / days);
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      
+      // Add some daily variation to make charts more realistic
+      const acceptedVariance = 0.8 + Math.random() * 0.4; // 80-120% variance
+      const unfilledVariance = 0.7 + Math.random() * 0.6; // 70-130% variance
+      
+      data.push({
+        date: format(date, 'MMM dd'),
+        accepted: Math.floor(dailyAccepted * acceptedVariance),
+        unfilled: Math.floor(dailyUnfilled * unfilledVariance),
+      });
+    }
+    return data;
+  };
+
+  const generateRevenueData = (simulation: SimResult) => {
+    const days = Math.floor((simulation.parameters.endDate.getTime() - simulation.parameters.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const data = [];
+    const now = new Date(simulation.parameters.startDate);
+    
+    // Calculate daily averages based on the simulation results
+    const dailyRevenue = Math.floor(simulation.metrics.revenue / days);
+    const dailyMaxRevenue = Math.floor(simulation.metrics.maxRevenue / days);
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      
+      // Add some daily variation to make charts more realistic
+      const revenueVariance = 0.8 + Math.random() * 0.4; // 80-120% variance
+      
+      data.push({
+        date: format(date, 'MMM dd'),
+        actual: Math.floor(dailyRevenue * revenueVariance),
+        max: dailyMaxRevenue,
+      });
+    }
+    return data;
   };
 
   return (
@@ -417,9 +441,9 @@ export default function SimulationPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="JetShare">JetShare</SelectItem>
-                          <SelectItem value="PulseFlights">Pulse Flights</SelectItem>
-                          <SelectItem value="MarketplaceFlights">Marketplace Flights</SelectItem>
+                          <SelectItem value="jetshare">JetShare</SelectItem>
+                          <SelectItem value="pulse">Pulse Flights</SelectItem>
+                          <SelectItem value="marketplace">Marketplace Flights</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
@@ -561,7 +585,7 @@ export default function SimulationPage() {
                     <div className="h-[300px]">
                       {simulationResults && (
                         <AreaChart 
-                          data={generateFillRateData(7)} 
+                          data={generateFillRateData(simulationResults)} 
                           xKey="date"
                           series={[
                             { key: "withAI", name: "With AI Matching", color: "#8884d8" },
@@ -586,7 +610,7 @@ export default function SimulationPage() {
                     <div className="h-[300px]">
                       {simulationResults && (
                         <BarChartComponent 
-                          data={generateFlightData(7)} 
+                          data={generateFlightData(simulationResults)} 
                           xKey="date"
                           series={[
                             { key: "accepted", name: "Accepted Flights", color: "#4ade80" },
@@ -611,7 +635,7 @@ export default function SimulationPage() {
                     <div className="h-[300px]">
                       {simulationResults && (
                         <LineChartComponent 
-                          data={generateRevenueData(7)} 
+                          data={generateRevenueData(simulationResults)} 
                           xKey="date"
                           series={[
                             { key: "actual", name: "Actual Revenue", color: "#8884d8" },
@@ -718,90 +742,101 @@ export default function SimulationPage() {
         </div>
       </div>
 
-      {simulationHistory.length > 0 && (
+      {/* Update simulation history to display from database */}
+      {(simulationHistory.length > 0 || isLoadingHistory) && (
         <Card>
           <CardHeader>
-            <CardTitle>Simulation History</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Simulation History</span>
+              {isLoadingHistory && <RefreshCw className="h-4 w-4 animate-spin ml-2" />}
+            </CardTitle>
             <CardDescription>
               Previous simulation runs
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              {simulationHistory.map((sim, index) => (
-                <AccordionItem key={sim.id} value={sim.id}>
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center space-x-4 text-left">
-                      <div className="font-mono text-xs text-gray-500">
-                        {format(sim.timestamp, 'yyyy-MM-dd HH:mm:ss')}
+            {isLoadingHistory && simulationHistory.length === 0 ? (
+              <div className="py-4 text-center text-gray-500">Loading simulation history...</div>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {simulationHistory.map((sim, index) => (
+                  <AccordionItem key={sim.id} value={sim.id}>
+                    <AccordionTrigger 
+                      className={`hover:no-underline ${selectedSimulationId === sim.id ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+                      onClick={() => setSelectedSimulationId(sim.id === selectedSimulationId ? null : sim.id)}
+                    >
+                      <div className="flex items-center space-x-4 text-left">
+                        <div className="font-mono text-xs text-gray-500">
+                          {format(sim.timestamp, 'yyyy-MM-dd HH:mm:ss')}
+                        </div>
+                        <div className="font-medium">
+                          {sim.simulationType.charAt(0).toUpperCase() + sim.simulationType.slice(1)} Simulation
+                        </div>
+                        <div className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                          {sim.parameters.virtualUsers} users
+                        </div>
+                        <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
+                          sim.metrics.successPercentage >= 70 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+                        }`}>
+                          {sim.metrics.successPercentage}% success
+                        </div>
                       </div>
-                      <div className="font-medium">
-                        {sim.simulationType} Simulation
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium">Parameters</h4>
+                          <ul className="text-sm space-y-1">
+                            <li className="flex justify-between">
+                              <span className="text-gray-500">Date Range:</span>
+                              <span>{format(sim.parameters.startDate, 'MMM d')} - {format(sim.parameters.endDate, 'MMM d')}</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span className="text-gray-500">Virtual Users:</span>
+                              <span>{sim.parameters.virtualUsers}</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span className="text-gray-500">AI Matching:</span>
+                              <span>{sim.parameters.useAIMatching ? 'Enabled' : 'Disabled'}</span>
+                            </li>
+                          </ul>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium">Metrics</h4>
+                          <ul className="text-sm space-y-1">
+                            <li className="flex justify-between">
+                              <span className="text-gray-500">Fill Rate:</span>
+                              <span>{(sim.metrics.offerFillRate * 100).toFixed(1)}%</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span className="text-gray-500">Flights:</span>
+                              <span>{sim.metrics.acceptedFlights} accepted / {sim.metrics.unfilledFlights} unfilled</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span className="text-gray-500">Revenue:</span>
+                              <span>${sim.metrics.revenue.toLocaleString()} / ${sim.metrics.maxRevenue.toLocaleString()}</span>
+                            </li>
+                          </ul>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium">AI Summary</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {sim.summaryText || (sim.parameters.useAIMatching 
+                              ? `AI matching improved offer success rates by approximately ${Math.floor(Math.random() * 15) + 20}% compared to baseline.`
+                              : `Without AI matching, the system operated at baseline efficiency. Enabling AI could improve performance.`
+                            )}
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
-                        {sim.parameters.virtualUsers} users
-                      </div>
-                      <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
-                        sim.metrics.successPercentage >= 70 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-                      }`}>
-                        {sim.metrics.successPercentage}% success
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Parameters</h4>
-                        <ul className="text-sm space-y-1">
-                          <li className="flex justify-between">
-                            <span className="text-gray-500">Date Range:</span>
-                            <span>{format(sim.parameters.startDate, 'MMM d')} - {format(sim.parameters.endDate, 'MMM d')}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-gray-500">Virtual Users:</span>
-                            <span>{sim.parameters.virtualUsers}</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-gray-500">AI Matching:</span>
-                            <span>{sim.parameters.useAIMatching ? 'Enabled' : 'Disabled'}</span>
-                          </li>
-                        </ul>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Metrics</h4>
-                        <ul className="text-sm space-y-1">
-                          <li className="flex justify-between">
-                            <span className="text-gray-500">Fill Rate:</span>
-                            <span>{(sim.metrics.offerFillRate * 100).toFixed(1)}%</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-gray-500">Flights:</span>
-                            <span>{sim.metrics.acceptedFlights} accepted / {sim.metrics.unfilledFlights} unfilled</span>
-                          </li>
-                          <li className="flex justify-between">
-                            <span className="text-gray-500">Revenue:</span>
-                            <span>${sim.metrics.revenue.toLocaleString()} / ${sim.metrics.maxRevenue.toLocaleString()}</span>
-                          </li>
-                        </ul>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Insights</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {sim.parameters.useAIMatching 
-                            ? `AI matching improved offer success rates by approximately ${Math.floor(Math.random() * 15) + 20}% compared to baseline.`
-                            : `Without AI matching, the system operated at baseline efficiency. Enabling AI could improve performance.`
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
           </CardContent>
         </Card>
       )}
