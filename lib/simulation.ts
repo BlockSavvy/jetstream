@@ -262,7 +262,7 @@ export async function getRecentSimulations(limit: number = 10): Promise<SimResul
     }
     
     // Convert the database records back to SimResult objects
-    return data.map(record => {
+    return data.map((record: any) => {
       const parameters = record.input_parameters;
       const metrics = record.results_summary.metrics;
       const logEntries = record.results_summary.logEntries || [];
@@ -370,31 +370,31 @@ export async function getSimulationStatsByType(simType: SimType): Promise<any> {
     }
     
     // Calculate average metrics
-    const withAI = data.filter(record => record.ai_matching_enabled);
-    const withoutAI = data.filter(record => !record.ai_matching_enabled);
+    const withAI = data.filter((record: any) => record.ai_matching_enabled);
+    const withoutAI = data.filter((record: any) => !record.ai_matching_enabled);
     
     const avgFillRateWithAI = withAI.length > 0
-      ? withAI.reduce((sum, record) => sum + record.results_summary.metrics.offerFillRate, 0) / withAI.length
+      ? withAI.reduce((sum: number, record: any) => sum + record.results_summary.metrics.offerFillRate, 0) / withAI.length
       : 0;
     
     const avgFillRateWithoutAI = withoutAI.length > 0
-      ? withoutAI.reduce((sum, record) => sum + record.results_summary.metrics.offerFillRate, 0) / withoutAI.length
+      ? withoutAI.reduce((sum: number, record: any) => sum + record.results_summary.metrics.offerFillRate, 0) / withoutAI.length
       : 0;
     
     const aiImprovementFactor = avgFillRateWithoutAI > 0
       ? avgFillRateWithAI / avgFillRateWithoutAI
       : 1;
     
-    const avgSuccessRate = data.reduce((sum, record) => 
+    const avgSuccessRate = data.reduce((sum: number, record: any) => 
       sum + record.results_summary.metrics.successPercentage, 0) / data.length;
     
     return {
       count: data.length,
-      averageFillRate: (data.reduce((sum, record) => 
+      averageFillRate: (data.reduce((sum: number, record: any) => 
         sum + record.results_summary.metrics.offerFillRate, 0) / data.length) * 100,
       averageSuccessRate: avgSuccessRate,
       aiImprovementFactor: aiImprovementFactor,
-      recentSimulations: data.slice(0, 5).map(record => ({
+      recentSimulations: data.slice(0, 5).map((record: any) => ({
         id: record.id,
         timestamp: record.created_at,
         summaryText: record.results_summary.summaryText || record.agent_instruction_summary,
