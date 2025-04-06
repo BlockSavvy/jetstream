@@ -1,5 +1,3 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -34,26 +32,28 @@ export const createClient = async () => {
 };
 
 /**
- * Creates a Supabase client for server components using cookie-based auth
- * This is for regular user operations that should respect RLS policies
+ * Creates a Supabase client that works in both client and server components
+ * using the anon key. This is a replacement for the server-component specific
+ * version that used cookies from next/headers.
+ * 
+ * Note: This doesn't maintain user sessions. For authenticated requests in server
+ * components, use the createAuthClient from app/lib/supabase-server-components.ts
  */
 export const createAuthClient = async () => {
-  try {
-    // Create server-side client with cookie-based auth
-    const supabase = createServerComponentClient({ cookies });
-    return supabase;
-  } catch (e) {
-    console.warn('Error creating server component client, falling back to direct client:', e);
-    
-    // Fallback to direct client if cookie access fails
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    
-    return createSupabaseClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing Supabase URL or anon key');
   }
+  
+  return createSupabaseClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
 };
+
+// Export a type so other files can use our return type
+export type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
