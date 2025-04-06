@@ -2,6 +2,9 @@ import { CohereEmbeddings } from '@langchain/cohere';
 import { EnrichedProfile, TravelHistory, UserPreferences } from '../types/matching.types';
 import { Flight } from '@/app/flights/types';
 import axios from 'axios';
+import { PineconeRecord } from '@pinecone-database/pinecone';
+import { createClient } from '@/lib/supabase-server';
+import * as cohere from 'cohere-ai';
 
 // Initialize Cohere embeddings with API key
 const cohereApiKey = process.env.COHERE_API_KEY || 'gjiwLcvAkdZkvSVgMAG4OP4lQC1klq86nDEZ0vZa';
@@ -286,4 +289,499 @@ export async function generateJetShareOfferEmbedding(offer: any): Promise<number
   const offerText = generateJetShareOfferText(offer);
   const result = await embeddings.embedDocuments([offerText]);
   return result[0];
+}
+
+/**
+ * JetStream Embeddings Service
+ * 
+ * This service provides functions for:
+ * 1. Generating standardized text formats for different entity types
+ * 2. Creating embedding vectors using Cohere/OpenAI
+ * 3. Supporting the CLI batch processing tool
+ */
+
+// Set up Cohere client
+const COHERE_API_KEY = process.env.COHERE_API_KEY || '';
+cohere.init(COHERE_API_KEY);
+
+/**
+ * Generate a text representation of a JetShare offer for embedding
+ */
+export function generateJetShareOfferText(offer: any): string {
+  // Format the flight date and time if available
+  let formattedDate = 'Unknown date and time';
+  if (offer.flight_date) {
+    const date = new Date(offer.flight_date);
+    formattedDate = date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+  }
+
+  // Format departure time if available
+  if (offer.departure_time) {
+    const departureTime = new Date(offer.departure_time);
+    formattedDate += ` at ${departureTime.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`;
+  }
+
+  let text = `JetShare Flight Offer\n`;
+  text += `From: ${offer.departure_location || 'Unknown'}\n`;
+  text += `To: ${offer.arrival_location || 'Unknown'}\n`;
+  text += `Date and Time: ${formattedDate}\n`;
+  
+  if (offer.aircraft_model) {
+    text += `Aircraft: ${offer.aircraft_model}\n`;
+  }
+  
+  if (offer.total_flight_cost) {
+    text += `Total Cost: $${offer.total_flight_cost.toLocaleString()}\n`;
+  }
+  
+  if (offer.requested_share_amount) {
+    text += `Share Cost: $${offer.requested_share_amount.toLocaleString()}\n`;
+  }
+  
+  if (offer.total_seats !== undefined && offer.available_seats !== undefined) {
+    text += `Seats: ${offer.available_seats} available out of ${offer.total_seats} total\n`;
+  } else if (offer.available_seats !== undefined) {
+    text += `Available Seats: ${offer.available_seats}\n`;
+  }
+  
+  if (offer.details) {
+    text += `Additional Details: ${offer.details}\n`;
+  }
+  
+  if (offer.has_ai_matching) {
+    text += `AI Matching: Enabled\n`;
+  }
+
+  return text;
+}
+
+/**
+ * Generate a text representation of a flight for embedding
+ */
+export function generateFlightText(flight: any): string {
+  // Format dates if available
+  const departureTime = flight.departure_time 
+    ? new Date(flight.departure_time).toLocaleString()
+    : 'Unknown';
+  
+  const arrivalTime = flight.arrival_time
+    ? new Date(flight.arrival_time).toLocaleString()
+    : 'Unknown';
+  
+  let text = `Flight\n`;
+  text += `From: ${flight.origin_airport || 'Unknown'}\n`;
+  text += `To: ${flight.destination_airport || 'Unknown'}\n`;
+  text += `Departure: ${departureTime}\n`;
+  text += `Arrival: ${arrivalTime}\n`;
+  
+  if (flight.jets) {
+    text += `Aircraft: ${flight.jets.manufacturer} ${flight.jets.model}\n`;
+    
+    if (flight.jets.seat_capacity) {
+      text += `Capacity: ${flight.jets.seat_capacity} seats\n`;
+    }
+  }
+  
+  if (flight.base_price) {
+    text += `Base Price: $${flight.base_price.toLocaleString()}\n`;
+  }
+  
+  if (flight.available_seats !== undefined) {
+    text += `Available Seats: ${flight.available_seats}\n`;
+  }
+  
+  if (flight.flight_number) {
+    text += `Flight Number: ${flight.flight_number}\n`;
+  }
+  
+  if (flight.amenities && flight.amenities.length > 0) {
+    text += `Amenities: ${flight.amenities.join(', ')}\n`;
+  }
+  
+  if (flight.status) {
+    text += `Status: ${flight.status}\n`;
+  }
+  
+  return text;
+}
+
+/**
+ * Generate a text representation of a crew member for embedding
+ */
+export function generateCrewText(crew: any): string {
+  let text = `Crew Member: ${crew.name || 'Unknown'}\n`;
+  
+  if (crew.bio) {
+    text += `Bio: ${crew.bio}\n`;
+  }
+  
+  if (crew.crew_specializations && crew.crew_specializations.length > 0) {
+    const specializations = crew.crew_specializations.map((spec: any) => spec.name).join(', ');
+    text += `Specializations: ${specializations}\n`;
+    
+    // Add more details from specializations
+    crew.crew_specializations.forEach((spec: any) => {
+      if (spec.description) {
+        text += `${spec.name}: ${spec.description}\n`;
+      }
+    });
+  }
+  
+  if (crew.average_rating) {
+    text += `Average Rating: ${crew.average_rating}/5\n`;
+  }
+  
+  if (crew.reviews_count) {
+    text += `Number of Reviews: ${crew.reviews_count}\n`;
+  }
+  
+  if (crew.availability_status) {
+    text += `Availability: ${crew.availability_status}\n`;
+  }
+  
+  if (crew.certifications && crew.certifications.length > 0) {
+    text += `Certifications: ${crew.certifications.join(', ')}\n`;
+  }
+  
+  return text;
+}
+
+/**
+ * Generate a text representation of a user profile for embedding
+ */
+export function generateUserProfileText(profile: any): string {
+  let text = `User Profile\n`;
+  
+  if (profile.firstName && profile.lastName) {
+    text += `Name: ${profile.firstName} ${profile.lastName}\n`;
+  }
+  
+  if (profile.bio) {
+    text += `Bio: ${profile.bio}\n`;
+  }
+  
+  if (profile.role) {
+    text += `Role: ${profile.role}\n`;
+  }
+  
+  // Add preferences if available
+  if (profile.preferences) {
+    const prefs = profile.preferences;
+    
+    if (prefs.preferredDestinations && prefs.preferredDestinations.length > 0) {
+      text += `Preferred Destinations: ${prefs.preferredDestinations.join(', ')}\n`;
+    }
+    
+    if (prefs.travelInterests && prefs.travelInterests.length > 0) {
+      text += `Travel Interests: ${prefs.travelInterests.join(', ')}\n`;
+    }
+    
+    if (prefs.tripTypes && prefs.tripTypes.length > 0) {
+      text += `Trip Types: ${prefs.tripTypes.join(', ')}\n`;
+    }
+    
+    if (prefs.languages && prefs.languages.length > 0) {
+      text += `Languages: ${prefs.languages.join(', ')}\n`;
+    }
+  }
+  
+  // Add professional details if available
+  if (profile.professionalDetails) {
+    const prof = profile.professionalDetails;
+    
+    if (prof.industry) {
+      text += `Industry: ${prof.industry}\n`;
+    }
+    
+    if (prof.jobTitle) {
+      text += `Job Title: ${prof.jobTitle}\n`;
+    }
+    
+    if (prof.company) {
+      text += `Company: ${prof.company}\n`;
+    }
+    
+    if (prof.expertise && prof.expertise.length > 0) {
+      text += `Expertise: ${prof.expertise.join(', ')}\n`;
+    }
+  }
+  
+  // Add interests and hobbies if available
+  if (profile.interestsAndHobbies && profile.interestsAndHobbies.length > 0) {
+    text += `Interests and Hobbies: ${profile.interestsAndHobbies.join(', ')}\n`;
+  }
+  
+  // Add travel history if available
+  if (profile.travelHistory && profile.travelHistory.length > 0) {
+    text += `Travel History:\n`;
+    
+    profile.travelHistory.forEach((trip: any) => {
+      const date = trip.date ? new Date(trip.date).toLocaleDateString() : 'Unknown date';
+      text += `- ${trip.origin || 'Unknown'} to ${trip.destination || 'Unknown'} (${date})\n`;
+    });
+  }
+  
+  return text;
+}
+
+/**
+ * Generate a text representation of a simulation log for embedding
+ */
+export function generateSimulationText(simulation: any): string {
+  const simType = (simulation.sim_type || '').toUpperCase();
+  let startDate = 'Unknown';
+  let endDate = 'Unknown';
+  
+  if (simulation.start_date) {
+    startDate = new Date(simulation.start_date).toLocaleDateString();
+  }
+  
+  if (simulation.end_date) {
+    endDate = new Date(simulation.end_date).toLocaleDateString();
+  }
+  
+  let text = `${simType} Simulation\n`;
+  text += `Date Range: ${startDate} to ${endDate}\n`;
+  text += `Virtual Users: ${simulation.virtual_users || 'Unknown'}\n`;
+  
+  // Add metrics if available
+  if (simulation.results_summary && simulation.results_summary.metrics) {
+    const metrics = simulation.results_summary.metrics;
+    
+    if (metrics.offerFillRate !== undefined) {
+      text += `Fill Rate: ${Math.round(metrics.offerFillRate * 100)}%\n`;
+    }
+    
+    if (metrics.revenue !== undefined && metrics.maxRevenue !== undefined) {
+      const recoveryRate = Math.round((metrics.revenue / metrics.maxRevenue) * 100);
+      text += `Cost Recovery: ${recoveryRate}%\n`;
+    }
+    
+    if (metrics.acceptedFlights !== undefined) {
+      text += `Accepted Flights: ${metrics.acceptedFlights}\n`;
+    }
+    
+    if (metrics.unfilledFlights !== undefined) {
+      text += `Unfilled Flights: ${metrics.unfilledFlights}\n`;
+    }
+  }
+  
+  // Add information from input parameters
+  if (simulation.input_parameters) {
+    const params = simulation.input_parameters;
+    
+    if (params.origin) {
+      text += `Origin: ${params.origin}\n`;
+    }
+    
+    if (params.destination) {
+      text += `Destination: ${params.destination}\n`;
+    }
+  }
+  
+  text += `AI Matching: ${simulation.ai_matching_enabled ? 'Enabled' : 'Disabled'}\n`;
+  
+  // Add summary if available
+  if (simulation.agent_instruction_summary) {
+    text += `Summary: ${simulation.agent_instruction_summary}\n`;
+  } else if (simulation.results_summary && simulation.results_summary.summaryText) {
+    text += `Summary: ${simulation.results_summary.summaryText}\n`;
+  }
+  
+  return text;
+}
+
+/**
+ * Generic embedding input generator for any entity type
+ */
+export function generateEmbeddingInput(entity: any, entityType: string): string {
+  switch (entityType.toLowerCase()) {
+    case 'jetshare_offer':
+      return generateJetShareOfferText(entity);
+    case 'flight':
+      return generateFlightText(entity);
+    case 'crew':
+      return generateCrewText(entity);
+    case 'user':
+      return generateUserProfileText(entity);
+    case 'simulation':
+      return generateSimulationText(entity);
+    default:
+      // For unknown types, try to create a generic representation
+      return JSON.stringify(entity, null, 2);
+  }
+}
+
+/**
+ * Create an embedding vector from text using Cohere
+ */
+export async function encode(text: string): Promise<number[]> {
+  try {
+    const response = await cohere.embed({
+      texts: [text],
+      model: 'embed-english-v3.0',
+    });
+    
+    if (response.body && response.body.embeddings && response.body.embeddings.length > 0) {
+      return response.body.embeddings[0];
+    }
+    
+    throw new Error('No embeddings returned from Cohere');
+  } catch (error) {
+    console.error('Error creating embedding:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create an embedding vector from text using OpenAI (fallback option)
+ */
+export async function encodeWithOpenAI(text: string): Promise<number[]> {
+  try {
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
+    
+    if (!OPENAI_API_KEY) {
+      throw new Error('OpenAI API key not configured');
+    }
+    
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        input: text,
+        model: 'text-embedding-3-large'
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.data && data.data.length > 0 && data.data[0].embedding) {
+      return data.data[0].embedding;
+    }
+    
+    throw new Error('No embeddings returned from OpenAI');
+  } catch (error) {
+    console.error('Error creating OpenAI embedding:', error);
+    throw error;
+  }
+}
+
+/**
+ * Prepare a record for Pinecone upsert with all necessary metadata
+ */
+export function preparePineconeRecord(
+  id: string,
+  vector: number[],
+  entityType: string,
+  entity: any,
+  text: string
+): PineconeRecord {
+  // Base metadata that should be included for all types
+  const baseMetadata = {
+    object_type: entityType,
+    object_id: id,
+    created_at: entity.created_at || new Date().toISOString(),
+    input_text: text
+  };
+  
+  // Add type-specific metadata
+  let metadata: any = { ...baseMetadata };
+  
+  switch (entityType) {
+    case 'jetshare_offer':
+      metadata = {
+        ...metadata,
+        user_id: entity.created_by,
+        departure_location: entity.departure_location,
+        arrival_location: entity.arrival_location,
+        flight_date: entity.flight_date,
+        departure_time: entity.departure_time,
+        total_flight_cost: entity.total_flight_cost,
+        requested_share_amount: entity.requested_share_amount,
+        available_seats: entity.available_seats,
+        has_ai_matching: entity.has_ai_matching || false
+      };
+      break;
+      
+    case 'flight':
+      metadata = {
+        ...metadata,
+        origin: entity.origin_airport,
+        destination: entity.destination_airport,
+        departure_time: entity.departure_time,
+        arrival_time: entity.arrival_time,
+        available_seats: entity.available_seats,
+        price: entity.base_price,
+        jet_model: entity.jets?.model || 'Unknown',
+        jet_manufacturer: entity.jets?.manufacturer || 'Unknown'
+      };
+      break;
+      
+    case 'crew':
+      metadata = {
+        ...metadata,
+        name: entity.name,
+        bio: entity.bio,
+        specializations: Array.isArray(entity.crew_specializations) 
+          ? entity.crew_specializations.map((spec: any) => spec.name).join(', ') 
+          : '',
+        image_url: entity.image_url,
+        rating: entity.average_rating
+      };
+      break;
+      
+    case 'user':
+      metadata = {
+        ...metadata,
+        email: entity.email,
+        full_name: typeof entity.firstName === 'string' && typeof entity.lastName === 'string'
+          ? `${entity.firstName} ${entity.lastName}`.trim()
+          : '',
+        role: entity.role || 'user',
+        interests: Array.isArray(entity.interestsAndHobbies) 
+          ? entity.interestsAndHobbies.join(', ') 
+          : ''
+      };
+      break;
+      
+    case 'simulation':
+      metadata = {
+        ...metadata,
+        sim_type: entity.sim_type,
+        start_date: entity.start_date,
+        end_date: entity.end_date,
+        virtual_users: entity.virtual_users,
+        ai_matching_enabled: entity.ai_matching_enabled,
+        user_id: entity.triggered_by_user_id
+      };
+      break;
+  }
+  
+  // Ensure all metadata values are strings for Pinecone compatibility
+  Object.keys(metadata).forEach(key => {
+    if (metadata[key] !== null && metadata[key] !== undefined && typeof metadata[key] !== 'string') {
+      metadata[key] = String(metadata[key]);
+    }
+  });
+  
+  return {
+    id,
+    values: vector,
+    metadata
+  };
 } 
