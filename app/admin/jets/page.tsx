@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getJets, Jet } from '../utils/data-fetching';
 import {
   Card,
@@ -26,9 +26,16 @@ import {
   Star,
   Calendar,
   Edit,
-  Gauge
+  Gauge,
+  RefreshCw,
+  Trash2,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { JetCreateDialog } from '../components/dialogs/jet-create-dialog';
+import { ActionTooltip } from '../components/action-tooltip';
+import { toast } from 'sonner';
+import { useUi } from '../components/ui-context';
 
 /**
  * Admin Jets Management Page
@@ -43,21 +50,46 @@ import { Button } from "@/components/ui/button";
 export default function AdminJetsPage() {
   const [jets, setJets] = useState<Jet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Use UI context for dialogs
+  const { 
+    openJetView, 
+    openJetCreate, 
+    openJetEdit, 
+    openJetDelete, 
+    setRefreshJets 
+  } = useUi();
 
-  useEffect(() => {
-    async function fetchJets() {
-      try {
-        const data = await getJets();
-        setJets(data);
-      } catch (error) {
-        console.error('Error fetching jets:', error);
-      } finally {
-        setLoading(false);
-      }
+  // Memoize the fetchJets function to prevent re-renders
+  const fetchJets = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getJets();
+      setJets(data);
+    } catch (error) {
+      console.error('Error fetching jets:', error);
+      toast.error('Failed to load jets');
+    } finally {
+      setLoading(false);
     }
-
-    fetchJets();
   }, []);
+  
+  // Handler to refresh jets
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchJets();
+    setIsRefreshing(false);
+    toast.success('Jets refreshed');
+  };
+
+  // Register the fetchJets function with context
+  useEffect(() => {
+    fetchJets();
+    
+    // Store the memoized function in context
+    setRefreshJets(fetchJets);
+  }, [fetchJets, setRefreshJets]);
 
   // Status badge color mapping
   const statusColors = {
@@ -78,10 +110,23 @@ export default function AdminJetsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Jets Management</h1>
-        <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-          <Plane className="mr-2 h-4 w-4" />
-          Add New Jet
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button 
+            className="bg-amber-500 hover:bg-amber-600 text-black"
+            onClick={openJetCreate}
+          >
+            <Plane className="mr-2 h-4 w-4" />
+            Add New Jet
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -160,9 +205,33 @@ export default function AdminJetsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-1">
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <ActionTooltip label="View Details">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openJetView(jet)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
+                        <ActionTooltip label="Edit">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openJetEdit(jet)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
+                        <ActionTooltip label="Delete">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => openJetDelete(jet)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </ActionTooltip>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -222,6 +291,9 @@ export default function AdminJetsPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Include dialog components */}
+      <JetCreateDialog />
     </div>
   );
 } 

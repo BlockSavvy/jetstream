@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useUi } from '../ui-context';
-
-// No props interface needed anymore - using context
 
 export function UserEditDialog() {
   const { userEditOpen, selectedUser, closeUserDialogs, refreshUsers } = useUi();
@@ -18,19 +16,19 @@ export function UserEditDialog() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    email: '',
+    email: ''
   });
 
-  // Reset form when user changes
-  useEffect(() => {
+  // Update form data when selectedUser changes
+  useState(() => {
     if (selectedUser) {
       setFormData({
         first_name: selectedUser.first_name || '',
         last_name: selectedUser.last_name || '',
-        email: selectedUser.email || '',
+        email: selectedUser.email || ''
       });
     }
-  }, [selectedUser]);
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,19 +38,20 @@ export function UserEditDialog() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedUser?.id) return;
+    if (!selectedUser) return;
     
     setIsSubmitting(true);
     
     try {
       const supabase = createClient();
+      
       const { error } = await supabase
         .from('profiles')
         .update({
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email,
-          updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .eq('id', selectedUser.id);
       
@@ -61,9 +60,9 @@ export function UserEditDialog() {
       toast.success('User updated successfully');
       closeUserDialogs();
       refreshUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user:', error);
-      toast.error('Failed to update user');
+      toast.error(`Failed to update user: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +74,7 @@ export function UserEditDialog() {
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
           <DialogDescription>
-            Make changes to the user profile here. Click save when you're done.
+            Update the user's profile information.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -126,7 +125,7 @@ export function UserEditDialog() {
                   Saving...
                 </>
               ) : (
-                'Save changes'
+                'Save Changes'
               )}
             </Button>
           </DialogFooter>

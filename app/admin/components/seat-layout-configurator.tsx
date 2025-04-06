@@ -5,7 +5,12 @@ export interface SeatLayoutConfiguratorProps {
   rows: number;
   seatsPerRow: number;
   skipPositions?: number[][];
-  onChange: (layout: any) => void;
+  onChange: (layout: {
+    rows: number;
+    seatsPerRow: number;
+    layoutType: string;
+    skipPositions: number[][];
+  }) => void;
   className?: string;
 }
 

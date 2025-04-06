@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { JetShareOffer, User, Flight } from '../utils/data-fetching';
+import { JetShareOffer, User, Flight, Jet } from '../utils/data-fetching';
 
 type UiContextType = {
   // User dialogs
@@ -28,6 +28,18 @@ type UiContextType = {
   openJetShareDelete: (offer: JetShareOffer) => void;
   closeJetShareDialogs: () => void;
   
+  // Jet dialogs
+  jetViewOpen: boolean;
+  jetCreateOpen: boolean;
+  jetEditOpen: boolean;
+  jetDeleteOpen: boolean;
+  selectedJet: Jet | null;
+  openJetView: (jet: Jet) => void;
+  openJetCreate: () => void;
+  openJetEdit: (jet: Jet) => void;
+  openJetDelete: (jet: Jet) => void;
+  closeJetDialogs: () => void;
+  
   // Flight dialogs
   flightViewOpen: boolean;
   flightCreateOpen: boolean;
@@ -40,9 +52,11 @@ type UiContextType = {
   refreshUsers: () => void;
   refreshOffers: () => void;
   refreshFlights: () => void;
+  refreshJets: () => void;
   setRefreshUsers: (callback: () => void) => void;
   setRefreshOffers: (callback: () => void) => void;
   setRefreshFlights: (callback: () => void) => void;
+  setRefreshJets: (callback: () => void) => void;
 };
 
 const UiContext = createContext<UiContextType | undefined>(undefined);
@@ -62,6 +76,13 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [jetShareDeleteOpen, setJetShareDeleteOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<JetShareOffer | null>(null);
   
+  // Jet dialog states
+  const [jetViewOpen, setJetViewOpen] = useState(false);
+  const [jetCreateOpen, setJetCreateOpen] = useState(false);
+  const [jetEditOpen, setJetEditOpen] = useState(false);
+  const [jetDeleteOpen, setJetDeleteOpen] = useState(false);
+  const [selectedJet, setSelectedJet] = useState<Jet | null>(null);
+  
   // Flight dialog states
   const [flightViewOpen, setFlightViewOpen] = useState(false);
   const [flightCreateOpen, setFlightCreateOpen] = useState(false);
@@ -71,6 +92,7 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const [refreshUsersCallback, setRefreshUsersCallback] = useState<(() => void) | null>(null);
   const [refreshOffersCallback, setRefreshOffersCallback] = useState<(() => void) | null>(null);
   const [refreshFlightsCallback, setRefreshFlightsCallback] = useState<(() => void) | null>(null);
+  const [refreshJetsCallback, setRefreshJetsCallback] = useState<(() => void) | null>(null);
 
   // User dialog handlers
   const openUserView = (user: User) => {
@@ -128,6 +150,34 @@ export function UiProvider({ children }: { children: ReactNode }) {
     setJetShareDeleteOpen(false);
   };
   
+  // Jet dialog handlers
+  const openJetView = (jet: Jet) => {
+    setSelectedJet(jet);
+    setJetViewOpen(true);
+  };
+  
+  const openJetCreate = () => {
+    setSelectedJet(null);
+    setJetCreateOpen(true);
+  };
+  
+  const openJetEdit = (jet: Jet) => {
+    setSelectedJet(jet);
+    setJetEditOpen(true);
+  };
+  
+  const openJetDelete = (jet: Jet) => {
+    setSelectedJet(jet);
+    setJetDeleteOpen(true);
+  };
+  
+  const closeJetDialogs = () => {
+    setJetViewOpen(false);
+    setJetCreateOpen(false);
+    setJetEditOpen(false);
+    setJetDeleteOpen(false);
+  };
+  
   // Flight dialog handlers
   const openFlightView = (flight: Flight) => {
     setSelectedFlight(flight);
@@ -157,6 +207,10 @@ export function UiProvider({ children }: { children: ReactNode }) {
     if (refreshFlightsCallback) refreshFlightsCallback();
   };
   
+  const refreshJets = () => {
+    if (refreshJetsCallback) refreshJetsCallback();
+  };
+  
   const setRefreshUsers = (callback: () => void) => {
     setRefreshUsersCallback(() => callback);
   };
@@ -167,6 +221,10 @@ export function UiProvider({ children }: { children: ReactNode }) {
   
   const setRefreshFlights = (callback: () => void) => {
     setRefreshFlightsCallback(() => callback);
+  };
+
+  const setRefreshJets = (callback: () => void) => {
+    setRefreshJetsCallback(() => callback);
   };
 
   return (
@@ -194,6 +252,17 @@ export function UiProvider({ children }: { children: ReactNode }) {
         openJetShareDelete,
         closeJetShareDialogs,
         
+        jetViewOpen,
+        jetCreateOpen,
+        jetEditOpen,
+        jetDeleteOpen,
+        selectedJet,
+        openJetView,
+        openJetCreate,
+        openJetEdit,
+        openJetDelete,
+        closeJetDialogs,
+        
         flightViewOpen,
         flightCreateOpen,
         selectedFlight,
@@ -204,9 +273,11 @@ export function UiProvider({ children }: { children: ReactNode }) {
         refreshUsers,
         refreshOffers,
         refreshFlights,
+        refreshJets,
         setRefreshUsers,
         setRefreshOffers,
-        setRefreshFlights
+        setRefreshFlights,
+        setRefreshJets
       }}
     >
       {children}
