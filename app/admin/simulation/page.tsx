@@ -1,6 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { v4 as uuidv4 } from 'uuid';
+
+// UI Components
 import { 
   Card, 
   CardContent, 
@@ -28,159 +35,321 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
-import dynamic from 'next/dynamic';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// Import icons
+// Icons
 import { 
   BarChart, 
   Play, 
-  Save, 
   RefreshCw, 
   PieChart, 
   LineChart, 
   Timer,
-  Calendar,
+  Calendar as CalendarIconLucide,
   Plane,
   Users,
   BrainCircuit,
   BarChart3,
-  TrendingUp
+  TrendingUp,
+  Zap,
+  Clock,
+  DollarSign,
+  AlertCircle,
+  CheckCircle2,
+  ToggleRight,
+  ToggleLeft
 } from "lucide-react";
 
-// Dynamically import each chart component separately
-const DynamicAreaChart = dynamic(
-  () => import('./components/recharts-components').then(mod => mod.AreaChartComponent),
-  {
-    ssr: false,
-    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
-  }
+// Create a simplified date picker component for our form
+function FormDatePicker({ date, onChange, disabled }: { date?: Date, onChange: (date: Date | undefined) => void, disabled?: boolean }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground"
+          )}
+          disabled={disabled}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? format(date, "PPP") : <span>Pick a date</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={onChange}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// Dynamic import for recharts components
+import dynamic from 'next/dynamic';
+
+const AreaChart = dynamic(
+  () => import('@/app/admin/components/recharts/area-chart'),
+  { ssr: false, loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div> }
 );
 
-const DynamicPieChart = dynamic(
-  () => import('./components/recharts-components').then(mod => mod.PieChartComponent),
-  {
-    ssr: false,
-    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
-  }
+const BarChartComponent = dynamic(
+  () => import('@/app/admin/components/recharts/bar-chart'),
+  { ssr: false, loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div> }
 );
 
-const DynamicBarChart = dynamic(
-  () => import('./components/recharts-components').then(mod => mod.BarChartComponent),
-  {
-    ssr: false,
-    loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div>
-  }
+const LineChartComponent = dynamic(
+  () => import('@/app/admin/components/recharts/line-chart'),
+  { ssr: false, loading: () => <div className="h-[300px] bg-slate-100 dark:bg-slate-800 animate-pulse rounded-md"></div> }
 );
+
+// Simulation form schema
+const simulationFormSchema = z.object({
+  startDate: z.date({
+    required_error: "Start date is required.",
+  }),
+  endDate: z.date({
+    required_error: "End date is required.",
+  }).refine(
+    (date) => date > new Date(), 
+    { message: "End date must be in the future." }
+  ),
+  simulationType: z.enum(["JetShare", "PulseFlights", "MarketplaceFlights"], {
+    required_error: "Simulation type is required.",
+  }),
+  virtualUsers: z.number()
+    .min(10, { message: "Minimum 10 users required." })
+    .max(1000, { message: "Maximum 1000 users allowed." }),
+  useAIMatching: z.boolean().default(true),
+});
+
+// Type for the form values
+type SimulationFormValues = z.infer<typeof simulationFormSchema>;
+
+// Type for simulation results
+interface SimulationResult {
+  id: string;
+  timestamp: Date;
+  simulationType: string;
+  parameters: {
+    startDate: Date;
+    endDate: Date;
+    virtualUsers: number;
+    useAIMatching: boolean;
+  };
+  metrics: {
+    offerFillRate: number;
+    acceptedFlights: number;
+    unfilledFlights: number;
+    revenue: number;
+    maxRevenue: number;
+    successPercentage: number;
+  };
+  logEntries: Array<{
+    timestamp: Date;
+    event: string;
+    details: string;
+  }>;
+}
 
 /**
- * Admin Simulation Page
+ * Simulation Engine Page
  * 
- * Provides an interface for running demand simulations and stress tests:
- * - Configure simulation parameters
- * - Run different types of simulations (demand, pricing, etc.)
- * - View simulation results in various visualizations
- * 
- * This page serves as a placeholder for future simulation capabilities.
+ * Allows admins to run simulations of user behavior, flight offers,
+ * and demand patterns within the JetStream ecosystem.
  */
-export default function AdminSimulationPage() {
-  const [simulationStatus, setSimulationStatus] = useState('idle'); // idle, running, completed
-  const [simulationType, setSimulationType] = useState('demand');
-  const [parameters, setParameters] = useState({
-    userCount: 1000,
-    duration: 30,
-    timeScale: 'days',
-    region: 'global',
-    flightTypes: ['business', 'leisure'],
-    demandMultiplier: 1.0
+export default function SimulationPage() {
+  // State for simulation status and results
+  const [simulationStatus, setSimulationStatus] = useState<'idle' | 'running' | 'completed'>('idle');
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  const [simulationResults, setSimulationResults] = useState<SimulationResult | null>(null);
+  const [simulationHistory, setSimulationHistory] = useState<SimulationResult[]>([]);
+  
+  // Form setup
+  const form = useForm<SimulationFormValues>({
+    resolver: zodResolver(simulationFormSchema),
+    defaultValues: {
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 1 week from now
+      simulationType: "JetShare",
+      virtualUsers: 100,
+      useAIMatching: true,
+    },
   });
 
-  // Placeholder simulation result data
-  const demandData = [
-    { name: 'Day 1', demand: 120, capacity: 150 },
-    { name: 'Day 2', demand: 132, capacity: 150 },
-    { name: 'Day 3', demand: 145, capacity: 150 },
-    { name: 'Day 4', demand: 140, capacity: 150 },
-    { name: 'Day 5', demand: 158, capacity: 150 },
-    { name: 'Day 6', demand: 171, capacity: 180 },
-    { name: 'Day 7', demand: 190, capacity: 190 },
-    { name: 'Day 8', demand: 185, capacity: 190 },
-    { name: 'Day 9', demand: 192, capacity: 190 },
-    { name: 'Day 10', demand: 210, capacity: 220 },
-  ];
-
-  const flightTypeData = [
-    { name: 'Business', value: 45 },
-    { name: 'Leisure', value: 30 },
-    { name: 'Group Charter', value: 15 },
-    { name: 'Medical', value: 10 },
-  ];
-
-  const routeDemandData = [
-    { name: 'NYC-LAX', demand: 450 },
-    { name: 'MIA-LAS', demand: 320 },
-    { name: 'BOS-CHI', demand: 280 },
-    { name: 'SFO-SEA', demand: 210 },
-    { name: 'DFW-DEN', demand: 180 },
-  ];
-
-  const performanceData = [
-    { name: 'Load Factor', value: 88 },
-    { name: 'Offer Conversion', value: 12 },
-    { name: 'Repeat Booking', value: 67 },
-    { name: 'JetShare Fill Rate', value: 72 },
-  ];
-
-  // Start simulation
-  const runSimulation = () => {
-    setSimulationStatus('running');
-    
-    // In a real application, this would trigger a backend simulation
-    // For now, we'll just simulate a delay and then show results
-    setTimeout(() => {
-      setSimulationStatus('completed');
-    }, 2000);
+  // Mock data for charts
+  const generateFillRateData = (days: number) => {
+    const data = [];
+    const now = new Date();
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      data.push({
+        date: format(date, 'MMM dd'),
+        withAI: Math.random() * 0.3 + 0.6, // 60-90%
+        withoutAI: Math.random() * 0.3 + 0.3, // 30-60%
+      });
+    }
+    return data;
   };
 
-  // Reset simulation
+  const generateFlightData = (days: number) => {
+    const data = [];
+    const now = new Date();
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      const total = Math.floor(Math.random() * 50) + 50; // 50-100 flights
+      const accepted = Math.floor(total * (Math.random() * 0.4 + 0.5)); // 50-90% acceptance
+      data.push({
+        date: format(date, 'MMM dd'),
+        accepted,
+        unfilled: total - accepted,
+      });
+    }
+    return data;
+  };
+
+  const generateRevenueData = (days: number) => {
+    const data = [];
+    const now = new Date();
+    for (let i = 0; i < days; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() + i);
+      const maxRevenue = Math.floor(Math.random() * 50000) + 100000; // $100k-$150k
+      const actualRevenue = Math.floor(maxRevenue * (Math.random() * 0.4 + 0.5)); // 50-90% of max
+      data.push({
+        date: format(date, 'MMM dd'),
+        actual: actualRevenue,
+        max: maxRevenue,
+      });
+    }
+    return data;
+  };
+
+  // Mock function to run a simulation
+  const runSimulation = async (values: SimulationFormValues) => {
+    // Set simulation to running state
+    setSimulationStatus('running');
+    setSimulationProgress(0);
+    
+    // Mock simulation progress
+    const simulationDuration = 5000; // 5 seconds
+    const interval = 100; // Update every 100ms
+    const steps = simulationDuration / interval;
+    let currentStep = 0;
+    
+    const progressInterval = setInterval(() => {
+      currentStep++;
+      setSimulationProgress(Math.min(100, Math.floor((currentStep / steps) * 100)));
+      
+      if (currentStep >= steps) {
+        clearInterval(progressInterval);
+        completeSimulation(values);
+      }
+    }, interval);
+  };
+  
+  // Generate simulation results
+  const completeSimulation = (values: SimulationFormValues) => {
+    // Create a new simulation result
+    const days = Math.floor((values.endDate.getTime() - values.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const newResult: SimulationResult = {
+      id: uuidv4(),
+      timestamp: new Date(),
+      simulationType: values.simulationType,
+      parameters: {
+        startDate: values.startDate,
+        endDate: values.endDate,
+        virtualUsers: values.virtualUsers,
+        useAIMatching: values.useAIMatching,
+      },
+      metrics: {
+        offerFillRate: values.useAIMatching ? 0.75 + Math.random() * 0.2 : 0.5 + Math.random() * 0.2,
+        acceptedFlights: Math.floor(values.virtualUsers * (0.5 + Math.random() * 0.5)),
+        unfilledFlights: Math.floor(values.virtualUsers * (0.1 + Math.random() * 0.3)),
+        revenue: Math.floor(values.virtualUsers * 1000 * (0.6 + Math.random() * 0.4)),
+        maxRevenue: Math.floor(values.virtualUsers * 1500),
+        successPercentage: values.useAIMatching ? 75 + Math.floor(Math.random() * 20) : 50 + Math.floor(Math.random() * 25),
+      },
+      logEntries: [
+        {
+          timestamp: new Date(),
+          event: "Simulation Started",
+          details: `Started ${values.simulationType} simulation with ${values.virtualUsers} virtual users`,
+        },
+        {
+          timestamp: new Date(Date.now() + 1000),
+          event: "User Generation",
+          details: `Created ${values.virtualUsers} synthetic user profiles`,
+        },
+        {
+          timestamp: new Date(Date.now() + 2000),
+          event: "Preference Modeling",
+          details: "Applied travel preference distributions across user base",
+        },
+        {
+          timestamp: new Date(Date.now() + 3000),
+          event: "Booking Behavior",
+          details: `Simulated ${Math.floor(values.virtualUsers * 1.5)} booking attempts`,
+        },
+        {
+          timestamp: new Date(Date.now() + 4000),
+          event: "Simulation Completed",
+          details: `Achieved ${values.useAIMatching ? 'optimal' : 'baseline'} matching performance`,
+        },
+      ],
+    };
+    
+    // Update state
+    setSimulationResults(newResult);
+    setSimulationHistory(prev => [newResult, ...prev].slice(0, 10)); // Keep last 10 simulations
+    setSimulationStatus('completed');
+    
+    // In a real implementation, this would call an API to store the simulation result
+    // storeSimulationResult(newResult);
+  };
+  
+  // Reset the simulation
   const resetSimulation = () => {
     setSimulationStatus('idle');
+    setSimulationProgress(0);
+    setSimulationResults(null);
   };
-
-  // COLORS for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  
+  // Form submission handler
+  const onSubmit = (values: SimulationFormValues) => {
+    console.log("Running simulation with parameters:", values);
+    runSimulation(values);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Simulation Engine</h1>
         <div className="space-x-2">
-          <Button 
-            variant="outline" 
-            onClick={resetSimulation}
-            disabled={simulationStatus === 'idle'}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Reset
-          </Button>
-          <Button 
-            className="bg-amber-500 hover:bg-amber-600 text-black"
-            onClick={runSimulation}
-            disabled={simulationStatus === 'running'}
-          >
-            {simulationStatus === 'running' ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Simulating...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Run Simulation
-              </>
-            )}
-          </Button>
+          {simulationStatus !== 'idle' && (
+            <Button 
+              variant="outline" 
+              onClick={resetSimulation}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Reset
+            </Button>
+          )}
         </div>
       </div>
 
@@ -190,121 +359,151 @@ export default function AdminSimulationPage() {
           <CardHeader>
             <CardTitle>Simulation Parameters</CardTitle>
             <CardDescription>
-              Configure parameters for the demand simulation
+              Configure parameters for the JetStream simulation
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <FormLabel>Simulation Type</FormLabel>
-              <Select 
-                value={simulationType} 
-                onValueChange={setSimulationType}
-                disabled={simulationStatus === 'running'}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select simulation type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="demand">Demand Forecast</SelectItem>
-                  <SelectItem value="pricing">Price Elasticity</SelectItem>
-                  <SelectItem value="capacity">Capacity Planning</SelectItem>
-                  <SelectItem value="route">Route Optimization</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>User Seed Volume</FormLabel>
-              <div className="flex items-center space-x-2">
-                <Input 
-                  type="number" 
-                  value={parameters.userCount} 
-                  onChange={(e) => setParameters({...parameters, userCount: parseInt(e.target.value)})}
-                  disabled={simulationStatus === 'running'}
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Date Range */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Start Date</FormLabel>
+                        <FormDatePicker 
+                          date={field.value} 
+                          onChange={field.onChange}
+                          disabled={simulationStatus === 'running'}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>End Date</FormLabel>
+                        <FormDatePicker 
+                          date={field.value} 
+                          onChange={field.onChange}
+                          disabled={simulationStatus === 'running'}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Simulation Type */}
+                <FormField
+                  control={form.control}
+                  name="simulationType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Simulation Type</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={simulationStatus === 'running'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select simulation type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="JetShare">JetShare</SelectItem>
+                          <SelectItem value="PulseFlights">Pulse Flights</SelectItem>
+                          <SelectItem value="MarketplaceFlights">Marketplace Flights</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        The type of flight offers to simulate
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <span className="text-sm text-muted-foreground">users</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>Simulation Duration</FormLabel>
-              <div className="flex items-center space-x-2">
-                <Input 
-                  type="number" 
-                  value={parameters.duration} 
-                  onChange={(e) => setParameters({...parameters, duration: parseInt(e.target.value)})}
-                  disabled={simulationStatus === 'running'}
+                
+                {/* Virtual Users */}
+                <FormField
+                  control={form.control}
+                  name="virtualUsers"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Virtual Users</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={10} 
+                          max={1000} 
+                          {...field}
+                          onChange={e => field.onChange(parseInt(e.target.value))}
+                          disabled={simulationStatus === 'running'}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Number of synthetic users (10-1000)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <Select 
-                  value={parameters.timeScale} 
-                  onValueChange={(value) => setParameters({...parameters, timeScale: value})}
+                
+                {/* AI Matching Toggle */}
+                <FormField
+                  control={form.control}
+                  name="useAIMatching"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                      <div className="space-y-0.5">
+                        <FormLabel>AI Matching</FormLabel>
+                        <FormDescription>
+                          Enable AI-powered offer matching algorithms
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={simulationStatus === 'running'}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Submit Button */}
+                <Button 
+                  type="submit" 
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black"
                   disabled={simulationStatus === 'running'}
                 >
-                  <SelectTrigger className="w-[110px]">
-                    <SelectValue placeholder="Time scale" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hours">Hours</SelectItem>
-                    <SelectItem value="days">Days</SelectItem>
-                    <SelectItem value="weeks">Weeks</SelectItem>
-                    <SelectItem value="months">Months</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>Region</FormLabel>
-              <Select 
-                value={parameters.region} 
-                onValueChange={(value) => setParameters({...parameters, region: value})}
-                disabled={simulationStatus === 'running'}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select region" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="global">Global</SelectItem>
-                  <SelectItem value="north-america">North America</SelectItem>
-                  <SelectItem value="europe">Europe</SelectItem>
-                  <SelectItem value="asia">Asia</SelectItem>
-                  <SelectItem value="middle-east">Middle East</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>Demand Multiplier</FormLabel>
-              <div className="pt-2">
-                <Slider
-                  value={[parameters.demandMultiplier * 100]}
-                  min={50}
-                  max={200}
-                  step={5}
-                  onValueChange={([value]) => setParameters({...parameters, demandMultiplier: value / 100})}
-                  disabled={simulationStatus === 'running'}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>0.5x</span>
-                  <span>{parameters.demandMultiplier.toFixed(1)}x</span>
-                  <span>2.0x</span>
-                </div>
-              </div>
-            </div>
+                  {simulationStatus === 'running' ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Running Simulation...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="mr-2 h-4 w-4" />
+                      Run Simulation
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
           </CardContent>
-          <CardFooter>
-            <div className="w-full">
-              <Separator className="my-2" />
-              <div className="text-xs text-muted-foreground italic mt-2">
-                This simulation engine will power predictive analytics and AI-driven decision making for flight operations.
-              </div>
-            </div>
-          </CardFooter>
         </Card>
 
         {/* Simulation Results */}
         <div className="md:col-span-3 space-y-6">
-          {simulationStatus === 'idle' ? (
+          {simulationStatus === 'idle' && !simulationResults ? (
             <Card className="h-80 flex items-center justify-center">
               <div className="text-center p-6">
                 <BrainCircuit className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -316,80 +515,110 @@ export default function AdminSimulationPage() {
             </Card>
           ) : simulationStatus === 'running' ? (
             <Card className="h-80 flex items-center justify-center">
-              <div className="text-center p-6">
+              <div className="text-center p-6 w-full max-w-md">
                 <RefreshCw className="h-12 w-12 text-amber-500 mx-auto mb-4 animate-spin" />
                 <h3 className="text-lg font-medium">Simulation in Progress</h3>
                 <p className="text-sm text-gray-500 mt-2">
-                  Processing {parameters.userCount.toLocaleString()} users over {parameters.duration} {parameters.timeScale}
+                  Processing {form.getValues().virtualUsers.toLocaleString()} virtual users
                 </p>
-                <div className="w-full mt-4 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div className="bg-amber-500 h-2.5 rounded-full animate-pulse" style={{ width: '70%' }}></div>
+                <div className="w-full mt-6 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                  <div 
+                    className="bg-amber-500 h-2.5 rounded-full" 
+                    style={{ width: `${simulationProgress}%` }}
+                  ></div>
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {simulationProgress}% complete
+                </p>
               </div>
             </Card>
           ) : (
-            <Tabs defaultValue="demand">
+            <Tabs defaultValue="fillRate">
               <TabsList>
-                <TabsTrigger value="demand">
+                <TabsTrigger value="fillRate">
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  Demand Forecast
+                  Offer Fill Rates
                 </TabsTrigger>
-                <TabsTrigger value="types">
-                  <PieChart className="h-4 w-4 mr-2" />
-                  Flight Types
+                <TabsTrigger value="flights">
+                  <Plane className="h-4 w-4 mr-2" />
+                  Flight Status
                 </TabsTrigger>
-                <TabsTrigger value="routes">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Popular Routes
+                <TabsTrigger value="revenue">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Revenue
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="demand" className="space-y-4 mt-4">
+              <TabsContent value="fillRate" className="space-y-4 mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Demand vs. Capacity Forecast</CardTitle>
+                    <CardTitle>JetShare Offer Fill Rates</CardTitle>
                     <CardDescription>
-                      Projected demand compared to available capacity over time
+                      AI matching vs. standard matching performance
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
-                      {/* Dynamically imported chart component */}
-                      <DynamicAreaChart data={demandData} />
+                      {simulationResults && (
+                        <AreaChart 
+                          data={generateFillRateData(7)} 
+                          xKey="date"
+                          series={[
+                            { key: "withAI", name: "With AI Matching", color: "#8884d8" },
+                            { key: "withoutAI", name: "Without AI Matching", color: "#82ca9d" }
+                          ]}
+                        />
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
               
-              <TabsContent value="types" className="space-y-4 mt-4">
+              <TabsContent value="flights" className="space-y-4 mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Flight Type Distribution</CardTitle>
+                    <CardTitle>Accepted vs. Unfilled Flights</CardTitle>
                     <CardDescription>
-                      Breakdown of different flight types in the simulation
+                      Flight booking outcomes over simulation period
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
-                      {/* Dynamically imported chart component */}
-                      <DynamicPieChart data={flightTypeData} colors={COLORS} />
+                      {simulationResults && (
+                        <BarChartComponent 
+                          data={generateFlightData(7)} 
+                          xKey="date"
+                          series={[
+                            { key: "accepted", name: "Accepted Flights", color: "#4ade80" },
+                            { key: "unfilled", name: "Unfilled Flights", color: "#f87171" }
+                          ]}
+                        />
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </TabsContent>
               
-              <TabsContent value="routes" className="space-y-4 mt-4">
+              <TabsContent value="revenue" className="space-y-4 mt-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Top Routes by Demand</CardTitle>
+                    <CardTitle>Revenue vs. Theoretical Maximum</CardTitle>
                     <CardDescription>
-                      Most popular flight routes in the simulation
+                      Actual revenue compared to maximum potential
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="h-[300px]">
-                      {/* Dynamically imported chart component */}
-                      <DynamicBarChart data={routeDemandData} />
+                      {simulationResults && (
+                        <LineChartComponent 
+                          data={generateRevenueData(7)} 
+                          xKey="date"
+                          series={[
+                            { key: "actual", name: "Actual Revenue", color: "#8884d8" },
+                            { key: "max", name: "Maximum Potential", color: "#d1d5db" }
+                          ]}
+                        />
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -397,67 +626,182 @@ export default function AdminSimulationPage() {
             </Tabs>
           )}
 
-          {simulationStatus === 'completed' && (
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-              {performanceData.map((item, index) => (
-                <Card key={index}>
-                  <CardHeader className="py-3">
-                    <CardTitle className="text-sm font-medium">{item.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="py-0">
-                    <div className="text-2xl font-bold">{item.value}%</div>
-                    <div className="text-xs text-muted-foreground flex items-center mt-1">
-                      <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                      <span>+{Math.floor(Math.random() * 5) + 1}% from baseline</span>
+          {simulationResults && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Simulation Results</CardTitle>
+                  <CardDescription>
+                    Summary metrics from the simulation run
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Offer Fill Rate
+                      </div>
+                      <div className="mt-1 flex items-center">
+                        <span className="text-2xl font-bold">
+                          {(simulationResults.metrics.offerFillRate * 100).toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Accepted Flights
+                      </div>
+                      <div className="mt-1 flex items-center">
+                        <span className="text-2xl font-bold">
+                          {simulationResults.metrics.acceptedFlights}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Revenue
+                      </div>
+                      <div className="mt-1 flex items-center">
+                        <span className="text-2xl font-bold">
+                          ${simulationResults.metrics.revenue.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Success Rate
+                      </div>
+                      <div className="mt-1 flex items-center">
+                        <span className="text-2xl font-bold">
+                          {simulationResults.metrics.successPercentage}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Simulation Log</CardTitle>
+                  <CardDescription>
+                    Detailed events from the simulation run
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Timestamp</TableHead>
+                          <TableHead>Event</TableHead>
+                          <TableHead>Details</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {simulationResults.logEntries.map((log, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-mono text-xs">
+                              {format(log.timestamp, 'HH:mm:ss')}
+                            </TableCell>
+                            <TableCell>{log.event}</TableCell>
+                            <TableCell>{log.details}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
       </div>
 
-      {simulationStatus === 'completed' && (
+      {simulationHistory.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Simulation Insights</CardTitle>
+            <CardTitle>Simulation History</CardTitle>
             <CardDescription>
-              AI-generated insights from the simulation results
+              Previous simulation runs
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950 dark:border-amber-800">
-                <h3 className="font-medium flex items-center">
-                  <BrainCircuit className="h-5 w-5 mr-2 text-amber-500" />
-                  Demand Exceeds Capacity
-                </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  The simulation indicates demand will exceed capacity by approximately 10% on days 5-10. Consider increasing available jets or implementing dynamic pricing to optimize revenue.
-                </p>
-              </div>
-              
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950 dark:border-blue-800">
-                <h3 className="font-medium flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-blue-500" />
-                  Route Opportunity
-                </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  NYC-LAX route shows highest demand but also highest competition. Consider adding 2 additional jets to the MIA-LAS route where demand is growing with lower competition.
-                </p>
-              </div>
-              
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-950 dark:border-green-800">
-                <h3 className="font-medium flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-green-500" />
-                  JetShare Performance
-                </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  JetShare fill rate is 72%, which is strong but could be improved. Analysis suggests lowering the minimum booking threshold from 4 to 3 seats could increase fill rate to 85%.
-                </p>
-              </div>
-            </div>
+            <Accordion type="single" collapsible className="w-full">
+              {simulationHistory.map((sim, index) => (
+                <AccordionItem key={sim.id} value={sim.id}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center space-x-4 text-left">
+                      <div className="font-mono text-xs text-gray-500">
+                        {format(sim.timestamp, 'yyyy-MM-dd HH:mm:ss')}
+                      </div>
+                      <div className="font-medium">
+                        {sim.simulationType} Simulation
+                      </div>
+                      <div className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                        {sim.parameters.virtualUsers} users
+                      </div>
+                      <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
+                        sim.metrics.successPercentage >= 70 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+                      }`}>
+                        {sim.metrics.successPercentage}% success
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Parameters</h4>
+                        <ul className="text-sm space-y-1">
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Date Range:</span>
+                            <span>{format(sim.parameters.startDate, 'MMM d')} - {format(sim.parameters.endDate, 'MMM d')}</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Virtual Users:</span>
+                            <span>{sim.parameters.virtualUsers}</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">AI Matching:</span>
+                            <span>{sim.parameters.useAIMatching ? 'Enabled' : 'Disabled'}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Metrics</h4>
+                        <ul className="text-sm space-y-1">
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Fill Rate:</span>
+                            <span>{(sim.metrics.offerFillRate * 100).toFixed(1)}%</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Flights:</span>
+                            <span>{sim.metrics.acceptedFlights} accepted / {sim.metrics.unfilledFlights} unfilled</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Revenue:</span>
+                            <span>${sim.metrics.revenue.toLocaleString()} / ${sim.metrics.maxRevenue.toLocaleString()}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Insights</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {sim.parameters.useAIMatching 
+                            ? `AI matching improved offer success rates by approximately ${Math.floor(Math.random() * 15) + 20}% compared to baseline.`
+                            : `Without AI matching, the system operated at baseline efficiency. Enabling AI could improve performance.`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </CardContent>
         </Card>
       )}
