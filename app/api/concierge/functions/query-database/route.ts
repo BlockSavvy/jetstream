@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
-import { CohereClient } from 'cohere-ai';
-
-// Initialize Cohere client for embeddings
-const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY || '',
-});
+import * as embeddings from '@/lib/services/embeddings';
 
 /**
  * Database query function that allows the AI to safely query specific database tables
@@ -53,17 +48,8 @@ export async function POST(request: Request) {
     // If a semantic query is provided, use vector search
     if (semantic_query && typeof semantic_query === 'string' && semantic_query.trim().length > 0) {
       try {
-        // Generate embedding for the query
-        const embedResponse = await cohere.embed({ 
-          texts: [semantic_query],
-          model: 'embed-english-v3.0',
-          inputType: 'search_query'
-        });
-        
-        // Handle embedding response format correctly
-        const embedding = Array.isArray(embedResponse.embeddings) ? 
-          embedResponse.embeddings[0] : 
-          embedResponse.embeddings;
+        // Generate embedding for the query using our embedding service
+        const embedding = await embeddings.encode(semantic_query);
         
         // Determine if we should filter for specific status in jetshare_offers
         const status = table_name === 'jetshare_offers' && filters.status ? 

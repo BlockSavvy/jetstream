@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
-import { CohereClient } from 'cohere-ai';
-
-// Initialize Cohere client
-const cohere = new CohereClient({
-  token: process.env.COHERE_API_KEY || '',
-});
+import * as embeddings from '@/lib/services/embeddings';
 
 /**
  * Vector search endpoint for retrieving relevant data based on semantic similarity
@@ -23,17 +18,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
     
-    // Generate embedding for the query using Cohere
-    const embedResponse = await cohere.embed({ 
-      texts: [query],
-      model: 'embed-english-v3.0',
-      inputType: 'search_query'
-    });
-    
-    // Handle embedding response format correctly
-    const embedding = Array.isArray(embedResponse.embeddings) ? 
-      embedResponse.embeddings[0] : 
-      embedResponse.embeddings;
+    // Generate embedding for the query using our embeddings service
+    const embedding = await embeddings.encode(query);
     
     // Initialize Supabase client
     const supabase = createClient();
