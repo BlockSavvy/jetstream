@@ -9,18 +9,18 @@ export default function JetSharePage() {
       {/* Hero Section */}
       <section className="py-8 md:py-16 text-center">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-            <span className="block bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500">
+          <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight mb-2">
+            <div className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-amber-600 dark:from-amber-400 dark:to-amber-500">
               Instantly Share & Offset
-            </span>
-            <span className="block text-gray-900 dark:text-white">Your Private Jet Costs</span>
+            </div>
+            <div className="text-gray-900 dark:text-white mt-1">Your Private Jet Costs</div>
           </h1>
           <p className="text-xl sm:text-xl md:text-2xl text-gray-800 dark:text-gray-200 mb-6 max-w-2xl mx-auto">
             List empty seats, connect with verified travelers, and recover up to 70% of your flight expenses.
           </p>
           
           {/* Two-sided marketplace CTAs */}
-          <div className="flex flex-col gap-8 mb-8">
+          <div className="flex flex-col gap-6 mb-8">
             {/* List seats CTA (emphasized) */}
             <div className="bg-white dark:bg-gray-800 shadow-md rounded-xl p-5">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Have a booked private flight?</h2>
@@ -31,11 +31,6 @@ export default function JetSharePage() {
                   List Your Seats
                 </Link>
               </Button>
-            </div>
-            
-            {/* Connecting arrow for mobile */}
-            <div className="flex justify-center items-center">
-              <div className="w-px h-8 bg-gray-300 dark:bg-gray-700"></div>
             </div>
             
             {/* Find seats CTA */}
