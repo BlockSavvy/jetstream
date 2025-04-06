@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { UiProvider } from './components/ui-context';
+import Sidebar from './components/sidebar';
 import { Toaster } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Menu, X } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -11,6 +14,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const [isMounted, setIsMounted] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   
   // Only run on client
   useEffect(() => {
@@ -20,10 +24,35 @@ export default function AdminLayout({
   return (
     <UiProvider>
       <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 dark:bg-gray-950">
+        {/* Desktop Sidebar */}
         <div className="w-64 md:block hidden border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-          {/* Sidebar placeholder */}
-          <div className="p-4 font-bold text-lg">Admin Dashboard</div>
+          <Sidebar />
         </div>
+        
+        {/* Mobile Nav */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+          <div className="font-bold text-lg">JetStream Admin</div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+          >
+            {mobileNavOpen ? <X /> : <Menu />}
+          </Button>
+        </div>
+        
+        {/* Mobile Sidebar */}
+        {mobileNavOpen && (
+          <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileNavOpen(false)}>
+            <div 
+              className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-950 h-full" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Sidebar />
+            </div>
+          </div>
+        )}
+        
         <div className="flex-1 overflow-x-hidden">
           <main className={cn(
             "p-6 max-w-7xl mx-auto",
