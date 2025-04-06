@@ -217,7 +217,7 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel className="dark:text-gray-200">Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="youremail@example.com" type="email" {...field} 
+                  <Input placeholder="youremail@example.com" type="email" autoComplete="email" {...field} 
                     className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" />
                 </FormControl>
                 <FormMessage className="dark:text-red-300" />
@@ -239,7 +239,7 @@ export function LoginForm() {
                   </Link>
                 </div>
                 <FormControl>
-                  <Input placeholder="••••••••" type="password" {...field} 
+                  <Input placeholder="••••••••" type="password" autoComplete="current-password" {...field} 
                     className="dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
                 </FormControl>
                 <FormMessage className="dark:text-red-300" />

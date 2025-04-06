@@ -12,6 +12,7 @@ export interface JetShareOffer {
   id: string;
   user_id: string;
   flight_date: string;
+  departure_time: string;
   departure_location: string;
   arrival_location: string;
   total_flight_cost: number;
@@ -19,10 +20,23 @@ export interface JetShareOffer {
   status: JetShareOfferStatus;
   matched_user_id?: string;
   aircraft_model?: string;
+  jet_id?: string;
   total_seats?: number;
   available_seats?: number;
   created_at: string;
   updated_at: string;
+  split_configuration?: {
+    jetId: string;
+    splitOrientation: 'horizontal' | 'vertical';
+    splitRatio: string;
+    splitPercentage?: number;
+    allocatedSeats: {
+      front?: string[];
+      back?: string[];
+      left?: string[];
+      right?: string[];
+    };
+  };
 }
 
 // Define JetShare transaction type
@@ -53,6 +67,7 @@ export interface JetShareSettings {
 // Define input types for API requests
 export interface CreateJetShareOfferInput {
   flight_date: string;
+  departure_time: string;
   departure_location: string;
   arrival_location: string;
   total_flight_cost: number;
@@ -90,6 +105,14 @@ export interface JetShareOfferWithUser extends JetShareOffer {
     last_name?: string;
     email?: string;
     avatar_url?: string;
+  };
+  // Add the jet/aircraft information for image display
+  jet?: {
+    id?: string;
+    manufacturer?: string;
+    model?: string;
+    image_url?: string;
+    [key: string]: any;
   };
 }
 

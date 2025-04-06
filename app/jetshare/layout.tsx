@@ -14,7 +14,8 @@ import AIConcierge from './components/AIConcierge';
 const PROTECTED_ROUTES = [
   '/jetshare/dashboard',
   '/jetshare/listings/manage',
-  '/jetshare/offer'
+  '/jetshare/offer/edit',
+  '/jetshare/offer/new'
 ];
 
 export default function JetShareLayout({ children }: { children: ReactNode }) {
@@ -34,7 +35,10 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
   // Determine if current path needs authentication
   const isPaymentPath = pathname ? pathname.startsWith('/jetshare/payment/') : false;
   const isDashboardPath = pathname ? pathname.startsWith('/jetshare/dashboard') : false;
-  const isOfferPath = pathname ? pathname.startsWith('/jetshare/offer') : false;
+  const isOfferPath = pathname ? (
+    pathname.startsWith('/jetshare/offer/') && 
+    (pathname.includes('/new') || pathname.includes('/edit'))
+  ) : false;
   
   // NEVER require auth for payment paths - they'll handle their own auth
   const needsAuth = pathname ? (
@@ -337,7 +341,7 @@ export default function JetShareLayout({ children }: { children: ReactNode }) {
   }, [user, authLoading, needsAuth, router, loading, pathname, isPaymentPath]);
   
   return (
-    <main className={`min-h-screen bg-background ${isMobile ? 'jetstream-mobile' : ''}`}>
+    <main className={`min-h-screen bg-background dark ${isMobile ? 'jetstream-mobile' : ''}`}>
       <JetShareHeader />
       <div className={`jetshare-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
         {(!needsAuth || user || loading) ? children : null}

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     const viewMode = searchParams.get('viewMode') || 'marketplace';
     const forceUserId = searchParams.get('force_user_id');
     const requestId = searchParams.get('rid') || 'unknown-rid';
+    const includeJetDetails = searchParams.get('include_aircraft_details') === 'true';
     
     // Log the parameters for debugging
     console.log('[API /jetshare/getOffers] Function execution started.');
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
       userId,
       matchedUserId,
       viewMode,
+      includeJetDetails,
       instanceId: searchParams.get('instance_id') ? '00000000...' : null
     });
 
@@ -146,27 +148,89 @@ export async function GET(request: NextRequest) {
         // Create a service client directly
         const serviceClient = createSBClient(supabaseServiceUrl, supabaseServiceKey);
         
-        // For marketplace, we only get open offers - FIXED: removed the join with profiles
-        const query = serviceClient
-          .from('jetshare_offers')
-          .select('*, user:user_id(*)')
-          .eq('status', 'open');
-          
-        // Add additional filters if provided
-        if (status) {
-          query.eq('status', status);
+        // Define the base fields to select
+        let selectFields = `
+          *,
+          user:user_id (
+            id,
+            email,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `;
+        
+        // Add aircraft details if requested
+        if (includeJetDetails) {
+          console.log('[API /jetshare/getOffers] Including jet details in query');
+          selectFields = `
+            *,
+            user:user_id (
+              id,
+              email,
+              first_name,
+              last_name,
+              avatar_url
+            ),
+            jet:jet_id (
+              id,
+              manufacturer,
+              model,
+              image_url,
+              images,
+              category,
+              capacity,
+              range_nm,
+              cruise_speed_kts,
+              tail_number,
+              description
+            )
+          `;
         }
         
+        // Updated marketplace query
+        // Ensure we're showing all open offers, ordered by newest first
+        let query = serviceClient
+          .from('jetshare_offers')
+          .select(selectFields)
+          .order('created_at', { ascending: false });
+
+        // Apply status filter if provided
+        if (status) {
+          console.log(`[API /jetshare/getOffers] Filtering by status: ${status}`);
+          query = query.eq('status', status);
+        } else {
+          // Default to 'open' status if not specified
+          console.log('[API /jetshare/getOffers] Using default status filter: open');
+          query = query.eq('status', 'open');
+        }
+
         // Execute the query
         console.log('[API /jetshare/getOffers] Executing marketplace query with service role');
         const { data: offersData, error: offersError } = await query;
         
         if (offersError) {
-          console.error('[API /jetshare/getOffers] Error fetching marketplace offers:', offersError);
-          return NextResponse.json({ error: 'Database error', details: offersError }, { status: 500 });
+          console.error('[API /jetshare/getOffers] Query error:', offersError);
+          return NextResponse.json(
+            { message: 'Failed to fetch offers', error: offersError.message },
+            { status: 500 }
+          );
         }
         
+        // Log the total count of offers found
         console.log(`[API /jetshare/getOffers] Found ${offersData?.length || 0} marketplace offers`);
+
+        // Add debug information for the first few offers (if any)
+        if (offersData && offersData.length > 0) {
+          const sampleOffers = offersData.slice(0, 3).map((offer: any) => ({
+            id: offer.id,
+            status: offer.status,
+            created_at: offer.created_at,
+            departure_location: offer.departure_location,
+            user_id: offer.user_id
+          }));
+          console.log(`[API /jetshare/getOffers] Sample offers:`, sampleOffers);
+        }
         
         // Return the offers
         return NextResponse.json({

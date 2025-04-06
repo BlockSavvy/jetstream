@@ -9,6 +9,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+// Add jet_id to the types
+interface CreateOfferData {
+  user_id: string;
+  departure_time: string;
+  flight_date: string;
+  departure_location: string;
+  arrival_location: string;
+  aircraft_model?: string;
+  jet_id?: string; // Add jet_id field to handle real jet references
+  total_seats?: number;
+  available_seats?: number;
+  total_flight_cost: number;
+  requested_share_amount: number;
+  split_configuration?: any;
+  status: string;
+  created_at: string;
+}
+
 export async function POST(request: Request) {
   try {
     // Use server-side client instead of cookie-based authentication
@@ -144,29 +162,32 @@ export async function POST(request: Request) {
       );
     }
     
+    // In the POST method, add jet_id to the fields to parse
     const {
+      user_id,
       flight_date,
+      departure_time,
       departure_location,
       arrival_location,
       aircraft_model,
+      jet_id, // Add jet_id to the fields we're extracting
       total_seats,
       available_seats,
       total_flight_cost,
       requested_share_amount,
-      status = 'open'
+      split_configuration,
+      status = 'open',
     } = body;
     
     // Validate required fields
-    if (!flight_date || !departure_location || !arrival_location || !aircraft_model || 
-        !total_seats || !available_seats || !total_flight_cost || !requested_share_amount) {
+    if (!user_id || !departure_location || !arrival_location || !total_flight_cost || !requested_share_amount) {
       console.error('Missing required fields in createOffer', body);
       return NextResponse.json(
         { 
           message: 'Missing required fields', 
           code: 'VALIDATION_ERROR',
           details: {
-            requiredFields: ['flight_date', 'departure_location', 'arrival_location', 'aircraft_model', 
-                           'total_seats', 'available_seats', 'total_flight_cost', 'requested_share_amount'],
+            requiredFields: ['user_id', 'departure_location', 'arrival_location', 'total_flight_cost', 'requested_share_amount'],
             receivedFields: Object.keys(body || {})
           }
         },
@@ -201,23 +222,26 @@ export async function POST(request: Request) {
     console.log('Creating offer for user:', user.id);
     
     // Create the offer
+    const offerData: CreateOfferData = {
+      user_id,
+      flight_date,
+      departure_time: departure_time || flight_date, // Ensure departure_time is set
+      departure_location,
+      arrival_location,
+      aircraft_model: aircraft_model || null,
+      jet_id: jet_id || null, // Add jet_id to the data being inserted
+      total_seats: total_seats || null,
+      available_seats: available_seats || null,
+      total_flight_cost,
+      requested_share_amount,
+      split_configuration: split_configuration || null,
+      status,
+      created_at: new Date().toISOString(),
+    };
+    
     const { data: offer, error: offerError } = await supabase
       .from('jetshare_offers')
-      .insert([
-        {
-          user_id: user.id,
-          flight_date,
-          departure_location,
-          arrival_location,
-          aircraft_model,
-          total_seats,
-          available_seats,
-          total_flight_cost,
-          requested_share_amount,
-          status,
-          matched_user_id: null
-        }
-      ])
+      .insert([offerData])
       .select()
       .single();
     

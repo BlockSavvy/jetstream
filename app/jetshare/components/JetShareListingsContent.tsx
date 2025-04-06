@@ -24,7 +24,8 @@ import {
   Users,
   MoreVertical,
   LoaderCircle,
-  RefreshCw
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -70,7 +71,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@supabase/supabase-js';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatTime } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -89,6 +90,22 @@ import { useAuth } from '@/components/auth-provider';
 // Update the JetShareOfferWithUser type to include the isOwnOffer flag
 interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
   isOwnOffer?: boolean;
+  image_url?: string;
+  jet_id?: string;
+  jet?: {
+    id?: string;
+    manufacturer?: string;
+    model?: string;
+    image_url?: string;
+    images?: string[];
+    category?: string;
+    capacity?: number;
+    range_nm?: number;
+    cruise_speed_kts?: number;
+    tail_number?: string;
+    description?: string;
+    [key: string]: any;
+  };
 }
 
 // Type for user profile with verification status
@@ -268,6 +285,9 @@ export default function JetShareListingsContent() {
       // Construct the API URL with query parameters
       let url = `/api/jetshare/getOffers?status=${status}&viewMode=${viewMode}`;
       
+      // Add parameter to request jet details
+      url += '&include_aircraft_details=true';
+      
       // Always append a timestamp to bust cache
       url += `&t=${Date.now()}`;
       
@@ -401,11 +421,19 @@ export default function JetShareListingsContent() {
           // Mark offers created by current user
           const isOwnOffer = authUserId && offer.user_id === authUserId;
           
+          // Extract image URL from jet relation if available
+          let imageUrl = null;
+          if (offer.jet && offer.jet.image_url) {
+            imageUrl = offer.jet.image_url;
+            console.log(`Extracted image URL from jet relation: ${imageUrl}`);
+          }
+          
           // Check if user info is missing and provide defaults
           if (!offer.user) {
             return {
               ...offer,
               isOwnOffer,
+              image_url: imageUrl,
               user: {
                 id: offer.user_id,
                 first_name: "Jet",
@@ -415,7 +443,8 @@ export default function JetShareListingsContent() {
           }
           return {
             ...offer,
-            isOwnOffer
+            isOwnOffer,
+            image_url: imageUrl
           };
         });
         
@@ -853,14 +882,85 @@ export default function JetShareListingsContent() {
     setSearchTerm('');
   };
   
+  // Function to get a valid jet image URL with fallbacks
+  const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
+    // Log debug information
+    console.log('Offer debug for image URL:', {
+      id: offer.id,
+      aircraft_model: offer.aircraft_model || '',
+      jet_id: offer.jet_id,
+      has_jet: !!offer.jet,
+      jet_details: offer.jet ? {
+        id: offer.jet.id,
+        model: offer.jet.model,
+        manufacturer: offer.jet.manufacturer,
+        image_url: offer.jet.image_url,
+        has_images_array: !!offer.jet.images && offer.jet.images.length > 0
+      } : null
+    });
+    
+    // Use proper cascading fallbacks in order of preference:
+    
+    // 1. First, check if the offer has a direct image_url property
+    if (offer.image_url) {
+      console.log(`Using direct image_url from offer: ${offer.image_url}`);
+      return offer.image_url;
+    }
+    
+    // 2. Next, try to get the image from the jet relation
+    if (offer.jet) {
+      // 2a. Check for direct image_url on the jet
+      if (offer.jet.image_url) {
+        console.log(`Using image_url from jet object: ${offer.jet.image_url}`);
+        return offer.jet.image_url;
+      }
+      
+      // 2b. Check for images array on the jet
+      if (offer.jet.images && offer.jet.images.length > 0) {
+        console.log(`Using first image from jet.images array: ${offer.jet.images[0]}`);
+        return offer.jet.images[0];
+      }
+      
+      // 2c. Construct path from manufacturer and model if available
+      if (offer.jet.manufacturer && offer.jet.model) {
+        const manufacturer = offer.jet.manufacturer.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const model = offer.jet.model.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const path = `/images/jets/${manufacturer}/${model}.jpg`;
+        console.log(`Constructed path from jet manufacturer/model: ${path}`);
+        return path;
+      }
+    }
+    
+    // 3. Final fallback - use the placeholder image
+    console.log('No suitable image found, using placeholder');
+    return '/images/placeholder-jet.jpg';
+  };
+  
   // Render flight share cards
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
     <Card 
       key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
-      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative"
       onClick={() => !offer.isOwnOffer && handleOfferAccept(offer)}
     >
-      <div className="relative">
+      {/* Add background image based on aircraft model */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 z-0"
+        style={{ 
+          backgroundImage: `url(${getJetImageUrl(offer)})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'brightness(0.7) contrast(1.1)'
+        }}
+        aria-hidden="true"
+      />
+      {/* Add semi-transparent gradient overlay for better text readability */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-b from-gray-900/70 via-gray-800/60 to-gray-900/80 z-0"
+        aria-hidden="true"
+      />
+      
+      <div className="relative z-10">
         {offer.isOwnOffer && (
           <div className="absolute top-0 right-0 m-2 z-10">
             <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 font-semibold">
@@ -873,9 +973,15 @@ export default function JetShareListingsContent() {
             <div>
               <CardTitle className="text-lg">{offer.departure_location} to {offer.arrival_location}</CardTitle>
               <CardDescription>
-                <div className="flex items-center mt-1">
-                  <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
-                  <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
+                <div className="flex flex-col mt-1">
+                  <div className="flex items-center">
+                    <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
+                    <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center mt-1">
+                    <Clock className="h-3.5 w-3.5 mr-1 opacity-70" />
+                    <span>{offer.departure_time ? formatTime(offer.departure_time) : formatTime(offer.flight_date)}</span>
+                  </div>
                 </div>
               </CardDescription>
             </div>
