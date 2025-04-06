@@ -1,5 +1,3 @@
-'use server';
-
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
@@ -118,13 +116,13 @@ const AIRCRAFT_LAYOUTS: AircraftLayoutsMap = {
   }
 };
 
-export async function GET(
-  request: Request,
-  context: { params: { id: string } }
-) {
+/**
+ * GET handler for Jets API
+ */
+export async function GET(request: Request, context: { params: { id: string } }) {
+  const jet_id = context.params.id;
+  
   try {
-    const jet_id = context.params.id;
-    
     // Initialize Supabase client
     const supabase = createServerComponentClient({ cookies });
     

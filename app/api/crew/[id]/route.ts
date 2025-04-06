@@ -1,24 +1,19 @@
-'use server';
-
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 
-export async function GET(
-  request: Request,
-  context: { params: { id: string } }
-) {
+/**
+ * GET route handler
+ */
+export async function GET(request: Request, context: { params: { id: string } }) {
+  const id = context.params.id;
+  
+  if (!id) {
+    return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
+  }
+  
   try {
-    console.log('Fetching crew with ID:', context.params.id);
-    
     // Use the existing createClient function
     const supabase = await createClient();
-    
-    const id = context.params.id;
-    
-    if (!id) {
-      console.error('No crew ID provided');
-      return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
-    }
     
     // Get the crew member with reviews
     const { data: crewData, error: crewError } = await supabase
@@ -28,8 +23,6 @@ export async function GET(
       .single();
     
     if (crewError) {
-      console.error('Error fetching crew member:', crewError, 'ID:', id);
-      
       // If the error is "not found", return a 404 status
       if (crewError.code === 'PGRST116') {
         return NextResponse.json({ error: 'Crew member not found' }, { status: 404 });
@@ -42,11 +35,8 @@ export async function GET(
     }
     
     if (!crewData) {
-      console.error('No crew data found for ID:', id);
       return NextResponse.json({ error: 'Crew member not found' }, { status: 404 });
     }
-    
-    console.log('Successfully fetched crew member:', crewData.name);
     
     // Get reviews for the crew member - if this fails, don't fail the whole request
     let reviewsData = [];
@@ -161,25 +151,24 @@ export async function GET(
     console.error('Unexpected error in crew API:', error);
     return NextResponse.json({ 
       error: error.message, 
-      stack: error.stack,
       source: 'GET /api/crew/[id]'
     }, { status: 500 });
   }
 }
 
-export async function PATCH(
-  request: Request,
-  context: { params: { id: string } }
-) {
+/**
+ * PATCH route handler
+ */
+export async function PATCH(request: Request, context: { params: { id: string } }) {
+  const id = context.params.id;
+  
+  if (!id) {
+    return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
+  }
+  
   try {
     // Use the existing createClient function
     const supabase = await createClient();
-    
-    const id = context.params.id;
-    
-    if (!id) {
-      return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
-    }
     
     // Get the authenticated user
     const { data: { user } } = await supabase.auth.getUser();
@@ -250,19 +239,19 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  context: { params: { id: string } }
-) {
+/**
+ * DELETE route handler
+ */
+export async function DELETE(request: Request, context: { params: { id: string } }) {
+  const id = context.params.id;
+  
+  if (!id) {
+    return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
+  }
+  
   try {
     // Use the existing createClient function
     const supabase = await createClient();
-    
-    const id = context.params.id;
-    
-    if (!id) {
-      return NextResponse.json({ error: 'Crew ID is required' }, { status: 400 });
-    }
     
     // Get the authenticated user
     const { data: { user } } = await supabase.auth.getUser();
