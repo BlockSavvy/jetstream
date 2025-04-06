@@ -467,7 +467,8 @@ export async function encode(text: string): Promise<number[]> {
       {
         texts: [text],
         model: 'embed-english-v3.0',
-        truncate: 'END'
+        truncate: 'END',
+        input_type: 'search_query'
       },
       {
         headers: {
@@ -483,8 +484,12 @@ export async function encode(text: string): Promise<number[]> {
     
     throw new Error('No embeddings returned from Cohere');
   } catch (error) {
-    console.error('Error creating embedding:', error);
-    throw error;
+    // Fall back to OpenAI embeddings if Cohere fails
+    try {
+      return await encodeWithOpenAI(text);
+    } catch (fallbackError) {
+      throw new Error(`Failed to generate embeddings: ${error}`);
+    }
   }
 }
 
@@ -523,8 +528,7 @@ export async function encodeWithOpenAI(text: string): Promise<number[]> {
     
     throw new Error('No embeddings returned from OpenAI');
   } catch (error) {
-    console.error('Error creating OpenAI embedding:', error);
-    throw error;
+    throw new Error(`OpenAI embedding failed: ${error}`);
   }
 }
 
@@ -538,13 +542,18 @@ export async function batchEncode(texts: string[]): Promise<number[][]> {
       return [];
     }
 
+    if (!cohereApiKey) {
+      throw new Error('COHERE_API_KEY environment variable is not set');
+    }
+
     // Use axios directly for the Cohere API
     const response = await axios.post(
       'https://api.cohere.ai/v1/embed',
       {
         texts: texts,
         model: 'embed-english-v3.0',
-        truncate: 'END'
+        truncate: 'END',
+        input_type: 'search_query'
       },
       {
         headers: {
@@ -561,8 +570,7 @@ export async function batchEncode(texts: string[]): Promise<number[][]> {
 
     throw new Error('Failed to generate batch embeddings');
   } catch (error) {
-    console.error('Error generating batch embeddings:', error);
-    throw new Error('Failed to generate batch embeddings');
+    throw new Error(`Failed to generate batch embeddings: ${error}`);
   }
 }
 

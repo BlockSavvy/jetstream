@@ -363,7 +363,7 @@ async function enrichUserProfile(supabase: any, profile: any): Promise<any> {
       };
     }
   } catch (e) {
-    console.log(`No preferences found for user ${profile.id}`);
+    // Silent catch - not all users have preferences
   }
   
   // Try to load professional details
@@ -383,7 +383,7 @@ async function enrichUserProfile(supabase: any, profile: any): Promise<any> {
       };
     }
   } catch (e) {
-    console.log(`No professional details found for user ${profile.id}`);
+    // Silent catch - not all users have professional details
   }
   
   // Try to load interests and hobbies
@@ -397,7 +397,7 @@ async function enrichUserProfile(supabase: any, profile: any): Promise<any> {
       enriched.interestsAndHobbies = interests.map((i: any) => i.interest);
     }
   } catch (e) {
-    console.log(`No interests found for user ${profile.id}`);
+    // Silent catch - not all users have interests
   }
   
   // Try to load travel history
@@ -415,7 +415,7 @@ async function enrichUserProfile(supabase: any, profile: any): Promise<any> {
       }));
     }
   } catch (e) {
-    console.log(`No travel history found for user ${profile.id}`);
+    // Silent catch - not all users have travel history
   }
   
   return enriched;
