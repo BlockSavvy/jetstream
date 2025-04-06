@@ -258,6 +258,48 @@ export async function POST(request: Request) {
     }
     
     console.log('Offer created successfully:', offer.id);
+
+    // Immediately index the offer with embeddings (non-blocking)
+    try {
+      console.log('Starting real-time embedding indexing for offer:', offer.id);
+      
+      // Fire and forget - don't wait for the response but make sure we don't
+      // block the main offer creation flow
+      void (async () => {
+        try {
+          // Use fetch API to make the call to embedding API
+          await fetch(`${request.headers.get('origin') || 'https://jetstream.aiya.sh'}/api/embedding/index-offer`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ offerId: offer.id }),
+          });
+          console.log('Successfully requested embedding indexing');
+        } catch (indexError) {
+          console.error('Error indexing offer (non-critical):', indexError);
+          
+          try {
+            // Add to embedding queue for retry
+            await supabase
+              .from('embedding_queue')
+              .insert([{
+                object_id: offer.id,
+                object_type: 'jetshare_offer',
+                status: 'pending',
+                attempts: 0
+              }]);
+            console.log('Added to embedding queue for retry');
+          } catch (queueError) {
+            console.error('Failed to add to embedding queue:', queueError);
+          }
+        }
+      })();
+    } catch (indexingError) {
+      console.error('Error during index offer operation (non-critical):', indexingError);
+      // This failure is non-critical for the offer creation, so we just log it
+    }
+
     return NextResponse.json(offer, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in createOffer route:', error);

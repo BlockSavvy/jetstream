@@ -516,9 +516,17 @@ export function generateEmbeddingInput(entity: any, entityType: string): string 
 }
 
 /**
- * Create an embedding vector from text using Cohere
+ * Create an embedding vector from text using Cohere by default with OpenAI fallback
+ * @param text - The text to encode
+ * @param provider - The embedding provider to use ('cohere' or 'openai')
+ * @param input_type - The type of input ('search_query' or 'search_document')
  */
-export async function encode(text: string): Promise<number[]> {
+export async function encode(text: string, provider: 'cohere' | 'openai' = 'cohere', input_type: 'search_query' | 'search_document' = 'search_query'): Promise<number[]> {
+  // Use the specified provider, or fall back if it fails
+  if (provider === 'openai' || !cohereApiKey) {
+    return encodeWithOpenAI(text);
+  }
+  
   try {
     // Use axios directly since cohere-ai package might not have the right methods
     const response = await axios.post(
@@ -527,7 +535,7 @@ export async function encode(text: string): Promise<number[]> {
         texts: [text],
         model: 'embed-english-v3.0',
         truncate: 'END',
-        input_type: 'search_query'
+        input_type
       },
       {
         headers: {
@@ -538,11 +546,14 @@ export async function encode(text: string): Promise<number[]> {
     );
     
     if (response.data && response.data.embeddings && response.data.embeddings.length > 0) {
+      console.log(`Successfully generated embedding with Cohere (${input_type})`);
       return response.data.embeddings[0];
     }
     
     throw new Error('No embeddings returned from Cohere');
   } catch (error) {
+    console.error('Error with Cohere embedding, falling back to OpenAI:', error);
+    
     // Fall back to OpenAI embeddings if Cohere fails
     try {
       return await encodeWithOpenAI(text);
@@ -593,18 +604,28 @@ export async function encodeWithOpenAI(text: string): Promise<number[]> {
 
 /**
  * Batch encode multiple texts at once for efficiency
+ * @param texts - Array of texts to encode
+ * @param provider - The embedding provider to use ('cohere' or 'openai')
+ * @param input_type - The type of input ('search_query' or 'search_document')
  */
-export async function batchEncode(texts: string[]): Promise<number[][]> {
+export async function batchEncode(
+  texts: string[], 
+  provider: 'cohere' | 'openai' = 'cohere', 
+  input_type: 'search_query' | 'search_document' = 'search_query'
+): Promise<number[][]> {
+  // Handle empty array case
+  if (!texts || texts.length === 0) {
+    return [];
+  }
+
+  // If OpenAI is specifically requested or Cohere is not available, use OpenAI
+  if (provider === 'openai' || !cohereApiKey) {
+    // OpenAI doesn't have an efficient batch API, so we need to call for each text
+    const embeddings = await Promise.all(texts.map(text => encodeWithOpenAI(text)));
+    return embeddings;
+  }
+
   try {
-    // Handle empty array case
-    if (!texts || texts.length === 0) {
-      return [];
-    }
-
-    if (!cohereApiKey) {
-      throw new Error('COHERE_API_KEY environment variable is not set');
-    }
-
     // Use axios directly for the Cohere API
     const response = await axios.post(
       'https://api.cohere.ai/v1/embed',
@@ -612,7 +633,7 @@ export async function batchEncode(texts: string[]): Promise<number[][]> {
         texts: texts,
         model: 'embed-english-v3.0',
         truncate: 'END',
-        input_type: 'search_query'
+        input_type
       },
       {
         headers: {
@@ -624,12 +645,21 @@ export async function batchEncode(texts: string[]): Promise<number[][]> {
 
     // Extract the embedding vectors from the response
     if (response.data && response.data.embeddings) {
+      console.log(`Successfully generated ${texts.length} embeddings with Cohere (${input_type})`);
       return response.data.embeddings;
     }
 
     throw new Error('Failed to generate batch embeddings');
   } catch (error) {
-    throw new Error(`Failed to generate batch embeddings: ${error}`);
+    console.error('Error with Cohere batch embedding, falling back to OpenAI:', error);
+    
+    // Fall back to OpenAI embeddings
+    try {
+      const embeddings = await Promise.all(texts.map(text => encodeWithOpenAI(text)));
+      return embeddings;
+    } catch (fallbackError) {
+      throw new Error(`Failed to generate batch embeddings: ${error}`);
+    }
   }
 }
 
