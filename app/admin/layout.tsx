@@ -23,14 +23,14 @@ export default function AdminLayout({
   
   return (
     <UiProvider>
-      <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 dark:bg-gray-950">
-        {/* Desktop Sidebar */}
-        <div className="w-64 md:block hidden border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+      <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 dark:bg-gray-950 mt-16 pt-2">
+        {/* Desktop Sidebar - Add top padding and fixed positioning */}
+        <div className="w-64 md:block hidden border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 md:sticky md:top-16 md:h-[calc(100vh-4rem)] overflow-y-auto">
           <Sidebar />
         </div>
         
-        {/* Mobile Nav */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+        {/* Mobile Nav - Add top margin */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 sticky top-16 z-10">
           <div className="font-bold text-lg">JetStream Admin</div>
           <Button 
             variant="ghost" 
@@ -41,11 +41,11 @@ export default function AdminLayout({
           </Button>
         </div>
         
-        {/* Mobile Sidebar */}
+        {/* Mobile Sidebar - Adjust for the top nav */}
         {mobileNavOpen && (
-          <div className="md:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setMobileNavOpen(false)}>
+          <div className="md:hidden fixed inset-0 z-50 bg-black/50 mt-16" onClick={() => setMobileNavOpen(false)}>
             <div 
-              className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-950 h-full" 
+              className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-950 h-[calc(100vh-4rem)] top-16" 
               onClick={(e) => e.stopPropagation()}
             >
               <Sidebar />

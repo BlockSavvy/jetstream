@@ -56,14 +56,14 @@ export default function Sidebar() {
   const pathname = usePathname();
   
   return (
-    <div className="h-full flex flex-col py-4">
+    <div className="h-full flex flex-col py-4 overflow-y-auto">
       <div className="px-4 mb-6">
         <Link href="/admin/overview" className="flex items-center">
           <span className="font-bold text-xl">JetStream Admin</span>
         </Link>
       </div>
       
-      <nav className="space-y-1 px-2 flex-1">
+      <nav className="space-y-1 px-2 flex-1 overflow-y-auto">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           
