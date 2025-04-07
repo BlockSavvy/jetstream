@@ -132,6 +132,7 @@ You are the AI Concierge for JetShare, a premier private jet sharing service. Yo
 **Database Access Guidelines:**
 - For questions about airports, use the airports table to look up codes, names, and locations
 - For questions about available flights, use the flights table
+- For JetShare offers specifically, always use the jetshare_offers table - NOT the general flights marketplace
 - For questions about aircraft, use the jets table
 - Always verify information with database queries before providing definitive answers
 
@@ -154,12 +155,12 @@ When a user wants to create a JetShare offer, you are to collect and confirm the
 
 Confirm all details back to the user with the message: "I'll create a JetShare offer with these details:" followed by a summary of the collected information in a clear and structured format.
 
-**Finding Flights or JetShare Offers:**
-When searching for flights or JetShare offers, gather:
-- Desired location (destination or origin)
-- Date range (if specified)
-- Time of day (if specified, e.g., "afternoon", "evening")
-- Price range (if specified)
+**Finding JetShare Offers:**
+When users ask about JetShare offers or flight shares:
+- ALWAYS search in the jetshare_offers table, NOT the general flights marketplace
+- Gather: desired location (destination or origin), date range (if specified), time of day (if specified), price range (if specified)
+- If NO offers match the search criteria, clearly state "There are currently no JetShare offers available that match your criteria" (NOT "no marketplace offers")
+- Always use correct terminology - these are "JetShare offers" or "flight share offers", not "marketplace flights"
 
 **General Inquiries:**
 For questions not directly related to our database (such as weather, events, or dining recommendations), provide helpful and accurate general information.
@@ -503,12 +504,12 @@ export default function AIConcierge() {
     await handleFunctionCall(functionCallToExecute);
   };
 
-  // Enhanced function to fetch real flights from the database - improve with direct query
-  const fetchRecentFlights = async () => {
+  // Enhanced function to fetch real JetShare offers from the database
+  const fetchJetShareOffers = async () => {
     if (!user) return [];
     
     try {
-      console.log('Fetching real flights from database...');
+      console.log('Fetching real JetShare offers from database...');
       // Use the direct API endpoint to get offers with status=open
       const response = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace', {
         headers: {
@@ -517,32 +518,32 @@ export default function AIConcierge() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch flights');
+        throw new Error('Failed to fetch JetShare offers');
       }
       
       const data = await response.json();
-      console.log('Fetched real flight data - raw response:', data);
+      console.log('Fetched real JetShare offer data - raw response:', data);
       
       if (!data.offers || data.offers.length === 0) {
-        console.log('⚠️ No open flights found in the database');
+        console.log('⚠️ No open JetShare offers found in the database');
         return [];
       }
       
-      console.log('✅ Found', data.offers.length, 'open flights in the database');
-      data.offers.forEach((flight: any, index: number) => {
-        console.log(`Flight ${index + 1}:`, {
-          id: flight.id,
-          departure: flight.departure_location,
-          arrival: flight.arrival_location,
-          date: flight.flight_date,
-          cost: flight.total_flight_cost,
-          model: flight.aircraft_model,
+      console.log('✅ Found', data.offers.length, 'open JetShare offers in the database');
+      data.offers.forEach((offer: any, index: number) => {
+        console.log(`JetShare Offer ${index + 1}:`, {
+          id: offer.id,
+          departure: offer.departure_location,
+          arrival: offer.arrival_location,
+          date: offer.flight_date,
+          cost: offer.total_flight_cost,
+          model: offer.aircraft_model,
         });
       });
       
       return data.offers || [];
     } catch (error) {
-      console.error('Error fetching flights:', error);
+      console.error('Error fetching JetShare offers:', error);
       return [];
     }
   };
@@ -564,7 +565,7 @@ export default function AIConcierge() {
       let functionResult = null;
       
       // First, fetch real flight data to ensure the AI has accurate information
-      const recentFlights = await fetchRecentFlights();
+      const recentOffers = await fetchJetShareOffers();
       
       switch (name) {
         case 'QueryDatabase':
@@ -574,21 +575,21 @@ export default function AIConcierge() {
         case 'FindJetShareOffer':
           endpoint = '/api/concierge/functions/find-jetshare-offer';
           
-          // Pre-process the search query to match against actual flights
+          // Pre-process the search query to match against actual JetShare offers
           const { desired_location, date_range, time_of_day, price_range } = args;
           
-          // Fetch flights directly from database to ensure we have the latest data
-          const flights = await fetchRecentFlights();
-          console.log('Processing flights for search:', flights);
+          // Fetch JetShare offers directly from database to ensure we have the latest data
+          const offers = await fetchJetShareOffers();
+          console.log('Processing JetShare offers for search:', offers);
           
-          // Filter flights based on search criteria
-          const matchedFlights = flights.filter((flight: any) => {
-            console.log('Checking flight:', flight);
+          // Filter offers based on search criteria
+          const matchedOffers = offers.filter((offer: any) => {
+            console.log('Checking JetShare offer:', offer);
             // Fix field name checks for consistency
-            const departureField = flight.departure || flight.departure_location;
-            const arrivalField = flight.arrival || flight.arrival_location;
-            const flightDateField = flight.flight_date || flight.departure_date;
-            const totalCostField = flight.total_cost || flight.total_flight_cost;
+            const departureField = offer.departure || offer.departure_location;
+            const arrivalField = offer.arrival || offer.arrival_location;
+            const flightDateField = offer.flight_date || offer.departure_date;
+            const totalCostField = offer.total_cost || offer.total_flight_cost;
             
             const matchesLocation = 
               !desired_location || 
@@ -617,20 +618,20 @@ export default function AIConcierge() {
             return matchesLocation && matchesDateRange && matchesPrice;
           });
           
-          console.log('Matched flights:', matchedFlights);
+          console.log('Matched JetShare offers:', matchedOffers);
           
-          // Store matched flights for display
-          setFoundFlights(matchedFlights.map((flight: any) => {
-            const departureField = flight.departure || flight.departure_location;
-            const arrivalField = flight.arrival || flight.arrival_location;
-            const flightDateField = flight.flight_date || flight.departure_date;
-            const totalCostField = flight.total_cost || flight.total_flight_cost;
-            const shareAmountField = flight.share_amount || 
-              (flight.available_seats ? `${flight.available_seats} seats` : 'Not specified');
-            const jetTypeField = flight.jet_type || flight.aircraft_model || 'Not specified';
+          // Store matched offers for display
+          setFoundFlights(matchedOffers.map((offer: any) => {
+            const departureField = offer.departure || offer.departure_location;
+            const arrivalField = offer.arrival || offer.arrival_location;
+            const flightDateField = offer.flight_date || offer.departure_date;
+            const totalCostField = offer.total_cost || offer.total_flight_cost;
+            const shareAmountField = offer.share_amount || 
+              (offer.available_seats ? `${offer.available_seats} seats` : 'Not specified');
+            const jetTypeField = offer.jet_type || offer.aircraft_model || 'Not specified';
             
             return {
-              id: flight.id,
+              id: offer.id,
               departure: departureField,
               arrival: arrivalField,
               flight_date: flightDateField,
@@ -640,8 +641,8 @@ export default function AIConcierge() {
             };
           }));
           
-          // Add the matched flights to the AI's response for reference
-          paramsWithUser.matched_flights = matchedFlights;
+          // Add the matched offers to the AI's response for reference
+          paramsWithUser.matched_offers = matchedOffers;
           
           break;
           
@@ -714,7 +715,7 @@ export default function AIConcierge() {
           interactionType,
           // Add recent flights data as context for the AI
           contextData: {
-            recentFlights: recentFlights.slice(0, 5) // Limit to 5 for context size
+            recentOffers: recentOffers.slice(0, 5) // Limit to 5 for context size
           }
         }),
       });
@@ -858,7 +859,7 @@ export default function AIConcierge() {
     
     // Check for find JetShare offers intent
     if (text.includes("I'll search for JetShare offers") || 
-        text.includes("Let me find flights for you") ||
+        text.includes("Let me find JetShare offers for you") ||
         text.includes("Here are the JetShare offers")) {
       
       const locationMatcher = /(?:to|from|in)[:\s]+([A-Za-z\s,]+?)(?:on|between|for|within|\.|,|\n)/i;
@@ -884,7 +885,7 @@ export default function AIConcierge() {
           },
           confirmationCard: {
             title: "Find JetShare Offers",
-            description: `Search for flights${location ? ` to ${location}` : ''}`,
+            description: `Search for JetShare offers${location ? ` to ${location}` : ''}`,
             details: [
               { label: "Location", value: location || "Any" },
               { label: "Dates", value: dateRange || "Anytime" },
@@ -983,18 +984,18 @@ export default function AIConcierge() {
     let contextData: any = {};
     if (user) {
       // Fetch real flight data to provide context
-      const recentFlights = await fetchRecentFlights();
-      console.log("AVAILABLE FLIGHTS FOR AI CONTEXT:", recentFlights);
+      const recentOffers = await fetchJetShareOffers();
+      console.log("AVAILABLE FLIGHTS FOR AI CONTEXT:", recentOffers);
       
       // If no flights are found, add specific instruction to the AI
-      const flightContextNote = recentFlights.length > 0 
-        ? `Current available flights: ${recentFlights.length}` 
+      const flightContextNote = recentOffers.length > 0 
+        ? `Current available flights: ${recentOffers.length}` 
         : "IMPORTANT: There are currently NO available flights in the system. Do not make up any flights in your responses.";
       
       contextData = {
         userId: user.id,
         email: user.email,
-        recentFlights: recentFlights.slice(0, 5), // Limit to 5 for context size
+        recentOffers: recentOffers.slice(0, 5), // Limit to 5 for context size
         flightContextNote: flightContextNote,
         databaseContext: databaseContext // Add database context to AI context
       };
