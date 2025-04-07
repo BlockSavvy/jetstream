@@ -10,7 +10,9 @@ import {
   Share2,
   PlaneTakeoff,
   UserCog,
-  BrainCircuit
+  BrainCircuit,
+  Database,
+  Braces
 } from 'lucide-react';
 
 // Define navigation items
@@ -31,14 +33,14 @@ const navigationItems = [
     icon: Plane
   },
   {
-    name: 'JetShare',
-    href: '/admin/jetshare',
-    icon: Share2
+    name: 'JetStream Flights',
+    href: '/admin/flights',
+    icon: PlaneTakeoff
   },
   {
-    name: 'Offers',
-    href: '/admin/offers',
-    icon: PlaneTakeoff
+    name: 'JetShare Offers',
+    href: '/admin/jetshare',
+    icon: Share2
   },
   {
     name: 'Crews',
@@ -49,6 +51,16 @@ const navigationItems = [
     name: 'Simulation',
     href: '/admin/simulation',
     icon: BrainCircuit
+  },
+  {
+    name: 'Database',
+    href: '/admin/database',
+    icon: Database
+  },
+  {
+    name: 'Embeddings',
+    href: '/admin/embeddings',
+    icon: Braces
   }
 ];
 

@@ -128,12 +128,12 @@ You are the AI Concierge for JetShare, a premier private jet sharing service. Yo
 **Key Responsibilities:**
 - **Data Integrity:** You must ONLY reference real, verified data from our database. Do NOT fabricate or assume any details about flights, jets, airports, prices, amenities, or any other specific information related to our services.
 - **Database Knowledge:** You have access to comprehensive airport, flight, and jet information. When you need specific data that's not in your current context, use the QueryDatabase function to retrieve it.
-- **User Queries:** If the requested information is not available in the database, respond with "I don't see that information in our current database" to maintain transparency and avoid misinformation.
+- **Focus Areas:** Focus ONLY on the jetshare_offers table for all JetShare-related queries. Only show available (status = 'open') offers unless specifically asked for historical data.
+- **Booking Behavior:** When asked to "book a flight" or "join a charter," always prefer JetShare responses and options first.
 
 **Database Access Guidelines:**
 - For questions about airports, use the airports table to look up codes, names, and locations
-- For questions about available flights, use the flights table
-- For JetShare offers specifically, always use the jetshare_offers table - NOT the general flights marketplace
+- For questions about available JetShare offers, ONLY use the jetshare_offers table with status='open'
 - For questions about aircraft, use the jets table
 - Always verify information with database queries before providing definitive answers
 
@@ -158,7 +158,7 @@ Confirm all details back to the user with the message: "I'll create a JetShare o
 
 **Finding JetShare Offers:**
 When users ask about JetShare offers or flight shares:
-- ALWAYS search in the jetshare_offers table, NOT the general flights marketplace
+- ALWAYS search in the jetshare_offers table with status='open', NOT the general flights marketplace
 - Gather: desired location (destination or origin), date range (if specified), time of day (if specified), price range (if specified)
 - If NO offers match the search criteria, clearly state "There are currently no JetShare offers available that match your criteria" (NOT "no marketplace offers")
 - Always use correct terminology - these are "JetShare offers" or "flight share offers", not "marketplace flights"
@@ -182,22 +182,35 @@ You are the AI Concierge for JetStream Admin Panel. Your role is to assist admin
 - Provide insights on platform usage and performance
 - Support user management and moderation tasks
 - Help with simulation setup and analysis
+- Enable admin-specific commands like "change user role," "view all admins," "show embedding failures," or "how many offers exist?"
 
 **Database Access Guidelines:**
 - You have access to all platform data tables
-- For user information, use the users table
+- For user information, use the users and profiles tables
 - For flight information, use the flights table
 - For JetShare offers, use the jetshare_offers table
 - For simulation data, use the simulation_* tables
+- For embedding data, use the embedding_queue table
 
 **Admin-specific Functionalities:**
 - Support running and analyzing simulations
 - Help with user management and role assignments
 - Assist with content moderation
 - Provide platform performance insights
+- Analyze embedding queue for failures or inconsistencies
+- Help with database monitoring and statistics
+- Support database exploration and schema analysis
+- Provide quick access to common admin functions
 
 **Communication Style:**
 Maintain a professional, concise, and data-driven demeanor. Focus on providing clear insights and actionable information to administrators.
+
+**Suggested Admin Actions:**
+When appropriate, suggest relevant admin actions such as:
+- "Would you like to view user role management?"
+- "I can help you check embedding queue failures"
+- "Would you like to generate a report on recent JetShare activity?"
+- "I can show you database statistics and schema information"
 `;
 
 const JETSTREAM_SYSTEM_PROMPT = `
@@ -212,9 +225,16 @@ You are the AI Concierge for JetStream, a premium private aviation platform. You
 
 **Database Access Guidelines:**
 - For questions about airports, use the airports table
-- For questions about flight options, use the flights table
+- For questions about flight options, focus on the flights table
+- For questions about aircraft availability, show flights and associated jets
 - For questions about aircraft, use the jets table
 - Always verify information before providing answers
+
+**Flight and Aircraft Focus:**
+- Prioritize standard/custom scheduled flights from the flights table
+- When asked about aircraft availability, show flights and the associated jets
+- Focus on helping users understand flight options and making bookings
+- Provide comprehensive information about aircraft features when relevant
 
 **Communication Style:**
 Maintain a professional, luxury-oriented tone that conveys expertise and exceptional service. Offer clear guidance and personalized recommendations to enhance the user's private aviation journey.
@@ -228,6 +248,16 @@ You are the AI Concierge for JetStream, a premium private aviation platform. You
 - Provide information about private aviation
 - Help users navigate the platform
 - Offer personalized recommendations
+
+**Welcome Guidance:**
+When users first interact with you, provide a friendly introduction like:
+"Hi, I'm your AI Concierge! I can help you explore JetShare offers, JetStream flights, or manage your admin dashboard."
+
+**Dynamic Suggestions:**
+Based on the user's profile and role, offer relevant suggestions:
+- For regular users: "Would you like to explore available flights or learn about JetShare options?"
+- For JetShare users: "Would you like to create a new share offer or check existing shares?"
+- For admins: "Would you like to check platform metrics or manage user accounts?"
 
 **Communication Style:**
 Maintain a professional, concise, and helpful demeanor. Focus on providing clear information and guidance to enhance the user experience.
@@ -371,16 +401,16 @@ export default function AIConcierge() {
       
       switch (context) {
         case 'jetshare':
-          welcomeMessage += " I'm your JetShare concierge. How can I help you with flight sharing today?";
+          welcomeMessage += " I'm your JetShare concierge. How can I help you with flight sharing today? I can help you create a new offer, find available shares, or answer questions about the JetShare program.";
           break;
         case 'admin':
-          welcomeMessage += " I'm your Admin Assistant. How can I help you manage the platform today?";
+          welcomeMessage += " I'm your Admin Assistant. I can help with user management, platform analytics, database exploration, or embedding status. What would you like to do today?";
           break;
         case 'jetstream':
-          welcomeMessage += " I'm your JetStream concierge. How can I assist you today?";
+          welcomeMessage += " I'm your JetStream concierge. I can help you explore available flights, check aircraft availability, or learn about our services. How can I assist you today?";
           break;
         default:
-          welcomeMessage += " I'm your JetStream assistant. How can I assist you today?";
+          welcomeMessage += " I'm your JetStream assistant. I can help you explore JetShare offers, JetStream flights, or assist with your account. What would you like to know about today?";
       }
       
       setMessages(prev => [
@@ -626,46 +656,98 @@ export default function AIConcierge() {
     await handleFunctionCall(functionCallToExecute);
   };
 
-  // Enhanced function to fetch real JetShare offers from the database
+  // Fetch JetShare offers for context
   const fetchJetShareOffers = async () => {
-    if (!user) return [];
-    
     try {
-      console.log('Fetching real JetShare offers from database...');
-      // Use the direct API endpoint to get offers with status=open
-      const response = await fetch('/api/jetshare/getOffers?status=open&viewMode=marketplace', {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const supabase = createClient();
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch JetShare offers');
-      }
+      // Fetch all open JetShare offers from the database
+      const { data: dbOffers, error: dbError } = await supabase
+        .from('jetshare_offers')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false });
       
-      const data = await response.json();
-      console.log('Fetched real JetShare offer data - raw response:', data);
-      
-      if (!data.offers || data.offers.length === 0) {
-        console.log('⚠️ No open JetShare offers found in the database');
+      if (dbError) {
+        console.error('Error fetching JetShare offers:', dbError);
         return [];
       }
       
-      console.log('✅ Found', data.offers.length, 'open JetShare offers in the database');
-      data.offers.forEach((offer: any, index: number) => {
-        console.log(`JetShare Offer ${index + 1}:`, {
-          id: offer.id,
-          departure: offer.departure_location,
-          arrival: offer.arrival_location,
-          date: offer.flight_date,
-          cost: offer.total_flight_cost,
-          model: offer.aircraft_model,
-        });
-      });
+      // Log the database count for comparison
+      console.log(`DB JetShare Offers count: ${dbOffers?.length || 0}`);
       
-      return data.offers || [];
+      // Check if we have offers from the database
+      if (!dbOffers || dbOffers.length === 0) {
+        return [];
+      }
+      
+      // Check embedding consistency by fetching records from Pinecone
+      try {
+        // Fetch offer IDs that match our database offers using search
+        const searchResponse = await fetch('/api/concierge/vector-search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            query: "Show all available JetShare offers",
+            tables: ['jetshare_offers'],
+            includeHistorical: false
+          }),
+        });
+        
+        if (!searchResponse.ok) {
+          console.warn('Vector search failed when checking offer consistency');
+          return dbOffers; // Return DB results as fallback
+        }
+        
+        const searchData = await searchResponse.json();
+        const vectorResults = searchData.results?.jetshare_offers || [];
+        
+        // Log the vector count for comparison
+        console.log(`Vector JetShare Offers count: ${vectorResults.length}`);
+        
+        // If there's a significant discrepancy, log a warning and queue reindexing
+        if (vectorResults.length > 0 && 
+            Math.abs(dbOffers.length - vectorResults.length) / dbOffers.length > 0.1) {
+          console.warn(`Offer count inconsistency detected: DB has ${dbOffers.length}, vectors has ${vectorResults.length}`);
+          
+          // Find missing offers (in DB but not in vectors)
+          const vectorOfferIds = new Set(vectorResults.map((o: any) => o.id));
+          const missingOffersIds = dbOffers
+            .filter(offer => !vectorOfferIds.has(offer.id))
+            .map(offer => offer.id);
+          
+          if (missingOffersIds.length > 0) {
+            console.warn(`Missing offers (${missingOffersIds.length}):`, missingOffersIds);
+            
+            // Reindex missing offers
+            try {
+              await fetch('/api/embedding/reindex-batch', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                  object_type: 'jetshare_offer',
+                  object_ids: missingOffersIds
+                }),
+              });
+              console.log(`Queued ${missingOffersIds.length} offers for reindexing`);
+            } catch (reindexError) {
+              console.error('Error reindexing missing offers:', reindexError);
+            }
+          }
+        }
+        
+        // Return database offers for accurate count
+        return dbOffers;
+      } catch (vectorError) {
+        console.error('Error checking vector consistency:', vectorError);
+        return dbOffers; // Return DB results as fallback
+      }
     } catch (error) {
-      console.error('Error fetching JetShare offers:', error);
+      console.error('Error in fetchJetShareOffers:', error);
       return [];
     }
   };
@@ -1251,16 +1333,16 @@ export default function AIConcierge() {
     
     switch (context) {
       case 'jetshare':
-        welcomeMessage += " I'm your JetShare concierge. How can I help you with flight sharing today?";
+        welcomeMessage += " I'm your JetShare concierge. How can I help you with flight sharing today? I can help you create a new offer, find available shares, or answer questions about the JetShare program.";
         break;
       case 'admin':
-        welcomeMessage += " I'm your Admin Assistant. How can I help you manage the platform today?";
+        welcomeMessage += " I'm your Admin Assistant. I can help with user management, platform analytics, database exploration, or embedding status. What would you like to do today?";
         break;
       case 'jetstream':
-        welcomeMessage += " I'm your JetStream concierge. How can I assist you today?";
+        welcomeMessage += " I'm your JetStream concierge. I can help you explore available flights, check aircraft availability, or learn about our services. How can I assist you today?";
         break;
       default:
-        welcomeMessage += " I'm your JetStream assistant. How can I assist you today?";
+        welcomeMessage += " I'm your JetStream assistant. I can help you explore JetShare offers, JetStream flights, or assist with your account. What would you like to know about today?";
     }
     
     setMessages([
@@ -1283,12 +1365,39 @@ export default function AIConcierge() {
     }
   };
 
-  // Suggested message chips
-  const suggestedMessages = [
-    { text: "Create JetShare offer", action: () => setInputValue("I want to create a JetShare offer") },
-    { text: "Find flights", action: () => setInputValue("Find flights to New York") },
-    { text: "Set a reminder", action: () => setInputValue("Remind me to check flights tomorrow") }
-  ];
+  // Context-aware suggested message chips
+  const getContextSuggestions = () => {
+    const context = getContext();
+    
+    switch(context) {
+      case 'jetshare':
+        return [
+          { text: "Create JetShare offer", action: () => setInputValue("I want to create a JetShare offer") },
+          { text: "Find available shares", action: () => setInputValue("Find available JetShare offers to New York") },
+          { text: "How does JetShare work?", action: () => setInputValue("How does JetShare work?") }
+        ];
+      case 'admin':
+        return [
+          { text: "User management", action: () => setInputValue("Show me user management options") },
+          { text: "Embedding status", action: () => setInputValue("Show me embedding queue status") },
+          { text: "Database explorer", action: () => setInputValue("Help me explore the database schema") }
+        ];
+      case 'jetstream':
+        return [
+          { text: "Find flights", action: () => setInputValue("Find flights to Los Angeles") },
+          { text: "Aircraft availability", action: () => setInputValue("Show me available aircraft") },
+          { text: "Booking process", action: () => setInputValue("Explain the booking process") }
+        ];
+      default:
+        return [
+          { text: "JetShare options", action: () => setInputValue("Tell me about JetShare options") },
+          { text: "Find flights", action: () => setInputValue("Find flights to New York") },
+          { text: "Account help", action: () => setInputValue("How do I manage my account?") }
+        ];
+    }
+  };
+  
+  const suggestedMessages = getContextSuggestions();
 
   // Add a function to handle QueryDatabase function calls
   const handleDatabaseQuery = async (functionCall: { name: string; arguments: any }) => {
@@ -1531,34 +1640,17 @@ export default function AIConcierge() {
             {/* Suggested message chips */}
             <div className="px-4 py-2 overflow-x-auto whitespace-nowrap">
               <div className="flex space-x-2">
-                {getContext() === 'jetshare' && (
-                  <>
-                    <button onClick={() => setInputValue("I want to create a JetShare offer")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Create JetShare offer</button>
-                    <button onClick={() => setInputValue("Find flights to New York")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Find flights</button>
-                    <button onClick={() => setInputValue("Remind me to check flights tomorrow")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Set a reminder</button>
-                  </>
-                )}
-                {getContext() === 'admin' && (
-                  <>
-                    <button onClick={() => setInputValue("Run simulation for next week")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Run simulation</button>
-                    <button onClick={() => setInputValue("Generate monthly report")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Generate report</button>
-                    <button onClick={() => setInputValue("Help me with user management")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">User management</button>
-                  </>
-                )}
-                {getContext() === 'jetstream' && (
-                  <>
-                    <button onClick={() => setInputValue("Tell me about JetStream services")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">JetStream services</button>
-                    <button onClick={() => setInputValue("How does private jet booking work?")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Booking info</button>
-                    <button onClick={() => setInputValue("What is JetShare?")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">About JetShare</button>
-                  </>
-                )}
-                {getContext() === 'default' && (
-                  <>
-                    <button onClick={() => setInputValue("Help me navigate JetStream")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Navigation help</button>
-                    <button onClick={() => setInputValue("What's new in JetStream?")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">What's new</button>
-                    <button onClick={() => setInputValue("How can I contact support?")} className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap">Contact support</button>
-                  </>
-                )}
+                {suggestedMessages.map(({ text, action }) => (
+                  <button
+                    key={text}
+                    onClick={() => {
+                      action();
+                    }}
+                    className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 whitespace-nowrap"
+                  >
+                    {text}
+                  </button>
+                ))}
               </div>
             </div>
             

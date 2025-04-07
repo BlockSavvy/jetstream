@@ -132,7 +132,7 @@ export default function AdminFlightOffersPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Flight Offers</h1>
+        <h1 className="text-3xl font-bold">JetStream Flights</h1>
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
