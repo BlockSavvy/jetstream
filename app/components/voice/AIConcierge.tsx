@@ -422,7 +422,7 @@ export default function AIConcierge() {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages, streamingResponse]);
 
   // Initialize audio recording
@@ -1140,6 +1140,17 @@ export default function AIConcierge() {
     return null;
   };
 
+  // Function to ensure chat scrolls to bottom
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  };
+
   // Enhanced send message function with additional context
   const handleSendMessage = async (textOverride?: string) => {
     const textToSend = textOverride || inputValue;
@@ -1155,6 +1166,9 @@ export default function AIConcierge() {
     setInputValue('');
     setIsLoading(true);
     setStreamingResponse('');
+    
+    // Ensure chat scrolls after state update
+    setTimeout(scrollToBottom, 100);
     
     // Retrieve database context based on user query
     let databaseContext = '';
@@ -1558,6 +1572,7 @@ export default function AIConcierge() {
             <div
               ref={chatContainerRef}
               className="flex-1 overflow-y-auto p-4 space-y-4"
+              style={{ maxHeight: 'calc(80vh - 160px)', scrollBehavior: 'smooth' }}
             >
               {messages.filter(msg => msg.role !== 'system').map((message, index) => (
                 <div
@@ -1655,7 +1670,7 @@ export default function AIConcierge() {
             </div>
             
             {/* Input area */}
-            <div className="p-4 border-t">
+            <div className="p-4 border-t sticky bottom-0 bg-white dark:bg-gray-800 z-10">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();

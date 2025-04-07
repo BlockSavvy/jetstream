@@ -768,4 +768,79 @@ export function preparePineconeRecord(
     values: vector,
     metadata
   };
+}
+
+/**
+ * Generate an embedding using Cohere
+ * @param text - Text to generate embedding for
+ * @returns Vector embedding
+ */
+export async function generateEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.COHERE_API_KEY;
+  if (!apiKey) {
+    throw new Error('COHERE_API_KEY is not set in environment variables');
+  }
+
+  try {
+    const response = await fetch('https://api.cohere.ai/v1/embed', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        texts: [text],
+        model: 'embed-english-v3.0',
+        truncate: 'END'
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Cohere API error (${response.status}): ${errorData}`);
+    }
+
+    const data = await response.json();
+    return data.embeddings[0];
+  } catch (error) {
+    console.error('Error generating embedding with Cohere:', error);
+    throw error;
+  }
+}
+
+/**
+ * Generate an embedding using OpenAI as a fallback
+ * @param text - Text to generate embedding for
+ * @returns Vector embedding
+ */
+export async function generateOpenAIEmbedding(text: string): Promise<number[]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENAI_API_KEY is not set in environment variables');
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: text,
+        model: 'text-embedding-3-small',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`OpenAI API error (${response.status}): ${errorData}`);
+    }
+
+    const data = await response.json();
+    return data.data[0].embedding;
+  } catch (error) {
+    console.error('Error generating embedding with OpenAI:', error);
+    throw error;
+  }
 } 

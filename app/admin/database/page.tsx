@@ -27,8 +27,37 @@ export default function DatabaseExplorerPage() {
       try {
         const supabase = createClient();
         
-        // Fetch row counts from RPC
-        const { data, error } = await supabase.rpc('table_row_counts');
+        // Try RPC method first
+        let data;
+        let error;
+        try {
+          const response = await supabase.rpc('table_row_counts');
+          data = response.data;
+          error = response.error;
+        } catch (rpcError) {
+          console.log('RPC method failed, trying API endpoint', rpcError);
+          error = rpcError;
+        }
+        
+        // If RPC fails, try the API endpoint
+        if (error) {
+          try {
+            const response = await fetch('/api/admin/database/count');
+            const apiData = await response.json();
+            
+            if (apiData.tables) {
+              // Convert the tables object to the format expected by the component
+              data = Object.entries(apiData.tables).map(([table_name, row_count]) => ({
+                table_name,
+                row_count
+              }));
+              error = null;
+            }
+          } catch (apiError) {
+            console.error('API endpoint also failed:', apiError);
+            error = apiError;
+          }
+        }
         
         if (error) {
           console.error('Error fetching table counts:', error);

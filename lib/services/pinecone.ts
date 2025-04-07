@@ -31,6 +31,22 @@ let pineconeInstance: Pinecone | null = null;
 let indexCache: any = null;
 
 /**
+ * Get the Pinecone client instance
+ * This function is used by the matching service
+ */
+export async function getPineconeClient(): Promise<Pinecone> {
+  if (!pineconeInstance) {
+    await initPinecone();
+  }
+  
+  if (!pineconeInstance) {
+    throw new Error('Failed to initialize Pinecone client');
+  }
+  
+  return pineconeInstance;
+}
+
+/**
  * Initialize the Pinecone client if it doesn't exist
  */
 export async function initPinecone(): Promise<Pinecone> {
@@ -293,4 +309,273 @@ export async function createPineconeVectorStore(texts: string[]) {
     pineconeIndex: await getPineconeIndex(),
     maxConcurrency: 5, // Maximum number of batch requests to make simultaneously
   });
+}
+
+/**
+ * Upsert a user profile to Pinecone
+ * @param profile The enriched user profile to upsert
+ * @returns A promise that resolves when the operation is complete
+ */
+export async function upsertUserProfile(profile: EnrichedProfile): Promise<void> {
+  try {
+    console.log(`Upserting user profile for user ${profile.id} to Pinecone`);
+    
+    // Generate embedding for the user profile
+    const userEmbedding = await embeddings.generateUserEmbedding(profile);
+    
+    // Create a document for the user
+    const userDocument = createUserDocument(profile, userEmbedding);
+    
+    // Create record for Pinecone
+    const record: PineconeRecord = {
+      id: `user-${profile.id}`,
+      values: userEmbedding,
+      metadata: {
+        ...userDocument.metadata,
+        type: 'user',
+        userId: profile.id,
+        updatedAt: new Date().toISOString()
+      }
+    };
+    
+    // Upsert to Pinecone
+    const index = await getPineconeIndex();
+    await index.upsert([record], { namespace: USERS_NAMESPACE });
+    
+    console.log(`Successfully upserted user profile for ${profile.id}`);
+    
+    // Log to embedding_logs table
+    try {
+      await axios.post('/api/embedding/logging', {
+        object_type: 'user',
+        object_id: profile.id,
+        status: 'success',
+        embedding_model: 'openai:text-embedding-ada-002',
+        token_count: JSON.stringify(profile).length / 4 // Rough estimate
+      });
+    } catch (logError) {
+      console.error('Error logging embedding operation:', logError);
+    }
+  } catch (error) {
+    console.error(`Error upserting user profile for ${profile.id}:`, error);
+    
+    // Log failure to embedding_logs table
+    try {
+      await axios.post('/api/embedding/logging', {
+        object_type: 'user',
+        object_id: profile.id,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        embedding_model: 'openai:text-embedding-ada-002'
+      });
+    } catch (logError) {
+      console.error('Error logging embedding failure:', logError);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Upsert a flight to Pinecone
+ * @param flight The flight to upsert
+ * @returns A promise that resolves when the operation is complete
+ */
+export async function upsertFlight(flight: Flight): Promise<void> {
+  try {
+    console.log(`Upserting flight ${flight.id} to Pinecone`);
+    
+    // Generate embedding for the flight
+    const flightEmbedding = await embeddings.generateFlightEmbedding(flight);
+    
+    // Create a document for the flight
+    const flightDocument = createFlightDocument(flight, flightEmbedding);
+    
+    // Create record for Pinecone
+    const record: PineconeRecord = {
+      id: `flight-${flight.id}`,
+      values: flightEmbedding,
+      metadata: {
+        ...flightDocument.metadata,
+        type: 'flight',
+        flightId: flight.id,
+        updatedAt: new Date().toISOString()
+      }
+    };
+    
+    // Upsert to Pinecone
+    const index = await getPineconeIndex();
+    await index.upsert([record], { namespace: FLIGHTS_NAMESPACE });
+    
+    console.log(`Successfully upserted flight ${flight.id}`);
+    
+    // Log to embedding_logs table
+    try {
+      await axios.post('/api/embedding/logging', {
+        object_type: 'flight',
+        object_id: flight.id,
+        status: 'success',
+        embedding_model: 'openai:text-embedding-ada-002',
+        token_count: JSON.stringify(flight).length / 4 // Rough estimate
+      });
+    } catch (logError) {
+      console.error('Error logging embedding operation:', logError);
+    }
+  } catch (error) {
+    console.error(`Error upserting flight ${flight.id}:`, error);
+    
+    // Log failure to embedding_logs table
+    try {
+      await axios.post('/api/embedding/logging', {
+        object_type: 'flight',
+        object_id: flight.id,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        embedding_model: 'openai:text-embedding-ada-002'
+      });
+    } catch (logError) {
+      console.error('Error logging embedding failure:', logError);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Find similar flights in Pinecone based on embedding
+ * @param embedding The embedding to search with
+ * @param limit The maximum number of results to return
+ * @param filter Optional filter for the search
+ * @returns Array of matching flights with scores
+ */
+export async function findSimilarFlights(
+  embedding: number[],
+  limit: number = 10,
+  filter: Record<string, any> = {}
+): Promise<Array<{id: string; score: number; metadata: any}>> {
+  try {
+    console.log('Searching for similar flights in Pinecone');
+    
+    // Add namespace filter
+    const pineconeFilter = {
+      ...filter,
+      type: 'flight' // Ensure we only get flights
+    };
+    
+    // Query Pinecone
+    const index = await getPineconeIndex();
+    const searchResults = await index.query({
+      vector: embedding,
+      filter: pineconeFilter,
+      topK: limit,
+      includeMetadata: true,
+      namespace: FLIGHTS_NAMESPACE
+    });
+    
+    // Process results
+    const matches = searchResults.matches || [];
+    
+    // Transform to consistently structured results
+    const results = matches.map((match: { id: string; score: number; metadata?: Record<string, any> }) => {
+      const flightId = match.metadata?.flightId || match.id.replace('flight-', '');
+      return {
+        id: flightId,
+        score: match.score,
+        metadata: match.metadata || {}
+      };
+    });
+    
+    console.log(`Found ${results.length} similar flights`);
+    return results;
+  } catch (error) {
+    console.error('Error finding similar flights:', error);
+    return [];
+  }
+}
+
+/**
+ * Find similar users in Pinecone based on embedding
+ * @param embedding The embedding to search with
+ * @param limit The maximum number of results to return
+ * @param filter Optional filter for the search
+ * @returns Array of matching users with scores
+ */
+export async function findSimilarUsers(
+  embedding: number[],
+  limit: number = 10,
+  filter: Record<string, any> = {}
+): Promise<Array<{id: string; score: number; metadata: any}>> {
+  try {
+    console.log('Searching for similar users in Pinecone');
+    
+    // Add namespace filter
+    const pineconeFilter = {
+      ...filter,
+      type: 'user' // Ensure we only get users
+    };
+    
+    // Query Pinecone
+    const index = await getPineconeIndex();
+    const searchResults = await index.query({
+      vector: embedding,
+      filter: pineconeFilter,
+      topK: limit,
+      includeMetadata: true,
+      namespace: USERS_NAMESPACE
+    });
+    
+    // Process results
+    const matches = searchResults.matches || [];
+    
+    // Transform to consistently structured results
+    const results = matches.map((match: { id: string; score: number; metadata?: Record<string, any> }) => {
+      const userId = match.metadata?.userId || match.id.replace('user-', '');
+      return {
+        id: userId,
+        score: match.score,
+        metadata: match.metadata || {}
+      };
+    });
+    
+    console.log(`Found ${results.length} similar users`);
+    return results;
+  } catch (error) {
+    console.error('Error finding similar users:', error);
+    return [];
+  }
+}
+
+/**
+ * Delete a record from Pinecone by ID
+ * @param id - The record ID to delete
+ * @returns Promise that resolves when the record is deleted
+ */
+export async function deleteRecord(id: string): Promise<void> {
+  const client = await getPineconeClient();
+  const index = client.index(PINECONE_INDEX_NAME);
+  
+  await index.deleteOne(id);
+  console.log(`Deleted Pinecone record: ${id}`);
+}
+
+/**
+ * Upsert a single record to Pinecone
+ * @param record - The record to upsert
+ * @returns Promise that resolves when the record is upserted
+ */
+export async function upsertRecord(record: {
+  id: string;
+  embedding: number[];
+  metadata: Record<string, any>;
+}): Promise<void> {
+  const client = await getPineconeClient();
+  const index = client.index(PINECONE_INDEX_NAME);
+  
+  await index.upsert([{
+    id: record.id,
+    values: record.embedding,
+    metadata: record.metadata
+  }]);
+  
+  console.log(`Upserted record to Pinecone: ${record.id}`);
 } 

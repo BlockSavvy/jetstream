@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { ensureUserProfile } from '@/app/jetshare/utils/ensureUserProfile';
+import { embedEntity } from '@/lib/services/embed-entity';
 
 // Add CORS headers to support cross-origin requests
 const corsHeaders = {
@@ -267,32 +268,18 @@ export async function POST(request: Request) {
       // block the main offer creation flow
       void (async () => {
         try {
-          // Use fetch API to make the call to embedding API
-          await fetch(`${request.headers.get('origin') || 'https://jetstream.aiya.sh'}/api/embedding/index-offer`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ offerId: offer.id }),
-          });
-          console.log('Successfully requested embedding indexing');
-        } catch (indexError) {
-          console.error('Error indexing offer (non-critical):', indexError);
+          // Use the new embedEntity utility function instead of inline code
+          const result = await embedEntity(
+            supabase,
+            'jetshare_offer',
+            offer.id,
+            3, // High priority for new offers
+            request.headers.get('origin') || 'https://jetstream.aiya.sh'
+          );
           
-          try {
-            // Add to embedding queue for retry
-            await supabase
-              .from('embedding_queue')
-              .insert([{
-                object_id: offer.id,
-                object_type: 'jetshare_offer',
-                status: 'pending',
-                attempts: 0
-              }]);
-            console.log('Added to embedding queue for retry');
-          } catch (queueError) {
-            console.error('Failed to add to embedding queue:', queueError);
-          }
+          console.log(`Embedding result for offer ${offer.id}:`, result);
+        } catch (indexError) {
+          console.error('Error during embedding operation (non-critical):', indexError);
         }
       })();
     } catch (indexingError) {

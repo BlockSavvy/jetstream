@@ -7,10 +7,7 @@ import { AuthProvider } from "@/components/auth-provider"
 import { Toaster } from "sonner"
 import Navbar from "@/components/navbar"
 import { AuthPersistenceProvider } from "@/components/auth-persistence-provider"
-import dynamic from "next/dynamic"
-
-// Import AI Concierge component with dynamic loading to avoid hydration issues
-const AIConcierge = dynamic(() => import("@/app/components/voice/AIConcierge"), { ssr: false })
+import { ConciergeProvider } from "@/app/components/concierge-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -38,7 +35,7 @@ export default function RootLayout({
                 {children}
               </main>
               {/* Global AI Concierge */}
-              <AIConcierge />
+              <ConciergeProvider />
             </AuthPersistenceProvider>
           </AuthProvider>
         </ThemeProvider>

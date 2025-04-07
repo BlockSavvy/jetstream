@@ -42,6 +42,13 @@ interface EmbeddingLogEntry {
   object_id?: string;
 }
 
+// Add column types interfaces for type safety
+interface TableColumn {
+  column_name: string;
+  data_type: string;
+  is_nullable: boolean;
+}
+
 /**
  * API endpoint to log embedding requests for tracking and analytics
  */
@@ -116,31 +123,70 @@ export async function GET(request: Request) {
     // Connect to Supabase
     const supabase = createClient();
     
-    // Get total counts
-    const { data: totalCounts, error: countError } = await supabase
-      .from('embedding_logs')
-      .select('provider, success', { count: 'exact' })
-      .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+    // First check if provider column exists to handle both schema versions
+    const { data: columns, error: columnsError } = await supabase
+      .rpc('get_table_columns', { table_name: 'embedding_logs' });
     
-    if (countError) {
-      console.error('Error fetching embedding logs:', countError);
+    if (columnsError) {
+      console.error('Error checking table schema:', columnsError);
       return NextResponse.json(
         { error: 'Failed to fetch embedding statistics' },
         { status: 500, headers: corsHeaders }
       );
     }
     
-    // Calculate provider usage and success rates
+    const hasProviderColumn = columns?.some((col: TableColumn) => col.column_name === 'provider');
+    const hasEmbeddingModelColumn = columns?.some((col: TableColumn) => col.column_name === 'embedding_model');
+    
+    // Adapt query based on available columns
+    let query = supabase
+      .from('embedding_logs')
+      .select('*')
+      .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+    
+    const { data: logs, error: logsError } = await query;
+    
+    if (logsError) {
+      console.error('Error fetching embedding logs:', logsError);
+      return NextResponse.json(
+        { error: 'Failed to fetch embedding statistics' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+    
+    // Calculate stats based on available columns
+    let totalRequests = logs?.length || 0;
+    let successCount = 0;
+    let cohereCount = 0;
+    let openaiCount = 0;
+    
+    if (logs && logs.length > 0) {
+      // Count success based on 'success' column if exists, otherwise assume all successful
+      if ('success' in logs[0]) {
+        successCount = logs.filter(l => l.success).length;
+      } else {
+        successCount = logs.filter(l => !l.error).length;
+      }
+      
+      // Count provider usage based on available columns
+      if (hasProviderColumn) {
+        cohereCount = logs.filter(l => l.provider === 'cohere').length;
+        openaiCount = logs.filter(l => l.provider === 'openai').length;
+      } else if (hasEmbeddingModelColumn) {
+        cohereCount = logs.filter(l => l.embedding_model?.includes('cohere')).length;
+        openaiCount = logs.filter(l => l.embedding_model?.includes('openai')).length;
+      }
+    }
+    
     const stats = {
-      totalRequests: totalCounts?.length || 0,
-      successRate: totalCounts ? totalCounts.filter(l => l.success).length / totalCounts.length : 0,
+      totalRequests,
+      successRate: totalRequests > 0 ? successCount / totalRequests : 0,
       providerUsage: {
-        cohere: totalCounts ? totalCounts.filter(l => l.provider === 'cohere').length : 0,
-        openai: totalCounts ? totalCounts.filter(l => l.provider === 'openai').length : 0
+        cohere: cohereCount,
+        openai: openaiCount,
+        unknown: totalRequests - (cohereCount + openaiCount)
       },
-      fallbackRate: totalCounts ? 
-        totalCounts.filter(l => l.provider === 'openai').length / 
-        (totalCounts.filter(l => l.provider === 'cohere').length || 1) : 0
+      fallbackRate: cohereCount > 0 ? openaiCount / cohereCount : 0
     };
     
     return NextResponse.json(stats, { headers: corsHeaders });

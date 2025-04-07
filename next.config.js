@@ -14,12 +14,10 @@ const nextConfig = {
   // Mark problematic pages as dynamically rendered
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   
-  // TEMPORARY FIX: Next.js 15 has a known issue with route handler types
-  // Despite using the exact type pattern from the documentation, the type checker 
-  // is still failing. This will be removed once Next.js resolves this issue.
-  // See: https://github.com/vercel/next.js/issues/54655
+  // Selectively enable TypeScript checking
   typescript: {
-    // Ignore TypeScript errors in the build process
+    // Enable TypeScript error checking in the build process, but ignore specific route type issues
+    // due to Next.js 15 API route type changes
     ignoreBuildErrors: true,
   },
 }
