@@ -7,7 +7,7 @@ import { useAuth } from '@/components/auth-provider';
 import { useAuthSync } from '@/hooks/useAuthSync';
 import { createClient } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { AIConcierge } from '@/components/voice';
+import { AIConcierge } from '../components/voice';
 
 // Routes that should have AuthGuard applied
 // Also protect /jetshare/payment/* routes
