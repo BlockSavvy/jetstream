@@ -11,7 +11,8 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Temporarily ignore type checking while we work on a more comprehensive client component fix
+    // Temporarily disable type checking for build
+    // TODO: Upgrade client components after building proper migration path
     ignoreBuildErrors: true,
   },
   images: {

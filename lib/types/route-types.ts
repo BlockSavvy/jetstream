@@ -50,4 +50,23 @@ export type PutRouteHandler<T extends Record<string, string>> = (
 // Type for static route handlers (no params)
 export type StaticRouteHandler = (
   request: NextRequest
-) => Promise<Response>; 
+) => Promise<Response>;
+
+// Add these types for client components at the end of the file
+
+/**
+ * Client component page props types for Next.js 15
+ * These work with our next-client.d.ts declaration file
+ */
+
+// Use these types in client components instead of the Promise-based versions
+export type ClientParams<T> = {
+  params: T;
+};
+
+// Predefined client param types for common scenarios
+export type ClientIdParams = ClientParams<{ id: string }>;
+export type ClientSlugParams = ClientParams<{ slug: string }>;
+export type ClientUserIdParams = ClientParams<{ userId: string }>;
+export type ClientFlightIdParams = ClientParams<{ flightId: string }>;
+export type ClientJetShareIdParams = ClientParams<{ jetShareId: string }>; 

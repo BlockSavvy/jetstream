@@ -8,10 +8,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Plane, Ticket, Wallet, Download, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { ClientIdParams } from '@/lib/types/route-types'
 
-export default function BoardingPassPage() {
+export default function BoardingPassPage({ params }: ClientIdParams) {
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
   const id = params.id as string;
   const isTestMode = searchParams.get('test') === 'true';

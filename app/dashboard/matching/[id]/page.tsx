@@ -29,6 +29,7 @@ import {
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate, formatTime, formatCurrency } from '@/lib/utils'
+import { ClientIdParams } from '@/lib/types/route-types'
 
 // Mock data - would be fetched from API in production
 const matchData = {
@@ -110,8 +111,7 @@ const matchData = {
   image: '/placeholder.svg?height=400&width=800'
 };
 
-export default function MatchDetailPage() {
-  const params = useParams();
+export default function MatchDetailPage({ params }: ClientIdParams) {
   const matchId = params.id as string;
   const [loading, setLoading] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState(1);

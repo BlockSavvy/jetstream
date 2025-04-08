@@ -5,16 +5,11 @@ import { createClient } from '@/lib/supabase-server';
 import { notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
+import { ClientIdParams } from '@/lib/types/route-types'
 
 // Page component is now a Server Component (no 'use client')
-export default function PaymentPage(props: PageProps) {
-  const offerId = props.params?.id;
+export default function JetSharePaymentPage({ params }: ClientIdParams) {
+  const offerId = params?.id;
   
   // Handle server-side validation
   if (!offerId || offerId === 'undefined' || offerId.length < 10) {

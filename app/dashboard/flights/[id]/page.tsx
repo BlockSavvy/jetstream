@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth-provider'
+import { ClientIdParams } from '@/lib/types/route-types'
 import { 
   Card, 
   CardHeader, 
@@ -69,7 +70,7 @@ const flightData = {
   }
 }
 
-export default function FlightDetailPage({ params }: { params: { id: string } }) {
+export default function FlightDetailPage({ params }: ClientIdParams) {
   const { user, loading } = useAuth()
   const router = useRouter()
   const flightId = params.id
