@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScatterChart, Download } from 'lucide-react';
+import { ScatterChart, Download, X } from 'lucide-react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Spinner } from '@/components/ui/spinner';
@@ -35,6 +35,8 @@ export default function DatabaseExplorerPage() {
   const [isNarrating, setIsNarrating] = useState(false);
   const [schemaSummary, setSchemaSummary] = useState<any[]>([]);
   const [schemaLoaded, setSchemaLoaded] = useState(false);
+  const [tableCardFilter, setTableCardFilter] = useState('');
+  const [focusedTableForErd, setFocusedTableForErd] = useState<string | null>(null);
   
   // Load table counts on mount
   useEffect(() => {
@@ -196,6 +198,19 @@ export default function DatabaseExplorerPage() {
     }
   };
   
+  // Function to handle focus request from table cards
+  const handleFocusRequest = (tableName: string) => {
+    setFocusedTableForErd(tableName);
+    // Optionally scroll to the ERD section
+    const erdSection = document.getElementById('erd-section');
+    erdSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Function to clear focus, passed down to LiamERD
+  const clearFocusForErd = () => {
+    setFocusedTableForErd(null);
+  };
+  
   // Render the database explorer page
   return (
     <div className="space-y-6">
@@ -236,7 +251,7 @@ export default function DatabaseExplorerPage() {
         
         {/* Schema Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <Card>
+          <Card id="erd-section">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Database Schema (ERD)</CardTitle>
               <div className="flex gap-2">
@@ -249,12 +264,21 @@ export default function DatabaseExplorerPage() {
                   <Download className="h-4 w-4" />
                   Download Schema
                 </Button>
+                {focusedTableForErd && (
+                  <Button variant="outline" size="sm" onClick={clearFocusForErd} className="h-7 px-2 py-1 text-xs">
+                    <X className="h-3 w-3 mr-1"/>
+                    Clear ERD Focus
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>
               {schemaLoaded ? (
                 <div className="relative w-full rounded-lg border">
-                  <LiamERD />
+                  <LiamERD 
+                    focusedTable={focusedTableForErd} 
+                    onClearFocus={clearFocusForErd} 
+                  />
                 </div>
               ) : (
                 <div className="relative aspect-[16/9] w-full rounded-lg border overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
@@ -276,6 +300,13 @@ export default function DatabaseExplorerPage() {
           <Card>
             <CardHeader>
               <CardTitle>Table Relationships</CardTitle>
+              <Input 
+                type="text"
+                placeholder="Filter tables..." 
+                className="mt-2 max-w-xs h-8 text-xs"
+                value={tableCardFilter}
+                onChange={(e) => setTableCardFilter(e.target.value)}
+              />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -287,20 +318,28 @@ export default function DatabaseExplorerPage() {
                     </div>
                   ))
                 ) : (
-                  schemaSummary.map((table, i) => (
-                    <div key={i} className="p-4 border rounded-lg">
-                      <h3 className="font-medium">{table.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{table.description}</p>
-                      <div className="mt-2">
-                        <span className="text-xs font-semibold">Relations:</span>
-                        <ul className="text-xs text-gray-500 ml-2 mt-1">
-                          {table.relations?.map((rel: string, j: number) => (
-                            <li key={j}>{rel}</li>
-                          ))}
-                        </ul>
+                  schemaSummary
+                    .filter(table => !tableCardFilter || table.name.toLowerCase().includes(tableCardFilter.toLowerCase()))
+                    .map((table, i) => (
+                      <div 
+                        key={`${table.name}-${i}`} 
+                        className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer" 
+                        onClick={() => handleFocusRequest(table.name)}
+                      >
+                        <h3 className="font-medium">{table.name}</h3>
+                        <p className="text-sm text-gray-500 mt-1">{table.description}</p>
+                        {table.relations && table.relations.length > 0 && (
+                           <div className="mt-2">
+                            <span className="text-xs font-semibold">Relations:</span>
+                            <ul className="text-xs text-gray-500 ml-2 mt-1">
+                              {table.relations.map((rel: string, j: number) => (
+                                <li key={j}>{rel}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))
+                    ))
                 )}
               </div>
             </CardContent>

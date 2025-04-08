@@ -44,6 +44,7 @@ import { Separator } from "@/components/ui/separator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Spinner } from "@/components/ui/spinner";
 
 // Icons
 import { 
@@ -160,7 +161,8 @@ export default function SimulationPage() {
   const [simulationResults, setSimulationResults] = useState<SimResult | null>(null);
   const [simulationHistory, setSimulationHistory] = useState<SimResult[]>([]);
   const [selectedSimulationId, setSelectedSimulationId] = useState<string | null>(null);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   
   // Form setup
   const form = useForm<SimulationFormValues>({
@@ -176,17 +178,24 @@ export default function SimulationPage() {
 
   // Load simulation history on component mount
   useEffect(() => {
-    async function loadSimulationHistory() {
-      setIsLoadingHistory(true);
+    // Load simulation history
+    const loadSimulationHistory = async () => {
+      setLoadingHistory(true);
+      setHistoryError(null);
       try {
-        const history = await getRecentSimulations(10);
-        setSimulationHistory(history);
-      } catch (error) {
+        const response = await fetch('/api/admin/simulations/history?limit=20');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch history: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setSimulationHistory(data.simulations || []);
+      } catch (error: any) {
         console.error('Error loading simulation history:', error);
+        setHistoryError(error.message || 'Could not load simulation history.');
       } finally {
-        setIsLoadingHistory(false);
+        setLoadingHistory(false);
       }
-    }
+    };
     
     loadSimulationHistory();
   }, []);
@@ -212,55 +221,79 @@ export default function SimulationPage() {
     }
   }, [selectedSimulationId]);
 
-  // Use real functions from our simulation library
+  // Use API endpoint to run simulation
   const handleRunSimulation = async (values: SimulationFormValues) => {
-    // Set simulation to running state
     setSimulationStatus('running');
     setSimulationProgress(0);
+    setSimulationResults(null); // Clear previous results
     
-    // Mock progress updates (since the actual simulation runs quickly server-side)
-    const simulationDuration = 5000; // 5 seconds
-    const interval = 100; // Update every 100ms
+    const simulationDuration = 3000; // Shorter duration for API call feedback
+    const interval = 50;
     const steps = simulationDuration / interval;
     let currentStep = 0;
     
     const progressInterval = setInterval(() => {
       currentStep++;
       setSimulationProgress(Math.min(100, Math.floor((currentStep / steps) * 100)));
-      
       if (currentStep >= steps) {
         clearInterval(progressInterval);
       }
     }, interval);
     
     try {
-      // Run the actual simulation
-      const result = await runSimulation({
-        startDate: values.startDate,
-        endDate: values.endDate,
-        simulationType: values.simulationType as SimType,
-        virtualUsers: values.virtualUsers,
-        useAIMatching: values.useAIMatching,
-        // Get user ID for the triggered_by field (if available)
-        // In a real app, this would come from auth context
-        triggeredByUserId: undefined
+      const response = await fetch('/api/admin/simulations/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          startDate: values.startDate.toISOString(),
+          endDate: values.endDate.toISOString(),
+          simulationType: values.simulationType,
+          virtualUsers: values.virtualUsers,
+          useAIMatching: values.useAIMatching,
+        }),
       });
       
-      // Update state with the results
-      setSimulationResults(result);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to run simulation via API');
+      }
+      
+      // Update state with the results from the API
+      // API returns { result: SimResult }, need to parse dates
+      const apiResult = data.result;
+      const parsedResult: SimResult = {
+        ...apiResult,
+        timestamp: new Date(apiResult.timestamp),
+        parameters: {
+          ...apiResult.parameters,
+          startDate: new Date(apiResult.parameters.startDate),
+          endDate: new Date(apiResult.parameters.endDate),
+        },
+        logEntries: apiResult.logEntries.map((entry: any) => ({
+          ...entry,
+          timestamp: new Date(entry.timestamp),
+        })),
+      };
+      setSimulationResults(parsedResult);
       
       // Refresh simulation history
-      const history = await getRecentSimulations(10);
-      setSimulationHistory(history);
+      const historyResponse = await fetch('/api/admin/simulations/history?limit=20');
+      const historyData = await historyResponse.json();
+      setSimulationHistory(historyData.simulations || []);
       
-      // Clear interval if not already cleared
+      // Ensure progress hits 100 and status is completed
       clearInterval(progressInterval);
       setSimulationProgress(100);
       setSimulationStatus('completed');
-    } catch (error) {
-      console.error('Error running simulation:', error);
+    } catch (error: any) {
+      console.error('Error running simulation via API:', error);
+      // Display error to user?
       clearInterval(progressInterval);
       setSimulationStatus('idle');
+      // Optionally show an error message in the UI
     }
   };
   
@@ -660,7 +693,7 @@ export default function SimulationPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
                     <div className="rounded-lg border p-3">
                       <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                         Offer Fill Rate
@@ -693,6 +726,16 @@ export default function SimulationPage() {
                     </div>
                     <div className="rounded-lg border p-3">
                       <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Fee Revenue
+                      </div>
+                      <div className="mt-1 flex items-center">
+                        <span className="text-2xl font-bold">
+                          ${simulationResults.metrics.feeRevenue?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
                         Success Rate
                       </div>
                       <div className="mt-1 flex items-center">
@@ -700,6 +743,17 @@ export default function SimulationPage() {
                           {simulationResults.metrics.successPercentage}%
                         </span>
                       </div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Creator Recoupment
+                      </div>
+                      <div className="mt-1 flex items-center">
+                        <span className="text-2xl font-bold">
+                          {simulationResults.metrics.creatorCostRecoupmentPercentage}%
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">% of cost covered by shares</p>
                     </div>
                   </div>
                 </CardContent>
@@ -743,103 +797,103 @@ export default function SimulationPage() {
       </div>
 
       {/* Update simulation history to display from database */}
-      {(simulationHistory.length > 0 || isLoadingHistory) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Simulation History</span>
-              {isLoadingHistory && <RefreshCw className="h-4 w-4 animate-spin ml-2" />}
-            </CardTitle>
-            <CardDescription>
-              Previous simulation runs
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingHistory && simulationHistory.length === 0 ? (
-              <div className="py-4 text-center text-gray-500">Loading simulation history...</div>
-            ) : (
-              <Accordion type="single" collapsible className="w-full">
-                {simulationHistory.map((sim, index) => (
-                  <AccordionItem key={sim.id} value={sim.id}>
-                    <AccordionTrigger 
-                      className={`hover:no-underline ${selectedSimulationId === sim.id ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
-                      onClick={() => setSelectedSimulationId(sim.id === selectedSimulationId ? null : sim.id)}
-                    >
-                      <div className="flex items-center space-x-4 text-left">
-                        <div className="font-mono text-xs text-gray-500">
-                          {format(sim.timestamp, 'yyyy-MM-dd HH:mm:ss')}
-                        </div>
-                        <div className="font-medium">
-                          {sim.simulationType.charAt(0).toUpperCase() + sim.simulationType.slice(1)} Simulation
-                        </div>
-                        <div className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
-                          {sim.parameters.virtualUsers} users
-                        </div>
-                        <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
-                          sim.metrics.successPercentage >= 70 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
-                        }`}>
-                          {sim.metrics.successPercentage}% success
-                        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Simulation History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingHistory ? (
+            <div className="flex justify-center items-center h-40">
+              <Spinner size="lg" />
+            </div>
+          ) : historyError ? (
+            <div className="text-red-500 p-4 border border-red-200 rounded bg-red-50">
+              Error: {historyError}
+            </div>
+          ) : simulationHistory.length > 0 ? (
+            <Accordion type="single" collapsible className="w-full max-h-[500px] overflow-y-auto">
+              {simulationHistory.map((sim) => (
+                <AccordionItem key={sim.id} value={sim.id}>
+                  <AccordionTrigger 
+                    className={`hover:no-underline ${selectedSimulationId === sim.id ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+                    onClick={() => setSelectedSimulationId(sim.id === selectedSimulationId ? null : sim.id)}
+                  >
+                    <div className="flex items-center space-x-4 text-left">
+                      <div className="font-mono text-xs text-gray-500">
+                        {format(sim.timestamp, 'yyyy-MM-dd HH:mm:ss')}
                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Parameters</h4>
-                          <ul className="text-sm space-y-1">
-                            <li className="flex justify-between">
-                              <span className="text-gray-500">Date Range:</span>
-                              <span>{format(sim.parameters.startDate, 'MMM d')} - {format(sim.parameters.endDate, 'MMM d')}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span className="text-gray-500">Virtual Users:</span>
-                              <span>{sim.parameters.virtualUsers}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span className="text-gray-500">AI Matching:</span>
-                              <span>{sim.parameters.useAIMatching ? 'Enabled' : 'Disabled'}</span>
-                            </li>
-                          </ul>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Metrics</h4>
-                          <ul className="text-sm space-y-1">
-                            <li className="flex justify-between">
-                              <span className="text-gray-500">Fill Rate:</span>
-                              <span>{(sim.metrics.offerFillRate * 100).toFixed(1)}%</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span className="text-gray-500">Flights:</span>
-                              <span>{sim.metrics.acceptedFlights} accepted / {sim.metrics.unfilledFlights} unfilled</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span className="text-gray-500">Revenue:</span>
-                              <span>${sim.metrics.revenue.toLocaleString()} / ${sim.metrics.maxRevenue.toLocaleString()}</span>
-                            </li>
-                          </ul>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium">AI Summary</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {sim.summaryText || (sim.parameters.useAIMatching 
-                              ? `AI matching improved offer success rates by approximately ${Math.floor(Math.random() * 15) + 20}% compared to baseline.`
-                              : `Without AI matching, the system operated at baseline efficiency. Enabling AI could improve performance.`
-                            )}
-                          </p>
-                        </div>
+                      <div className="font-medium">
+                        {sim.simulationType.charAt(0).toUpperCase() + sim.simulationType.slice(1)} Simulation
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                      <div className="text-xs px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                        {sim.parameters.virtualUsers} users
+                      </div>
+                      <div className={`flex items-center text-xs px-2 py-1 rounded-full ${
+                        sim.metrics.successPercentage >= 70 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300'
+                      }`}>
+                        {sim.metrics.successPercentage}% success
+                      </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Parameters</h4>
+                        <ul className="text-sm space-y-1">
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Date Range:</span>
+                            <span>{format(sim.parameters.startDate, 'MMM d')} - {format(sim.parameters.endDate, 'MMM d')}</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Virtual Users:</span>
+                            <span>{sim.parameters.virtualUsers}</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">AI Matching:</span>
+                            <span>{sim.parameters.useAIMatching ? 'Enabled' : 'Disabled'}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Metrics</h4>
+                        <ul className="text-sm space-y-1">
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Fill Rate:</span>
+                            <span>{(sim.metrics.offerFillRate * 100).toFixed(1)}%</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Flights:</span>
+                            <span>{sim.metrics.acceptedFlights} accepted / {sim.metrics.unfilledFlights} unfilled</span>
+                          </li>
+                          <li className="flex justify-between">
+                            <span className="text-gray-500">Revenue:</span>
+                            <span>${sim.metrics.revenue.toLocaleString()} / ${sim.metrics.maxRevenue.toLocaleString()}</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">AI Summary</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {sim.summaryText || (sim.parameters.useAIMatching 
+                            ? `AI matching improved offer success rates by approximately ${Math.floor(Math.random() * 15) + 20}% compared to baseline.`
+                            : `Without AI matching, the system operated at baseline efficiency. Enabling AI could improve performance.`
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          ) : (
+            <p className="text-muted-foreground">No simulation history found.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 } 

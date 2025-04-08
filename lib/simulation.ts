@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-server';
+import { createClient as createSupabaseServerClient } from '@/lib/supabase-server';
 import { v4 as uuidv4 } from 'uuid';
 import * as pineconeService from './services/pinecone-browser';
 
@@ -28,6 +28,8 @@ export interface SimMetrics {
   revenue: number;
   maxRevenue: number;
   successPercentage: number;
+  feeRevenue: number;
+  creatorCostRecoupmentPercentage: number;
 }
 
 // Define simulation log entry
@@ -69,7 +71,7 @@ export const runSimulation = async (config: SimConfig): Promise<SimResult> => {
   const metrics: SimMetrics = generateMetrics(config);
   
   // Generate log entries
-  const logEntries: SimLogEntry[] = generateLogEntries(config);
+  const logEntries: SimLogEntry[] = generateLogEntries(config, metrics, days * 24 * 60 * 60 * 1000);
   
   // Create the simulation result
   const result: SimResult = {
@@ -101,83 +103,128 @@ export const runSimulation = async (config: SimConfig): Promise<SimResult> => {
 };
 
 /**
- * Generate simulation metrics based on the configuration
+ * Generate mock simulation metrics based on input parameters
  */
 function generateMetrics(config: SimConfig): SimMetrics {
-  const { useAIMatching, virtualUsers } = config;
+  const { virtualUsers, useAIMatching, startDate, endDate } = config;
+  const days = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
+  // Base success rate
+  const baseSuccess = Math.min(0.6, 0.3 + virtualUsers / 2000);
+  const aiBoost = useAIMatching ? 1.2 : 1.0;
+  const successPercentage = Math.min(95, Math.round(baseSuccess * aiBoost * 100 + (Math.random() * 10)));
+
+  // Offer fill rate
+  const baseFillRate = (successPercentage / 100) * (0.8 + Math.random() * 0.15);
+  const offerFillRate = Math.min(0.98, baseFillRate);
+
+  // Simulate flights
+  const totalPotentialFlights = Math.ceil(virtualUsers * days * (0.1 + Math.random() * 0.05));
+  const acceptedFlights = Math.round(totalPotentialFlights * offerFillRate);
+  const unfilledFlights = totalPotentialFlights - acceptedFlights;
+
+  // Simulate revenue & costs
+  const estimatedFlightCost = 15000 + Math.random() * 10000; // $15k - $25k per flight
+  const totalEstimatedCost = totalPotentialFlights * estimatedFlightCost; // Total cost if all potential flights ran
+  // Actual revenue from accepted shares (what sharers paid)
+  const revenue = acceptedFlights * (estimatedFlightCost * (0.95 + Math.random() * 0.1)); // Simulate sharer price variation
   
-  // Calculate fill rate - AI matching improves this by 20-25%
-  const baseRate = 0.5 + Math.random() * 0.2; // 50-70% base rate
-  const aiBoost = useAIMatching ? (0.2 + Math.random() * 0.05) : 0; // 20-25% AI boost
-  const offerFillRate = Math.min(0.95, baseRate + aiBoost); // Cap at 95%
-  
-  // Calculate flights stats
-  const acceptedFlights = Math.floor(virtualUsers * (0.5 + Math.random() * 0.5));
-  const unfilledFlights = Math.floor(virtualUsers * (0.1 + Math.random() * 0.3));
-  
-  // Calculate revenue stats - more users and AI matching mean more revenue
-  const baseRevenue = virtualUsers * 1000;
-  const aiRevenueBoost = useAIMatching ? (0.2 + Math.random() * 0.1) : 0; // 20-30% AI revenue boost
-  const revenue = Math.floor(baseRevenue * (0.6 + Math.random() * 0.3 + aiRevenueBoost));
-  const maxRevenue = Math.floor(baseRevenue * 1.5);
-  
-  // Calculate success percentage
-  const successBase = useAIMatching ? 75 : 50;
-  const successVariation = Math.floor(Math.random() * (useAIMatching ? 20 : 25));
-  const successPercentage = successBase + successVariation;
-  
+  // Calculate Fee Revenue (e.g., 5% of actual revenue)
+  const feeRate = 0.05;
+  const feeRevenue = revenue * feeRate;
+
+  // Calculate Creator Cost Recoupment Percentage
+  // This is the % of the *accepted* flights' estimated cost that was covered by sharer payments
+  const costOfAcceptedFlights = acceptedFlights * estimatedFlightCost;
+  const creatorCostRecoupmentPercentage = costOfAcceptedFlights > 0 
+    ? Math.min(100, Math.round((revenue / costOfAcceptedFlights) * 100))
+    : 0;
+
   return {
+    successPercentage,
     offerFillRate,
     acceptedFlights,
     unfilledFlights,
-    revenue,
-    maxRevenue,
-    successPercentage,
+    revenue: Math.round(revenue), 
+    maxRevenue: Math.round(totalEstimatedCost), // Renamed from maxRevenue for clarity
+    feeRevenue: Math.round(feeRevenue),
+    creatorCostRecoupmentPercentage, // Added recoupment percentage
   };
 }
 
 /**
- * Generate simulation log entries
+ * Generate mock simulation log entries
  */
-function generateLogEntries(config: SimConfig): SimLogEntry[] {
-  const { virtualUsers, useAIMatching } = config;
-  
-  // Create log entries with appropriate timestamps
-  const now = new Date();
-  return [
-    {
-      timestamp: new Date(now.getTime()),
-      event: "Simulation Started",
-      details: `Started ${config.simulationType} simulation with ${virtualUsers} virtual users`,
-    },
-    {
-      timestamp: new Date(now.getTime() + 1000),
-      event: "User Generation",
-      details: `Created ${virtualUsers} synthetic user profiles`,
-    },
-    {
-      timestamp: new Date(now.getTime() + 2000),
-      event: "Preference Modeling",
-      details: "Applied travel preference distributions across user base",
-    },
-    {
-      timestamp: new Date(now.getTime() + 3000),
-      event: "Booking Behavior",
-      details: `Simulated ${Math.floor(virtualUsers * 1.5)} booking attempts`,
-    },
-    {
-      timestamp: new Date(now.getTime() + 4000),
-      event: "AI Matching",
-      details: useAIMatching
-        ? `Applied AI matching algorithms, improving match quality by ~25%`
-        : `Skipped AI matching, using baseline matching algorithms`,
-    },
-    {
-      timestamp: new Date(now.getTime() + 5000),
-      event: "Simulation Completed",
-      details: `Achieved ${useAIMatching ? 'optimal' : 'baseline'} matching performance`,
-    },
+function generateLogEntries(config: SimConfig, metrics: SimMetrics, totalDurationMs: number): SimLogEntry[] {
+  const { startDate, endDate, virtualUsers } = config;
+  const { acceptedFlights, unfilledFlights } = metrics;
+  const logCount = Math.min(200, Math.max(50, virtualUsers)); // Generate a reasonable number of logs
+  const logs: SimLogEntry[] = [];
+  const simStartTime = startDate.getTime();
+  const simEndTime = endDate.getTime();
+  const actualDurationMs = simEndTime - simStartTime;
+
+  const events = [
+    { event: 'User Login', details: 'User authenticated successfully' },
+    { event: 'Offer Created', details: 'New JetShare offer posted' },
+    { event: 'Search Performed', details: 'User searched for flights' },
+    { event: 'Offer Viewed', details: 'User viewed JetShare offer details' },
+    { event: 'Offer Accepted', details: 'User accepted JetShare offer' },
+    { event: 'Payment Initiated', details: 'User started payment process' },
+    { event: 'Payment Completed', details: 'Payment successful, booking confirmed' },
+    { event: 'Offer Expired', details: 'JetShare offer expired unfilled' },
+    { event: 'Flight Completed', details: 'Simulated flight reached destination' },
+    { event: 'User Logout', details: 'User session ended' },
   ];
+
+  // Determine probabilities based on metrics
+  const totalFlights = acceptedFlights + unfilledFlights;
+  const acceptProbability = totalFlights > 0 ? acceptedFlights / totalFlights : 0.5;
+  const paymentProbability = 0.9; // Assume 90% of acceptances lead to payment attempt
+  const paymentSuccessProbability = 0.95; // Assume 95% of payments succeed
+
+  for (let i = 0; i < logCount; i++) {
+    // Simulate time progression
+    const logTimeMs = simStartTime + (actualDurationMs * (i / logCount)) * (0.8 + Math.random() * 0.4);
+    const timestamp = new Date(logTimeMs);
+    
+    let chosenEvent;
+    const rand = Math.random();
+
+    // Bias events based on probabilities
+    if (rand < acceptProbability * 0.4) { // Higher chance of acceptance-related logs if fill rate is high
+      chosenEvent = events.find(e => e.event === 'Offer Accepted')!;
+    } else if (rand < acceptProbability * 0.4 + (1 - acceptProbability) * 0.3) { // Higher chance of expiration if fill rate is low
+      chosenEvent = events.find(e => e.event === 'Offer Expired')!;
+    } else if (rand < 0.8) { // General user activity
+      chosenEvent = events[Math.floor(Math.random() * 4)]; // Login, Create, Search, View
+    } else { // Payment/Completion/Logout
+      chosenEvent = events[5 + Math.floor(Math.random() * 5)]; 
+    }
+
+    // Refine details based on event
+    let details = chosenEvent.details;
+    if (chosenEvent.event === 'Offer Accepted') {
+      if (Math.random() < paymentProbability) {
+        // Simulate payment flow
+        logs.push({ timestamp, event: chosenEvent.event, details });
+        const paymentTime = new Date(timestamp.getTime() + Math.random() * 1000 * 60 * 5); // 0-5 mins later
+        logs.push({ timestamp: paymentTime, event: 'Payment Initiated', details: 'User started payment process' });
+        if (Math.random() < paymentSuccessProbability) {
+           const paymentSuccessTime = new Date(paymentTime.getTime() + Math.random() * 1000 * 30); // 0-30 secs later
+           logs.push({ timestamp: paymentSuccessTime, event: 'Payment Completed', details: 'Payment successful, booking confirmed' });
+        }
+        continue; // Skip adding the original 'Offer Accepted' log again
+      }
+    } else if (chosenEvent.event === 'Offer Expired') {
+       details = `JetShare offer expired unfilled (ID: ${uuidv4().substring(0, 8)})`;
+    }
+
+    logs.push({ timestamp, event: chosenEvent.event, details });
+  }
+
+  // Sort logs chronologically
+  return logs.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 }
 
 /**
@@ -205,7 +252,7 @@ function generateSummaryText(config: SimConfig, metrics: SimMetrics): string {
  */
 async function storeSimulationResult(result: SimResult, config: SimConfig): Promise<void> {
   try {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
     
     // Format the data for storing in the database
     const dbRecord = {
@@ -255,7 +302,7 @@ async function storeSimulationResult(result: SimResult, config: SimConfig): Prom
  */
 export async function getRecentSimulations(limit: number = 10): Promise<SimResult[]> {
   try {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
     
     const { data, error } = await supabase
       .from('simulation_logs')
@@ -303,7 +350,7 @@ export async function getRecentSimulations(limit: number = 10): Promise<SimResul
  */
 export async function getSimulationById(simulationId: string): Promise<SimResult | null> {
   try {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
     
     const { data, error } = await supabase
       .from('simulation_logs')
@@ -354,7 +401,7 @@ export async function getSimulationById(simulationId: string): Promise<SimResult
  */
 export async function getSimulationStatsByType(simType: SimType): Promise<any> {
   try {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
     
     const { data, error } = await supabase
       .from('simulation_logs')
@@ -444,20 +491,60 @@ export async function runSimulationFromAgent(config: SimConfig, userId?: string)
 /**
  * Generate embedding input for vector databases
  * This follows the suggested format for Pinecone or pgvector
+ * Accepts either a DB log object or a SimResult object
  */
-export function generateEmbeddingInput(log: any): string {
+export function generateEmbeddingInput(logOrResult: any): string {
+  // Determine if it's a SimResult or a DB log based on properties
+  const isSimResult = logOrResult.simulationType !== undefined && logOrResult.parameters !== undefined;
+  
+  const simType = (isSimResult ? logOrResult.simulationType : logOrResult.sim_type || '').toUpperCase();
+  let startDate = 'Unknown';
+  let endDate = 'Unknown';
+  let virtualUsers = 'Unknown';
+  let fillRate = 0;
+  let costRecovery = 0;
+  let origin = 'N/A';
+  let destination = 'N/A';
+  let aiMatching = 'Disabled';
+  let summary = 'No summary available';
+
+  if (isSimResult) {
+    startDate = logOrResult.parameters.startDate ? new Date(logOrResult.parameters.startDate).toLocaleDateString() : 'Unknown';
+    endDate = logOrResult.parameters.endDate ? new Date(logOrResult.parameters.endDate).toLocaleDateString() : 'Unknown';
+    virtualUsers = logOrResult.parameters.virtualUsers?.toString() || 'Unknown';
+    fillRate = logOrResult.metrics?.offerFillRate ? Math.round(logOrResult.metrics.offerFillRate * 100) : 0;
+    costRecovery = logOrResult.metrics?.revenue && logOrResult.metrics?.maxRevenue
+      ? Math.round((logOrResult.metrics.revenue / logOrResult.metrics.maxRevenue) * 100)
+      : 0;
+    origin = logOrResult.parameters?.origin || 'N/A'; // Assuming origin/dest are in parameters now
+    destination = logOrResult.parameters?.destination || 'N/A';
+    aiMatching = logOrResult.parameters.useAIMatching ? 'Enabled' : 'Disabled';
+    summary = logOrResult.summaryText || 'No summary available';
+  } else {
+    // Assume DB log structure
+    startDate = logOrResult.start_date ? new Date(logOrResult.start_date).toLocaleDateString() : 'Unknown';
+    endDate = logOrResult.end_date ? new Date(logOrResult.end_date).toLocaleDateString() : 'Unknown';
+    virtualUsers = logOrResult.virtual_users?.toString() || 'Unknown';
+    fillRate = logOrResult.results_summary?.metrics?.offerFillRate ? Math.round(logOrResult.results_summary.metrics.offerFillRate * 100) : 0;
+    costRecovery = logOrResult.results_summary?.metrics?.revenue && logOrResult.results_summary?.metrics?.maxRevenue
+      ? Math.round((logOrResult.results_summary.metrics.revenue / logOrResult.results_summary.metrics.maxRevenue) * 100)
+      : 0;
+    origin = logOrResult.input_parameters?.origin || 'N/A';
+    destination = logOrResult.input_parameters?.destination || 'N/A';
+    aiMatching = logOrResult.ai_matching_enabled ? 'Enabled' : 'Disabled';
+    summary = logOrResult.agent_instruction_summary || logOrResult.results_summary?.summaryText || 'No summary available';
+  }
+
   return `
-${log.sim_type.toUpperCase()} simulation
-Date Range: ${new Date(log.start_date).toLocaleDateString()} to ${new Date(log.end_date).toLocaleDateString()}
-Users: ${log.virtual_users}
-Fill Rate: ${log.results_summary?.metrics?.offerFillRate ? Math.round(log.results_summary.metrics.offerFillRate * 100) : 0}%
-Cost Recovery: ${log.results_summary?.metrics?.revenue && log.results_summary?.metrics?.maxRevenue 
-  ? Math.round((log.results_summary.metrics.revenue / log.results_summary.metrics.maxRevenue) * 100) 
-  : 0}%
-Origin: ${log.input_parameters?.origin || 'N/A'}
-Destination: ${log.input_parameters?.destination || 'N/A'}
-AI Matching: ${log.ai_matching_enabled ? 'Enabled' : 'Disabled'}
-Summary: ${log.agent_instruction_summary || log.results_summary?.summaryText || 'No summary available'}
+${simType} simulation
+Date Range: ${startDate} to ${endDate}
+Users: ${virtualUsers}
+Fill Rate: ${fillRate}%
+Cost Recovery: ${costRecovery}%
+Origin: ${origin}
+Destination: ${destination}
+AI Matching: ${aiMatching}
+Summary: ${summary}
 `;
 }
 
@@ -474,6 +561,7 @@ export async function prepareSimulationForEmbedding(result: SimResult): Promise<
 }> {
   try {
     // Convert the simulation result to an embedding-friendly format
+    // Pass the SimResult object directly
     const embedInput = generateEmbeddingInput(result);
 
     // Structure metadata for retrieval

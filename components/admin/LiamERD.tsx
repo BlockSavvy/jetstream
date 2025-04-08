@@ -2,9 +2,18 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+
+// Define props for the component
+interface LiamERDProps {
+  focusedTable: string | null;
+  onClearFocus: () => void;
+}
 
 // Simple ERD renderer without relying on external libraries
-const LiamERD: React.FC = () => {
+const LiamERD: React.FC<LiamERDProps> = ({ focusedTable, onClearFocus }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -14,6 +23,7 @@ const LiamERD: React.FC = () => {
     source: string;
     target: string;
   } | null>(null);
+  const [relationshipFilter, setRelationshipFilter] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -55,54 +65,65 @@ const LiamERD: React.FC = () => {
   }, []);
   
   // Find tables related to a specific table
-  const findRelatedTables = (tableName: string) => {
+  const findRelatedTables = (tableName: string): string[] => {
     if (!schema || !schema.relationships) return [];
     
-    return schema.relationships
-      .filter((rel: any) => 
-        rel.source_table === tableName || rel.target_table === tableName
-      )
-      .map((rel: any) => 
-        rel.source_table === tableName ? rel.target_table : rel.source_table
-      );
+    const related = new Set<string>();
+    schema.relationships.forEach((rel: any) => {
+      if (rel.source_table === tableName) {
+        related.add(rel.target_table);
+      } else if (rel.target_table === tableName) {
+        related.add(rel.source_table);
+      }
+    });
+    return Array.from(related);
   };
   
-  // Determine if a table should be highlighted
-  const isHighlighted = (tableName: string) => {
-    if (hoveredTable === tableName) return true;
-    if (!hoveredTable && !hoveredRelation) return false;
-    
-    if (hoveredRelation) {
-      return hoveredRelation.source === tableName || hoveredRelation.target === tableName;
+  // Determine if a table should be highlighted or visible
+  const getTableVisibility = (tableName: string): { isVisible: boolean; isHighlighted: boolean } => {
+    if (!focusedTable) {
+      const isHighlight = hoveredTable === tableName || 
+                          (hoveredRelation && (hoveredRelation.source === tableName || hoveredRelation.target === tableName));
+      return { isVisible: true, isHighlighted: !!isHighlight }; 
     }
     
-    const relatedTables = findRelatedTables(hoveredTable!);
-    return relatedTables.includes(tableName);
+    const relatedToFocused = findRelatedTables(focusedTable);
+    const isVisible = tableName === focusedTable || relatedToFocused.includes(tableName);
+    const isHighlight = hoveredTable === tableName || 
+                        (hoveredRelation && (hoveredRelation.source === tableName || hoveredRelation.target === tableName));
+
+    return { isVisible, isHighlighted: !!isHighlight };
   };
   
   // Sort tables to ensure consistent display order
   const sortedTables = () => {
     if (!schema || !schema.tables) return [];
     
+    const coreTables = ['profiles', 'jets', 'flights', 'bookings', 'airports'];
+    
     return [...schema.tables].sort((a, b) => {
-      // Primary tables first
-      const aPrimary = ['profiles', 'jets', 'flights', 'bookings', 'airports'].includes(a.name);
-      const bPrimary = ['profiles', 'jets', 'flights', 'bookings', 'airports'].includes(b.name);
+      const aIsCore = coreTables.includes(a.name);
+      const bIsCore = coreTables.includes(b.name);
+
+      if (aIsCore && !bIsCore) return -1; // a comes first
+      if (!aIsCore && bIsCore) return 1;  // b comes first
       
-      if (aPrimary && !bPrimary) return -1;
-      if (!aPrimary && bPrimary) return 1;
-      
-      // Then alphabetically
+      // If both are core or both are not core, sort alphabetically
       return a.name.localeCompare(b.name);
     });
   };
   
+  const clearFocus = onClearFocus;
+
   // Render a basic ERD visualization
   const renderERD = () => {
     if (!schema || !schema.tables) return null;
     
-    const tables = sortedTables();
+    const allTables = sortedTables();
     const totalRelationships = schema.relationships?.length || 0;
+    
+    // Filter visible tables based on focus
+    const visibleTables = allTables.filter(table => getTableVisibility(table.name).isVisible);
     
     // Function to scroll to relationships section
     const scrollToRelationships = () => {
@@ -112,39 +133,62 @@ const LiamERD: React.FC = () => {
       }
     };
     
+    // Filter relationships based on the filter text
+    const filteredRelationships = (schema.relationships || []).filter((rel: any) => {
+      if (!relationshipFilter) return true;
+      const searchTerm = relationshipFilter.toLowerCase();
+      return (
+        rel.source_table.toLowerCase().includes(searchTerm) ||
+        rel.source_column.toLowerCase().includes(searchTerm) ||
+        rel.target_table.toLowerCase().includes(searchTerm) ||
+        rel.target_column.toLowerCase().includes(searchTerm)
+      );
+    });
+
     return (
       <div className="w-full h-full overflow-auto p-4">
         <div className="mb-4 text-sm sticky top-0 bg-background pt-2 pb-2 border-b z-10 flex justify-between items-center">
           <div className="text-muted-foreground">
-            <span className="font-medium">{tables.length} tables</span> and <span className="font-medium">{totalRelationships} relationships</span> found in database
+            <span className="font-medium">{allTables.length} tables</span> and <span className="font-medium">{totalRelationships} relationships</span> found
+            {focusedTable && (
+              <span className="ml-2 text-primary font-semibold">(Showing: {focusedTable} & relations)</span>
+            )}
           </div>
-          {schema.relationships && schema.relationships.length > 0 && (
-            <button 
-              onClick={scrollToRelationships}
-              className="text-xs px-2 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
-            >
-              Jump to Relationships
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {focusedTable && (
+              <Button variant="outline" size="sm" onClick={clearFocus} className="h-7 px-2 py-1 text-xs">
+                <X className="h-3 w-3 mr-1"/>
+                Clear Focus
+              </Button>
+            )}
+            {schema.relationships && schema.relationships.length > 0 && (
+              <button 
+                onClick={scrollToRelationships}
+                className="text-xs px-2 py-1 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+              >
+                Jump to Relationships
+              </button>
+            )}
+          </div>
         </div>
         
         <div className="flex flex-wrap gap-4 justify-center mb-8">
-          {tables.map((table: any) => {
+          {visibleTables.map((table: any) => {
             const relations = schema.relationships?.filter((rel: any) => 
               rel.source_table === table.name || rel.target_table === table.name
             ) || [];
             
-            const isTableHighlighted = isHighlighted(table.name);
+            const { isHighlighted } = getTableVisibility(table.name);
+            const isDimmed = (hoveredTable || hoveredRelation || focusedTable) && !isHighlighted && focusedTable !== table.name;
+            const isFocus = focusedTable === table.name;
             
             return (
               <div 
                 key={table.name} 
-                className={`border rounded-md shadow-sm w-64 flex flex-col transition-all duration-200 ${
-                  isTableHighlighted 
-                    ? 'ring-2 ring-primary shadow-md z-10' 
-                    : hoveredTable || hoveredRelation 
-                      ? 'opacity-60' 
-                      : ''
+                className={`border rounded-md shadow-sm w-64 flex flex-col transition-all duration-200 cursor-pointer ${ 
+                  isFocus ? 'ring-2 ring-offset-2 ring-blue-500 shadow-lg z-20' : 
+                  isHighlighted ? 'ring-1 ring-primary shadow-md z-10' : 
+                  isDimmed ? 'opacity-40' : '' 
                 }`}
                 onMouseEnter={() => setHoveredTable(table.name)}
                 onMouseLeave={() => setHoveredTable(null)}
@@ -152,7 +196,7 @@ const LiamERD: React.FC = () => {
                 <div className="border-b bg-muted p-2 font-bold text-center flex justify-between items-center">
                   <span>{table.name}</span>
                   {relations.length > 0 && (
-                    <span className="text-xs bg-primary/20 text-primary px-1 py-0.5 rounded-full">
+                    <span className={`text-xs px-1 py-0.5 rounded-full ${isFocus ? 'bg-blue-100 text-blue-700' : 'bg-primary/20 text-primary'}`}>
                       {relations.length} relations
                     </span>
                   )}
@@ -165,6 +209,7 @@ const LiamERD: React.FC = () => {
                           <span className={column.primary_key ? 'font-bold' : ''}>
                             {column.name}
                             {column.primary_key && ' 🔑'}
+                            {column.foreign_key && <span className="ml-1 text-blue-500 text-xs font-normal">[FK]</span>}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {column.type}
@@ -174,10 +219,13 @@ const LiamERD: React.FC = () => {
                         {column.foreign_key && (
                           <div 
                             className="text-xs text-blue-500 mt-1 cursor-pointer hover:underline"
-                            onMouseEnter={() => setHoveredRelation({
-                              source: table.name,
-                              target: column.foreign_key.table
-                            })}
+                            onMouseEnter={(e) => { 
+                              e.stopPropagation();
+                              setHoveredRelation({
+                                source: table.name,
+                                target: column.foreign_key.table
+                              });
+                            }}
                             onMouseLeave={() => setHoveredRelation(null)}
                           >
                             → {column.foreign_key.table}.{column.foreign_key.column}
@@ -192,27 +240,38 @@ const LiamERD: React.FC = () => {
           })}
         </div>
         
-        {/* Table Relationships List */}
+        {/* Table Relationships List - Add filter input and hover handlers */}
         {schema.relationships && schema.relationships.length > 0 && (
           <div id="relationships-section" className="mt-8 border rounded-lg p-4 mb-8">
-            <h3 className="font-bold mb-2">All Relationships</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold">All Relationships {focusedTable ? `(Related to ${focusedTable})` : ''}</h3>
+              <Input 
+                type="text"
+                placeholder="Filter relationships..." 
+                className="max-w-xs h-8 text-xs"
+                value={relationshipFilter}
+                onChange={(e) => setRelationshipFilter(e.target.value)}
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {schema.relationships.map((rel: any, index: number) => (
-                <div 
-                  key={index} 
-                  className="text-sm p-2 border rounded hover:bg-muted cursor-pointer transition-colors"
-                  onMouseEnter={() => setHoveredRelation({
-                    source: rel.source_table,
-                    target: rel.target_table
-                  })}
-                  onMouseLeave={() => setHoveredRelation(null)}
-                >
-                  <span className="font-medium">{rel.source_table}</span>
-                  <span className="text-muted-foreground">.{rel.source_column}</span>
-                  <span className="mx-1">→</span>
-                  <span className="font-medium">{rel.target_table}</span>
-                  <span className="text-muted-foreground">.{rel.target_column}</span>
-                </div>
+              {filteredRelationships
+                .filter((rel: any) => !focusedTable || rel.source_table === focusedTable || rel.target_table === focusedTable)
+                .map((rel: any, index: number) => (
+                  <div 
+                    key={`${rel.source_table}-${rel.source_column}-${rel.target_table}-${rel.target_column}-${index}`}
+                    className="text-sm p-2 border rounded hover:bg-muted cursor-default transition-colors"
+                    onMouseEnter={() => setHoveredRelation({
+                      source: rel.source_table,
+                      target: rel.target_table
+                    })}
+                    onMouseLeave={() => setHoveredRelation(null)}
+                  >
+                    <span className="font-medium">{rel.source_table}</span>
+                    <span className="text-muted-foreground">.{rel.source_column}</span>
+                    <span className="mx-1">→</span>
+                    <span className="font-medium">{rel.target_table}</span>
+                    <span className="text-muted-foreground">.{rel.target_column}</span>
+                  </div>
               ))}
             </div>
           </div>

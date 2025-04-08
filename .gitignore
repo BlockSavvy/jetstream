@@ -16,15 +16,22 @@
 # misc
 .DS_Store
 *.pem
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # local env files
 .env*.local
 .env
+!.env.example
 
 # vercel
 .vercel
@@ -36,3 +43,7 @@ supabase/.temp/
 
 # Local logs
 logs/
+
+# IDE
+.idea/
+.vscode/
