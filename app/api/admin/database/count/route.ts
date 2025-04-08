@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 
 // Query to get table counts using dynamic SQL
 const TABLE_COUNT_QUERY = `
@@ -28,100 +28,66 @@ const ALTERNATIVE_COUNT_QUERY = `
 
 export async function GET() {
   try {
-    const supabase = createClient();
-    
-    // First try to use the RPC function if available
-    let tableData;
-    let error;
+    const supabase = await createClient();
     
     try {
-      const { data: rpcData, error: rpcError } = await supabase.rpc('table_row_counts');
-      tableData = rpcData;
-      error = rpcError;
-    } catch (rpcFailure) {
-      console.log('RPC function table_row_counts not available, falling back to SQL', rpcFailure);
-      error = rpcFailure;
-    }
-    
-    // If RPC fails, try to use run_sql RPC function
-    if (error) {
-      try {
-        const { data: sqlData, error: sqlError } = await supabase.rpc('run_sql', { query: TABLE_COUNT_QUERY });
-        tableData = sqlData;
-        error = sqlError;
-      } catch (sqlFailure) {
-        console.log('RPC function run_sql not available, trying alternative SQL', sqlFailure);
-        error = sqlFailure;
+      // First get a list of all tables in the public schema
+      const { data: tables, error: tablesError } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_schema', 'public')
+        .order('table_name');
+      
+      if (tablesError) {
+        console.error('Error fetching tables:', tablesError);
+        return NextResponse.json({ error: 'Failed to fetch tables' }, { status: 500 });
       }
-    }
-    
-    // If run_sql also fails, try direct SQL execution as a last resort
-    if (error) {
-      try {
-        // Try both queries, starting with the main one
-        let { data: directData, error: directError } = await supabase.from('information_schema.tables')
-          .select('table_name')
-          .eq('table_schema', 'public')
-          .eq('table_type', 'BASE TABLE');
-        
-        if (directError || !directData) {
-          throw directError || new Error('No data returned from tables query');
-        }
-        
-        // If we can access table names, use the slowest but most reliable method:
-        // query each table for count(*) individually
-        const tableCountsMap: Record<string, number> = {};
-        
-        // For each table, count the rows
-        for (const table of directData) {
-          const tableName = table.table_name;
-          try {
-            const { count, error: countError } = await supabase
-              .from(tableName)
-              .select('*', { count: 'exact', head: true });
-            
-            if (!countError) {
-              tableCountsMap[tableName] = count || 0;
-            } else {
-              console.warn(`Error counting table ${tableName}:`, countError);
-              tableCountsMap[tableName] = 0;
-            }
-          } catch (tableError) {
-            console.warn(`Error accessing table ${tableName}:`, tableError);
-            tableCountsMap[tableName] = 0;
+      
+      if (!tables || tables.length === 0) {
+        return NextResponse.json({ tables: {}, count: 0 });
+      }
+      
+      // Create a result object
+      const result: Record<string, number> = {};
+      
+      // For each table, get the count
+      for (const table of tables) {
+        const tableName = table.table_name;
+        try {
+          // Use a simple count query for each table
+          const { count, error: countError } = await supabase
+            .from(tableName)
+            .select('*', { count: 'exact', head: true });
+          
+          if (countError) {
+            console.warn(`Error counting rows in ${tableName}:`, countError);
+            result[tableName] = -1; // Indicate error
+          } else {
+            result[tableName] = count || 0;
           }
+        } catch (countError) {
+          console.warn(`Exception counting rows in ${tableName}:`, countError);
+          result[tableName] = -1; // Indicate error
         }
-        
-        return NextResponse.json({ 
-          tables: tableCountsMap,
-          total_tables: Object.keys(tableCountsMap).length,
-          total_rows: Object.values(tableCountsMap).reduce((sum, count) => sum + count, 0),
-          method: 'direct-count'
-        });
-      } catch (directFailure) {
-        console.error('All methods failed for table counts:', directFailure);
-        return NextResponse.json(
-          { error: 'All table count methods failed', details: 'Database schema access issue' },
-          { status: 500 }
-        );
       }
+      
+      return NextResponse.json({ 
+        tables: result, 
+        count: Object.keys(result).length,
+        generated_at: new Date().toISOString()
+      });
+    } catch (dbError) {
+      console.error('Database operation error:', dbError);
+      return NextResponse.json(
+        { 
+          error: 'Database operation failed',
+          details: dbError instanceof Error ? dbError.message : 'Unknown database error'
+        },
+        { status: 500 }
+      );
     }
-    
-    // Format the data for easier consumption
-    const tableCountsMap: Record<string, number> = {};
-    
-    tableData.forEach((row: any) => {
-      tableCountsMap[row.table_name] = parseInt(row.row_count);
-    });
-    
-    return NextResponse.json({ 
-      tables: tableCountsMap,
-      total_tables: tableData.length,
-      total_rows: Object.values(tableCountsMap).reduce((sum: number, count: number) => sum + count, 0),
-      method: error ? 'run-sql' : 'rpc'
-    });
   } catch (error) {
-    console.error('Error in table counts:', error);
+    console.error('Error getting table counts:', error);
     return NextResponse.json(
       { error: 'Failed to get table counts', details: (error as Error).message },
       { status: 500 }

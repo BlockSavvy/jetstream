@@ -1,104 +1,124 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScatterChart } from 'lucide-react';
+import { ScatterChart, Download } from 'lucide-react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import { Spinner } from '@/components/ui/spinner';
+
+// Dynamically import Liam ERD component to avoid SSR issues
+const LiamERD = dynamic(() => import('@/components/admin/LiamERD'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-[16/9] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg border">
+      <div className="text-center">
+        <Spinner className="h-8 w-8 mx-auto mb-4" />
+        <p className="text-sm text-gray-500">Loading schema visualization...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function DatabaseExplorerPage() {
   const [loading, setLoading] = useState(true);
-  const [tableCounts, setTableCounts] = useState<{[key: string]: number}>({});
+  const [tableCounts, setTableCounts] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [currentTab, setCurrentTab] = useState('overview');
   const [isNarrating, setIsNarrating] = useState(false);
   const [schemaSummary, setSchemaSummary] = useState<any[]>([]);
+  const [schemaLoaded, setSchemaLoaded] = useState(false);
   
   // Load table counts on mount
   useEffect(() => {
-    const fetchTableCounts = async () => {
-      setLoading(true);
-      try {
-        const supabase = createClient();
+    // Fetch table counts and schema summary
+    const fetchDatabaseInfo = async () => {
+      if (!schemaLoaded) {
+        setLoading(true);
         
-        // Try RPC method first
-        let data;
-        let error;
         try {
-          const response = await supabase.rpc('table_row_counts');
-          data = response.data;
-          error = response.error;
-        } catch (rpcError) {
-          console.log('RPC method failed, trying API endpoint', rpcError);
-          error = rpcError;
-        }
-        
-        // If RPC fails, try the API endpoint
-        if (error) {
-          try {
-            const response = await fetch('/api/admin/database/count');
-            const apiData = await response.json();
+          // Define types for the fetched data
+          type CountsResponse = { counts: Record<string, number> };
+          type SchemaResponse = { tables: any[]; relationships: any[] };
+          
+          // Create promises but handle them separately
+          const countsPromise = fetch('/api/admin/database/counts')
+            .then(res => res.ok ? res.json() as Promise<CountsResponse> : { counts: {} })
+            .catch(err => {
+              console.error('Error fetching table counts:', err);
+              return { counts: {} };
+            });
             
-            if (apiData.tables) {
-              // Convert the tables object to the format expected by the component
-              data = Object.entries(apiData.tables).map(([table_name, row_count]) => ({
-                table_name,
-                row_count
-              }));
-              error = null;
-            }
-          } catch (apiError) {
-            console.error('API endpoint also failed:', apiError);
-            error = apiError;
+          const schemaPromise = fetch('/api/admin/database/schema')
+            .then(res => res.ok ? res.json() as Promise<SchemaResponse> : { tables: [], relationships: [] })
+            .catch(err => {
+              console.error('Error fetching schema:', err);
+              return { tables: [], relationships: [] };
+            });
+          
+          // Wait for both to complete
+          const [countsData, schemaData] = await Promise.all([countsPromise, schemaPromise]);
+          
+          // Set table counts
+          setTableCounts(countsData.counts || {});
+          
+          // Process schema data
+          if (schemaData.tables && Array.isArray(schemaData.tables)) {
+            const summary = schemaData.tables.map((table: any) => {
+              const relations = (schemaData.relationships || [])
+                .filter((rel: any) => rel.source_table === table.name || rel.target_table === table.name)
+                .map((rel: any) => {
+                  if (rel.source_table === table.name) {
+                    return `→ ${rel.target_table} (via ${rel.source_column})`;
+                  } else {
+                    return `← ${rel.source_table} (via ${rel.target_column})`;
+                  }
+                });
+              
+              return {
+                name: table.name,
+                description: `Table with ${table.columns ? table.columns.length : 0} columns`,
+                relations
+              };
+            });
+            
+            setSchemaSummary(summary);
+          } else {
+            const mockTables = ['profiles', 'jets', 'flights', 'bookings', 'jetshare_offers'];
+            const mockSummary = mockTables.map(tableName => ({
+              name: tableName,
+              description: 'Table data unavailable',
+              relations: []
+            }));
+            setSchemaSummary(mockSummary);
           }
-        }
-        
-        if (error) {
-          console.error('Error fetching table counts:', error);
+          
+          setSchemaLoaded(true);
+        } catch (error) {
+          console.error('Error fetching database info:', error);
+          const mockTables = ['profiles', 'jets', 'flights', 'bookings', 'jetshare_offers'];
+          const mockSummary = mockTables.map(tableName => ({
+            name: tableName,
+            description: 'Table data unavailable',
+            relations: []
+          }));
+          setSchemaSummary(mockSummary);
+          setSchemaLoaded(true);
+        } finally {
           setLoading(false);
-          return;
         }
-        
-        // Format the data into a more usable structure
-        const counts: {[key: string]: number} = {};
-        data.forEach((item: any) => {
-          counts[item.table_name] = parseInt(item.row_count);
-        });
-        
-        setTableCounts(counts);
-        
-        // Also fetch schema summaries
-        await fetchSchemaSummaries();
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setLoading(false);
       }
     };
     
-    fetchTableCounts();
-  }, []);
-  
-  // Fetch schema summaries
-  const fetchSchemaSummaries = async () => {
-    try {
-      const response = await fetch('/api/admin/database/summary');
-      const data = await response.json();
-      
-      if (data.summaries) {
-        setSchemaSummary(data.summaries);
-      }
-    } catch (error) {
-      console.error('Error fetching schema summaries:', error);
-    }
-  };
+    fetchDatabaseInfo();
+  }, [schemaLoaded]);
   
   // Handle search
   const handleSearch = async () => {
@@ -155,6 +175,27 @@ export default function DatabaseExplorerPage() {
     }
   };
   
+  // Download schema JSON
+  const downloadSchema = async () => {
+    try {
+      const response = await fetch('/api/admin/database/download-schema');
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'jetstream-schema.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error downloading schema:', error);
+    }
+  };
+  
   // Render the database explorer page
   return (
     <div className="space-y-6">
@@ -165,14 +206,25 @@ export default function DatabaseExplorerPage() {
             Explore the database schema, view table statistics, and search data
           </p>
         </div>
-        <Button 
-          className="flex items-center gap-2" 
-          onClick={startNarration}
-          disabled={isNarrating}
-        >
-          {isNarrating ? 'Narrating...' : 'Narrate Schema'}
-          <span className={`inline-block rounded-full w-2 h-2 ${isNarrating ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`}></span>
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="flex items-center gap-2" 
+            onClick={startNarration}
+            disabled={isNarrating}
+          >
+            {isNarrating ? 'Narrating...' : 'Narrate Schema'}
+            <span className={`inline-block rounded-full w-2 h-2 ${isNarrating ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`}></span>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            asChild
+          >
+            <a href="/admin/database/sql-console">
+              <span>SQL Console</span>
+            </a>
+          </Button>
+        </div>
       </div>
       
       <Tabs defaultValue="overview" className="w-full" onValueChange={setCurrentTab}>
@@ -185,19 +237,36 @@ export default function DatabaseExplorerPage() {
         {/* Schema Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Database Schema (ERD)</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setSchemaLoaded(false)}>
+                  <span className="flex items-center gap-1">
+                    <span>Refresh Schema</span>
+                  </span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadSchema} className="flex items-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Download Schema
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="relative aspect-[16/9] w-full rounded-lg border overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <ScatterChart className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-lg font-medium mb-2">Entity Relationship Diagram</h3>
-                  <p className="text-sm text-gray-500 max-w-md mx-auto">
-                    Visualizes the relationships between tables in the JetStream database. The diagram shows primary keys, foreign keys, and table relationships.
-                  </p>
+              {schemaLoaded ? (
+                <div className="relative w-full rounded-lg border">
+                  <LiamERD />
                 </div>
-              </div>
+              ) : (
+                <div className="relative aspect-[16/9] w-full rounded-lg border overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <Spinner className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium mb-2">Loading Entity Relationship Diagram</h3>
+                    <p className="text-sm text-gray-500 max-w-md mx-auto">
+                      Visualizing relationships between tables in the JetStream database...
+                    </p>
+                  </div>
+                </div>
+              )}
               <p className="text-sm text-gray-500 mt-2">
                 Entity Relationship Diagram showing the relationships between tables in the JetStream database.
               </p>

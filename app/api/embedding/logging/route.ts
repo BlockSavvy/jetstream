@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase-server';
 
 // CORS headers
 const corsHeaders = {
@@ -64,8 +64,8 @@ export async function POST(request: Request) {
       );
     }
     
-    // Connect to Supabase
-    const supabase = createClient();
+    // Connect to Supabase - must await the client
+    const supabase = await createClient();
     
     // Insert the log entry
     const { data, error } = await supabase
@@ -120,80 +120,153 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get('days') || '7');
     
-    // Connect to Supabase
-    const supabase = createClient();
+    // Connect to Supabase - must await the client
+    const supabase = await createClient();
     
-    // First check if provider column exists to handle both schema versions
-    const { data: columns, error: columnsError } = await supabase
-      .rpc('get_table_columns', { table_name: 'embedding_logs' });
-    
-    if (columnsError) {
-      console.error('Error checking table schema:', columnsError);
-      return NextResponse.json(
-        { error: 'Failed to fetch embedding statistics' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-    
-    const hasProviderColumn = columns?.some((col: TableColumn) => col.column_name === 'provider');
-    const hasEmbeddingModelColumn = columns?.some((col: TableColumn) => col.column_name === 'embedding_model');
-    
-    // Adapt query based on available columns
-    let query = supabase
-      .from('embedding_logs')
-      .select('*')
-      .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
-    
-    const { data: logs, error: logsError } = await query;
-    
-    if (logsError) {
-      console.error('Error fetching embedding logs:', logsError);
-      return NextResponse.json(
-        { error: 'Failed to fetch embedding statistics' },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-    
-    // Calculate stats based on available columns
-    let totalRequests = logs?.length || 0;
-    let successCount = 0;
-    let cohereCount = 0;
-    let openaiCount = 0;
-    
-    if (logs && logs.length > 0) {
-      // Count success based on 'success' column if exists, otherwise assume all successful
-      if ('success' in logs[0]) {
-        successCount = logs.filter(l => l.success).length;
-      } else {
-        successCount = logs.filter(l => !l.error).length;
+    try {
+      // First check if embedding_logs table exists
+      const { data: tables, error: tablesError } = await supabase
+        .from('information_schema.tables')
+        .select('table_name')
+        .eq('table_schema', 'public')
+        .eq('table_name', 'embedding_logs');
+      
+      if (tablesError) {
+        console.error('Error checking tables:', tablesError);
+        return NextResponse.json(
+          { 
+            totalRequests: 0,
+            successRate: 0,
+            providerUsage: { cohere: 0, openai: 0, unknown: 0 },
+            fallbackRate: 0,
+            error: 'Table check failed'
+          },
+          { headers: corsHeaders }
+        );
       }
       
-      // Count provider usage based on available columns
-      if (hasProviderColumn) {
-        cohereCount = logs.filter(l => l.provider === 'cohere').length;
-        openaiCount = logs.filter(l => l.provider === 'openai').length;
-      } else if (hasEmbeddingModelColumn) {
-        cohereCount = logs.filter(l => l.embedding_model?.includes('cohere')).length;
-        openaiCount = logs.filter(l => l.embedding_model?.includes('openai')).length;
+      // If embedding_logs table doesn't exist yet, return empty stats
+      if (!tables || tables.length === 0) {
+        console.log('The embedding_logs table does not exist yet');
+        return NextResponse.json(
+          { 
+            totalRequests: 0,
+            successRate: 0,
+            providerUsage: { cohere: 0, openai: 0, unknown: 0 },
+            fallbackRate: 0,
+            note: 'No embedding logs table exists yet'
+          },
+          { headers: corsHeaders }
+        );
       }
+      
+      // Get columns to adapt query
+      const { data: columns, error: columnsError } = await supabase
+        .from('information_schema.columns')
+        .select('column_name, data_type')
+        .eq('table_schema', 'public')
+        .eq('table_name', 'embedding_logs');
+        
+      if (columnsError) {
+        console.error('Error checking table schema:', columnsError);
+        return NextResponse.json(
+          { 
+            totalRequests: 0,
+            successRate: 0,
+            providerUsage: { cohere: 0, openai: 0, unknown: 0 },
+            fallbackRate: 0,
+            error: 'Schema check failed'
+          },
+          { headers: corsHeaders }
+        );
+      }
+      
+      // Check which columns exist to adapt our query
+      const columnNames = columns.map(col => col.column_name);
+      const hasProviderColumn = columnNames.includes('provider');
+      const hasEmbeddingModelColumn = columnNames.includes('embedding_model');
+      const hasSuccessColumn = columnNames.includes('success');
+      
+      // Fetch logs using the right column names
+      let query = supabase
+        .from('embedding_logs')
+        .select('*')
+        .gte('timestamp', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString());
+      
+      const { data: logs, error: logsError } = await query;
+      
+      if (logsError) {
+        console.error('Error fetching embedding logs:', logsError);
+        return NextResponse.json(
+          { 
+            totalRequests: 0,
+            successRate: 0,
+            providerUsage: { cohere: 0, openai: 0, unknown: 0 },
+            fallbackRate: 0,
+            error: 'Failed to fetch logs'
+          },
+          { headers: corsHeaders }
+        );
+      }
+      
+      // Calculate stats
+      const totalRequests = logs?.length || 0;
+      let successCount = 0;
+      let cohereCount = 0;
+      let openaiCount = 0;
+      
+      if (logs && logs.length > 0) {
+        // Count success based on 'success' column if exists
+        if (hasSuccessColumn) {
+          successCount = logs.filter(l => l.success).length;
+        } else {
+          successCount = logs.filter(l => !l.error_message).length;
+        }
+        
+        // Count provider usage based on available columns
+        if (hasProviderColumn) {
+          cohereCount = logs.filter(l => l.provider?.toLowerCase().includes('cohere')).length;
+          openaiCount = logs.filter(l => l.provider?.toLowerCase().includes('openai')).length;
+        } else if (hasEmbeddingModelColumn) {
+          cohereCount = logs.filter(l => l.embedding_model?.toLowerCase().includes('cohere')).length;
+          openaiCount = logs.filter(l => l.embedding_model?.toLowerCase().includes('openai')).length;
+        }
+      }
+      
+      const stats = {
+        totalRequests,
+        successRate: totalRequests > 0 ? successCount / totalRequests : 0,
+        providerUsage: {
+          cohere: cohereCount,
+          openai: openaiCount,
+          unknown: totalRequests - (cohereCount + openaiCount)
+        },
+        fallbackRate: cohereCount > 0 ? openaiCount / cohereCount : 0
+      };
+      
+      return NextResponse.json(stats, { headers: corsHeaders });
+    } catch (dbError) {
+      console.error('Database operation error:', dbError);
+      return NextResponse.json(
+        { 
+          totalRequests: 0,
+          successRate: 0,
+          providerUsage: { cohere: 0, openai: 0, unknown: 0 },
+          fallbackRate: 0,
+          error: 'Database operation failed',
+          details: dbError instanceof Error ? dbError.message : 'Unknown database error'
+        },
+        { status: 500, headers: corsHeaders }
+      );
     }
-    
-    const stats = {
-      totalRequests,
-      successRate: totalRequests > 0 ? successCount / totalRequests : 0,
-      providerUsage: {
-        cohere: cohereCount,
-        openai: openaiCount,
-        unknown: totalRequests - (cohereCount + openaiCount)
-      },
-      fallbackRate: cohereCount > 0 ? openaiCount / cohereCount : 0
-    };
-    
-    return NextResponse.json(stats, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in embedding statistics API:', error);
     return NextResponse.json(
       { 
+        totalRequests: 0,
+        successRate: 0,
+        providerUsage: { cohere: 0, openai: 0, unknown: 0 },
+        fallbackRate: 0,
         error: 'Error fetching embedding statistics',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
