@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { GetRouteHandler, PostRouteHandler, PatchRouteHandler, DeleteRouteHandler, PutRouteHandler, IdParam } from '@/lib/types/route-types';
 
-export async function GET(
+export const GET: GetRouteHandler<{ id: string }> = async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: IdParam
+) => {
   try {
-    const ticketId = params.id;
+    const { id } = await context.params;
+const ticketId = id;
     
     if (!ticketId) {
       return NextResponse.json(
@@ -49,4 +51,4 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+};

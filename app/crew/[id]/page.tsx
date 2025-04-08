@@ -157,8 +157,9 @@ async function getCrewData(id: string): Promise<CrewMember | null> {
 }
 
 // Generate metadata for the page
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const crew = await getCrewData(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const crew = await getCrewData(id);
   
   if (!crew) {
     return {
@@ -173,9 +174,10 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function CrewDetailPage({ params }: { params: { id: string } }) {
+export default async function CrewDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Get crew data server-side using the ID directly from params
-  const crew = await getCrewData(params.id);
+  const { id } = await params;
+  const crew = await getCrewData(id);
   
   // If no crew data, return 404
   if (!crew) {

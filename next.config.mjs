@@ -11,7 +11,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Temporarily ignore type checking while we fix all route types
+    // Temporarily ignore type checking while we work on a more comprehensive client component fix
     ignoreBuildErrors: true,
   },
   images: {

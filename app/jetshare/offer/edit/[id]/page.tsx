@@ -15,12 +15,12 @@ export default async function EditOfferPage({ params }: EditOfferPageProps) {
   
   if (!user) {
     // If not logged in, redirect to sign-in
-    redirect('/auth/signin?redirect=/jetshare/offer/edit/' + params.id);
+    redirect('/auth/signin?redirect=/jetshare/offer/edit/' + (await params).id);
   }
   
   try {
     // Get the offer details
-    const offer = await getJetShareOfferById(params.id);
+    const offer = await getJetShareOfferById((await params).id);
     
     // Ensure the user is the owner and the offer is editable (open)
     if (offer.user_id !== user.id) {
@@ -30,7 +30,7 @@ export default async function EditOfferPage({ params }: EditOfferPageProps) {
     
     if (offer.status !== 'open') {
       // If offer is not in open state, it cannot be edited
-      redirect(`/jetshare/offer/${params.id}?error=not-editable`);
+      redirect(`/jetshare/offer/${(await params).id}?error=not-editable`);
     }
     
     return (

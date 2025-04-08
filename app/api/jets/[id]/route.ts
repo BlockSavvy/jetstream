@@ -1,6 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { GetRouteHandler, PostRouteHandler, PatchRouteHandler, DeleteRouteHandler, PutRouteHandler, IdParam } from '@/lib/types/route-types';
 
 // Define interface for aircraft layout template
 interface AircraftLayout {
@@ -47,12 +48,13 @@ const AIRCRAFT_LAYOUTS: AircraftLayoutsMap = {
 };
 
 // Using the correct Next.js pattern for dynamic route parameters
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export const GET: GetRouteHandler<{ id: string }> = async (
+  request: NextRequest,
+  context: IdParam
+) => {
   try {
-    const jet_id = params.id;
+    const { id } = await context.params;
+const jet_id = id;
     
     // Initialize Supabase client
     const supabase = createServerComponentClient({ cookies });
@@ -149,4 +151,4 @@ export async function GET(
     console.error('Error processing request:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-} 
+};

@@ -15,7 +15,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
   
   if (!user) {
     // If not logged in, redirect to sign-in
-    redirect('/auth/signin?redirect=/jetshare/offer/' + params.id);
+    redirect('/auth/signin?redirect=/jetshare/offer/' + (await params).id);
   }
   
   try {
@@ -27,7 +27,7 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
         user:user_id (*),
         matched_user:matched_user_id (*)
       `)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single();
     
     if (offerError || !offer) {
@@ -52,13 +52,13 @@ export default async function OfferDetailPage({ params }: OfferDetailPageProps) 
     
     // If the offer is completed, redirect to the transaction page
     if (offer.status === 'completed') {
-      redirect(`/jetshare/transaction/${params.id}`);
+      redirect(`/jetshare/transaction/${(await params).id}`);
     }
     
     // If the offer is accepted, and the user is the matched user (not the creator),
     // redirect to the payment page
     if (offer.status === 'accepted' && isMatchedUser) {
-      redirect(`/jetshare/payment/${params.id}`);
+      redirect(`/jetshare/payment/${(await params).id}`);
     }
     
     return (

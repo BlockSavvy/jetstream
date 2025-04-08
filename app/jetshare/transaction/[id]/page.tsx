@@ -17,7 +17,7 @@ interface TransactionPageProps {
 
 export default async function TransactionPage({ params, searchParams }: TransactionPageProps) {
   // Wait for params to be available (fixes Next.js error)
-  const id = await Promise.resolve(params.id);
+  const id = await Promise.resolve((await params).id);
   
   if (!id) {
     return notFound();

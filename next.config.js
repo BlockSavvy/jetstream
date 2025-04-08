@@ -16,8 +16,8 @@ const nextConfig = {
   
   // Re-enable TypeScript checking now that we've fixed the route types
   typescript: {
-    // Temporarily ignore type checking while we fix all route types
-    ignoreBuildErrors: true,
+    // Re-enable type checking as we've fixed all route handler types
+    ignoreBuildErrors: false,
   },
   
   // Handle Node.js modules in browser
