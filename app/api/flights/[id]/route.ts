@@ -1,9 +1,15 @@
 import { createClient } from '@/lib/supabase-server';
 import { NextRequest, NextResponse } from 'next/server';
+import { GetRouteHandler, IdParam } from '@/lib/types/route-types';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export const GET: GetRouteHandler<{ id: string }> = async (
+  request: NextRequest,
+  context: IdParam
+) => {
   try {
-    const flightId = params.id;
+    // In Next.js 15, params is a Promise that needs to be awaited
+    const { id } = await context.params;
+    const flightId = id;
     
     if (!flightId) {
       return NextResponse.json(
@@ -104,4 +110,4 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       { status: 500 }
     );
   }
-} 
+}; 

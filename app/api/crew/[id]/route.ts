@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
+import { GetRouteHandler, PatchRouteHandler, DeleteRouteHandler, IdParam } from '@/lib/types/route-types';
 
 /**
  * GET route handler
  */
-export async function GET(
+export const GET: GetRouteHandler<{ id: string }> = async (
   request: NextRequest,
-  context: { params: { id: string } }
-) {
+  context: IdParam
+) => {
   try {
-    const id = context.params.id;
+    // In Next.js 15, params is a Promise that needs to be awaited
+    const { id } = await context.params;
     
     // Use the existing createClient function
     const supabase = await createClient();
@@ -41,17 +43,18 @@ export async function GET(
       error: error.message
     }, { status: 500 });
   }
-}
+};
 
 /**
  * PATCH route handler
  */
-export async function PATCH(
+export const PATCH: PatchRouteHandler<{ id: string }> = async (
   request: NextRequest,
-  context: { params: { id: string } }
-) {
+  context: IdParam
+) => {
   try {
-    const id = context.params.id;
+    // In Next.js 15, params is a Promise that needs to be awaited
+    const { id } = await context.params;
     
     // Use the existing createClient function
     const supabase = await createClient();
@@ -82,17 +85,18 @@ export async function PATCH(
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
+};
 
 /**
  * DELETE route handler
  */
-export async function DELETE(
+export const DELETE: DeleteRouteHandler<{ id: string }> = async (
   request: NextRequest,
-  context: { params: { id: string } }
-) {
+  context: IdParam
+) => {
   try {
-    const id = context.params.id;
+    // In Next.js 15, params is a Promise that needs to be awaited
+    const { id } = await context.params;
     
     // Use the existing createClient function
     const supabase = await createClient();
@@ -111,4 +115,4 @@ export async function DELETE(
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-} 
+}; 

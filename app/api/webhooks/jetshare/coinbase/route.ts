@@ -1,51 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Client } from 'coinbase-commerce-node';
-import Webhook from 'coinbase-commerce-node/lib/Webhook';
 import { createClient } from '@/lib/supabase-server';
-
-// Initialize Coinbase Commerce client if API key is present
-if (process.env.COINBASE_COMMERCE_API_KEY) {
-  Client.init(process.env.COINBASE_COMMERCE_API_KEY);
-}
+import { verifyCoinbaseWebhookSignature } from '@/lib/services/payment-api';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if Coinbase Commerce is properly initialized
-    if (!process.env.COINBASE_COMMERCE_API_KEY) {
-      console.error('Coinbase Commerce API key is not configured');
-      return NextResponse.json(
-        { error: 'Coinbase Commerce is not configured' },
-        { status: 500 }
-      );
-    }
-    
     // Get the signature from headers
     const signature = request.headers.get('x-cc-webhook-signature') || '';
     
     // Get the webhook secret
     const webhookSecret = process.env.COINBASE_COMMERCE_WEBHOOK_SECRET || '';
     
+    if (!webhookSecret) {
+      console.error('Coinbase webhook secret is not configured');
+      return NextResponse.json(
+        { error: 'Webhook not properly configured' },
+        { status: 500 }
+      );
+    }
+    
     // Get the request body as text
     const rawBody = await request.text();
     
-    let event;
-    
+    // Verify the webhook signature
     try {
-      // Verify the webhook signature
-      const webhook = new Webhook(webhookSecret);
+      const isValid = verifyCoinbaseWebhookSignature(rawBody, signature, webhookSecret);
       
-      if (!webhook.verify(rawBody, signature)) {
-        throw new Error('Invalid signature');
+      if (!isValid) {
+        console.error('Invalid webhook signature');
+        return NextResponse.json(
+          { error: 'Invalid signature' },
+          { status: 400 }
+        );
       }
-      
-      event = webhook.construct(rawBody);
     } catch (error) {
-      console.error('Webhook signature verification failed:', error);
+      console.error('Error verifying webhook signature:', error);
       return NextResponse.json(
         { error: 'Webhook signature verification failed' },
         { status: 400 }
       );
     }
+    
+    // Parse the event data
+    const event = JSON.parse(rawBody);
     
     const supabase = await createClient();
     

@@ -49,6 +49,33 @@ export type UserProfile = {
   } | null;
   pilot_license?: string;
   verified?: boolean;
+  notification_preferences?: {
+    email_marketing?: boolean;
+    sms_alerts?: boolean;
+    offer_notifications?: boolean;
+    travel_updates?: boolean;
+    email?: boolean;
+    push?: boolean;
+    sms?: boolean;
+    settings?: Record<string, {
+      email: boolean;
+      push: boolean;
+      sms: boolean;
+    }>;
+  };
+  privacy_settings?: {
+    profile_visibility?: 'public' | 'connections' | 'private';
+    travel_history_visibility?: 'public' | 'connections' | 'private';
+    connections_visibility?: 'public' | 'connections' | 'private';
+    allow_matching_suggestions?: boolean;
+    allow_profile_indexing?: boolean;
+    visibility_mode?: string;
+    show_profile?: boolean;
+    show_travel_history?: boolean;
+    show_upcoming_flights?: boolean;
+    show_company?: boolean;
+    show_social_links?: boolean;
+  };
 };
 
 /**
@@ -139,10 +166,13 @@ export function useUserProfile() {
       Object.keys(updates).forEach(key => {
         // Only include the key if it exists in the current profile or is a standard field
         // that we know should be in profiles (like first_name, last_name, etc.)
-        const standardFields = ['first_name', 'last_name', 'full_name', 'avatar_url', 
-                               'bio', 'phone_number', 'website', 'location', 
-                               'company', 'position', 'verification_status', 'profile_visibility'];
-                               
+        const standardFields = [
+          'first_name', 'last_name', 'full_name', 'avatar_url', 
+          'bio', 'phone_number', 'website', 'location', 
+          'company', 'position', 'verification_status', 'profile_visibility',
+          'notification_preferences', 'privacy_settings' // Add our new fields to the standardFields list
+        ];
+                             
         if (key in currentProfile || standardFields.includes(key)) {
           // @ts-ignore - we're being careful about the keys
           safeUpdates[key] = updates[key];

@@ -8,20 +8,25 @@ import { CohereEmbeddings } from '@langchain/cohere';
  */
 export async function GET(req: NextRequest) {
   try {
-    // Test Pinecone connection
-    const pinecone = getPineconeClient();
-    const indexName = process.env.PINECONE_INDEX || 'jetstream';
+    const indexName = process.env.PINECONE_INDEX_NAME || 'jetstream';
     
-    // List indexes to verify connection
+    // Get the Pinecone client
+    const pinecone = await getPineconeClient();
+    
+    // Correctly await the client, then call listIndexes
     const indexList = await pinecone.listIndexes();
-    console.log('Pinecone index list:', indexList);
     
-    // Get the test index
+    if (!indexList?.indexes?.length) {
+      return NextResponse.json({ 
+        error: 'No indexes found in Pinecone account' 
+      }, { status: 404 });
+    }
+    
+    // Correctly retrieve the index after awaiting the client
     const index = pinecone.index(indexName);
     
-    // Get index stats to verify it exists and is accessible
-    const indexStats = await index.describeIndexStats();
-    console.log('Index stats:', indexStats);
+    // Get stats about the index
+    const stats = await index.describeIndexStats();
     
     // Test Cohere embeddings
     let cohereEmbeddings: CohereEmbeddings;
@@ -40,7 +45,7 @@ export async function GET(req: NextRequest) {
         pineconeStatus: 'Success',
         cohereStatus: 'Error',
         pineconeIndices: indexList,
-        indexStats,
+        indexStats: stats,
         cohereError
       });
     }
@@ -64,7 +69,7 @@ export async function GET(req: NextRequest) {
         pineconeStatus: 'Connected but upsert failed',
         cohereStatus: 'Success',
         pineconeIndices: indexList,
-        indexStats,
+        indexStats: stats,
         embeddingLength: embeddings.length,
         upsertError
       });
@@ -82,7 +87,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         status: 'Success',
         pineconeIndices: indexList,
-        indexStats,
+        indexStats: stats,
         embeddingLength: embeddings.length,
         queryResult
       });
@@ -92,7 +97,7 @@ export async function GET(req: NextRequest) {
         pineconeStatus: 'Connected but query failed',
         cohereStatus: 'Success',
         pineconeIndices: indexList,
-        indexStats,
+        indexStats: stats,
         embeddingLength: embeddings.length,
         queryError
       });

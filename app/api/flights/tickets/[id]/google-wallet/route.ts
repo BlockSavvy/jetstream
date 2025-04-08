@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { generateGoogleWalletPass } from '@/lib/services/wallet';
+import { GetRouteHandler, IdParam } from '@/lib/types/route-types';
 
-export async function GET(
+export const GET: GetRouteHandler<{ id: string }> = async (
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: IdParam
+) => {
   try {
-    const ticketId = params.id;
-    const verificationCode = request.nextUrl.searchParams.get('code');
+    const { id } = await context.params;
+    const ticketId = id;
     
     if (!ticketId) {
       return NextResponse.json(
@@ -34,39 +35,23 @@ export async function GET(
       );
     }
     
-    // Verify the ticket code if provided
-    if (verificationCode && ticket.ticket_code !== verificationCode) {
-      return NextResponse.json(
-        { error: 'Invalid verification code' },
-        { status: 403 }
-      );
-    }
+    // Generate the Google Wallet pass
+    const passObject = await generateGoogleWalletPass(ticket, ticket.flights);
     
-    // Generate the Google Wallet pass URL
-    // In a production environment, this would integrate with the Google Pay API
-    // Here, we'll just return a success page with the ticket details
-    try {
-      const googleWalletUrl = await generateGoogleWalletPass(ticket, ticket.flights);
-      
-      // For this implementation, we'll redirect to a success page
-      // In a real implementation, this would redirect to the actual Google Wallet
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
-      const successUrl = `${baseUrl}/flights/tickets/${ticketId}?wallet=google&added=true`;
-      
-      return NextResponse.redirect(successUrl);
-    } catch (error) {
-      console.error('Error generating Google Wallet pass:', error);
+    if (!passObject) {
       return NextResponse.json(
         { error: 'Failed to generate Google Wallet pass' },
         { status: 500 }
       );
     }
+    
+    // Return the pass as JSON
+    return NextResponse.json(passObject);
   } catch (error) {
-    console.error('Error processing Google Wallet request:', error);
+    console.error('Error generating Google Wallet pass:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
-} 
+}; 

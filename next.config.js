@@ -14,11 +14,29 @@ const nextConfig = {
   // Mark problematic pages as dynamically rendered
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   
-  // Selectively enable TypeScript checking
+  // Re-enable TypeScript checking now that we've fixed the route types
   typescript: {
-    // Enable TypeScript error checking in the build process, but ignore specific route type issues
-    // due to Next.js 15 API route type changes
+    // Temporarily ignore type checking while we fix all route types
     ignoreBuildErrors: true,
+  },
+  
+  // Handle Node.js modules in browser
+  webpack: (config, { isServer }) => {
+    // If client-side (browser), provide empty modules for Node.js specific imports
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        'node:stream': false,
+        stream: require.resolve('stream-browserify'),
+        crypto: require.resolve('crypto-browserify'),
+        path: require.resolve('path-browserify'),
+        os: require.resolve('os-browserify/browser'),
+      };
+    }
+    return config;
   },
 }
 

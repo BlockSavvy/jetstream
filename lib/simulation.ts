@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server';
 import { v4 as uuidv4 } from 'uuid';
+import * as pineconeService from './services/pinecone-browser';
 
 // Define simulation types that match the database schema
 export type SimType = 'jetshare' | 'pulse' | 'marketplace';
@@ -89,6 +90,12 @@ export const runSimulation = async (config: SimConfig): Promise<SimResult> => {
   
   // Store the result in the database
   await storeSimulationResult(result, config);
+  
+  // Index the simulation in the vector database for semantic search
+  // Do this asynchronously so it doesn't block the response
+  indexSimulationInVectorDB(result).catch(error => {
+    console.error('Failed to index simulation in vector database:', error);
+  });
   
   return result;
 };
@@ -452,4 +459,75 @@ Destination: ${log.input_parameters?.destination || 'N/A'}
 AI Matching: ${log.ai_matching_enabled ? 'Enabled' : 'Disabled'}
 Summary: ${log.agent_instruction_summary || log.results_summary?.summaryText || 'No summary available'}
 `;
+}
+
+// Add function to prepare simulation for embedding
+/**
+ * Prepare a simulation record for embedding in Pinecone
+ * @param result - The simulation result to prepare for embedding
+ * @returns The properly structured record for embedding
+ */
+export async function prepareSimulationForEmbedding(result: SimResult): Promise<{
+  id: string;
+  embedInput: string;
+  metadata: Record<string, any>;
+}> {
+  try {
+    // Convert the simulation result to an embedding-friendly format
+    const embedInput = generateEmbeddingInput(result);
+
+    // Structure metadata for retrieval
+    const metadata = {
+      id: result.id,
+      type: 'simulation', 
+      sim_type: result.simulationType,
+      created_at: result.timestamp.toISOString(),
+      fill_rate: result.metrics.offerFillRate.toFixed(2),
+      success_rate: result.metrics.successPercentage.toString(),
+      virtual_users: result.parameters.virtualUsers.toString(),
+      ai_matching: result.parameters.useAIMatching ? 'enabled' : 'disabled',
+      summary: result.summaryText
+    };
+
+    return {
+      id: `simulation-${result.id}`,
+      embedInput,
+      metadata
+    };
+  } catch (error) {
+    console.error('Error preparing simulation for embedding:', error);
+    throw error;
+  }
+}
+
+/**
+ * Store a simulation in the vector database for semantic search
+ * This can be called after runSimulation to make results searchable
+ */
+export async function indexSimulationInVectorDB(result: SimResult): Promise<void> {
+  try {
+    // Import services dynamically to avoid circular dependencies
+    const embeddingService = await import('./services/embeddings');
+    
+    // Prepare the simulation for embedding
+    const { id, embedInput, metadata } = await prepareSimulationForEmbedding(result);
+    
+    // Generate the embedding vector
+    const vector = await embeddingService.encode(embedInput);
+    
+    // Create the record for Pinecone
+    const record = {
+      id,
+      embedding: vector,
+      metadata
+    };
+    
+    // Upsert the record to Pinecone
+    await pineconeService.upsertRecord(record);
+    
+    console.log(`Indexed simulation ${result.id} in vector database`);
+  } catch (error) {
+    console.error('Error indexing simulation in vector database:', error);
+    // Don't throw - we want the simulation to succeed even if embedding fails
+  }
 } 

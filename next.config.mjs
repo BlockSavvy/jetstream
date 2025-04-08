@@ -11,6 +11,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   typescript: {
+    // Temporarily ignore type checking while we fix all route types
     ignoreBuildErrors: true,
   },
   images: {
@@ -20,6 +21,25 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+  },
+  
+  // Handle Node.js modules in browser
+  webpack: (config, { isServer }) => {
+    // If client-side (browser), provide empty modules for Node.js specific imports
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        'node:stream': false,
+        stream: false,
+        crypto: false,
+        path: false,
+        os: false,
+      };
+    }
+    return config;
   },
 }
 

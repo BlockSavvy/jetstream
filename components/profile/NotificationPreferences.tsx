@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserProfile, UserProfile } from '@/hooks/useUserProfile';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -120,7 +120,7 @@ export default function NotificationPreferences() {
         notification_preferences: notificationPreferences,
       });
 
-      if (result.error) {
+      if (result?.error) {
         toast.error('Failed to update notification preferences. Please try again.');
         console.error('Error updating notification preferences:', result.error);
       } else {

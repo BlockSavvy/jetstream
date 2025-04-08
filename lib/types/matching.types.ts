@@ -17,6 +17,33 @@ export interface UserProfile {
   interests?: string[];
   travelPreferences?: UserPreferences;
   travelHistory?: TravelHistory[];
+  notification_preferences?: {
+    email_marketing?: boolean;
+    sms_alerts?: boolean;
+    offer_notifications?: boolean;
+    travel_updates?: boolean;
+    email?: boolean;
+    push?: boolean;
+    sms?: boolean;
+    settings?: Record<string, {
+      email: boolean;
+      push: boolean;
+      sms: boolean;
+    }>;
+  };
+  privacy_settings?: {
+    profile_visibility?: 'public' | 'connections' | 'private';
+    travel_history_visibility?: 'public' | 'connections' | 'private';
+    connections_visibility?: 'public' | 'connections' | 'private';
+    allow_matching_suggestions?: boolean;
+    allow_profile_indexing?: boolean;
+    visibility_mode?: string;
+    show_profile?: boolean;
+    show_travel_history?: boolean;
+    show_upcoming_flights?: boolean;
+    show_company?: boolean;
+    show_social_links?: boolean;
+  };
 }
 
 // User travel preferences

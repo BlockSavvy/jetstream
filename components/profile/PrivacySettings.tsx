@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserProfile, UserProfile } from '@/hooks/useUserProfile';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -58,7 +58,7 @@ export default function PrivacySettings() {
         privacy_settings: privacySettings,
       });
 
-      if (result.error) {
+      if (result?.error) {
         toast.error('Failed to update privacy settings. Please try again.');
         console.error('Error updating privacy settings:', result.error);
       } else {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { JetShareOfferWithUser } from '@/types/jetshare';
 import { Button } from '@/components/ui/button';
@@ -40,20 +40,13 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
   const formattedDate = format(new Date(offer.flight_date), 'MMMM d, yyyy');
 
   // Convert old split configuration to new seat configuration format
-  const seatConfiguration: SeatConfiguration | null = offer.split_configuration ? {
-    jetId: offer.split_configuration.jetId || offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet',
-    selectedSeats: [
-      ...(offer.split_configuration.allocatedSeats?.front || []), 
-      ...(offer.split_configuration.allocatedSeats?.left || [])
-    ],
-    totalSeats: offer.total_seats || 0,
-    totalSelected: (
-      (offer.split_configuration.allocatedSeats?.front?.length || 0) + 
-      (offer.split_configuration.allocatedSeats?.left?.length || 0)
-    ),
-    selectionPercentage: offer.split_configuration.splitPercentage || 
-      (offer.split_configuration.splitRatio ? 
-        parseInt(offer.split_configuration.splitRatio.split('/')[0]) : 50)
+  const seatConfig = offer.split_configuration ? {
+    jet_id: offer.split_configuration.jetId || offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet',
+    selectedSeats: offer.split_configuration.allocatedSeats ? 
+      (Object.values(offer.split_configuration.allocatedSeats).flat() as string[]) : [],
+    totalSeats: offer.total_seats || 8,
+    totalSelected: Object.values(offer.split_configuration.allocatedSeats || {}).flat().length,
+    selectionPercentage: offer.split_configuration.splitPercentage || 0
   } : null;
 
   const handleDeleteOffer = async () => {
@@ -93,6 +86,8 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
         return <Badge>{status}</Badge>;
     }
   };
+
+  const visualizerRef = useRef(null);
 
   return (
     <div>
@@ -325,10 +320,11 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
             </div>
             
             <div className="mt-4">
-              {seatConfiguration ? (
+              {seatConfig ? (
                 <JetSeatVisualizer 
-                  jetId={offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet'}
-                  initialSelection={seatConfiguration}
+                  ref={visualizerRef}
+                  jet_id={offer.aircraft_model?.toLowerCase().replace(/\s+/g, '-') || 'default-jet'}
+                  initialSelection={seatConfig || { selectedSeats: [] }}
                   readOnly={true}
                   showControls={false}
                   totalSeats={offer.total_seats}

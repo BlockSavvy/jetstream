@@ -1,40 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Client, resources } from 'coinbase-commerce-node';
+import { BookingFormData } from '@/app/flights/types';
 import { createClient } from '@/lib/supabase-server';
-
-// Initialize Coinbase Commerce client
-let coinbaseClient;
-// TypeScript needs a type for Charge
-let Charge: any;
-
-if (process.env.COINBASE_COMMERCE_API_KEY) {
-  coinbaseClient = Client.init(process.env.COINBASE_COMMERCE_API_KEY);
-  ({ Charge } = resources);
-}
+import { createCoinbaseCharge, CoinbaseChargeData } from '@/lib/services/payment-api';
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if Coinbase Commerce is initialized
-    if (!Charge) {
-      return NextResponse.json(
-        { error: 'Coinbase Commerce is not configured' },
-        { status: 500 }
-      );
-    }
-
-    const { flightId, userId, seatsBooked, totalPrice } = await request.json();
-
+    const data: BookingFormData = await request.json();
+    const { flightId, userId, seatsBooked, totalPrice } = data;
+    
     if (!flightId || !userId || !seatsBooked || !totalPrice) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Create a new charge with Coinbase Commerce
-    const chargeData = {
-      name: `Flight Booking (ID: ${flightId})`,
-      description: `Booking for ${seatsBooked} seat(s)`,
+    const supabase = await createClient();
+    
+    // Get flight details
+    const { data: flight, error: flightError } = await supabase
+      .from('flights')
+      .select('*, jets:jet_id(*)')
+      .eq('id', flightId)
+      .single();
+    
+    if (flightError || !flight) {
+      console.error('Error getting flight:', flightError);
+      return NextResponse.json({ error: 'Flight not found' }, { status: 404 });
+    }
+    
+    // Initialize Coinbase Commerce API
+    const apiKey = process.env.COINBASE_COMMERCE_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Coinbase API key not configured' }, { status: 500 });
+    }
+    
+    // Create a charge using our server-side API
+    const chargeData: CoinbaseChargeData = {
+      name: `JetStream Flight Booking: ${flight.origin_airport} to ${flight.destination_airport}`,
+      description: `${seatsBooked} seat(s) on ${flight.jets.manufacturer} ${flight.jets.model}`,
       local_price: {
         amount: totalPrice.toString(),
         currency: 'USD'
@@ -43,52 +44,47 @@ export async function POST(request: NextRequest) {
       metadata: {
         flightId,
         userId,
-        seatsBooked: seatsBooked.toString()
+        seatsBooked,
+        bookingType: 'flight'
       },
-      redirect_url: `${process.env.NEXT_PUBLIC_APP_URL}/flights/confirmation`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/flights`
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/flights/booking/confirm?flightId=${flightId}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/flights/${flightId}?cancelled=true`
     };
-
-    const charge = await Charge.create(chargeData);
-
-    // Store the charge in Supabase
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('payment_intents')
-      .insert([
-        {
-          id: charge.id,
-          user_id: userId,
-          flight_id: flightId,
-          amount: totalPrice,
-          currency: 'USD',
-          payment_method: 'coinbase',
-          status: 'created',
-          metadata: {
-            checkoutUrl: charge.hosted_url,
-            seatsBooked
-          }
-        }
-      ]);
-
-    if (error) {
-      console.error('Error storing Coinbase charge:', error);
-      // We continue because the charge is created in Coinbase
+    
+    // Call our API client instead of the Coinbase SDK
+    const chargeResponse = await createCoinbaseCharge(chargeData, apiKey);
+    
+    // Create a booking record
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert({
+        user_id: userId,
+        flight_id: flightId,
+        seats_booked: seatsBooked,
+        total_price: totalPrice,
+        payment_method: 'coinbase',
+        payment_status: 'pending',
+        payment_id: chargeResponse.data.id
+      })
+      .select()
+      .single();
+    
+    if (bookingError) {
+      console.error('Error creating booking:', bookingError);
+      return NextResponse.json({ error: 'Failed to create booking record' }, { status: 500 });
     }
-
+    
     return NextResponse.json({
-      success: true,
-      coinbaseCheckout: {
-        id: charge.id,
-        checkoutUrl: charge.hosted_url,
-        amount: totalPrice,
-        currency: 'USD'
-      }
+      id: chargeResponse.data.id,
+      checkoutUrl: chargeResponse.data.hosted_url,
+      amount: totalPrice,
+      currency: 'USD',
+      bookingId: booking.id
     });
-  } catch (error: any) {
-    console.error('Coinbase payment error:', error);
+  } catch (error) {
+    console.error('Error processing Coinbase payment:', error);
     return NextResponse.json(
-      { error: error.message || 'An unexpected error occurred' },
+      { error: 'Failed to process Coinbase payment' },
       { status: 500 }
     );
   }

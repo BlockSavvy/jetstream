@@ -123,7 +123,7 @@ export default function TrendingFlights() {
                 const formattedDepartureDate = format(departureDate, 'MMM d, yyyy');
                 
                 // Get event name (using destination city as fallback)
-                const eventName = `${flight.destination.city} Experience`;
+                const eventName = flight.destination?.city ? `${flight.destination.city} Experience` : 'Destination Experience';
                 
                 // Get jet image
                 const jetImage = getJetImage(flight.jets, 0);
@@ -164,7 +164,7 @@ export default function TrendingFlights() {
                           <h3 className="text-xl font-bold text-white truncate">{eventName}</h3>
                           <div className="flex items-center text-gray-300 text-sm">
                             <MapPin className="w-3.5 h-3.5 mr-1" />
-                            <span>{flight.destination.city}</span>
+                            <span>{flight.destination?.city || 'Unknown City'}</span>
                           </div>
                         </div>
                       </div>
