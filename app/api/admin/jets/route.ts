@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    // Initialize Supabase client with proper cookie handling
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({ cookies: () => cookieStore });
-    
-    // Check if the user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    // Initialize Supabase client using the server-side client with admin privileges
+    const supabase = await createClient();
     
     // Get all jets
     const { data: jets, error } = await supabase

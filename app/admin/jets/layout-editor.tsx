@@ -55,15 +55,25 @@ export default function JetLayoutEditor() {
   useEffect(() => {
     async function loadJets() {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/admin/jets');
+        
         if (!response.ok) {
+          if (response.status === 401) {
+            // Let the app's built-in auth system handle redirects for authentication
+            toast.error('Authentication required');
+            return;
+          }
           throw new Error('Failed to load jets');
         }
+        
         const data = await response.json();
         setJets(data.jets || []);
       } catch (error) {
         console.error('Error loading jets:', error);
         toast.error('Failed to load jets');
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -75,9 +85,15 @@ export default function JetLayoutEditor() {
     async function loadPresetLayouts() {
       try {
         const response = await fetch('/api/admin/jets/setLayout');
+        
         if (!response.ok) {
+          if (response.status === 401) {
+            // Let the app's built-in auth system handle redirects
+            return;
+          }
           throw new Error('Failed to load preset layouts');
         }
+        
         const data = await response.json();
         setPresetLayouts(data.presetLayouts || {});
       } catch (error) {
@@ -172,6 +188,13 @@ export default function JetLayoutEditor() {
       });
 
       if (!response.ok) {
+        // Handle 401 authentication errors using the app's built-in auth system
+        if (response.status === 401) {
+          toast.error('Authentication required');
+          setIsSaving(false);
+          return;
+        }
+        
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to save layout');
       }
@@ -203,7 +226,10 @@ export default function JetLayoutEditor() {
           <label className="text-sm font-medium">Select Jet</label>
           <Select
             value={selectedJetId}
-            onValueChange={setSelectedJetId}
+            onValueChange={(value) => {
+              // Handle state update in event handler, not during render
+              setSelectedJetId(value);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Choose a jet..." />
@@ -250,7 +276,12 @@ export default function JetLayoutEditor() {
                   <label className="text-sm font-medium">Layout Style</label>
                   <Select
                     value={selectedPresetCategory}
-                    onValueChange={setSelectedPresetCategory}
+                    onValueChange={(value) => {
+                      // Handle state update in event handler, not during render
+                      setSelectedPresetCategory(value);
+                      // Reset the layout selection when category changes
+                      setSelectedPresetLayout('');
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Choose layout style..." />
@@ -270,7 +301,10 @@ export default function JetLayoutEditor() {
                     <label className="text-sm font-medium">Seat Configuration</label>
                     <Select
                       value={selectedPresetLayout}
-                      onValueChange={setSelectedPresetLayout}
+                      onValueChange={(value) => {
+                        // Handle state update in event handler, not during render
+                        setSelectedPresetLayout(value);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Choose seat configuration..." />

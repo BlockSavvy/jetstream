@@ -1,31 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase-server';
 
 // Admin-only endpoint to set a custom seat layout for a jet
 export async function POST(request: NextRequest) {
   try {
-    // Initialize Supabase client with proper cookie handling
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({ cookies: () => cookieStore });
-    
-    // Check if the user is authenticated and has admin privileges
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-    
-    // Check if user is an admin (modify this according to your auth system)
-    const { data: isAdmin } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single();
-      
-    if (!isAdmin?.is_admin) {
-      return NextResponse.json({ error: 'Admin privileges required' }, { status: 403 });
-    }
+    // Initialize Supabase client with admin privileges
+    const supabase = await createClient();
     
     // Parse the request body
     const { jetId, layout } = await request.json();
@@ -87,7 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: 'Seat layout saved successfully',
-      data: result.data[0]
+      data: result.data?.[0] || null
     });
     
   } catch (error) {
@@ -102,16 +82,8 @@ export async function POST(request: NextRequest) {
 // Admin-only endpoint to get all available preset layouts
 export async function GET(request: NextRequest) {
   try {
-    // Initialize Supabase client with proper cookie handling
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({ cookies: () => cookieStore });
-    
-    // Check if the user is authenticated 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+    // Initialize Supabase client with admin privileges
+    const supabase = await createClient();
     
     // Return available preset layouts
     const presetLayouts = {
