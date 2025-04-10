@@ -70,8 +70,9 @@ export const GET: GetRouteHandler<{ id: string }> = async (
       });
     }
     
-    // Initialize Supabase client
-    const supabase = createServerComponentClient({ cookies });
+    // Initialize Supabase client with the correct cookie handling
+    const cookieStore = cookies();
+    const supabase = createServerComponentClient({ cookies: () => cookieStore });
     
     // Get jet data
     const { data: jet, error: jetError } = await supabase
@@ -104,16 +105,29 @@ export const GET: GetRouteHandler<{ id: string }> = async (
       // Continue without interior data
     }
     
-    // Get jet seat layout data
-    const { data: seatLayoutData, error: layoutError } = await supabase
-      .from('jet_seat_layouts')
-      .select('layout')
-      .eq('jet_id', jet_id)
-      .maybeSingle();
+    // Try to get jet seat layout data - but handle the case where table doesn't exist yet
+    let seatLayoutData = null;
+    let layoutError = null;
     
-    if (layoutError) {
-      console.error('Error fetching seat layout:', layoutError);
-      // Continue without seat layout data
+    try {
+      const result = await supabase
+        .from('jet_seat_layouts')
+        .select('layout')
+        .eq('jet_id', jet_id)
+        .maybeSingle();
+        
+      seatLayoutData = result.data;
+      layoutError = result.error;
+      
+      if (layoutError && layoutError.code === '42P01') {
+        console.log('Seat layout table does not exist yet, using default layout');
+        layoutError = null; // Clear the error since we'll handle it gracefully
+      } else if (layoutError) {
+        console.error('Error fetching seat layout:', layoutError);
+      }
+    } catch (err) {
+      console.error('Error in seat layout query:', err);
+      // Continue without layout data
     }
     
     // Create a default seat layout based on capacity if no custom layout exists
@@ -124,9 +138,10 @@ export const GET: GetRouteHandler<{ id: string }> = async (
       seatLayout = seatLayoutData.layout;
     } else {
       // Create a default layout based on capacity
-      const capacity = jet.capacity || (interior?.seats || 4);
+      const capacity = jet.capacity || (interior?.seats ? parseInt(interior.seats) : 4);
       let rows = 0;
       let seatsPerRow = 0;
+      let skipPositions: number[][] = [];
       
       // Calculate a reasonable layout
       if (capacity <= 4) {
@@ -135,24 +150,70 @@ export const GET: GetRouteHandler<{ id: string }> = async (
       } else if (capacity <= 8) {
         rows = 2;
         seatsPerRow = 4;
+        
+        // Handle non-standard counts (5, 6, 7)
+        const extraSeats = (rows * seatsPerRow) - capacity;
+        if (extraSeats > 0) {
+          // Skip seats from the last row, right to left
+          for (let i = 0; i < extraSeats; i++) {
+            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
+          }
+        }
       } else if (capacity <= 12) {
         rows = 3;
         seatsPerRow = 4;
+        
+        // Handle non-standard counts (9, 10, 11)
+        const extraSeats = (rows * seatsPerRow) - capacity;
+        if (extraSeats > 0) {
+          // Skip seats from the last row, right to left
+          for (let i = 0; i < extraSeats; i++) {
+            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
+          }
+        }
       } else if (capacity <= 16) {
         rows = 4;
         seatsPerRow = 4;
+        
+        // Handle non-standard counts (13, 14, 15)
+        const extraSeats = (rows * seatsPerRow) - capacity;
+        if (extraSeats > 0) {
+          // Skip seats from the last row, right to left
+          for (let i = 0; i < extraSeats; i++) {
+            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
+          }
+        }
       } else {
         rows = 5;
         seatsPerRow = 4;
+        
+        // Handle non-standard counts (17, 18, 19)
+        const extraSeats = (rows * seatsPerRow) - capacity;
+        if (extraSeats > 0) {
+          // Skip seats from the last row, right to left
+          for (let i = 0; i < extraSeats; i++) {
+            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
+          }
+        }
       }
       
+      // Create the layout object
       seatLayout = {
         rows,
         seatsPerRow,
         layoutType: 'standard',
         totalSeats: capacity,
-        skipPositions: []
+        seatMap: {
+          skipPositions: skipPositions
+        }
       };
+      
+      console.log(`Generated layout for ${capacity} seats:`, {
+        rows, 
+        seatsPerRow, 
+        skipPositions,
+        actualSeats: (rows * seatsPerRow) - skipPositions.length
+      });
     }
     
     // Return combined data

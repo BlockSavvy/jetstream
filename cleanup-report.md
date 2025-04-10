@@ -49,6 +49,9 @@ Moved the following SQL files to an organized archive structure:
 - restore-db-for-dashboard.sql
 - restore-database.js
 
+### Added New Migrations
+- Added jet_seat_layouts.sql migration to create the missing table for custom jet seat layouts
+
 ## 2. Fix Scripts
 Moved one-time data fix scripts to the archive:
 
@@ -86,10 +89,17 @@ Organized miscellaneous files into appropriate archive locations:
 
 ## 5. Bug Fixes
 
-### Fixed JetSeatVisualizer API Issue
+### Fixed JetSeatVisualizer API Issues
 - Modified `/app/api/jets/[id]/route.ts` to handle 'default' ID case specifically
-- Added proper handling for the 'default' case to avoid database querying with invalid UUID
-- Fixed NextRequest import to resolve TypeScript error
+- Fixed cookie handling to properly handle cookies as per Next.js requirements
+- Improved error handling for missing jet_seat_layouts table
+- Added jet_seat_layouts.sql migration to create the required table
+
+### Fixed Seat Visualizer Display Issues
+- Enhanced the layout calculation to properly handle non-standard seat counts
+- Added proper skipPositions calculation to ensure correct number of seats display
+- Now displays exactly the number of seats specified in the jet's capacity or interior.seats
+- Improved logging to help troubleshoot seat layout issues
 
 ## 6. Code Consolidation
 
@@ -113,4 +123,5 @@ Organized miscellaneous files into appropriate archive locations:
 - Continue identifying and consolidating any other duplicated code
 - Review and clean up unused dependencies in package.json
 - Standardize naming conventions across the codebase
-- Run linting and fix any style issues 
+- Run linting and fix any style issues
+- Create comprehensive documentation for both the main application and JetShare feature 
