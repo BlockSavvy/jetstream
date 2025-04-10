@@ -143,56 +143,42 @@ export const GET: GetRouteHandler<{ id: string }> = async (
       let seatsPerRow = 0;
       let skipPositions: number[][] = [];
       
-      // Calculate a reasonable layout
+      // Configure typical aircraft layout - prioritize 2 seats per row for most jets
       if (capacity <= 4) {
+        // For very small jets, 2 rows of 2 seats
         rows = 2;
         seatsPerRow = 2;
-      } else if (capacity <= 8) {
-        rows = 2;
-        seatsPerRow = 4;
-        
-        // Handle non-standard counts (5, 6, 7)
-        const extraSeats = (rows * seatsPerRow) - capacity;
-        if (extraSeats > 0) {
-          // Skip seats from the last row, right to left
-          for (let i = 0; i < extraSeats; i++) {
-            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
-          }
-        }
-      } else if (capacity <= 12) {
-        rows = 3;
-        seatsPerRow = 4;
-        
-        // Handle non-standard counts (9, 10, 11)
-        const extraSeats = (rows * seatsPerRow) - capacity;
-        if (extraSeats > 0) {
-          // Skip seats from the last row, right to left
-          for (let i = 0; i < extraSeats; i++) {
-            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
-          }
-        }
       } else if (capacity <= 16) {
-        rows = 4;
-        seatsPerRow = 4;
+        // For most private jets, use 2 seats per row
+        seatsPerRow = 2;
+        rows = Math.ceil(capacity / seatsPerRow);
         
-        // Handle non-standard counts (13, 14, 15)
-        const extraSeats = (rows * seatsPerRow) - capacity;
-        if (extraSeats > 0) {
-          // Skip seats from the last row, right to left
-          for (let i = 0; i < extraSeats; i++) {
-            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
+        // Handle odd number of seats by skipping the last position
+        if (capacity % 2 !== 0) {
+          skipPositions.push([rows - 1, 1]); // Skip last seat in last row
+        }
+      } else if (capacity <= 30) {
+        // For larger jets, use 3 seats per row
+        seatsPerRow = 3;
+        rows = Math.ceil(capacity / seatsPerRow);
+        
+        // Handle seats that don't fill the last row
+        const lastRowPositions = capacity % seatsPerRow;
+        if (lastRowPositions > 0) {
+          for (let i = lastRowPositions; i < seatsPerRow; i++) {
+            skipPositions.push([rows - 1, i]);
           }
         }
       } else {
-        rows = 5;
+        // For commercial aircraft, use 4 seats per row
         seatsPerRow = 4;
+        rows = Math.ceil(capacity / seatsPerRow);
         
-        // Handle non-standard counts (17, 18, 19)
-        const extraSeats = (rows * seatsPerRow) - capacity;
-        if (extraSeats > 0) {
-          // Skip seats from the last row, right to left
-          for (let i = 0; i < extraSeats; i++) {
-            skipPositions.push([rows - 1, seatsPerRow - 1 - i]);
+        // Handle seats that don't fill the last row
+        const lastRowPositions = capacity % seatsPerRow;
+        if (lastRowPositions > 0) {
+          for (let i = lastRowPositions; i < seatsPerRow; i++) {
+            skipPositions.push([rows - 1, i]);
           }
         }
       }
