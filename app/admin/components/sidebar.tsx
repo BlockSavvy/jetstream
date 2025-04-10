@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -13,7 +14,9 @@ import {
   BrainCircuit,
   Database,
   Braces,
-  Grid
+  Grid,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 
 // Define the type for navigation items
@@ -92,6 +95,17 @@ const navigationItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
+    // Start with Jets expanded by default
+    'Jets': true
+  });
+  
+  const toggleSubmenu = (name: string) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
+  };
   
   return (
     <div className="h-full flex flex-col py-4 overflow-y-auto">
@@ -103,24 +117,45 @@ export default function Sidebar() {
       
       <nav className="space-y-1 px-2 flex-1 overflow-y-auto">
         {navigationItems.map((item) => {
-          const isActive = item.href ? (pathname === item.href || pathname?.startsWith(`${item.href}/`)) : false;
+          const isActive = item.href 
+            ? (pathname === item.href || pathname?.startsWith(`${item.href}/`))
+            : item.submenu?.some(subitem => pathname === subitem.href || pathname?.startsWith(`${subitem.href}/`));
+          
           const hasSubmenu = item.submenu && item.submenu.length > 0;
+          const isExpanded = expandedMenus[item.name] || false;
           
           return (
             <div key={item.name} className="flex flex-col space-y-1">
               {/* Main menu item */}
               {item.isCategory ? (
-                <div
+                // Category header (toggleable)
+                <button
+                  onClick={() => toggleSubmenu(item.name)}
                   className={cn(
-                    'flex items-center px-3 py-2 text-sm font-medium rounded-md',
-                    'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/50',
+                    'flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md w-full text-left',
+                    isActive
+                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' 
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
                     'group'
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0 text-gray-500 dark:text-gray-400" />
-                  {item.name}
-                </div>
+                  <div className="flex items-center">
+                    <item.icon className={cn(
+                      'mr-3 h-5 w-5 flex-shrink-0',
+                      isActive 
+                        ? 'text-amber-500 dark:text-amber-400' 
+                        : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400'
+                    )} />
+                    {item.name}
+                  </div>
+                  {isExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
               ) : (
+                // Regular clickable link
                 <Link
                   href={item.href || '#'}
                   className={cn(
@@ -141,11 +176,11 @@ export default function Sidebar() {
                 </Link>
               )}
               
-              {/* Submenu items if any */}
-              {hasSubmenu && (
+              {/* Submenu items if any and expanded */}
+              {hasSubmenu && isExpanded && (
                 <div className="ml-8 pl-1 border-l border-gray-200 dark:border-gray-700 space-y-1">
                   {item.submenu!.map((subitem) => {
-                    const isSubActive = pathname === subitem.href;
+                    const isSubActive = pathname === subitem.href || pathname?.startsWith(`${subitem.href}/`);
                     
                     return (
                       <Link
@@ -154,8 +189,8 @@ export default function Sidebar() {
                         className={cn(
                           'flex items-center pl-2 py-2 text-sm font-medium rounded-md transition-colors',
                           isSubActive 
-                            ? 'text-amber-600 dark:text-amber-400' 
-                            : 'text-gray-600 hover:text-amber-600 dark:text-gray-400 dark:hover:text-amber-400',
+                            ? 'text-amber-600 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-900/20' 
+                            : 'text-gray-600 hover:text-amber-600 dark:text-gray-400 dark:hover:text-amber-400 hover:bg-gray-50 dark:hover:bg-gray-800/50',
                         )}
                       >
                         {subitem.icon && (
