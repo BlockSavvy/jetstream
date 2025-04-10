@@ -1,0 +1,43 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Jetshare/Introduction" />
+
+# Jetshare UI Components
+
+Jetshare is a mobile-first feature of the Jetstream platform that enables users to book and share private jet flights. This documentation covers the UI components specifically built for the Jetshare experience.
+
+## Mobile-First Design
+
+All Jetshare components are designed with a mobile-first approach, ensuring a seamless experience on smartphones and tablets, while still functioning well on desktop devices.
+
+## Key Components
+
+The Jetshare UI includes several specialized components:
+
+- **JetShareHeader**: Navigation and branding for the Jetshare experience
+- **JetShareOfferDetail**: Displays details of available jet sharing opportunities
+- **JetShareOfferForm**: Complex form for creating new jet share listings
+- **JetSeatVisualizer**: Interactive component for selecting seats on an aircraft
+- **LocationAutocomplete**: Search and select airports with autocomplete
+- **JetSharePaymentForm**: Secure payment processing for booking seats
+- **JetShareDashboard**: User dashboard for managing bookings and listings
+- **BoardingPass**: Digital boarding pass generation and display
+
+## Implementation Guidelines
+
+When implementing Jetshare components:
+
+1. **Responsiveness**: All components must adapt seamlessly across device sizes
+2. **Performance**: Components should load quickly, even on slower mobile connections
+3. **Accessibility**: Follow WCAG guidelines for mobile accessibility
+4. **Offline Support**: Where possible, components should gracefully handle intermittent connectivity
+
+## Design System Integration
+
+Jetshare components build upon the base Jetstream UI components but add mobile-optimized variations and Jetshare-specific styling.
+
+The design uses a simplified color palette optimized for mobile screens and incorporates larger touch targets for improved usability on touchscreens.
+
+## Testing on Mobile Devices
+
+All Jetshare components should be tested on multiple devices and in various network conditions. The Storybook mobile addon can be used to simulate different viewport sizes during development. 

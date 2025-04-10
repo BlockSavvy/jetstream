@@ -9,7 +9,8 @@ const config: StorybookConfig = {
   "stories": [
     "../stories/Introduction.mdx",
     "../stories/**/*.mdx",
-    "../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)"
+    "../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)",
+    "../app/jetshare/**/*.stories.@(js|jsx|mjs|ts|tsx)"
   ],
   "addons": [
     "@storybook/addon-essentials",
@@ -27,7 +28,20 @@ const config: StorybookConfig = {
     "../docs"
   ],
   "docs": {
-    "autodocs": "tag"
+    "autodocs": "tag",
+    "defaultName": "Documentation"
+  },
+  "typescript": {
+    "reactDocgen": "react-docgen-typescript",
+    "reactDocgenTypescriptOptions": {
+      "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true
+      },
+      "propFilter": {
+        "skipPropsWithoutDoc": false
+      }
+    }
   },
   "viteFinal": async (config) => {
     if (config.resolve) {
