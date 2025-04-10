@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { GetRouteHandler, PostRouteHandler, PatchRouteHandler, DeleteRouteHandler, PutRouteHandler, IdParam } from '@/lib/types/route-types';
 
 // Define interface for aircraft layout template
@@ -54,7 +54,21 @@ export const GET: GetRouteHandler<{ id: string }> = async (
 ) => {
   try {
     const { id } = await context.params;
-const jet_id = id;
+    const jet_id = id;
+    
+    // Special case: If "default" is requested, return the default layout
+    if (jet_id === 'default') {
+      return NextResponse.json({
+        jet: {
+          id: 'default',
+          model: 'Default Jet',
+          manufacturer: 'Generic',
+          capacity: 12
+        },
+        interior: null,
+        seatLayout: AIRCRAFT_LAYOUTS['default']
+      });
+    }
     
     // Initialize Supabase client
     const supabase = createServerComponentClient({ cookies });
