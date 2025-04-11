@@ -161,13 +161,14 @@ const TrendingFlightsError = () => {
   React.useEffect(() => {
     const originalFetch = window.fetch;
     
-    // Replace fetch with error version
-    window.fetch = () => Promise.resolve({
-      ok: false,
+    // Create a proper mock response for error case
+    const mockErrorResponse = new Response(null, {
       status: 500,
       statusText: 'Internal Server Error',
-      json: () => Promise.reject(new Error('Failed to fetch flights'))
-    } as Response);
+    });
+    
+    // Replace fetch with error version
+    window.fetch = () => Promise.resolve(mockErrorResponse);
     
     return () => {
       window.fetch = originalFetch;
@@ -182,7 +183,7 @@ const TrendingFlightsError = () => {
  * based on user preferences and trending destinations. It's a key part of the
  * Pulse AI matching system that showcases personalized flight recommendations.
  */
-const meta = {
+const meta: Meta<typeof TrendingFlights> = {
   title: 'Features/Pulse/TrendingFlights',
   parameters: {
     layout: 'centered',
@@ -224,7 +225,7 @@ The component integrates with the Pulse AI system to:
     }
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType) => (
       <div style={{ width: '1200px', maxWidth: '100%' }}>
         <Story />
       </div>
@@ -233,7 +234,7 @@ The component integrates with the Pulse AI system to:
 };
 
 export default meta;
-type Story = StoryObj;
+type Story = StoryObj<typeof TrendingFlights>;
 
 // Default story with mocked data
 export const Default: Story = {
