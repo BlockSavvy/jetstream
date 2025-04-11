@@ -1,49 +1,50 @@
-# Comprehensive Storybook & Docs Overhaul
+# Storybook Documentation for Real Components
 
 ## Overview
-
-This PR implements a complete Storybook documentation suite for the Jetstream application with special emphasis on the Jetshare mobile-first feature. The documentation provides interactive examples, usage guidelines, and best practices for UI components.
+This PR implements comprehensive Storybook documentation for the actual Jetstream components, especially focusing on the AI features. It provides a structured organization that helps designers and developers understand the component ecosystem.
 
 ## Changes
 
-### Storybook Setup
-- Installed and configured Storybook 8.6.12 with Next.js integration
-- Added essential addons (a11y, docs, actions, essentials)
-- Configured path aliases to support @/ imports
-- Added custom theming and documentation structure
+### Major Changes
+- Created Storybook documentation for real components instead of mock ones
+- Reorganized the story structure to reflect the actual application structure
+- Implemented proper state handling (loading, error, default) for components that fetch data
+- Added comprehensive documentation for each component
 
-### Component Documentation
-- Created detailed stories for core UI components (Button, Card, Alert, Accordion)
-- Created specialized stories for Jetshare components (JetSeatVisualizer, LocationAutocomplete)
-- Documented props, variants, and usage examples for all components
-- Implemented interactive examples with state management
+### Components Documented
+- **Pulse AI Components**
+  - TrendingFlights
+  - ExclusiveFlights
+  - PulseQuestionnaire
+  - PulseAlerts (planned)
+  - PulseHero (planned)
+  
+- **AI Concierge**
+  - AIConcierge
+  
+- **JetShare Mobile App** (planned)
+  - JetShareHeader
+  - JetShareOfferForm
+  - JetShareListingsContent
+  - And more...
 
-### Documentation Files
-- Created comprehensive Storybook-Readme.md with usage guidelines
-- Added Jetshare-Components.md with mobile-first documentation standards
-- Created Documentation-Overview.md with full documentation structure
-
-### Mobile-First Approach
-- Added special documentation for Jetshare's mobile components
-- Included responsive testing guidelines
-- Documented touch interaction patterns
+### Implementation Details
+- Used React's useEffect hook to mock API responses in stories
+- Created wrappers to handle different states of components
+- Added detailed documentation about component purpose and functionality
+- Implemented the same state management patterns used in the actual components
 
 ## Testing
-
-To test this PR:
-1. Run `npm run storybook` to start the Storybook server
-2. Open http://localhost:6006 in your browser
-3. Navigate through the component documentation
-4. Test interactive examples and responsive designs
-
-## Screenshots
-
-(Add screenshots when PR is ready)
+The Storybook has been tested locally to ensure all documented components render correctly and showcase their various states effectively.
 
 ## Next Steps
-- Add more component stories for remaining UI components
-- Implement visual regression testing
-- Set up continuous deployment for Storybook
+- Complete documentation for remaining Pulse AI components
+- Add JetShare mobile app components
+- Enhance integration between components in "recipe" stories
+- Add accessibility compliance documentation
+
+## Screenshots
+[TODO: Add screenshots of the Storybook UI]
 
 ## Related Issues
 - Addresses need for comprehensive component documentation
