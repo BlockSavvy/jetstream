@@ -1,43 +1,35 @@
 import React from 'react';
-import { fn } from '@storybook/test';
 
-// Ensure React is available globally
-if (typeof window !== 'undefined') {
-  window.React = React;
-}
-
-// Create a mock version of the AuthContext for Storybook stories
+// Mock authentication context
 const mockAuthContext = {
   user: { 
-    id: 'mocked-user-id', 
+    id: 'mock-user-id', 
     email: 'test@example.com',
     app_metadata: { provider: 'email' },
-    user_metadata: { name: 'Test User' }
+    user_metadata: { name: 'Mock User' }
   },
   session: { 
-    access_token: 'mocked-access-token',
-    refresh_token: 'mocked-refresh-token',
+    access_token: 'mock-token',
+    refresh_token: 'mock-refresh-token',
     expires_at: Date.now() + 3600000,
-    user: {
-      id: 'mocked-user-id', 
-      email: 'test@example.com',
-      app_metadata: { provider: 'email' },
-      user_metadata: { name: 'Test User' }
-    }
+    user: { id: 'mock-user-id' }
   },
   loading: false,
-  signUp: fn(),
-  signIn: fn(),
-  signOut: fn(),
-  resetPassword: fn(),
-  refreshSession: fn().mockResolvedValue(true),
+  signIn: () => Promise.resolve(),
+  signOut: () => Promise.resolve(),
+  signUp: () => Promise.resolve(),
+  resetPassword: () => Promise.resolve(),
+  refreshSession: () => Promise.resolve(),
   sessionError: null
 };
 
-// Mock AuthContext for components that use useAuth()
+// Create context
 const AuthContext = React.createContext(mockAuthContext);
 
-// Export a mock AuthProvider component
+// Export useAuth hook for components
+export const useAuth = () => React.useContext(AuthContext);
+
+// Auth provider component
 export const MockAuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={mockAuthContext}>
@@ -46,60 +38,34 @@ export const MockAuthProvider = ({ children }) => {
   );
 };
 
-// Decorator to wrap stories with MockAuthProvider
+// Decorator to wrap stories with auth provider
 export const withAuthProvider = (Story) => (
   <MockAuthProvider>
     <Story />
   </MockAuthProvider>
 );
 
-// Mock hook implementation
-export const useAuth = () => React.useContext(AuthContext);
-
-// Useful mock responses for different API endpoints
-export const mockApiResponses = {
-  jets: [
-    { id: 'jet1', name: 'Gulfstream G650', seats: 16, icon: '/images/jets/g650.svg' },
-    { id: 'jet2', name: 'Bombardier Global 7500', seats: 19, icon: '/images/jets/global7500.svg' },
-  ],
-  layouts: {
-    'jet1': { rows: 6, seatsPerRow: 4, layoutType: 'standard' },
-    'jet2': { rows: 5, seatsPerRow: 5, layoutType: 'luxury' }
-  }
+// Export mock utils
+export const utils = {
+  cn: (...classNames) => classNames.filter(Boolean).join(' '),
+  formatDate: (date) => date ? new Date(date).toLocaleDateString() : '',
+  formatCurrency: (amount) => `$${Number(amount).toFixed(2)}`
 };
 
-// Mock fetch for components that need API data
-export const withMockApiData = (Story, { parameters }) => {
-  // Save the original fetch
-  const originalFetch = window.fetch;
-
-  // Create a mock fetch
-  window.fetch = async (url, options) => {
-    console.log('[Storybook Mock API] Fetch request:', url);
-    
-    if (url.includes('/api/jets/')) {
-      const jetId = url.split('/').pop().split('?')[0];
-      return {
-        ok: true,
-        json: async () => ({ id: jetId, name: `Mock Jet ${jetId}`, seatLayout: mockApiResponses.layouts[jetId] || mockApiResponses.layouts['jet1'] })
-      };
-    }
-    
-    if (url.includes('/api/jets')) {
-      return {
-        ok: true,
-        json: async () => ({ jets: mockApiResponses.jets })
-      };
-    }
-    
-    // Add more mock endpoints as needed
-    
-    // Fall back to original fetch for other URLs
-    return originalFetch(url, options);
-  };
-  
-  return <Story />;
-};
-
-// Export all decorators
-export { React }; 
+// Export mock supabase
+export const supabase = {
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: mockAuthContext.session } }),
+    signInWithPassword: () => Promise.resolve({ data: { session: mockAuthContext.session } }),
+    signOut: () => Promise.resolve()
+  },
+  from: () => ({
+    select: () => ({
+      eq: () => ({
+        single: () => Promise.resolve({ data: {} })
+      })
+    }),
+    insert: () => Promise.resolve({ data: {} }),
+    update: () => Promise.resolve({ data: {} })
+  })
+}; 

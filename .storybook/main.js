@@ -1,21 +1,14 @@
 /** @type { import('@storybook/react-vite').StorybookConfig } */
 const config = {
-  stories: [
-    '../stories/Introduction.mdx',
-    '../stories/**/*.mdx',
-    '../stories/**/*.stories.@(js|jsx|ts|tsx)'
-  ],
-  addons: [
-    '@storybook/addon-essentials',
-    '@storybook/addon-a11y'
-  ],
+  stories: ['../stories/**/*.mdx', '../stories/**/*.stories.@(js|jsx|ts|tsx)'],
+  addons: ['@storybook/addon-essentials', '@storybook/addon-a11y'],
   framework: {
     name: '@storybook/react-vite',
     options: {}
   },
   staticDirs: ['../public'],
   features: {
-    storyStoreV7: true,
+    storyStoreV7: true
   },
   docs: {
     autodocs: true,
