@@ -1,3 +1,6 @@
+import '../app/globals.css';
+import { withAuthProvider } from './decorators.jsx';
+
 /** @type { import('@storybook/react').Preview } */
 const preview = {
   parameters: {
@@ -18,8 +21,21 @@ const preview = {
           'Components'
         ],
       },
-    }
+    },
+    // Improve accessibility checking
+    a11y: {
+      config: {
+        rules: [
+          {
+            // You can disable specific rules for certain scenarios
+          },
+        ],
+      },
+    },
   },
+  decorators: [
+    withAuthProvider,
+  ],
 };
 
 export default preview; 

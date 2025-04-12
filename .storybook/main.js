@@ -26,10 +26,6 @@ const config = {
     autodocs: true,
     defaultName: 'Documentation'
   },
-  // Explicitly exclude problematic files
-  refs: {
-    'design-system': false
-  },
   // This option helps prevent missing file errors
   core: {
     disableTelemetry: true,
