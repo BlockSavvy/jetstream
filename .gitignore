@@ -49,3 +49,4 @@ logs/
 .vscode/
 
 *storybook.log
+/storybook-static
