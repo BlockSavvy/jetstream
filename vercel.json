@@ -10,8 +10,6 @@
     "silent": true
   },
   "rewrites": [
-    { "source": "/storybook/(.*)", "destination": "/storybook-static/$1" }
-  ],
-  "outputFileTracing": true,
-  "publicDirectory": "storybook-static"
+    { "source": "/storybook/(.*)", "destination": "/storybook/$1" }
+  ]
 } 
