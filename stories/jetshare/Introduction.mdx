@@ -32,12 +32,118 @@ When implementing Jetshare components:
 3. **Accessibility**: Follow WCAG guidelines for mobile accessibility
 4. **Offline Support**: Where possible, components should gracefully handle intermittent connectivity
 
+## Comprehensive Responsive Design Guidelines
+
+### Viewport Considerations
+
+Jetshare components are designed to work across the following viewport sizes:
+
+- **Mobile Small**: 320px - 375px
+- **Mobile Large**: 376px - 639px
+- **Tablet**: 640px - 1023px
+- **Desktop**: 1024px and above
+
+### Responsive Design Techniques
+
+Our responsive approach uses these key techniques:
+
+1. **Fluid Layout Grids**:
+   - Mobile: Single column with 16px margin
+   - Tablet: Two-column with 24px margin
+   - Desktop: Multi-column with 32px+ margin
+
+2. **Touch Targets**:
+   - Minimum 44×44px for all interactive elements
+   - Increased spacing between interactive elements (minimum 8px)
+   - Larger hit areas for primary actions
+
+3. **Typography Scaling**:
+   ```css
+   /* Base mobile typography */
+   h1 { font-size: 1.5rem; line-height: 1.2; }
+   h2 { font-size: 1.25rem; line-height: 1.2; }
+   body { font-size: 1rem; line-height: 1.5; }
+   
+   /* Tablet and above */
+   @media (min-width: 640px) {
+     h1 { font-size: 2rem; }
+     h2 { font-size: 1.5rem; }
+   }
+   
+   /* Desktop */
+   @media (min-width: 1024px) {
+     h1 { font-size: 2.5rem; }
+     h2 { font-size: 1.75rem; }
+   }
+   ```
+
+4. **Progressive Enhancement**:
+   - Core functionality works on all devices
+   - Enhanced interactions on desktop (hover states, tooltips)
+   - Touch-optimized interactions on mobile
+
+### Component-Specific Responsive Patterns
+
+#### JetSeatVisualizer
+
+- Mobile: Zoomed view with panning gesture support
+- Tablet: Visible cabin with touch selection
+- Desktop: Full aircraft view with hover states
+
+#### JetShareOfferForm
+
+- Mobile: Single-field focus, progressive disclosure
+- Tablet: Grouped fields, side-by-side when appropriate
+- Desktop: Multi-column layout with contextual help
+
+#### LocationAutocomplete
+
+- Mobile: Full-screen search experience
+- Tablet/Desktop: Dropdown result list
+- All: Persistent recent searches
+
+### Testing Responsive Implementations
+
+To validate responsive behavior:
+
+1. **Device Testing Checklist**:
+   - iPhone SE (smallest common viewport)
+   - iPhone 12/13/14 (average mobile)
+   - iPad (tablet)
+   - Desktop monitor
+
+2. **Simulated Conditions**:
+   - Slow network connections (throttled to 3G)
+   - Touch input vs. mouse input
+   - Various pixel densities
+   - Portrait and landscape orientations
+
+3. **Testing Tools**:
+   - Storybook Viewports addon
+   - Chrome DevTools device simulation
+   - BrowserStack for real device testing
+
 ## Design System Integration
 
 Jetshare components build upon the base Jetstream UI components but add mobile-optimized variations and Jetshare-specific styling.
 
 The design uses a simplified color palette optimized for mobile screens and incorporates larger touch targets for improved usability on touchscreens.
 
-## Testing on Mobile Devices
+## Offline-First Approach
 
-All Jetshare components should be tested on multiple devices and in various network conditions. The Storybook mobile addon can be used to simulate different viewport sizes during development. 
+Jetshare components implement:
+
+1. **Data Persistence**: Local storage caching for important user data
+2. **Optimistic UI**: Update UI before network confirmation
+3. **Error Recovery**: Graceful retry mechanisms and clear offline indicators
+4. **Loading States**: Skeleton screens instead of spinners
+5. **Background Sync**: Queue operations when offline for later execution
+
+## Performance Benchmarks
+
+All Jetshare components must meet these performance metrics:
+
+- First meaningful paint < 1.5s on 3G connections
+- Time to interactive < 3s on average mobile devices
+- Total bundle size < 150KB (initial load)
+- Smooth scrolling (60fps) even during network operations 

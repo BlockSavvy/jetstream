@@ -47,9 +47,39 @@ const config: StorybookConfig = {
     if (config.resolve) {
       config.resolve.alias = {
         ...config.resolve.alias,
-        "@": join(process.cwd())
+        "@": join(process.cwd()),
+        // Handle lucide-react icon imports with backward compatibility
+        "lucide-react/dist/esm/icons": join(process.cwd(), "node_modules/lucide-react/dist/esm/icons"),
+        // Replace auth provider with our mock implementation
+        "@/components/auth-provider": join(process.cwd(), ".storybook/decorators.jsx")
       };
     }
+
+    // Add custom plugin to handle lucide-react imports
+    if (config.plugins) {
+      config.plugins.push({
+        name: 'lucide-icon-imports-transformer',
+        transform(code, id) {
+          // Transform specific import patterns only for relevant files
+          if (id.includes('.tsx') || id.includes('.jsx') || id.includes('.ts')) {
+            // Convert direct imports to namespace imports
+            const transformedCode = code.replace(
+              /import\s+(\w+)\s+from\s+['"]lucide-react\/dist\/esm\/icons\/(\w+)['"]/g,
+              'import { $2 as $1 } from "lucide-react"'
+            );
+            
+            if (transformedCode !== code) {
+              return {
+                code: transformedCode,
+                map: null
+              };
+            }
+          }
+          return null;
+        }
+      });
+    }
+    
     return config;
   }
 };

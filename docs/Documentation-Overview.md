@@ -118,4 +118,4 @@ Planned improvements to the documentation include:
 3. Implementing visual regression testing
 4. Creating a design token documentation section
 
-For additional help or questions, please contact the development team. 
+For additional help or questions, please contact the development team.

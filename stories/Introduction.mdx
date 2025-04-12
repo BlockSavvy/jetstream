@@ -15,6 +15,9 @@ Our components are organized into the following categories:
 - **Navigation Components**: Menus, navbars, and navigation controls
 - **Form Components**: Form controls and validation
 - **Feedback Components**: Notifications, alerts, and other user feedback
+- **Jetshare Mobile App**: Components specific to the Jetshare mobile experience
+- **Pulse AI Platform**: Components for our AI-powered flight recommendation system
+- **AI Concierge**: Conversational interface components for travel assistance
 
 ## Getting Started
 
@@ -32,6 +35,151 @@ Our components follow these core principles:
 3. **Responsiveness**: Components work across all device sizes
 4. **Modularity**: Components can be composed to create complex UIs
 5. **Performance**: Components are optimized for performance
+
+## Component Patterns and Best Practices
+
+### Component Structure
+
+All components should follow a consistent structure:
+
+```tsx
+// Import dependencies
+import React from 'react';
+import { classNames } from '../utils/classNames';
+
+// Define component props
+export interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+  disabled?: boolean;
+  onClick?: () => void;
+}
+
+// Component implementation
+export const Button: React.FC<ButtonProps> = ({
+  variant = 'primary',
+  size = 'md',
+  children,
+  disabled = false,
+  onClick,
+  ...props
+}) => {
+  // Component logic
+  
+  // Render component
+  return (
+    <button
+      className={classNames(
+        // Base styles
+        'rounded font-medium transition-colors focus:outline-none focus:ring-2',
+        // Variant styles
+        variant === 'primary' && 'bg-blue-600 text-white hover:bg-blue-700',
+        // Size styles
+        size === 'sm' && 'py-1 px-2 text-sm',
+        // Disabled styles
+        disabled && 'opacity-50 cursor-not-allowed'
+      )}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+```
+
+### State Management
+
+- Use React hooks for component state management
+- Consider composition over complex state when possible
+- Implement controlled components with optional uncontrolled fallbacks
+- For complex state, use a reducer pattern or context API
+
+### Accessibility Guidelines
+
+- All interactive elements must be keyboard accessible
+- Ensure proper focus management and tab order
+- Use appropriate ARIA attributes and roles
+- Test components with screen readers
+- Maintain contrast ratios of at least 4.5:1 for normal text
+
+### Performance Considerations
+
+- Memoize expensive calculations and renders
+- Optimize re-renders with `React.memo` when appropriate
+- Lazy load components that aren't immediately visible
+- Use virtualization for long lists
+
+## Testing with Storybook Stories
+
+Storybook stories serve as both documentation and tests. We use a "Story as Tests" approach to ensure components work as expected.
+
+### Writing Testable Stories
+
+1. **Cover all states**: Create stories for all component states (default, hover, active, loading, error, etc.)
+2. **Use controls**: Make key props adjustable via controls for interactive testing
+3. **Document edge cases**: Include stories for edge cases and boundary conditions
+4. **Test interactions**: Use play functions to test interactive behaviors
+
+### Running Tests
+
+We use several testing methods with our Storybook stories:
+
+1. **Visual regression testing**: We use Chromatic to detect visual changes
+2. **Accessibility testing**: The a11y addon checks for accessibility issues
+3. **Interaction testing**: Play functions test user interactions
+4. **Unit tests**: Jest tests verify component logic
+5. **End-to-end tests**: Cypress tests use components in context
+
+Example of a story with a play function for testing:
+
+```tsx
+export const SubmitForm: Story = {
+  args: {
+    initialValues: { name: '', email: '' },
+    onSubmit: action('form submitted'),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    
+    // Fill out the form
+    await userEvent.type(canvas.getByLabelText('Name'), 'John Doe');
+    await userEvent.type(canvas.getByLabelText('Email'), 'john@example.com');
+    
+    // Submit the form
+    await userEvent.click(canvas.getByRole('button', { name: /submit/i }));
+    
+    // Assert that onSubmit was called with correct values
+    await waitFor(() => {
+      expect(args.onSubmit).toHaveBeenCalledWith({
+        name: 'John Doe',
+        email: 'john@example.com'
+      });
+    });
+  }
+};
+```
+
+## User Personas
+
+Our components are designed with these key personas in mind:
+
+1. **Executive Traveler**: High-net-worth individuals who prioritize efficiency and luxury
+2. **Family Traveler**: Groups requiring special accommodations and simplified booking
+3. **Corporate Travel Manager**: Responsible for organizing and managing team travel
+4. **First-time Private Flyer**: Needs clear guidance and reassurance in the booking process
+
+## Responsive Design Guidelines
+
+Components are built following these responsive principles:
+
+- Mobile-first approach to styling and behavior
+- Fluid typography and spacing scales
+- Breakpoint-specific variants when needed
+- Touch-friendly targets on mobile (minimum 44×44px)
+- Testing across devices and viewports
 
 ## Contributing
 

@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react'
 import '../app/globals.css'
+import { withAuthProvider } from './decorators.jsx'
 
 const preview: Preview = {
   parameters: {
@@ -23,6 +24,9 @@ const preview: Preview = {
       },
     },
   },
+  decorators: [
+    withAuthProvider,
+  ],
 };
 
 export default preview;

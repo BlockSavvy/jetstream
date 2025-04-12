@@ -47,6 +47,142 @@ This section documents the UI components used in the AI Concierge system:
 4. **Action Confirmation**: UI for confirming user-requested actions
 5. **Handoff Interface**: Components for transitioning to human support
 
+## Component Usage Patterns
+
+### Chat Interface
+
+The Chat Interface is the primary method of interaction with the AI Concierge. It should be implemented following these patterns:
+
+```tsx
+// Basic implementation
+<AIConcierge
+  initialGreeting="How can I help with your travel plans today?"
+  userProfile={userProfileData}
+  suggestedActions={[
+    { label: "Book a flight", action: "BOOK_FLIGHT" },
+    { label: "Check status", action: "CHECK_STATUS" }
+  ]}
+  onActionSelected={(action) => handleAction(action)}
+/>
+```
+
+#### States to Handle:
+
+1. **Initial State**: Greeting with suggested actions
+2. **Conversation Active**: Continuous dialog exchange
+3. **Processing Request**: Loading state during backend operations
+4. **Response Ready**: Displaying AI responses
+5. **Error State**: Graceful handling of failures
+6. **Handoff State**: Transitioning to human support
+
+#### Best Practices:
+
+- Keep conversation history for context (limited to last 20 messages)
+- Always provide visual feedback during processing
+- Allow message correction or cancellation
+- Implement typing indicators for natural flow
+- Support message formatting and rich media
+
+### Suggestion Chips
+
+Suggestion chips offer quick, contextual actions that users can take without typing. They should:
+
+- Be context-aware and change based on conversation flow
+- Display no more than 5-6 chips at once
+- Have clear, concise labels (2-3 words max)
+- Be horizontally scrollable on mobile
+- Use consistent iconography for common actions
+
+### Response Cards
+
+Response cards display structured information like flight details, hotel options, or pricing summaries:
+
+```tsx
+<ResponseCard
+  type="flightOption"
+  data={flightData}
+  actions={[
+    { label: "Book", action: () => bookFlight(flightData.id) },
+    { label: "Save", action: () => saveFlight(flightData.id) }
+  ]}
+  expandable={true}
+/>
+```
+
+Cards should:
+- Present information in a scannable format
+- Include relevant imagery when appropriate
+- Offer direct actions related to the information
+- Group similar options for comparison
+- Support expanding for more details
+
+## Accessibility Guidelines
+
+The AI Concierge must be accessible to all users, including those with disabilities. Follow these guidelines to ensure inclusivity:
+
+### Keyboard Navigation
+
+- All interactive elements must be focusable with the keyboard
+- Use logical tab order that follows reading flow
+- Provide keyboard shortcuts for common actions (with proper documentation)
+- Implement focus management when new content appears
+- Ensure visible focus indicators meet WCAG 2.1 AA standards
+
+### Screen Reader Support
+
+- All UI elements must have appropriate ARIA roles, states, and properties
+- Messages should be announced as they arrive
+- Status updates should use `aria-live` regions
+- Non-text content must have text alternatives
+- Multi-step processes must provide clear progress indication
+
+### Voice Input Considerations
+
+Voice input functionality must:
+
+- Support pause detection for natural speech patterns
+- Provide visual feedback during recording
+- Offer transcription preview before sending
+- Allow easy correction of transcription errors
+- Work in noisy environments (filtering background noise)
+
+### Color and Contrast
+
+- All text must meet WCAG 2.1 AA contrast requirements (4.5:1 for normal text)
+- Do not rely solely on color to convey information
+- Provide high contrast mode support
+- Test with color vision deficiency simulators
+
+### Internationalization
+
+The AI Concierge supports multiple languages and should:
+
+- Handle right-to-left languages properly
+- Support voice recognition in multiple languages
+- Provide localized responses with appropriate cultural context
+- Respect regional formatting for dates, times, and currencies
+
+## User Testing and Feedback Loop
+
+The AI Concierge implementation includes a comprehensive testing framework:
+
+1. **Automated Testing**: Unit and integration tests for component behavior
+2. **Usability Testing**: Regular sessions with representative users
+3. **Accessibility Audits**: Automated and manual accessibility testing
+4. **Performance Monitoring**: Tracking response times and error rates
+5. **Feedback Collection**: In-conversation rating mechanism
+
+### Feedback Implementation
+
+```tsx
+<FeedbackCollector
+  conversationId={currentConversationId}
+  promptThreshold={5} // Ask after 5 exchanges
+  strategies={['emoji', 'followup']} // Collect both emoji ratings and specific feedback
+  onFeedbackReceived={(data) => processFeedback(data)}
+/>
+```
+
 ## Integration Points
 
 The AI Concierge integrates with:
@@ -56,3 +192,14 @@ The AI Concierge integrates with:
 - **Payment Processing**: For secure transactions
 - **Notification System**: For alerts and reminders
 - **Customer Support**: For seamless handoff to human agents when needed 
+
+## Metrics and Analytics
+
+Implementation should track these key metrics:
+
+- Task completion rate (% of user intents successfully fulfilled)
+- Average time to resolution
+- Handoff rate (% of conversations requiring human intervention)
+- User satisfaction scores
+- Conversation length (messages and time)
+- Feature usage frequency (which capabilities are most used) 
