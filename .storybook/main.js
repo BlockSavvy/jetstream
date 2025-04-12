@@ -1,8 +1,9 @@
 const config = {
   stories: [
-    '../stories/**/*.mdx',
-    '../stories/**/*.stories.@(js|jsx|ts|tsx)',
-    '../stories/features/**/*.stories.@(js|jsx|ts|tsx)'
+    '../stories/Introduction.mdx',
+    '../stories/components/**/*.stories.@(js|jsx|ts|tsx)',
+    '../stories/features/**/*.stories.@(js|jsx|ts|tsx)',
+    '../stories/jetshare/**/*.stories.@(js|jsx|ts|tsx)',
   ],
   addons: [
     '@storybook/addon-essentials',
@@ -24,6 +25,20 @@ const config = {
   docs: {
     autodocs: true,
     defaultName: 'Documentation'
+  },
+  // Explicitly exclude problematic files
+  refs: {
+    'design-system': false
+  },
+  // This option helps prevent missing file errors
+  core: {
+    disableTelemetry: true,
+    builder: {
+      name: '@storybook/builder-vite',
+      options: {
+        viteConfigPath: '.storybook/vite.config.js'
+      }
+    }
   }
 };
 
