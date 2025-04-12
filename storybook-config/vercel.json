@@ -2,5 +2,17 @@
   "buildCommand": "npm run build-storybook",
   "outputDirectory": "storybook-static",
   "installCommand": "npm install",
-  "framework": null
+  "framework": null,
+  "rewrites": [],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    }
+  ]
 } 

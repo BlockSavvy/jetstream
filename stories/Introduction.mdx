@@ -2,198 +2,30 @@ import { Meta } from '@storybook/blocks';
 
 <Meta title="Introduction" />
 
-# Welcome to Jetstream UI Components
+# Jetstream Storybook
 
-This Storybook contains a comprehensive collection of UI components used throughout the Jetstream application. Use this resource to explore, test, and learn how to implement our design system.
-
-## Component Categories
-
-Our components are organized into the following categories:
-
-- **UI Components**: Basic building blocks like buttons, cards, inputs
-- **Layout Components**: Components for structuring page layouts
-- **Navigation Components**: Menus, navbars, and navigation controls
-- **Form Components**: Form controls and validation
-- **Feedback Components**: Notifications, alerts, and other user feedback
-- **Jetshare Mobile App**: Components specific to the Jetshare mobile experience
-- **Pulse AI Platform**: Components for our AI-powered flight recommendation system
-- **AI Concierge**: Conversational interface components for travel assistance
+Welcome to the Jetstream Storybook, a comprehensive collection of components, patterns, and design documentation for the Jetstream platform.
 
 ## Getting Started
 
-1. Browse components using the sidebar navigation
-2. Interact with components using the controls panel
-3. View component code by clicking the "Show code" button
-4. Check accessibility with the Accessibility tab
+Explore the components using the sidebar navigation. Components are organized into the following categories:
 
-## Design Principles
+- **Core UI**: Basic UI elements like buttons, forms, and cards
+- **Features**: Complete features and larger components
+- **JetShare**: Components related to the JetShare application
+- **Components**: Reusable elements across the platform
 
-Our components follow these core principles:
+## Component Documentation
 
-1. **Consistency**: Components share common styles and behaviors
-2. **Accessibility**: All components meet WCAG 2.1 AA standards
-3. **Responsiveness**: Components work across all device sizes
-4. **Modularity**: Components can be composed to create complex UIs
-5. **Performance**: Components are optimized for performance
+Each component includes:
 
-## Component Patterns and Best Practices
+- **Overview**: Documentation and explanation
+- **Examples**: Interactive instances with configurable props
+- **Usage guidelines**: Best practices and implementation details
 
-### Component Structure
+## Using this Storybook
 
-All components should follow a consistent structure:
-
-```tsx
-// Import dependencies
-import React from 'react';
-import { classNames } from '../utils/classNames';
-
-// Define component props
-export interface ButtonProps {
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
-}
-
-// Component implementation
-export const Button: React.FC<ButtonProps> = ({
-  variant = 'primary',
-  size = 'md',
-  children,
-  disabled = false,
-  onClick,
-  ...props
-}) => {
-  // Component logic
-  
-  // Render component
-  return (
-    <button
-      className={classNames(
-        // Base styles
-        'rounded font-medium transition-colors focus:outline-none focus:ring-2',
-        // Variant styles
-        variant === 'primary' && 'bg-blue-600 text-white hover:bg-blue-700',
-        // Size styles
-        size === 'sm' && 'py-1 px-2 text-sm',
-        // Disabled styles
-        disabled && 'opacity-50 cursor-not-allowed'
-      )}
-      disabled={disabled}
-      onClick={disabled ? undefined : onClick}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-```
-
-### State Management
-
-- Use React hooks for component state management
-- Consider composition over complex state when possible
-- Implement controlled components with optional uncontrolled fallbacks
-- For complex state, use a reducer pattern or context API
-
-### Accessibility Guidelines
-
-- All interactive elements must be keyboard accessible
-- Ensure proper focus management and tab order
-- Use appropriate ARIA attributes and roles
-- Test components with screen readers
-- Maintain contrast ratios of at least 4.5:1 for normal text
-
-### Performance Considerations
-
-- Memoize expensive calculations and renders
-- Optimize re-renders with `React.memo` when appropriate
-- Lazy load components that aren't immediately visible
-- Use virtualization for long lists
-
-## Testing with Storybook Stories
-
-Storybook stories serve as both documentation and tests. We use a "Story as Tests" approach to ensure components work as expected.
-
-### Writing Testable Stories
-
-1. **Cover all states**: Create stories for all component states (default, hover, active, loading, error, etc.)
-2. **Use controls**: Make key props adjustable via controls for interactive testing
-3. **Document edge cases**: Include stories for edge cases and boundary conditions
-4. **Test interactions**: Use play functions to test interactive behaviors
-
-### Running Tests
-
-We use several testing methods with our Storybook stories:
-
-1. **Visual regression testing**: We use Chromatic to detect visual changes
-2. **Accessibility testing**: The a11y addon checks for accessibility issues
-3. **Interaction testing**: Play functions test user interactions
-4. **Unit tests**: Jest tests verify component logic
-5. **End-to-end tests**: Cypress tests use components in context
-
-Example of a story with a play function for testing:
-
-```tsx
-export const SubmitForm: Story = {
-  args: {
-    initialValues: { name: '', email: '' },
-    onSubmit: action('form submitted'),
-  },
-  play: async ({ canvasElement, args }) => {
-    const canvas = within(canvasElement);
-    
-    // Fill out the form
-    await userEvent.type(canvas.getByLabelText('Name'), 'John Doe');
-    await userEvent.type(canvas.getByLabelText('Email'), 'john@example.com');
-    
-    // Submit the form
-    await userEvent.click(canvas.getByRole('button', { name: /submit/i }));
-    
-    // Assert that onSubmit was called with correct values
-    await waitFor(() => {
-      expect(args.onSubmit).toHaveBeenCalledWith({
-        name: 'John Doe',
-        email: 'john@example.com'
-      });
-    });
-  }
-};
-```
-
-## User Personas
-
-Our components are designed with these key personas in mind:
-
-1. **Executive Traveler**: High-net-worth individuals who prioritize efficiency and luxury
-2. **Family Traveler**: Groups requiring special accommodations and simplified booking
-3. **Corporate Travel Manager**: Responsible for organizing and managing team travel
-4. **First-time Private Flyer**: Needs clear guidance and reassurance in the booking process
-
-## Responsive Design Guidelines
-
-Components are built following these responsive principles:
-
-- Mobile-first approach to styling and behavior
-- Fluid typography and spacing scales
-- Breakpoint-specific variants when needed
-- Touch-friendly targets on mobile (minimum 44×44px)
-- Testing across devices and viewports
-
-## Contributing
-
-To contribute new components or improve existing ones, please:
-
-1. Follow the component structure and naming conventions
-2. Ensure all components are properly documented
-3. Include examples of all component variants
-4. Test components for accessibility issues
-5. Review the [Component Guidelines](/docs/Storybook-Readme) before submitting
-
-## Resources
-
-- [Storybook Documentation](https://storybook.js.org/docs/react/get-started/introduction)
-- [Figma Design System](https://figma.com) (Internal link)
-- [Accessibility Guidelines](https://www.w3.org/WAI/ARIA/apg/)
-- [Component Documentation Guide](/docs/Storybook-Readme) 
+- **Navigation**: Use the sidebar to browse components
+- **Search**: Find components by name or functionality
+- **Controls**: Adjust component props to see different states
+- **Docs**: View detailed documentation for each component 
