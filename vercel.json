@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "next build && npm run build-storybook",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": ".next",
   "installCommand": "npm install --force",
   "framework": "nextjs",
@@ -9,24 +9,9 @@
   "github": {
     "silent": true
   },
-  "builds": [
-    { 
-      "src": "package.json", 
-      "use": "@vercel/next",
-      "config": { 
-        "outputDirectory": ".next"
-      }
-    },
-    {
-      "src": ".storybook/**",
-      "use": "@vercel/static",
-      "config": {
-        "distDir": "storybook-static"
-      }
-    }
+  "rewrites": [
+    { "source": "/storybook/(.*)", "destination": "/storybook-static/$1" }
   ],
-  "routes": [
-    { "src": "/storybook/(.*)", "dest": "/storybook-static/$1" },
-    { "src": "/(.*)", "dest": "/$1" }
-  ]
+  "outputFileTracing": true,
+  "publicDirectory": "storybook-static"
 } 

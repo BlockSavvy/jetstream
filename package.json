@@ -20,7 +20,8 @@
     "embeddings:worker:continuous": "tsx scripts/embedding-worker.ts --continuous",
     "embeddings:worker:production": "node scripts/embedding-worker.js --continuous --interval=600",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "vercel-build": "next build && npm run build-storybook && cp -r storybook-static public/storybook-static"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
