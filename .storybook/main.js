@@ -1,9 +1,9 @@
+/** @type { import('@storybook/react-vite').StorybookConfig } */
 const config = {
   stories: [
     '../stories/Introduction.mdx',
-    '../stories/components/**/*.stories.@(js|jsx|ts|tsx)',
-    '../stories/features/**/*.stories.@(js|jsx|ts|tsx)',
-    '../stories/jetshare/**/*.stories.@(js|jsx|ts|tsx)',
+    '../stories/**/*.mdx',
+    '../stories/**/*.stories.@(js|jsx|ts|tsx)'
   ],
   addons: [
     '@storybook/addon-essentials',
@@ -15,29 +15,27 @@ const config = {
   },
   staticDirs: ['../public'],
   features: {
-    // Skip the problematic features
     storyStoreV7: true,
-    buildStoriesJson: true,
-    // Disable Webpack 5 telemetry
-    warnOnLegacyHierarchySeparator: false
   },
-  // Skip the default Configure.mdx that's causing asset errors
   docs: {
     autodocs: true,
     defaultName: 'Documentation'
   },
-  // This option helps prevent missing file errors
   core: {
-    disableTelemetry: true,
-    builder: {
-      name: '@storybook/builder-vite',
-      options: {
-        viteConfigPath: '.storybook/vite.config.js'
-      }
-    }
+    disableTelemetry: true
   },
-  viteFinal: async (config) => {
-    // Add React shim to all components
+  async viteFinal(config) {
+    // Handle process.env
+    config.define = {
+      ...(config.define || {}),
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
+        NEXT_PUBLIC_SUPABASE_URL: JSON.stringify('https://example.supabase.co'),
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key')
+      },
+    };
+
+    // Make React available to component files
     config.optimizeDeps = config.optimizeDeps || {};
     config.optimizeDeps.include = [
       ...(config.optimizeDeps.include || []),
@@ -45,21 +43,8 @@ const config = {
       'react-dom',
     ];
     
-    // Define global variables
-    config.define = {
-      ...(config.define || {}),
-      'process.env': process.env,
-    };
-    
-    // Add alias to import React into all files
-    config.resolve = config.resolve || {};
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      'react': 'react',
-    };
-    
     return config;
-  }
+  },
 };
 
 export default config; 
