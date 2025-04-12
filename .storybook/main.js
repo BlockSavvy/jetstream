@@ -35,6 +35,30 @@ const config = {
         viteConfigPath: '.storybook/vite.config.js'
       }
     }
+  },
+  viteFinal: async (config) => {
+    // Add React shim to all components
+    config.optimizeDeps = config.optimizeDeps || {};
+    config.optimizeDeps.include = [
+      ...(config.optimizeDeps.include || []),
+      'react',
+      'react-dom',
+    ];
+    
+    // Define global variables
+    config.define = {
+      ...(config.define || {}),
+      'process.env': process.env,
+    };
+    
+    // Add alias to import React into all files
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      'react': 'react',
+    };
+    
+    return config;
   }
 };
 
