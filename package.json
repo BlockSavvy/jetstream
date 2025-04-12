@@ -21,7 +21,10 @@
     "embeddings:worker:production": "node scripts/embedding-worker.js --continuous --interval=600",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "vercel-build": "next build && npm run build-storybook && mkdir -p public/storybook && cp -r storybook-static/* public/storybook/"
+    "storybook-build-only": "rm -rf storybook-static && storybook build",
+    "clean-storybook": "rm -rf storybook-static node_modules/.cache/storybook",
+    "vercel-build": "npm run build-storybook",
+    "debug-storybook-build": "rm -rf storybook-static && storybook build && ls -la && find . -name 'storybook-static' -type d | xargs ls -la"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
@@ -115,7 +118,6 @@
     "@storybook/addon-onboarding": "^8.6.12",
     "@storybook/blocks": "^8.6.12",
     "@storybook/experimental-addon-test": "^8.6.12",
-    "@storybook/experimental-nextjs-vite": "^8.6.12",
     "@storybook/react": "^8.6.12",
     "@storybook/test": "^8.6.12",
     "@types/minimist": "^1.2.5",

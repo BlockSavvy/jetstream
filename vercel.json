@@ -1,15 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": ".next",
-  "installCommand": "npm install --force",
-  "framework": "nextjs",
-  "regions": ["iad1"],
+  "buildCommand": "npm run build-storybook",
+  "outputDirectory": "storybook-static",
+  "installCommand": "npm install --legacy-peer-deps",
   "cleanUrls": true,
   "github": {
     "silent": true
-  },
-  "rewrites": [
-    { "source": "/storybook/(.*)", "destination": "/storybook/$1" }
-  ]
+  }
 } 
