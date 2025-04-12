@@ -111,7 +111,7 @@ This questionnaire is the primary data source for the Pulse AI system, allowing 
     }
   },
   decorators: [
-    (Story) => (
+    (Story: React.ComponentType) => (
       <div style={{ width: '800px', maxWidth: '100%' }}>
         <MockAuthProvider>
           <Story />

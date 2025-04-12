@@ -152,13 +152,14 @@ const ExclusiveFlightsError = () => {
   React.useEffect(() => {
     const originalFetch = window.fetch;
     
-    // Replace fetch with error version
-    window.fetch = () => Promise.resolve({
-      ok: false,
+    // Create a proper mock response for error case
+    const mockErrorResponse = new Response(null, {
       status: 500,
       statusText: 'Internal Server Error',
-      json: () => Promise.reject(new Error('Failed to fetch flights'))
-    } as Response);
+    });
+    
+    // Replace fetch with error version
+    window.fetch = () => Promise.resolve(mockErrorResponse);
     
     return () => {
       window.fetch = originalFetch;
