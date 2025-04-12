@@ -1,15 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm run build-storybook",
-  "outputDirectory": "storybook-static",
-  "devCommand": "npm run storybook",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
   "installCommand": "npm install --force",
-  "framework": "other",
+  "framework": "nextjs",
   "regions": ["iad1"],
   "cleanUrls": true,
   "github": {
-    "silent": true,
-    "autoAlias": true
-  },
-  "rewrites": []
+    "silent": true
+  }
 } 
