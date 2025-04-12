@@ -4,7 +4,7 @@ import { join } from 'path';
 export default defineConfig({
   build: {
     rollupOptions: {
-      // Make sure to exclude problematic mdx files
+      // Make sure to exclude problematic mdx files and modules
       external: [
         'stories/Configure.mdx',
         './assets/github.svg',
@@ -21,8 +21,13 @@ export default defineConfig({
         './assets/accessibility.png',
         './assets/theming.png',
         './assets/addon-library.png',
+        'sb-original/image-context',
+        '@storybook/experimental-nextjs-vite',
       ],
     }
+  },
+  optimizeDeps: {
+    exclude: ['@storybook/experimental-nextjs-vite']
   },
   resolve: {
     alias: {
