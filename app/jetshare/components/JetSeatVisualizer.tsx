@@ -325,74 +325,136 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       });
     }, [readOnly, selectionMode]);
 
-    // Fetch layout data when jet_id changes
-    useEffect(() => {
-      const fetchLayoutData = async () => {
-        if (!jet_id) return;
+    /**
+     * Fetches seat layout data based on the jet_id
+     * Tries to get from custom layouts first, then falls back to jet interior data
+     */
+    const fetchLayoutData = useCallback(async () => {
+      if (!jet_id) {
+        debugLog('No jet ID provided');
+        return;
+      }
 
-        debugLog(`Fetching layout for jet ID: ${jet_id}`);
-        setIsLoading(true);
-        setError(null);
+      setIsLoading(true);
+      setError(null);
+      debugLog(`Fetching layout for jet ID: ${jet_id}`);
 
-        try {
-          // Call API to get jet layout data
-          const response = await fetch(`/api/jets/${jet_id}`);
+      try {
+        // First try to get custom layout from jet_seat_layouts table
+        const layoutResponse = await fetch(`/api/jetshare/seats/layout/${jet_id}`);
+        
+        // Check if we got a custom layout
+        if (layoutResponse.ok) {
+          const layoutData = await layoutResponse.json();
           
-          if (!response.ok) {
-            const errorMsg = `Failed to fetch jet layout data: ${response.status} ${response.statusText}`;
-            throw new Error(errorMsg);
+          if (layoutData && layoutData.layout) {
+            debugLog(`Found custom layout for jet ID: ${jet_id}`);
+            setLayout(layoutData.layout);
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // If no custom layout, fall back to jet data API
+        const response = await fetch(`/api/jets/${jet_id}?include_layout=true`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch jet layout data: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.seatLayout) {
+          // Use the provided seat layout
+          debugLog(`Using seat layout from jet data API`);
+          setLayout(data.seatLayout);
+        } else if (data && data.interior && data.interior.seats) {
+          // Derive a layout from the interior data
+          const seats = parseInt(data.interior.seats, 10);
+          const cabinConfig = data.interior.cabin_configuration || 'standard';
+          // Ensure layoutType is a valid type
+          const layoutType = (cabinConfig === 'luxury' || cabinConfig === 'custom') 
+            ? cabinConfig as 'luxury' | 'custom'
+            : 'standard';
+          
+          // Determine reasonable rows/columns based on total seats and layout type
+          let rows, seatsPerRow;
+          
+          if (layoutType === 'luxury') {
+            // Luxury layouts typically have fewer seats per row
+            seatsPerRow = 2;
+            rows = Math.ceil(seats / seatsPerRow);
+          } else {
+            // Standard layouts typically have 3-4 seats per row
+            seatsPerRow = seats <= 12 ? 3 : 4;
+            rows = Math.ceil(seats / seatsPerRow);
           }
           
-          const data = await response.json();
-          debugLog('Received jet layout data:', data);
-          
-          if (data.seatLayout) {
-            setLayout(data.seatLayout);
-            debugLog('Applied layout:', data.seatLayout);
-            
-            // Save skip positions if available
-            if (data.seatLayout.seatMap?.skipPositions) {
-              setSkipPositions(data.seatLayout.seatMap.skipPositions);
-              debugLog('Applied skip positions:', data.seatLayout.seatMap.skipPositions);
-            } else {
-              setSkipPositions([]);
+          const derivedLayout: SeatLayout = {
+            rows,
+            seatsPerRow,
+            layoutType,
+            totalSeats: seats,
+            seatMap: {
+              skipPositions: []
             }
-          }
-        } catch (err) {
-          console.error('Error fetching jet layout:', err);
-          setError('Failed to load jet configuration');
-          
-          // Call onError prop if provided
-          if (onError) {
-            onError(err instanceof Error ? err : String(err));
-          }
-          
-          // Keep using the default layout
-          // Create a fallback layout with the correct type
-          const fallbackLayout: SeatLayout = {
-            rows: 4,
-            seatsPerRow: 3,
-            layoutType: 'standard' as const,
-            totalSeats: totalSeats || 12
           };
           
-          setLayout(fallbackLayout);
-          debugLog('Using fallback layout:', fallbackLayout);
-        } finally {
-          setIsLoading(false);
+          debugLog(`Derived layout from interior data: ${JSON.stringify(derivedLayout)}`);
+          setLayout(derivedLayout);
+        } else if (data && data.jet && data.jet.capacity) {
+          // Last resort: derive from jet capacity
+          const seats = parseInt(data.jet.capacity, 10);
+          const layoutType: 'standard' = 'standard';
+          
+          // Standard configuration based on capacity
+          const seatsPerRow = seats <= 8 ? 2 : (seats <= 15 ? 3 : 4);
+          const rows = Math.ceil(seats / seatsPerRow);
+          
+          const derivedLayout: SeatLayout = {
+            rows,
+            seatsPerRow,
+            layoutType,
+            totalSeats: seats,
+            seatMap: {
+              skipPositions: []
+            }
+          };
+          
+          debugLog(`Derived layout from jet capacity: ${JSON.stringify(derivedLayout)}`);
+          setLayout(derivedLayout);
+        } else {
+          // If all else fails, use default layout
+          debugLog(`Using fallback layout: ${JSON.stringify(defaultLayout)}`);
+          setLayout(defaultLayout || {
+            rows: 4, 
+            seatsPerRow: 3, 
+            layoutType: 'standard',
+            seatMap: { skipPositions: [] }
+          });
         }
-      };
-
-      fetchLayoutData();
-      
-      // Expose fetchLayoutData for retrying
-      (window as any).fetchLayoutData = fetchLayoutData;
-      
-      return () => {
-        // Cleanup
-        delete (window as any).fetchLayoutData;
-      };
-    }, [jet_id, debugLog, onError, totalSeats]);
+      } catch (err) {
+        console.error('Error fetching jet layout:', err);
+        setError(err instanceof Error ? err.message : String(err));
+        debugLog(`Error fetching layout: ${err instanceof Error ? err.message : String(err)}`);
+        
+        // Use default layout as fallback
+        debugLog(`Using fallback layout: ${JSON.stringify(defaultLayout)}`);
+        setLayout(defaultLayout || {
+          rows: 4, 
+          seatsPerRow: 3, 
+          layoutType: 'standard',
+          seatMap: { skipPositions: [] }
+        });
+        
+        // Call onError callback if provided
+        if (onError) {
+          onError(err instanceof Error ? err : new Error(String(err)));
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }, [jet_id, defaultLayout, onError, debugLog]);
 
     // Update dimensions when layout changes or component mounts
     useEffect(() => {
@@ -488,119 +550,36 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       }
     }, [totalSeats, customLayout, forceExactLayout, debugLog]);
 
-    // Add a new method to fetch jet interior details
-    const fetchSeatLayout = useCallback(async () => {
+    // Fetch layout data when component mounts or jet_id changes
+    useEffect(() => {
+      // Skip if no jet_id is provided
       if (!jet_id) {
-        console.error('No jet ID provided');
+        setIsLoading(false);
         return;
       }
       
-      setIsLoading(true);
-      setError(null);
+      // Fetch the layout data
+      fetchLayoutData();
       
-      try {
-        // Fetch seat layout from API
-        const response = await fetch(`/api/jets/${jet_id}`);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch layout: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Store the jet data - now including interiors if available
-        setLayout(data.seatLayout || {
-          rows: 4,
-          seatsPerRow: 3,
-          layoutType: 'standard' as const,
-          totalSeats: 12
-        });
-        
-        // Try to fetch interior details if we have a proper UUID
-        if (jet_id && jet_id.includes('-') && jet_id.length > 10) {
-          try {
-            const interiorResponse = await fetch(`/api/jetshare/getJetInterior?jetId=${jet_id}`);
-            if (interiorResponse.ok) {
-              const interiorData = await interiorResponse.json();
-              if (interiorData && interiorData.interior) {
-                // Update layout with interior information
-                setLayout(prev => ({
-                  ...prev,
-                  interior: interiorData.interior
-                }));
-                
-                // If interior has seat count, use that
-                if (interiorData.interior.seats) {
-                  layout.totalSeats = parseInt(interiorData.interior.seats);
-                  
-                  // Try to create a better layout based on seat count
-                  if (layout.totalSeats <= 8) {
-                    layout.rows = 2;
-                    layout.seatsPerRow = 4;
-                  } else if (layout.totalSeats <= 12) {
-                    layout.rows = 3;
-                    layout.seatsPerRow = 4;
-                  } else if (layout.totalSeats <= 16) {
-                    layout.rows = 4;
-                    layout.seatsPerRow = 4;
-                  } else {
-                    layout.rows = 5;
-                    layout.seatsPerRow = 4;
-                  }
-                }
-              }
-            }
-          } catch (interiorError) {
-            console.warn('Error fetching jet interior:', interiorError);
-            // Continue with default layout - don't fail the whole component
-          }
-        }
-        
-        // Calculate grid dimensions based on layout
-        const baseGridWidth = layout.seatsPerRow * 60; // 60px per seat for better touch targets
-        const baseGridHeight = layout.rows * 60; // 60px per seat
-        
-        setGridDimensions({
-          width: baseGridWidth,
-          height: baseGridHeight,
-        });
-        
-        // Calculate seat size
-        setSeatSize(60);
-        
-        // If initial selection is provided, set it
-        if (initialSelection && initialSelection.selectedSeats) {
-          setSelectedSeats(initialSelection.selectedSeats);
-        }
-        
-        // Auto-open the visualizer if it should be open by default
-        setIsVisible(true);
-        
-        // Success!
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error fetching seat layout:', err);
-        setError(err instanceof Error ? err.message : String(err));
-        setIsLoading(false);
-        
-        if (onError) {
-          onError(err instanceof Error ? err : String(err));
-        }
-        
-        // Even on error, we set a default layout so the visualizer can still function
-        const defaultLayout: SeatLayout = {
-          rows: 4,
-          seatsPerRow: 3,
-          layoutType: 'standard' as const,
-          totalSeats: 12
-        };
-        
-        setLayout(defaultLayout);
-        setGridDimensions({ width: defaultLayout.seatsPerRow * 60, height: defaultLayout.rows * 60 });
-        setSeatSize(60);
-        setSelectedSeats([]);
+      // Store reference to layout fetch function for debugging
+      (window as any).retryFetchLayout = fetchLayoutData;
+      
+      // Cleanup function
+      return () => {
+        delete (window as any).retryFetchLayout;
+      };
+    }, [jet_id, fetchLayoutData]);
+
+    // Update skipPositions when layout changes
+    useEffect(() => {
+      if (layout && layout.seatMap && layout.seatMap.skipPositions) {
+        setSkipPositions(layout.seatMap.skipPositions);
+        debugLog('Updated skip positions from layout:', layout.seatMap.skipPositions);
+      } else {
+        setSkipPositions([]);
+        debugLog('No skip positions found in layout, using empty array');
       }
-    }, [jet_id, initialSelection, onError]);
+    }, [layout, debugLog]);
 
     if (!isVisible) return null;
 
@@ -683,7 +662,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         <StatusMessage 
           isLoading={isLoading} 
           error={error} 
-          onRetry={fetchSeatLayout} 
+          onRetry={fetchLayoutData} 
         />
 
         {!isLoading && !error && (
