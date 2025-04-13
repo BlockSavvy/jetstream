@@ -1,3 +1,5 @@
+const path = require('path');
+
 /** @type { import('@storybook/react-vite').StorybookConfig } */
 const config = {
   stories: ['../stories/**/*.mdx', '../stories/**/*.stories.@(js|jsx|ts|tsx)'],
@@ -18,24 +20,34 @@ const config = {
     disableTelemetry: true
   },
   async viteFinal(config) {
-    // Handle process.env
+    // Most important part: set up path aliases to match Next.js
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname, '../'),  // Map to project root
+    };
+
+    // Handle global variables like process.env
     config.define = {
-      ...(config.define || {}),
+      ...config.define,
       'process.env': {
         NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
         NEXT_PUBLIC_SUPABASE_URL: JSON.stringify('https://example.supabase.co'),
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key')
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key'),
       },
+      // Make React available globally
+      'React': 'React',
     };
 
-    // Make React available to component files
-    config.optimizeDeps = config.optimizeDeps || {};
-    config.optimizeDeps.include = [
-      ...(config.optimizeDeps.include || []),
-      'react',
-      'react-dom',
-    ];
-    
+    // Make Vite understand Next.js's "use client" directive
+    config.plugins.push({
+      name: 'use-client-directive-plugin',
+      transform(code, id) {
+        if (id.includes('.tsx') || id.includes('.jsx')) {
+          return code.replace(/['"]use client['"]\s*;?/, '');
+        }
+      },
+    });
+
     return config;
   },
 };
