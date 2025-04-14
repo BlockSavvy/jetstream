@@ -17,13 +17,6 @@ const config = {
     options: {}
   },
   staticDirs: ['../public'],
-  features: {
-    storyStoreV7: true
-  },
-  docs: {
-    autodocs: true,
-    defaultName: 'Documentation'
-  },
   core: {
     disableTelemetry: true
   },
@@ -44,20 +37,7 @@ const config = {
         NEXT_PUBLIC_SUPABASE_URL: JSON.stringify('https://example.supabase.co'),
         NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key'),
       },
-      // Don't make global = window to avoid conflicts with addon declarations
-      // global: 'window',
     };
-
-    // Fix for addon import errors
-    config.build = config.build || {};
-    config.build.rollupOptions = config.build.rollupOptions || {};
-    config.build.rollupOptions.external = [
-      '@storybook/window',
-      '@storybook/global',
-      ...(Array.isArray(config.build.rollupOptions.external) 
-          ? config.build.rollupOptions.external 
-          : [])
-    ];
 
     // Add React import to all files
     config.plugins = config.plugins || [];
@@ -77,15 +57,6 @@ const config = {
         }
       },
     });
-
-    // Ensure server can access all files
-    config.server = {
-      ...config.server,
-      fs: {
-        strict: false,
-        allow: ['..']
-      }
-    };
 
     return config;
   },
