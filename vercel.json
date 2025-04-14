@@ -2,6 +2,8 @@
   "version": 2,
   "buildCommand": "npm run build-storybook",
   "outputDirectory": "storybook-static",
+  "devCommand": "npm run storybook",
+  "framework": null,
   "installCommand": "npm install --legacy-peer-deps",
   "cleanUrls": true,
   "github": {
