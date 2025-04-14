@@ -44,15 +44,16 @@ const config = {
         NEXT_PUBLIC_SUPABASE_URL: JSON.stringify('https://example.supabase.co'),
         NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key'),
       },
-      // Make React available globally in all modules
-      global: 'window',
+      // Don't make global = window to avoid conflicts with addon declarations
+      // global: 'window',
     };
 
-    // Fix for @storybook/window import error in a11y addon
+    // Fix for addon import errors
     config.build = config.build || {};
     config.build.rollupOptions = config.build.rollupOptions || {};
     config.build.rollupOptions.external = [
       '@storybook/window',
+      '@storybook/global',
       ...(Array.isArray(config.build.rollupOptions.external) 
           ? config.build.rollupOptions.external 
           : [])
