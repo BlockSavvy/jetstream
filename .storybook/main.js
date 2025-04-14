@@ -2,7 +2,15 @@ const path = require('path');
 
 /** @type { import('@storybook/react-vite').StorybookConfig } */
 const config = {
-  stories: ['../stories/**/*.mdx', '../stories/**/*.stories.@(js|jsx|ts|tsx)'],
+  stories: [
+    '../stories/Introduction.mdx',
+    '../stories/jetstream/**/*.mdx',
+    '../stories/jetstream/**/*.stories.@(js|jsx|ts|tsx)',
+    '../stories/jetshare/**/*.mdx',
+    '../stories/jetshare/**/*.stories.@(js|jsx|ts|tsx)',
+    '../stories/ui/**/*.mdx',
+    '../stories/ui/**/*.stories.@(js|jsx|ts|tsx)'
+  ],
   addons: ['@storybook/addon-essentials', '@storybook/addon-a11y'],
   framework: {
     name: '@storybook/react-vite',
@@ -20,10 +28,12 @@ const config = {
     disableTelemetry: true
   },
   async viteFinal(config) {
-    // Most important part: set up path aliases to match Next.js
+    // Set up path aliases to match Next.js
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': path.resolve(__dirname, '../'),  // Map to project root
+      '@': path.resolve(__dirname, '../'),
+      'react': path.resolve(__dirname, '../node_modules/react'),
+      'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
     };
 
     // Handle global variables like process.env
@@ -34,19 +44,37 @@ const config = {
         NEXT_PUBLIC_SUPABASE_URL: JSON.stringify('https://example.supabase.co'),
         NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key'),
       },
-      // Make React available globally
-      'React': 'React',
+      // Make React available globally in all modules
+      global: 'window',
     };
 
-    // Make Vite understand Next.js's "use client" directive
+    // Add React import to all files
+    config.plugins = config.plugins || [];
     config.plugins.push({
-      name: 'use-client-directive-plugin',
+      name: 'add-react-import',
       transform(code, id) {
-        if (id.includes('.tsx') || id.includes('.jsx')) {
-          return code.replace(/['"]use client['"]\s*;?/, '');
+        if (id.includes('.tsx') || id.includes('.jsx') || id.includes('.ts')) {
+          // Replace 'use client' directive
+          let modifiedCode = code.replace(/['"]use client['"]\s*;?/, '');
+          
+          // Add React import if not present
+          if (!modifiedCode.includes('import React') && !modifiedCode.includes('import * as React')) {
+            modifiedCode = `import React from 'react';\n${modifiedCode}`;
+          }
+          
+          return modifiedCode;
         }
       },
     });
+
+    // Ensure server can access all files
+    config.server = {
+      ...config.server,
+      fs: {
+        strict: false,
+        allow: ['..']
+      }
+    };
 
     return config;
   },

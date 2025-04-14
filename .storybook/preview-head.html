@@ -1,8 +1,16 @@
 <script>
+  // Initialize globals before any component code runs
   window.global = window;
-  window.process = window.process || { env: {} };
+  window.process = window.process || {};
   window.process.env = window.process.env || {};
   window.process.env.NODE_ENV = 'development';
-  window.process.env.NEXT_PUBLIC_SUPABASE_URL = 'mocked-url';
-  window.process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mocked-key';
+  window.process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
+  window.process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mock-key';
+  
+  // Error handler to provide more useful feedback
+  window.addEventListener('error', function(event) {
+    console.warn('Storybook Error in:', event.filename);
+    console.warn('Line:', event.lineno, 'Column:', event.colno);
+    console.warn('Message:', event.message);
+  });
 </script> 

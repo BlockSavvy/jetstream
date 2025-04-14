@@ -1,14 +1,84 @@
 import { Meta } from '@storybook/blocks';
 
-<Meta title="Jetshare/Introduction" />
+<Meta title="JetShare/Introduction" />
+
+# JetShare Mobile App
+
+JetShare is a mobile-first application for peer-to-peer jet cost sharing, allowing users to offset the cost of private aviation by sharing flights with other passengers. As our primary launch focus, JetShare delivers a premium experience while making private aviation more accessible.
+
+## Mobile-First Design
+
+All JetShare components are designed with a mobile-first approach, ensuring a seamless experience on smartphones and tablets, while still functioning well on desktop devices.
+
+## Connection to Jetstream Platform
+
+JetShare leverages the core AI capabilities of the Jetstream platform, including:
+
+- **Vector-Based Matching** - Finding optimal flight sharing opportunities
+- **AI Agent Integration** - Context-aware assistance for booking and flight management
+- **Personalization Engine** - Creating tailored experiences for each user
+
+## Key Components
+
+The JetShare UI includes several specialized components:
+
+- **JetShareHeader**: Navigation and branding for the JetShare experience
+- **JetShareOfferDetail**: Displays details of available jet sharing opportunities
+- **JetShareOfferForm**: Complex form for creating new jet share listings
+- **JetSeatVisualizer**: Interactive component for selecting seats on an aircraft
+- **LocationAutocomplete**: Search and select airports with autocomplete
+- **JetSharePaymentForm**: Secure payment processing for booking seats
+- **JetShareDashboard**: User dashboard for managing bookings and listings
+- **BoardingPass**: Digital boarding pass generation and display
+
+## User Journey
+
+JetShare enables a seamless experience from discovery to boarding:
+
+1. Users browse available jet sharing opportunities
+2. They select a flight and choose their seat
+3. Payment is processed for their share of the flight
+4. Digital boarding passes are generated
+5. Users board and enjoy their premium flight experience
+
+## Responsive Design Guidelines
+
+### Viewport Considerations
+
+JetShare components are designed to work across the following viewport sizes:
+
+- **Mobile Small**: 320px - 375px
+- **Mobile Large**: 376px - 639px
+- **Tablet**: 640px - 1023px
+- **Desktop**: 1024px and above
+
+### Component-Specific Responsive Patterns
+
+#### JetSeatVisualizer
+
+- Mobile: Zoomed view with panning gesture support
+- Tablet: Visible cabin with touch selection
+- Desktop: Full aircraft view with hover states
+
+#### JetShareOfferForm
+
+- Mobile: Single-field focus, progressive disclosure
+- Tablet: Grouped fields, side-by-side when appropriate
+- Desktop: Multi-column layout with contextual help
+
+#### LocationAutocomplete
+
+- Mobile: Full-screen search experience
+- Tablet/Desktop: Dropdown result list
+- All: Persistent recent searches
+
+## Implementation Status
+
+All components are fully documented with comprehensive stories showcasing their functionality, states, and integration points across mobile viewports.
 
 # Jetshare UI Components
 
 Jetshare is a mobile-first feature of the Jetstream platform that enables users to book and share private jet flights. This documentation covers the UI components specifically built for the Jetshare experience.
-
-## Mobile-First Design
-
-All Jetshare components are designed with a mobile-first approach, ensuring a seamless experience on smartphones and tablets, while still functioning well on desktop devices.
 
 ## Key Components
 
@@ -81,26 +151,6 @@ Our responsive approach uses these key techniques:
    - Core functionality works on all devices
    - Enhanced interactions on desktop (hover states, tooltips)
    - Touch-optimized interactions on mobile
-
-### Component-Specific Responsive Patterns
-
-#### JetSeatVisualizer
-
-- Mobile: Zoomed view with panning gesture support
-- Tablet: Visible cabin with touch selection
-- Desktop: Full aircraft view with hover states
-
-#### JetShareOfferForm
-
-- Mobile: Single-field focus, progressive disclosure
-- Tablet: Grouped fields, side-by-side when appropriate
-- Desktop: Multi-column layout with contextual help
-
-#### LocationAutocomplete
-
-- Mobile: Full-screen search experience
-- Tablet/Desktop: Dropdown result list
-- All: Persistent recent searches
 
 ### Testing Responsive Implementations
 

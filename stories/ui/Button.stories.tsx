@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '../../../components/ui/button';
+import { Button } from '@/components/ui/button';
 
 /**
  * Button component that can be used to trigger actions or navigate between pages.

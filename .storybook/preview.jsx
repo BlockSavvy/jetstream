@@ -1,29 +1,49 @@
 import React from 'react';
 import '../app/globals.css';
 
-// Make React available globally (for components that don't explicitly import it)
-window.React = React;
+// Add global React reference - needs to be available before any component modules are loaded
+if (typeof window !== 'undefined') {
+  window.React = React;
+  window.global = window;
+}
 
-// Simple mock of auth context for components that need it
+// Basic mock auth context
+const mockUser = { id: 'mock-user', email: 'user@example.com' };
+const mockSession = { access_token: 'mock-token', user: mockUser };
+
 const AuthContext = React.createContext({
-  user: { id: 'mock-user', email: 'user@example.com' },
-  session: { access_token: 'mock-token' },
+  user: mockUser,
+  session: mockSession,
   loading: false,
-  signIn: () => {},
-  signOut: () => {},
+  signIn: () => Promise.resolve({ data: { user: mockUser, session: mockSession } }),
+  signOut: () => Promise.resolve(),
 });
 
-// Export for components that import it
+// Export for components that need it
 export const useAuth = () => React.useContext(AuthContext);
 
-// Mock auth provider component
+// Export mock supabase
+export const supabase = {
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: mockSession } }),
+    signInWithPassword: () => Promise.resolve({ data: { user: mockUser, session: mockSession } })
+  }
+};
+
+// Wrapper component
 const MockAuthProvider = ({ children }) => (
-  <AuthContext.Provider value={AuthContext._currentValue}>
+  <AuthContext.Provider value={AuthContext._currentValue || {
+    user: mockUser,
+    session: mockSession,
+    loading: false,
+    signIn: () => Promise.resolve(),
+    signOut: () => Promise.resolve(),
+  }}>
     {children}
   </AuthContext.Provider>
 );
 
-// Add global configuration for stories
+// Global Storybook parameters
 export const parameters = {
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
@@ -34,9 +54,8 @@ export const parameters = {
   },
 };
 
-// Add global decorators
+// Global decorators
 export const decorators = [
-  // Wrap all stories with auth context
   (Story) => (
     <MockAuthProvider>
       <div style={{ padding: '1rem' }}>
