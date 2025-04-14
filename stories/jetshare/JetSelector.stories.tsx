@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import JetSelector from '../../../app/jetshare/components/JetSelector';
+import JetSelector from '@/app/jetshare/components/JetSelector';
 import { action } from '@storybook/addon-actions';
 
 /**

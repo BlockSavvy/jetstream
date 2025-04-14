@@ -1,6 +1,6 @@
 import React from 'react';
-import { Meta, StoryObj } from '@storybook/react';
-import AIConcierge from '../../../app/components/voice/AIConcierge';
+import type { Meta, StoryObj } from '@storybook/react';
+import AIConcierge from '@/app/components/voice/AIConcierge';
 
 /**
  * The AIConcierge component is the central AI-powered conversational interface for the Jetstream platform.

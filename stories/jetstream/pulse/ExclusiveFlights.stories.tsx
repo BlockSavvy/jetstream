@@ -1,6 +1,6 @@
 import React from 'react';
-import { Meta, StoryObj } from '@storybook/react';
-import ExclusiveFlights from '../../../app/pulse/components/ExclusiveFlights';
+import type { Meta, StoryObj } from '@storybook/react';
+import ExclusiveFlights from '@/app/pulse/components/ExclusiveFlights';
 
 // This is a simple wrapper to mock the fetch API
 const ExclusiveFlightsWithMockedAPI = () => {

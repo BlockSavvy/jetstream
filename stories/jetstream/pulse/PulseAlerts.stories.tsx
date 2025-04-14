@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import PulseAlerts from '../../../app/pulse/components/PulseAlerts';
+import PulseAlerts from '@/app/pulse/components/PulseAlerts';
 
 /**
  * The PulseAlerts component allows users to subscribe to notifications

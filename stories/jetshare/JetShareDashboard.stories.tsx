@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import JetShareDashboard from '../../../app/jetshare/components/JetShareDashboard';
+import JetShareDashboard from '@/app/jetshare/components/JetShareDashboard';
 import { action } from '@storybook/addon-actions';
 
 /**

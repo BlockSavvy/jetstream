@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import PulseHero from '../../../app/pulse/components/PulseHero';
+import PulseHero from '@/app/pulse/components/PulseHero';
 
 /**
  * The PulseHero component serves as the main hero section for the Pulse AI feature.

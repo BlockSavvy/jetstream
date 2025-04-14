@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import JetSharePaymentForm from '../../../app/jetshare/components/JetSharePaymentForm';
+import JetSharePaymentForm from '@/app/jetshare/components/JetSharePaymentForm';
 import { action } from '@storybook/addon-actions';
 
 /**

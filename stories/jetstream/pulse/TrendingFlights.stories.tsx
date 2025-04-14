@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import TrendingFlights from '../../../app/pulse/components/TrendingFlights';
+import TrendingFlights from '@/app/pulse/components/TrendingFlights';
 
 // This is a simple wrapper to mock the fetch API
 const TrendingFlightsWithMockedAPI = () => {

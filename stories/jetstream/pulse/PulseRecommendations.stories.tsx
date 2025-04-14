@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import PulseRecommendations from '../../../app/dashboard/components/PulseRecommendations';
+import PulseRecommendations from '@/app/dashboard/components/PulseRecommendations';
 
 // This is a wrapper to mock the auth provider and fetch API
 const PulseRecommendationsWithMockedAPI = () => {

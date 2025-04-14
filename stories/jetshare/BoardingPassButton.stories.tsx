@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import BoardingPassButton from '../../../app/jetshare/components/BoardingPassButton';
+import BoardingPassButton from '@/app/jetshare/components/BoardingPassButton';
 import { action } from '@storybook/addon-actions';
 
 /**

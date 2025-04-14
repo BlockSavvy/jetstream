@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import PulseQuestionnaire from '../../../app/pulse/components/PulseQuestionnaire';
+import PulseQuestionnaire from '@/app/pulse/components/PulseQuestionnaire';
 
 // Create a mock AuthProvider wrapper for the component
 const MockAuthProvider = ({ children }: { children: React.ReactNode }) => {

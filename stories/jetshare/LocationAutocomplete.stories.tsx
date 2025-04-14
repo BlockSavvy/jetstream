@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import LocationAutocomplete from '../../../app/jetshare/components/LocationAutocomplete';
+import LocationAutocomplete from '@/app/jetshare/components/LocationAutocomplete';
 import { action } from '@storybook/addon-actions';
 
 // Sample airport data for the stories

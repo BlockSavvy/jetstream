@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import JetSeatVisualizer, { JetSeatVisualizerRef, SeatLayout, SeatConfiguration } from '../../../app/jetshare/components/JetSeatVisualizer';
+import JetSeatVisualizer, { JetSeatVisualizerRef, SeatLayout, SeatConfiguration } from '@/app/jetshare/components/JetSeatVisualizer';
 import { action } from '@storybook/addon-actions';
 
 /**
