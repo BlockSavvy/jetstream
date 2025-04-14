@@ -11,7 +11,7 @@ const config = {
     '../stories/ui/**/*.mdx',
     '../stories/ui/**/*.stories.@(js|jsx|ts|tsx)'
   ],
-  addons: ['@storybook/addon-essentials', '@storybook/addon-a11y'],
+  addons: ['@storybook/addon-essentials'],
   framework: {
     name: '@storybook/react-vite',
     options: {}
@@ -47,6 +47,16 @@ const config = {
       // Make React available globally in all modules
       global: 'window',
     };
+
+    // Fix for @storybook/window import error in a11y addon
+    config.build = config.build || {};
+    config.build.rollupOptions = config.build.rollupOptions || {};
+    config.build.rollupOptions.external = [
+      '@storybook/window',
+      ...(Array.isArray(config.build.rollupOptions.external) 
+          ? config.build.rollupOptions.external 
+          : [])
+    ];
 
     // Add React import to all files
     config.plugins = config.plugins || [];
