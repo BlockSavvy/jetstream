@@ -20,46 +20,15 @@ const config = {
   core: {
     disableTelemetry: true
   },
-  async viteFinal(config) {
-    // Set up path aliases to match Next.js
+  viteFinal: (config) => {
+    // Simple path alias
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': path.resolve(__dirname, '../'),
-      'react': path.resolve(__dirname, '../node_modules/react'),
-      'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
+      '@': path.resolve(__dirname, '../')
     };
-
-    // Handle global variables like process.env
-    config.define = {
-      ...config.define,
-      'process.env': {
-        NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
-        NEXT_PUBLIC_SUPABASE_URL: JSON.stringify('https://example.supabase.co'),
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: JSON.stringify('mock-key'),
-      },
-    };
-
-    // Add React import to all files
-    config.plugins = config.plugins || [];
-    config.plugins.push({
-      name: 'add-react-import',
-      transform(code, id) {
-        if (id.includes('.tsx') || id.includes('.jsx') || id.includes('.ts')) {
-          // Replace 'use client' directive
-          let modifiedCode = code.replace(/['"]use client['"]\s*;?/, '');
-          
-          // Add React import if not present
-          if (!modifiedCode.includes('import React') && !modifiedCode.includes('import * as React')) {
-            modifiedCode = `import React from 'react';\n${modifiedCode}`;
-          }
-          
-          return modifiedCode;
-        }
-      },
-    });
-
+    
     return config;
-  },
+  }
 };
 
 export default config; 
