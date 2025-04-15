@@ -1,0 +1,23 @@
+{
+  "name": "GDY UP",
+  "short_name": "GDYUP",
+  "description": "Peer-to-peer flight splitting and luxury air travel experiences.",
+  "start_url": "/gdyup",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#CEFF00",
+  "icons": [
+    {
+      "src": "/icons/gdyup-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/gdyup-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+} 
