@@ -30,6 +30,9 @@ const config = {
       '@': path.resolve(__dirname, '../')
     };
     
+    // Ensure Vite correctly handles base path for static assets
+    config.base = './';
+    
     return config;
   }
 };
