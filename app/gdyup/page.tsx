@@ -25,7 +25,7 @@ export default function GdyupPage() {
             <div className="bg-gray-900 shadow-md rounded-xl p-5 border-l-4 gdyup-border">
               <h2 className="text-2xl font-bold text-white mb-3">Have a booked private flight?</h2>
               <p className="text-lg text-gray-300 mb-4">List your empty seats and recover up to 70% of your expenses</p>
-              <Button asChild size="lg" className="w-full text-lg bg-black text-[#CEFF00] hover:bg-gray-800 border-2 border-[#CEFF00] px-8 py-6 h-auto">
+              <Button asChild size="lg" className="w-full text-lg bg-black text-[#DAFF0D] hover:bg-gray-800 border-2 border-[#DAFF0D] px-8 py-6 h-auto main-cta-button">
                 <Link href="/gdyup/offer">
                   <Share className="w-5 h-5 mr-2" />
                   List Your Seats
@@ -37,7 +37,7 @@ export default function GdyupPage() {
             <div className="bg-gray-900 rounded-xl p-5 border-l-4 border-[#FF4B47]">
               <h2 className="text-2xl font-bold text-white mb-3">Looking for private jet seats?</h2>
               <p className="text-lg text-gray-300 mb-4">Browse available flights at a fraction of the charter cost</p>
-              <Button asChild size="lg" variant="outline" className="w-full text-lg px-8 py-6 h-auto border-[#FF4B47] text-[#FF4B47] hover:bg-gray-800">
+              <Button asChild size="lg" variant="outline" className="w-full text-lg px-8 py-6 h-auto border-[#FF4B47] text-[#FF4B47] hover:bg-gray-800 hover:text-white">
                 <Link href="/gdyup/listings">
                   <Search className="w-5 h-5 mr-2" />
                   Browse Flights
@@ -54,7 +54,7 @@ export default function GdyupPage() {
               <span className="font-medium">Cards</span>
             </div>
             <div className="flex items-center gap-1">
-              <Bitcoin className="w-5 h-5 text-[#CEFF00]" />
+              <Bitcoin className="w-5 h-5 text-[#DAFF0D]" />
               <span className="font-medium">Bitcoin</span>
             </div>
             <span>&</span>
@@ -75,8 +75,8 @@ export default function GdyupPage() {
         <div className="grid md:grid-cols-3 gap-6 md:gap-8">
           {/* Step 1 */}
           <div className="bg-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow gdyup-card">
-            <div className="bg-black rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto border-2 border-[#CEFF00]">
-              <Plane className="w-7 h-7 text-[#CEFF00]" />
+            <div className="bg-black rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto border-2 border-[#DAFF0D]">
+              <Plane className="w-7 h-7 text-[#DAFF0D]" />
             </div>
             <h3 className="text-xl font-bold mb-2 text-center text-white">List Your Flight</h3>
             <p className="text-base text-gray-300 text-center">
@@ -86,8 +86,8 @@ export default function GdyupPage() {
           
           {/* Step 2 */}
           <div className="bg-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow gdyup-card">
-            <div className="bg-black rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto border-2 border-[#CEFF00]">
-              <Sparkles className="w-7 h-7 text-[#CEFF00]" />
+            <div className="bg-black rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto border-2 border-[#DAFF0D]">
+              <Sparkles className="w-7 h-7 text-[#DAFF0D]" />
             </div>
             <h3 className="text-xl font-bold mb-2 text-center text-white">AI Concierge</h3>
             <p className="text-base text-gray-300 text-center">
@@ -97,8 +97,8 @@ export default function GdyupPage() {
           
           {/* Step 3 */}
           <div className="bg-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow gdyup-card">
-            <div className="bg-black rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto border-2 border-[#CEFF00]">
-              <Bitcoin className="w-7 h-7 text-[#CEFF00]" />
+            <div className="bg-black rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto border-2 border-[#DAFF0D]">
+              <Bitcoin className="w-7 h-7 text-[#DAFF0D]" />
             </div>
             <h3 className="text-xl font-bold mb-2 text-center text-white">Get Paid Directly</h3>
             <p className="text-base text-gray-300 text-center">
@@ -121,8 +121,8 @@ export default function GdyupPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Benefit 1 */}
             <div className="flex flex-col items-center">
-              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#CEFF00]">
-                <Banknote className="w-6 h-6 text-[#CEFF00]" />
+              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#DAFF0D]">
+                <Banknote className="w-6 h-6 text-[#DAFF0D]" />
               </div>
               <h3 className="text-lg font-bold mb-1 text-center text-white">70%+ Cost Recovery</h3>
               <p className="text-base text-gray-300 text-center">
@@ -132,8 +132,8 @@ export default function GdyupPage() {
             
             {/* Benefit 2 */}
             <div className="flex flex-col items-center">
-              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#CEFF00]">
-                <Clock className="w-6 h-6 text-[#CEFF00]" />
+              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#DAFF0D]">
+                <Clock className="w-6 h-6 text-[#DAFF0D]" />
               </div>
               <h3 className="text-lg font-bold mb-1 text-center text-white">30-Second Listing</h3>
               <p className="text-base text-gray-300 text-center">
@@ -143,8 +143,8 @@ export default function GdyupPage() {
             
             {/* Benefit 3 */}
             <div className="flex flex-col items-center">
-              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#CEFF00]">
-                <Bitcoin className="w-6 h-6 text-[#CEFF00]" />
+              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#DAFF0D]">
+                <Bitcoin className="w-6 h-6 text-[#DAFF0D]" />
               </div>
               <h3 className="text-lg font-bold mb-1 text-center text-white">Bitcoin Payments</h3>
               <p className="text-base text-gray-300 text-center">
@@ -154,8 +154,8 @@ export default function GdyupPage() {
             
             {/* Benefit 4 */}
             <div className="flex flex-col items-center">
-              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#CEFF00]">
-                <Sparkles className="w-6 h-6 text-[#CEFF00]" />
+              <div className="bg-gray-900 rounded-full w-12 h-12 flex items-center justify-center mb-3 border-2 border-[#DAFF0D]">
+                <Sparkles className="w-6 h-6 text-[#DAFF0D]" />
               </div>
               <h3 className="text-lg font-bold mb-1 text-center text-white">AI Concierge</h3>
               <p className="text-base text-gray-300 text-center">
@@ -178,7 +178,7 @@ export default function GdyupPage() {
             <div className="bg-gray-900 shadow-md p-5 rounded-xl border-l-4 gdyup-border">
               <h3 className="text-xl font-bold mb-3 text-white">For Jet Owners</h3>
               <p className="text-base text-gray-300 mb-4">Fill your empty seats and recover up to 70% of your costs</p>
-              <Button asChild size="lg" className="w-full text-lg gdyup-button px-6 py-4 h-auto">
+              <Button asChild size="lg" className="w-full text-lg gdyup-button px-6 py-4 h-auto list-seats-button">
                 <Link href="/gdyup/offer">
                   <Share className="w-5 h-5 mr-2" />
                   List Your Seats

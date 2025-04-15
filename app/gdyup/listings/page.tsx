@@ -47,44 +47,44 @@ export default function JetShareListingsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Find Available Flight Shares</h1>
+      <h1 className="text-3xl font-bold mb-8 gdyup-title">Find Available Flight Shares</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card>
+        <Card className="gdyup-card bg-gray-900 border-[#DAFF0D]">
           <CardHeader>
-            <CardTitle>Find Your Perfect Flight Share</CardTitle>
-            <CardDescription>Browse available flight shares and connect with fellow travelers.</CardDescription>
+            <CardTitle className="text-white">Find Your Perfect Flight Share</CardTitle>
+            <CardDescription className="text-gray-100">Browse available flight shares and connect with fellow travelers.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Use filters and search to find the ideal flight share that matches your travel plans.</p>
+            <p className="text-gray-200">Use filters and search to find the ideal flight share that matches your travel plans.</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="gdyup-card bg-gray-900 border-[#DAFF0D]">
           <CardHeader>
-            <CardTitle>Secure Booking</CardTitle>
-            <CardDescription>Safe and transparent transactions.</CardDescription>
+            <CardTitle className="text-white">Secure Booking</CardTitle>
+            <CardDescription className="text-gray-100">Safe and transparent transactions.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Book with confidence using our secure payment system and verified user profiles.</p>
+            <p className="text-gray-200">Book with confidence using our secure payment system and verified user profiles.</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="gdyup-card bg-gray-900 border-[#DAFF0D]">
           <CardHeader>
-            <CardTitle>Instant Confirmation</CardTitle>
-            <CardDescription>Quick and seamless process.</CardDescription>
+            <CardTitle className="text-white">Instant Confirmation</CardTitle>
+            <CardDescription className="text-gray-100">Quick and seamless process.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>Get instant confirmation and connect with the flight organizer right away.</p>
+            <p className="text-gray-200">Get instant confirmation and connect with the flight organizer right away.</p>
           </CardContent>
         </Card>
       </div>
       
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="ml-3 text-lg">Loading flight listings...</span>
+          <Loader2 className="h-8 w-8 animate-spin text-[#DAFF0D]" />
+          <span className="ml-3 text-lg text-gray-100">Loading flight listings...</span>
         </div>
       ) : (
         <JetShareListingsContent />

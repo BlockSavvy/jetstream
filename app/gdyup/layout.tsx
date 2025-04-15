@@ -341,8 +341,8 @@ export default function GdyupLayout({ children }: { children: ReactNode }) {
   }, [user, authLoading, needsAuth, router, loading, pathname, isPaymentPath]);
   
   return (
-    <main className={`min-h-screen bg-background dark ${isMobile ? 'gdyup-mobile' : ''}`} 
-          style={{ "--primary-color": "#CEFF00", "--secondary-color": "#FF4B47" } as React.CSSProperties}>
+    <main className={`min-h-screen bg-background dark gdyup-app ${isMobile ? 'gdyup-mobile' : ''}`} 
+          style={{ "--primary-color": "#DAFF0D", "--secondary-color": "#FF4B47" } as React.CSSProperties}>
       <GdyupHeader />
       <div className={`gdyup-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
         {(!needsAuth || user || loading) ? children : null}

@@ -302,3 +302,132 @@
   }
 }
 
+/* GDY UP Enhanced Contrast Styles */
+.gdyup-app {
+  /* Using the DAFF0D high-contrast color for better visibility */
+  --gdyup-primary: #DAFF0D;
+  --gdyup-secondary: #FF4B47;
+  --gdyup-bg-dark: #000000;
+  --gdyup-text-high-contrast: #FFFFFF;
+  --gdyup-text-medium: #E0E0E0;
+  --gdyup-text-subtle: #A0A0A0;
+  /* Improved interaction colors */
+  --gdyup-hover-bg: rgba(255, 255, 255, 0.1);
+  --gdyup-active-bg: rgba(218, 255, 13, 0.15);
+}
+
+/* Enhanced text visibility for GDY UP dark theme */
+.gdyup-app .text-high-contrast {
+  color: var(--gdyup-text-high-contrast) !important;
+  font-weight: 500;
+}
+
+.gdyup-app .text-medium-contrast {
+  color: var(--gdyup-text-medium) !important;
+}
+
+/* Improved navigation contrast */
+.gdyup-app .nav-link {
+  color: var(--gdyup-text-medium);
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.gdyup-app .nav-link:hover {
+  color: var(--gdyup-text-high-contrast);
+  background-color: var(--gdyup-hover-bg);
+}
+
+.gdyup-app .nav-link.active {
+  color: var(--gdyup-primary);
+  font-weight: 500;
+}
+
+/* Better contrast for buttons in GDY UP */
+.gdyup-app .btn-primary {
+  background-color: var(--gdyup-primary);
+  color: #000000;
+  font-weight: 500;
+  border: none;
+}
+
+.gdyup-app .btn-primary:hover {
+  background-color: #E8FF4D; /* Slightly brighter for hover */
+  color: #000000;
+}
+
+.gdyup-app .btn-secondary {
+  background-color: transparent;
+  color: var(--gdyup-text-high-contrast);
+  border: 1px solid var(--gdyup-text-medium);
+}
+
+.gdyup-app .btn-secondary:hover {
+  background-color: var(--gdyup-hover-bg);
+  border-color: var(--gdyup-text-high-contrast);
+}
+
+/* Enhanced card contrast */
+.gdyup-app .card {
+  background-color: #121212;
+  border: 1px solid #2a2a2a;
+}
+
+.gdyup-app .card:hover {
+  border-color: #444444;
+}
+
+/* Improved form input contrast */
+.gdyup-app input, 
+.gdyup-app select, 
+.gdyup-app textarea {
+  background-color: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  color: var(--gdyup-text-high-contrast);
+}
+
+.gdyup-app input:focus, 
+.gdyup-app select:focus, 
+.gdyup-app textarea:focus {
+  border-color: var(--gdyup-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(218, 255, 13, 0.2);
+}
+
+/* High contrast badges for GDY UP */
+.gdyup-app .badge-success {
+  background-color: rgba(0, 180, 0, 0.2);
+  color: #4eff4e;
+  border: 1px solid #2ead2e;
+}
+
+.gdyup-app .badge-warning {
+  background-color: rgba(255, 180, 0, 0.2);
+  color: #ffcc4d;
+  border: 1px solid #cc9633;
+}
+
+.gdyup-app .badge-error {
+  background-color: rgba(255, 0, 0, 0.2);
+  color: #ff6b6b;
+  border: 1px solid #cc3e3e;
+}
+
+/* Better contrast for status indicators */
+.gdyup-app .status-available {
+  color: #4eff4e;
+}
+
+.gdyup-app .status-pending {
+  color: #ffcc4d;
+}
+
+.gdyup-app .status-unavailable {
+  color: #ff6b6b;
+}
+
+/* Improved loading indicators */
+.gdyup-app .loading-spinner {
+  border-color: rgba(218, 255, 13, 0.2);
+  border-top-color: var(--gdyup-primary);
+}
+

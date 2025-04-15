@@ -84,12 +84,12 @@ export default function JetShareHeader() {
     const publicItems = [
       {
         name: 'Home',
-        path: '/jetshare',
+        path: '/gdyup',
         icon: <Home className="h-5 w-5" />
       },
       {
         name: 'Listings',
-        path: '/jetshare/listings',
+        path: '/gdyup/listings',
         icon: <Search className="h-5 w-5" />
       }
     ];
@@ -98,12 +98,12 @@ export default function JetShareHeader() {
     const authItems = isAuthenticated ? [
       {
         name: 'Offer a Share',
-        path: '/jetshare/offer',
+        path: '/gdyup/offer',
         icon: <PlaneTakeoff className="h-5 w-5" />
       },
       {
         name: 'Dashboard',
-        path: '/jetshare/dashboard',
+        path: '/gdyup/dashboard',
         icon: <BarChart4 className="h-5 w-5" />
       }
     ] : [];
@@ -112,8 +112,8 @@ export default function JetShareHeader() {
     const devItems = process.env.NODE_ENV === 'development' ? [
       {
         name: 'Debug',
-        path: '/jetshare/debug',
-        icon: <span className="text-xs p-1 bg-amber-100 text-amber-800 rounded">DEV</span>
+        path: '/gdyup/debug',
+        icon: <span className="text-xs p-1 bg-amber-100 text-amber-900 rounded">DEV</span>
       }
     ] : [];
     
@@ -132,23 +132,27 @@ export default function JetShareHeader() {
   };
   
   const handleSignIn = () => {
-    // Redirect back to JetShare after login with current path
-    const currentPath = pathname || '/jetshare';
+    // Redirect back to GDY UP after login with current path
+    const currentPath = pathname || '/gdyup';
     const timestamp = Date.now(); // Add timestamp to avoid caching issues
     router.push(`/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`);
   };
 
+  // GDY UP brand colors
+  const primaryColor = "#DAFF0D"; // Enhanced for better contrast
+
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 dark">
+    <header className="sticky top-0 z-50 bg-black border-b border-gray-800" style={{ "--brand-color": primaryColor } as React.CSSProperties}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link 
-              href="/jetshare" 
-              className="text-2xl font-bold text-amber-500"
+              href="/gdyup" 
+              className="text-2xl font-bold"
+              style={{ color: primaryColor }}
             >
-              JetShare
+              GDY UP
             </Link>
           </div>
 
@@ -161,9 +165,10 @@ export default function JetShareHeader() {
                 className={cn(
                   "flex items-center space-x-1 text-sm font-medium transition-colors",
                   isActive(item.path)
-                    ? "text-amber-500"
-                    : "text-muted-foreground hover:text-amber-500"
+                    ? { color: primaryColor }
+                    : "text-gray-100 hover:text-white"
                 )}
+                style={isActive(item.path) ? { color: primaryColor } : {}}
               >
                 {item.icon}
                 <span>{item.name}</span>
@@ -171,37 +176,38 @@ export default function JetShareHeader() {
             ))}
             
             {/* Divider */}
-            <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+            <div className="h-5 w-px bg-gray-700 mx-1" />
             
             {/* Profile link */}
             <Link 
-              href="/jetshare/profile" 
+              href="/gdyup/profile" 
               className={cn(
                 "flex items-center space-x-1 text-sm font-medium transition-colors",
-                isActive('/jetshare/profile')
-                  ? "text-amber-500"
-                  : "text-muted-foreground hover:text-amber-500"
+                isActive('/gdyup/profile')
+                  ? { color: primaryColor }
+                  : "text-gray-100 hover:text-white"
               )}
+              style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
             >
               <User className="h-5 w-5" />
               <span>Profile</span>
             </Link>
             
-            {/* Move 'Back to JetStream' to a more subtle location - dropdown instead of main nav */}
+            {/* More dropdown */}
             <div className="relative group">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-sm text-muted-foreground hover:text-muted-foreground/80"
+                className="text-sm text-gray-100 hover:text-white"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 More
               </Button>
-              <div className="absolute right-0 mt-2 w-56 origin-top-right bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                 <div className="py-1">
                   <Link 
                     href="/" 
-                    className="flex px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
                   >
                     <ChevronLeft className="h-5 w-5 mr-2" />
                     <span>Back to JetStream</span>
@@ -216,7 +222,7 @@ export default function JetShareHeader() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleSignOut}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="text-red-300 hover:text-red-200 hover:bg-red-900/30"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -226,7 +232,8 @@ export default function JetShareHeader() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleSignIn}
-                className="text-green-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                style={{ color: primaryColor }}
+                className="hover:bg-gray-800 hover:brightness-110"
               >
                 <LogIn className="h-4 w-4 mr-2" />
                 Sign In
@@ -237,7 +244,7 @@ export default function JetShareHeader() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden rounded-md p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="md:hidden rounded-md p-2 text-gray-100 hover:bg-gray-800 hover:text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -258,9 +265,10 @@ export default function JetShareHeader() {
                 className={cn(
                   "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                   isActive(item.path)
-                    ? "bg-amber-100 dark:bg-amber-900/30 text-amber-500"
-                    : "text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-100 hover:bg-gray-800 hover:text-white"
                 )}
+                style={isActive(item.path) ? { color: primaryColor } : {}}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.icon}
@@ -270,26 +278,27 @@ export default function JetShareHeader() {
             
             {/* Add Profile link to mobile menu */}
             <Link
-              href="/jetshare/profile"
+              href="/gdyup/profile"
               className={cn(
                 "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
-                isActive('/jetshare/profile')
-                  ? "bg-amber-100 dark:bg-amber-900/30 text-amber-500"
-                  : "text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
+                isActive('/gdyup/profile')
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-100 hover:bg-gray-800 hover:text-white"
               )}
+              style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
               onClick={() => setMobileMenuOpen(false)}
             >
               <User className="h-5 w-5" />
               <span>Profile</span>
             </Link>
             
-            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+            <div className="h-px bg-gray-700 my-2" />
             
             {/* Conditional auth buttons for mobile */}
             {isAuthenticated ? (
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-900/30"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sign Out</span>
@@ -297,7 +306,8 @@ export default function JetShareHeader() {
             ) : (
               <button
                 onClick={handleSignIn}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20"
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 hover:brightness-110"
+                style={{ color: primaryColor }}
               >
                 <LogIn className="h-5 w-5" />
                 <span>Sign In</span>
@@ -305,11 +315,11 @@ export default function JetShareHeader() {
             )}
             
             {/* Move back to JetStream link to bottom */}
-            <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+            <div className="h-px bg-gray-700 my-2" />
             
             <Link 
               href="/"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 opacity-70"
+              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white"
               onClick={() => setMobileMenuOpen(false)}
             >
               <ChevronLeft className="h-5 w-5" />

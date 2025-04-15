@@ -139,9 +139,9 @@ export default function GdyupHeader() {
     router.push(`/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`);
   };
 
-  // GDY UP brand colors
-  const primaryColor = "#CEFF00";
-  const secondaryColor = "#FF4B47";
+  // GDY UP brand colors - updated for better contrast
+  const primaryColor = "#DAFF0D"; // Enhanced brightness for better contrast against dark bg
+  const secondaryColor = "#FF4B47"; // Keep the secondary color
 
   return (
     <header className="sticky top-0 z-50 bg-black border-b border-gray-800" style={{ "--primary-color": primaryColor, "--secondary-color": secondaryColor } as React.CSSProperties}>
@@ -149,12 +149,14 @@ export default function GdyupHeader() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Link 
-              href="/gdyup" 
-              className="text-2xl font-bold"
-              style={{ color: primaryColor }}
-            >
-              GDY UP
+            <Link href="/gdyup" className="flex items-center">
+              <Image 
+                src="/assets/gdyup-logo.jpg" 
+                width={120} 
+                height={40} 
+                alt="GDY UP Logo"
+                className="h-8 w-auto" 
+              />
             </Link>
           </div>
 
@@ -168,7 +170,7 @@ export default function GdyupHeader() {
                   "flex items-center space-x-1 text-sm font-medium transition-colors",
                   isActive(item.path)
                     ? { color: primaryColor }
-                    : "text-gray-300 hover:text-white"
+                    : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
                 )}
                 style={isActive(item.path) ? { color: primaryColor } : {}}
               >
@@ -187,7 +189,7 @@ export default function GdyupHeader() {
                 "flex items-center space-x-1 text-sm font-medium transition-colors",
                 isActive('/gdyup/profile')
                   ? { color: primaryColor }
-                  : "text-gray-300 hover:text-white"
+                  : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
               )}
               style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
             >
@@ -195,12 +197,12 @@ export default function GdyupHeader() {
               <span>Profile</span>
             </Link>
             
-            {/* Move 'Back to JetStream' to a more subtle location - dropdown instead of main nav */}
+            {/* More dropdown */}
             <div className="relative group">
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-sm text-gray-300 hover:text-white"
+                className="text-sm text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 More
@@ -209,7 +211,7 @@ export default function GdyupHeader() {
                 <div className="py-1">
                   <Link 
                     href="/" 
-                    className="flex px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+                    className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
                   >
                     <ChevronLeft className="h-5 w-5 mr-2" />
                     <span>Back to JetStream</span>
@@ -224,7 +226,7 @@ export default function GdyupHeader() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleSignOut}
-                className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                className="text-red-300 hover:text-red-200 hover:bg-red-900/30" // Improved from red-400 to red-300 for better contrast
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -235,7 +237,7 @@ export default function GdyupHeader() {
                 size="sm" 
                 onClick={handleSignIn}
                 style={{ color: primaryColor }}
-                className="hover:bg-gray-800"
+                className="hover:bg-gray-800 hover:brightness-110" // Added brightness increase on hover
               >
                 <LogIn className="h-4 w-4 mr-2" />
                 Sign In
@@ -246,7 +248,7 @@ export default function GdyupHeader() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden rounded-md p-2 text-gray-400 hover:bg-gray-800"
+            className="md:hidden rounded-md p-2 text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-400 to gray-100
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? (
@@ -268,7 +270,7 @@ export default function GdyupHeader() {
                   "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                   isActive(item.path)
                     ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
                 )}
                 style={isActive(item.path) ? { color: primaryColor } : {}}
                 onClick={() => setMobileMenuOpen(false)}
@@ -285,7 +287,7 @@ export default function GdyupHeader() {
                 "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                 isActive('/gdyup/profile')
                   ? "bg-gray-800 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
               )}
               style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
               onClick={() => setMobileMenuOpen(false)}
@@ -300,7 +302,7 @@ export default function GdyupHeader() {
             {isAuthenticated ? (
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-900/20"
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-900/30" // Improved from red-400 to red-300
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sign Out</span>
@@ -308,7 +310,7 @@ export default function GdyupHeader() {
             ) : (
               <button
                 onClick={handleSignIn}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800"
+                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 hover:brightness-110" // Added brightness increase on hover
                 style={{ color: primaryColor }}
               >
                 <LogIn className="h-5 w-5" />
@@ -321,7 +323,7 @@ export default function GdyupHeader() {
             
             <Link 
               href="/"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-300 opacity-70"
+              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-400 to gray-100
               onClick={() => setMobileMenuOpen(false)}
             >
               <ChevronLeft className="h-5 w-5" />
