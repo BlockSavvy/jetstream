@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase-server';
 const PROTECTED_ROUTES = [
   '/jetshare/dashboard',
   '/jetshare/listings/manage',
+  '/gdyup/dashboard',
+  '/gdyup/listings/manage',
   // '/jetshare/payment',  // REMOVED payment route from protected routes
 ];
 
@@ -22,7 +24,9 @@ const AUTH_ROUTES = [
 const PROTECTED_API_ROUTES = [
   // '/api/jetshare/acceptOffer', // Moving to exempt routes for custom auth handling
   '/api/jetshare/completeTestPayment',
-  '/api/jetshare/profile'
+  '/api/jetshare/profile',
+  '/api/gdyup/completeTestPayment',
+  '/api/gdyup/profile'
 ];
 
 // API routes that should skip auth checks completely
@@ -34,6 +38,10 @@ const AUTH_EXEMPT_API_ROUTES = [
   '/api/jetshare/getOfferById', // Add our new endpoint for getting individual offers
   '/api/jetshare/setup-db',
   '/api/jetshare/check-db',
+  '/api/gdyup/getOffers',
+  '/api/gdyup/getOfferById',
+  '/api/gdyup/setup-db',
+  '/api/gdyup/check-db',
   // Debug/maintenance endpoints
   '/api/jetshare/fixConstraints',
   '/api/jetshare/debug',
@@ -45,12 +53,27 @@ const AUTH_EXEMPT_API_ROUTES = [
   '/api/jetshare/adminAcceptOffer',
   '/api/jetshare/fixProfileEmail',
   '/api/jetshare/runSql',
+  '/api/gdyup/fixConstraints',
+  '/api/gdyup/debug',
+  '/api/gdyup/testAccept',
+  '/api/gdyup/inspectStatus',
+  '/api/gdyup/fixStatus',
+  '/api/gdyup/fixStatusValues',
+  '/api/gdyup/fixOfferByUpdate',
+  '/api/gdyup/adminAcceptOffer',
+  '/api/gdyup/fixProfileEmail',
+  '/api/gdyup/runSql',
   // Core endpoints with custom auth handling
   '/api/jetshare/createOffer',
   '/api/jetshare/acceptOffer',
   '/api/jetshare/process-payment', // Consolidated payment API endpoint
   '/api/jetshare/getTransactions',
   '/api/jetshare/stats',
+  '/api/gdyup/createOffer',
+  '/api/gdyup/acceptOffer',
+  '/api/gdyup/process-payment',
+  '/api/gdyup/getTransactions',
+  '/api/gdyup/stats',
   // Webhooks
   '/api/webhook',
   '/api/webhooks',
@@ -60,6 +83,11 @@ const AUTH_EXEMPT_API_ROUTES = [
   '/api/jetshare/stripe',
   '/api/jetshare/payment-status',
   '/api/jetshare/update-payment',
+  '/api/gdyup/payment',
+  '/api/gdyup/checkout',
+  '/api/gdyup/stripe',
+  '/api/gdyup/payment-status',
+  '/api/gdyup/update-payment',
 ];
 
 // Define API routes that should be exempt from authentication
@@ -79,6 +107,14 @@ const AUTH_EXEMPT_PATHS = [
   '/jetshare/payment/[id]', // Payment page with ID template
   '/jetshare/payment/*', // All payment page variations
   '/jetshare/payment/success', // Success page explicitly exempt
+  '/gdyup', // Public landing page
+  '/gdyup/listings', // Public listings page
+  '/gdyup/offer', // Allowed in middleware, auth checked in component
+  '/gdyup/payment', // Base payment path exempt
+  '/gdyup/payment/', // Payment paths with IDs are exempt
+  '/gdyup/payment/[id]', // Payment page with ID template
+  '/gdyup/payment/*', // All payment page variations
+  '/gdyup/payment/success', // Success page explicitly exempt
   '/images', // Allow access to static images
   '/favicon.ico',
   '/api/webhooks',
@@ -128,13 +164,32 @@ const getLocalStorageAuthToken = (request: NextRequest): string | null => {
   return null;
 };
 
+// Helper function to handle jetshare to gdyup redirects
+function handleJetshareToGdyupRedirect(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  
+  // Redirect /jetshare routes to /gdyup except for API routes
+  if (pathname.startsWith('/jetshare') && !pathname.startsWith('/api/jetshare')) {
+    const newUrl = request.nextUrl.clone();
+    newUrl.pathname = pathname.replace('/jetshare', '/gdyup');
+    console.log(`Redirecting from ${pathname} to ${newUrl.pathname}`);
+    return NextResponse.redirect(newUrl);
+  }
+  
+  return null;
+}
+
 // Merge the functionality of handlePaymentFlow and recoverTransactionState
 function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
   const url = request.nextUrl.clone();
   const pathname = url.pathname;
   
+  // Support both jetshare and gdyup paths
+  const isJetsharePayment = pathname.startsWith('/jetshare/payment/');
+  const isGdyupPayment = pathname.startsWith('/gdyup/payment/');
+  
   // Special handling for the success page to ensure it never redirects
-  if (pathname === '/jetshare/payment/success') {
+  if (pathname === '/jetshare/payment/success' || pathname === '/gdyup/payment/success') {
     console.log('Middleware: Success page detected - allowing without auth');
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-payment-flow', 'true');
@@ -148,11 +203,11 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
   }
   
   // Check if we're on the payment page
-  if (pathname.startsWith('/jetshare/payment/') && !pathname.includes('/stripe/')) {
+  if ((isJetsharePayment || isGdyupPayment) && !pathname.includes('/stripe/')) {
     // First check if we're coming from a dashboard or success page redirect
     // This prevents redirect loops between dashboard and payment
     const referer = request.headers.get('referer') || '';
-    const isFromDashboard = referer.includes('/jetshare/dashboard');
+    const isFromDashboard = referer.includes('/jetshare/dashboard') || referer.includes('/gdyup/dashboard');
     const searchParams = request.nextUrl.searchParams;
     const isSuccessRedirect = searchParams.has('success') || searchParams.has('booked');
     
@@ -160,7 +215,7 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
     if ((isFromDashboard || isSuccessRedirect) && !searchParams.has('payment_retry')) {
       console.log('Middleware: Detected potential redirect loop, allowing dashboard to handle auth');
       // Force redirect to dashboard to break the loop
-      url.pathname = '/jetshare/dashboard';
+      url.pathname = isJetsharePayment ? '/jetshare/dashboard' : '/gdyup/dashboard';
       return NextResponse.redirect(url);
     }
     
@@ -178,7 +233,7 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
       
       if (pendingPaymentOfferId) {
         console.log('Middleware: Recovered offer ID from cookie:', pendingPaymentOfferId);
-        url.pathname = `/jetshare/payment/${pendingPaymentOfferId}`;
+        url.pathname = isJetsharePayment ? `/jetshare/payment/${pendingPaymentOfferId}` : `/gdyup/payment/${pendingPaymentOfferId}`;
         return NextResponse.redirect(url);
       }
       
@@ -188,7 +243,7 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
       
       if (offerIdFromQuery && offerIdFromQuery.length > 10) {
         console.log('Middleware: Recovered offer ID from query params:', offerIdFromQuery);
-        url.pathname = `/jetshare/payment/${offerIdFromQuery}`;
+        url.pathname = isJetsharePayment ? `/jetshare/payment/${offerIdFromQuery}` : `/gdyup/payment/${offerIdFromQuery}`;
         return NextResponse.redirect(url);
       }
     }
@@ -209,7 +264,13 @@ function handlePaymentFlow(request: NextRequest): NextResponse | NextRequest {
 }
 
 export async function middleware(request: NextRequest) {
-  // Handle payment flow first
+  // Check for JetShare to GDY UP redirects first
+  const redirectResponse = handleJetshareToGdyupRedirect(request);
+  if (redirectResponse) {
+    return redirectResponse;
+  }
+  
+  // Handle payment flow next
   const paymentResponse = handlePaymentFlow(request);
   
   // Explicitly check if the response is not the original request

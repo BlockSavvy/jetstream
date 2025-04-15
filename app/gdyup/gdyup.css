@@ -1,0 +1,102 @@
+/* GDY UP Branding Colors */
+:root {
+  --gdyup-primary: #CEFF00;
+  --gdyup-secondary: #FF4B47;
+  --gdyup-background: #000000;
+  --gdyup-text: #FFFFFF;
+  --gdyup-accent: #3A3A3A;
+}
+
+.gdyup-primary {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-secondary {
+  color: var(--gdyup-secondary);
+}
+
+.gdyup-bg-primary {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-background);
+}
+
+.gdyup-bg-secondary {
+  background-color: var(--gdyup-secondary);
+  color: var(--gdyup-text);
+}
+
+.gdyup-gradient {
+  background: linear-gradient(90deg, var(--gdyup-primary), var(--gdyup-secondary));
+  color: var(--gdyup-background);
+}
+
+.gdyup-border {
+  border-color: var(--gdyup-primary);
+}
+
+.gdyup-border-secondary {
+  border-color: var(--gdyup-secondary);
+}
+
+/* Custom Button Styles */
+.gdyup-button {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-background);
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.gdyup-button:hover {
+  background-color: var(--gdyup-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gdyup-button-outline {
+  background-color: transparent;
+  border: 2px solid var(--gdyup-primary);
+  color: var(--gdyup-primary);
+  font-weight: bold;
+}
+
+.gdyup-button-outline:hover {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-background);
+}
+
+/* Card & Container Styles */
+.gdyup-card {
+  background-color: var(--gdyup-accent);
+  border-radius: 8px;
+  border-left: 4px solid var(--gdyup-primary);
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.gdyup-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Typography */
+.gdyup-title {
+  color: var(--gdyup-primary);
+  font-weight: bold;
+  letter-spacing: -0.02em;
+}
+
+.gdyup-highlight {
+  color: var(--gdyup-secondary);
+  font-weight: bold;
+}
+
+/* Mobile-specific Styles */
+.gdyup-mobile .gdyup-card {
+  margin-bottom: 1rem;
+}
+
+.gdyup-mobile .gdyup-button {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+} 
