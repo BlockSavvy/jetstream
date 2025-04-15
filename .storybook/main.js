@@ -19,7 +19,7 @@ const config = {
   docs: {
     autodocs: 'tag',
   },
-  staticDirs: [],
+  staticDirs: ['../public'],
   core: {
     disableTelemetry: true
   },
@@ -29,9 +29,6 @@ const config = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, '../')
     };
-    
-    // Ensure Vite correctly handles base path for static assets
-    config.base = './';
     
     return config;
   }

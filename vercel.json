@@ -1,41 +1,6 @@
 {
-  "version": 2,
   "buildCommand": "npm run build-storybook",
   "outputDirectory": "storybook-static",
-  "devCommand": "npm run storybook",
   "framework": null,
-  "installCommand": "npm install --legacy-peer-deps",
-  "cleanUrls": true,
-  "github": {
-    "silent": true
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" },
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/iframe.html", "destination": "/iframe.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/(.*\\.(js|css|svg|jpg|png|gif|ico|json|woff|woff2|eot|ttf|otf)$)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
-  ]
+  "installCommand": "npm install --legacy-peer-deps"
 } 
