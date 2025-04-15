@@ -20,11 +20,11 @@
     "embeddings:worker:continuous": "tsx scripts/embedding-worker.ts --continuous",
     "embeddings:worker:production": "node scripts/embedding-worker.js --continuous --interval=600",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "build-storybook": "storybook build --output-dir public",
     "storybook-build-only": "rm -rf storybook-static && storybook build",
     "clean-storybook": "rm -rf storybook-static node_modules/.cache/storybook",
     "storybook-clean-install": "rm -rf node_modules && rm -rf storybook-static && npm install --legacy-peer-deps && npm run storybook",
-    "vercel-build": "npm run build-storybook && cp -r storybook-static public",
+    "vercel-build": "npm run build-storybook",
     "debug-storybook-build": "rm -rf storybook-static && storybook build && ls -la && find . -name 'storybook-static' -type d | xargs ls -la"
   },
   "dependencies": {

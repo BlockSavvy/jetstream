@@ -16,7 +16,11 @@ const config = {
     name: '@storybook/react-vite',
     options: {}
   },
+  docs: {
+    autodocs: 'tag',
+  },
   staticDirs: ['../public'],
+  outputDir: '../public',
   core: {
     disableTelemetry: true
   },
