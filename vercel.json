@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build-storybook",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "public",
   "devCommand": "npm run storybook",
   "framework": null,
