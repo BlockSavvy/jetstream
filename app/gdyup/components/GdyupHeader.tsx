@@ -182,13 +182,11 @@ export default function GdyupHeader() {
           <div className="flex items-center gap-2">
             <Link href="/gdyup" className="flex items-center">
               <Image 
-                src="/assets/gdyup-logo.svg" 
-                width={160} 
-                height={48} 
-                alt="GDY UP Logo"
-                className="h-10 w-auto object-contain gdyup-logo" 
-                priority
-                unoptimized={true}
+                src="/assets/gdyup-logo-v2.svg"
+                alt="GDYUP Logo"
+                width={150}
+                height={40}
+                className="h-10 w-auto object-contain gdyup-logo"
               />
             </Link>
           </div>

@@ -606,16 +606,19 @@ div[class*="rounded"] .lucide {
   transform: scale(1.02);
 }
 
-header a img[src*="gdyup-logo.svg"] {
-  filter: drop-shadow(0 0 8px rgba(218, 255, 13, 0.3));
-  transition: all 0.3s ease;
+header a img[src*="gdyup-logo"] {
+  filter: none !important;
+  height: 40px !important;
 }
 
-/* Ensure logo contrast on dark backgrounds */
 @media (prefers-color-scheme: dark) {
-  header a img[src*="gdyup-logo.svg"] {
-    filter: drop-shadow(0 0 10px rgba(218, 255, 13, 0.4)) brightness(1.05);
+  header a img[src*="gdyup-logo"] {
+    filter: none !important;
   }
+}
+
+.dark header a img[src*="gdyup-logo"] {
+  filter: none !important;
 }
 
 /* Mobile optimization for the logo */

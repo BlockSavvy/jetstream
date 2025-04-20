@@ -7,6 +7,7 @@ const urlsToCache = [
   '/icons/gdyup-icon-512.png',
   '/icons/gdyup-icon-192.png',
   '/assets/gdyup-logo.jpg',
+  '/assets/gdyup-logo-v2.svg',
 ];
 
 self.addEventListener('install', (event) => {
