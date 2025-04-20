@@ -1,46 +1,85 @@
-import { createClient } from '@/lib/supabase-server';
-import { getJetShareOfferById } from '@/lib/services/jetshare';
-import { redirect } from 'next/navigation';
-import JetShareOfferEditForm from '@/app/jetshare/components/JetShareOfferEditForm';
+'use client';
 
-interface EditOfferPageProps {
-  params: {
-    id: string;
-  };
-}
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import JetShareOfferEditForm from '@/app/gdyup/components/JetShareOfferEditForm';
+import { Suspense } from 'react';
+import { SessionProvider } from "next-auth/react";
+import { JetShareOfferWithUser } from '@/types/jetshare';
 
-export default async function EditOfferPage({ params }: EditOfferPageProps) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export default function EditOfferPage() {
+  const params = useParams();
+  const router = useRouter();
+  const [offer, setOffer] = useState<JetShareOfferWithUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  if (!user) {
-    // If not logged in, redirect to sign-in
-    redirect('/auth/signin?redirect=/jetshare/offer/edit/' + (await params).id);
-  }
+  useEffect(() => {
+    const fetchOffer = async () => {
+      try {
+        setLoading(true);
+        // Get the offer details
+        const response = await fetch(`/api/jetshare/getOffers?id=${params.id}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch offer');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.offers || data.offers.length === 0) {
+          throw new Error('Offer not found');
+        }
+        
+        setOffer(data.offers[0]);
+      } catch (error) {
+        console.error('Error fetching offer:', error);
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
+        router.push('/gdyup/dashboard?error=offer-not-found');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (params.id) {
+      fetchOffer();
+    }
+  }, [params.id, router]);
   
-  try {
-    // Get the offer details
-    const offer = await getJetShareOfferById((await params).id);
-    
-    // Ensure the user is the owner and the offer is editable (open)
-    if (offer.user_id !== user.id) {
-      // If not the owner, redirect to dashboard
-      redirect('/jetshare/dashboard?error=unauthorized');
-    }
-    
-    if (offer.status !== 'open') {
-      // If offer is not in open state, it cannot be edited
-      redirect(`/jetshare/offer/${(await params).id}?error=not-editable`);
-    }
-    
+  if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Edit Your JetShare Offer</h1>
-        <JetShareOfferEditForm offer={offer} userId={user.id} />
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#DAFF0D]"></div>
+        </div>
       </div>
     );
-  } catch (error) {
-    // If offer not found, redirect to dashboard
-    redirect('/jetshare/dashboard?error=offer-not-found');
   }
+  
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-900/20 border border-red-700 text-red-300 p-4 rounded-lg">
+          <p>Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <SessionProvider>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8 text-white">Edit Your JetShare Offer</h1>
+        {offer && (
+          <Suspense fallback={
+            <div className="flex justify-center items-center h-40">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#DAFF0D]"></div>
+            </div>
+          }>
+            <JetShareOfferEditForm offer={offer} userId={offer.user_id} />
+          </Suspense>
+        )}
+      </div>
+    </SessionProvider>
+  );
 } 

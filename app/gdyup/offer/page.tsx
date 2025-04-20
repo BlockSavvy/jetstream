@@ -3,56 +3,176 @@
 import JetShareOfferForm from '../components/JetShareOfferForm';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { SessionProvider } from "next-auth/react";
 
 // Extract a component that uses searchParams to properly handle suspense
 function JetShareOfferContent() {
-  const [airports, setAirports] = useState([]);
+  // Use proper typing for airports array
+  interface Airport {
+    code: string;
+    name: string;
+    city: string;
+    country: string;
+    is_private?: boolean;
+    lat?: number;
+    lng?: number;
+  }
+  
+  const [airports, setAirports] = useState<Airport[]>([]);
+  const [isLoadingAirports, setIsLoadingAirports] = useState(true);
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
   
-  // Fetch airports data when component mounts
+  // Fetch airports data when component mounts - IMPROVED with better error handling and retries
   useEffect(() => {
-    const fetchAirports = async () => {
+    const fetchAirports = async (retryCount = 0) => {
       try {
-        const response = await fetch('/api/airports');
+        setIsLoadingAirports(true);
+        
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        console.log(`Fetching airports data (attempt ${retryCount + 1})...`);
+        const response = await fetch(`/api/airports?t=${timestamp}`);
+        
         if (response.ok) {
           const data = await response.json();
-          setAirports(data);
           
-          // Store in sessionStorage for quick access
+          if (Array.isArray(data) && data.length > 0) {
+            console.log(`Successfully loaded ${data.length} airports from API`);
+            
+            // Sort airports by city name for better UX
+            const sortedData = [...data].sort((a, b) => a.city.localeCompare(b.city));
+            setAirports(sortedData);
+            
+            // Store in sessionStorage for quick access on future loads
+            try {
+              sessionStorage.setItem('jetstream_airports', JSON.stringify(sortedData));
+              console.log('Cached airports in sessionStorage for future use');
+            } catch (e) {
+              console.warn('Failed to cache airports in sessionStorage:', e);
+            }
+            
+            // Success! Return early
+            return true;
+          } else {
+            console.error('API returned empty or invalid airports data', data);
+            
+            // Retry once if this is the first attempt
+            if (retryCount === 0) {
+              console.log('Retrying airport data fetch...');
+              setTimeout(() => fetchAirports(1), 1000); // Wait 1 second before retry
+              return false;
+            }
+            
+            // Fallback to cached data after retry
+            return loadCachedAirports();
+          }
+        } else {
+          let errorDetails = '';
           try {
-            sessionStorage.setItem('jetstream_airports', JSON.stringify(data));
-          } catch (e) {
-            console.warn('Failed to cache airports in sessionStorage', e);
+            // Try to parse error response as JSON
+            const errorData = await response.json();
+            errorDetails = JSON.stringify(errorData);
+          } catch {
+            // If not JSON, get as text
+            errorDetails = await response.text();
           }
           
-          console.log(`Loaded ${data.length} airports for location selector`);
-        } else {
-          console.error('Failed to fetch airports');
+          console.error(`Failed to fetch airports: ${response.status} ${errorDetails}`);
+          
+          // Retry once on server errors (5xx) if this is the first attempt
+          if (response.status >= 500 && retryCount === 0) {
+            console.log('Server error, retrying airport data fetch...');
+            setTimeout(() => fetchAirports(1), 1500); // Wait 1.5 seconds before retry
+            return false;
+          }
+          
+          // Fallback to cached data after retry
+          return loadCachedAirports();
         }
       } catch (error) {
         console.error('Error fetching airports:', error);
+        
+        // Retry once if this is the first attempt
+        if (retryCount === 0) {
+          console.log('Network error, retrying airport data fetch...');
+          setTimeout(() => fetchAirports(1), 1000); // Wait 1 second before retry
+          return false;
+        }
+        
+        // Fallback to cached data after retry
+        return loadCachedAirports();
+      } finally {
+        // Only set loading to false if we're done with all retries
+        if (retryCount > 0) {
+          setIsLoadingAirports(false);
+        }
       }
     };
     
-    // Check if we already have airports in sessionStorage
-    try {
-      const cachedAirports = sessionStorage.getItem('jetstream_airports');
-      if (cachedAirports) {
-        setAirports(JSON.parse(cachedAirports));
-        console.log('Using cached airports from sessionStorage');
-      } else {
-        fetchAirports();
+    // Helper function to load cached airports from sessionStorage
+    const loadCachedAirports = () => {
+      try {
+        const cachedAirports = sessionStorage.getItem('jetstream_airports');
+        if (cachedAirports) {
+          const parsed = JSON.parse(cachedAirports);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            console.log(`Using ${parsed.length} cached airports from sessionStorage`);
+            setAirports(parsed);
+            return true;
+          }
+        }
+        return false;
+      } catch (e) {
+        console.warn('Error reading cached airports from sessionStorage:', e);
+        return false;
       }
-    } catch (e) {
+    };
+    
+    // Try to use cached airports first for immediate rendering
+    if (!loadCachedAirports()) {
+      // If no cached airports, fetch fresh data
+      fetchAirports();
+    } else {
+      // Even if we loaded cached airports, fetch fresh data in the background
       fetchAirports();
     }
   }, []);
   
+  // Display data fetching status in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`JetShareOfferContent: Airport data status: ${isLoadingAirports ? 'Loading...' : airports.length > 0 ? `Loaded ${airports.length} airports` : 'No data available'}`);
+    }
+  }, [isLoadingAirports, airports]);
+
   return (
     <div className="container mx-auto px-4 py-2">
       <div className="max-w-2xl mx-auto">
-        <JetShareOfferForm airportsList={airports} editOfferId={editId} />
+        {/* Initial loading indicator for airports data */}
+        {isLoadingAirports && airports.length === 0 && (
+          <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-3 mb-4 flex items-center space-x-3">
+            <div className="animate-spin h-4 w-4 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
+            <p className="text-sm text-gray-300">Loading airports data...</p>
+          </div>
+        )}
+        
+        {/* Show debug info in development */}
+        {process.env.NODE_ENV === 'development' && !isLoadingAirports && (
+          <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-2 mb-4 text-xs text-gray-400">
+            <span className="px-1.5 py-0.5 bg-blue-900/50 text-blue-300 rounded-md border border-blue-700/30 mr-2">DEV</span>
+            {airports.length > 0 ? (
+              <span>Using {airports.length} real airports from database</span>
+            ) : (
+              <span className="text-amber-400">No airport data available from database - using fallbacks</span>
+            )}
+          </div>
+        )}
+        
+        <JetShareOfferForm 
+          airportsList={airports} 
+          editOfferId={editId} 
+        />
       </div>
     </div>
   );
@@ -61,12 +181,14 @@ function JetShareOfferContent() {
 // Main page component with suspense boundary
 export default function JetShareOfferPage() {
   return (
-    <Suspense fallback={
-      <div className="container mx-auto px-4 py-2 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-      </div>
-    }>
-      <JetShareOfferContent />
-    </Suspense>
+    <SessionProvider>
+      <Suspense fallback={
+        <div className="container mx-auto px-4 py-2 flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+        </div>
+      }>
+        <JetShareOfferContent />
+      </Suspense>
+    </SessionProvider>
   );
 } 

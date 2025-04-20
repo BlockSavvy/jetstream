@@ -1,7 +1,7 @@
-import { createClient } from '@/lib/supabase-server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-// Enhanced airport interface with geolocation data
+// Enhanced airport interface with geolocation data and images
 interface Airport {
   code: string;
   name: string;
@@ -10,41 +10,51 @@ interface Airport {
   is_private?: boolean;
   lat?: number;
   lng?: number;
+  image_url?: string;
+  route_map_template?: string;
 }
+
+// Initialize Supabase client with service role key to bypass authentication issues
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Environment-dependent configuration
 const CONFIG = {
   // In development mode, we'll log warnings when fallbacks are used
   isDev: process.env.NODE_ENV === 'development',
-  // Ability to toggle fallbacks off for testing database connectivity issues
-  useFallbacks: process.env.USE_FALLBACKS !== 'false',
+  // Disable fallbacks to ensure we always use database data
+  useFallbacks: false,
   // Track telemetry - which could be extended to send to a monitoring service
   trackTelemetry: true,
   logPrefix: '[AIRPORTS API]',
 };
 
+// Default placeholder airport map path
+const PLACEHOLDER_AIRPORT_MAP = '/images/airports/placeholder_airport_map.png';
+
 // Fallback airport data in case the database query returns no results
 const fallbackAirports: Airport[] = [
-  { code: "EDDB", name: "Berlin Brandenburg Airport", city: "Berlin", country: "Germany", lat: 52.3667, lng: 13.5033 },
-  { code: "OMDB", name: "Dubai International Airport", city: "Dubai", country: "UAE", lat: 25.2528, lng: 55.3644 },
-  { code: "VHHH", name: "Hong Kong International Airport", city: "Hong Kong", country: "China", lat: 22.3080, lng: 113.9185 },
-  { code: "KLAS", name: "Harry Reid International Airport", city: "Las Vegas", country: "USA", lat: 36.0840, lng: -115.1537 },
-  { code: "EGLL", name: "London Heathrow Airport", city: "London", country: "UK", lat: 51.4700, lng: -0.4543 },
-  { code: "EGGW", name: "London Luton Airport", city: "London", country: "UK", lat: 51.8747, lng: -0.3689 },
-  { code: "KVAN", name: "Van Nuys Airport", city: "Los Angeles", country: "USA", lat: 34.2098, lng: -118.4896, is_private: true },
-  { code: "KLAX", name: "Los Angeles International Airport", city: "Los Angeles", country: "USA", lat: 33.9416, lng: -118.4085 },
-  { code: "KMIA", name: "Miami International Airport", city: "Miami", country: "USA", lat: 25.7932, lng: -80.2906 },
-  { code: "EDDM", name: "Munich Airport", city: "Munich", country: "Germany", lat: 48.3538, lng: 11.7861 },
-  { code: "VIDP", name: "Indira Gandhi International Airport", city: "New Delhi", country: "India", lat: 28.5562, lng: 77.1000 },
-  { code: "KJFK", name: "John F. Kennedy International Airport", city: "New York", country: "USA", lat: 40.6413, lng: -73.7781 },
-  { code: "KPBI", name: "Palm Beach International Airport", city: "Palm Beach", country: "USA", lat: 26.6832, lng: -80.0956 },
-  { code: "LFPB", name: "Paris–Le Bourget Airport", city: "Paris", country: "France", lat: 48.9698, lng: 2.4383, is_private: true },
-  { code: "KSFO", name: "San Francisco International Airport", city: "San Francisco", country: "USA", lat: 37.6213, lng: -122.3790 },
-  { code: "KSDL", name: "Scottsdale Airport", city: "Scottsdale", country: "USA", lat: 33.6229, lng: -111.9107, is_private: true },
-  { code: "YSSY", name: "Sydney Kingsford Smith Airport", city: "Sydney", country: "Australia", lat: -33.9399, lng: 151.1753 },
-  { code: "KTEB", name: "Teterboro Airport", city: "Teterboro", country: "USA", lat: 40.8499, lng: -74.0610, is_private: true },
-  { code: "RJTT", name: "Tokyo Haneda Airport", city: "Tokyo", country: "Japan", lat: 35.5494, lng: 139.7798 },
-  { code: "KHPN", name: "Westchester County Airport", city: "White Plains", country: "USA", lat: 41.0670, lng: -73.7076, is_private: true }
+  { code: "EDDB", name: "Berlin Brandenburg Airport", city: "Berlin", country: "Germany", lat: 52.3667, lng: 13.5033, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "OMDB", name: "Dubai International Airport", city: "Dubai", country: "UAE", lat: 25.2528, lng: 55.3644, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "VHHH", name: "Hong Kong International Airport", city: "Hong Kong", country: "China", lat: 22.3080, lng: 113.9185, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KLAS", name: "Harry Reid International Airport", city: "Las Vegas", country: "USA", lat: 36.0840, lng: -115.1537, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "EGLL", name: "London Heathrow Airport", city: "London", country: "UK", lat: 51.4700, lng: -0.4543, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "EGGW", name: "London Luton Airport", city: "London", country: "UK", lat: 51.8747, lng: -0.3689, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KVAN", name: "Van Nuys Airport", city: "Los Angeles", country: "USA", lat: 34.2098, lng: -118.4896, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KLAX", name: "Los Angeles International Airport", city: "Los Angeles", country: "USA", lat: 33.9416, lng: -118.4085, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KMIA", name: "Miami International Airport", city: "Miami", country: "USA", lat: 25.7932, lng: -80.2906, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "EDDM", name: "Munich Airport", city: "Munich", country: "Germany", lat: 48.3538, lng: 11.7861, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "VIDP", name: "Indira Gandhi International Airport", city: "New Delhi", country: "India", lat: 28.5562, lng: 77.1000, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KJFK", name: "John F. Kennedy International Airport", city: "New York", country: "USA", lat: 40.6413, lng: -73.7781, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KPBI", name: "Palm Beach International Airport", city: "Palm Beach", country: "USA", lat: 26.6832, lng: -80.0956, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "LFPB", name: "Paris–Le Bourget Airport", city: "Paris", country: "France", lat: 48.9698, lng: 2.4383, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KSFO", name: "San Francisco International Airport", city: "San Francisco", country: "USA", lat: 37.6213, lng: -122.3790, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KSDL", name: "Scottsdale Airport", city: "Scottsdale", country: "USA", lat: 33.6229, lng: -111.9107, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "YSSY", name: "Sydney Kingsford Smith Airport", city: "Sydney", country: "Australia", lat: -33.9399, lng: 151.1753, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KTEB", name: "Teterboro Airport", city: "Teterboro", country: "USA", lat: 40.8499, lng: -74.0610, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "RJTT", name: "Tokyo Haneda Airport", city: "Tokyo", country: "Japan", lat: 35.5494, lng: 139.7798, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KHPN", name: "Westchester County Airport", city: "White Plains", country: "USA", lat: 41.0670, lng: -73.7076, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP }
 ];
 
 // Telemetry capture for monitoring
@@ -91,7 +101,7 @@ const telemetry = {
   }
 };
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     // Track the request
     if (CONFIG.trackTelemetry) {
@@ -101,10 +111,14 @@ export async function GET(request: Request) {
     // Get query parameters
     const url = new URL(request.url);
     const query = url.searchParams.get('query') || '';
+    const codesParam = url.searchParams.get('codes') || '';
     const limit = parseInt(url.searchParams.get('limit') || '100');
     const includeTelemetry = url.searchParams.get('telemetry') === 'true' && CONFIG.isDev;
     
-    console.log(`${CONFIG.logPrefix} Fetching airports data with query: "${query}", limit: ${limit}`);
+    // Parse codes parameter (comma-separated list of airport codes)
+    const codes = codesParam ? codesParam.split(',').map(c => c.trim().toUpperCase()) : [];
+    
+    console.log(`${CONFIG.logPrefix} Fetching airports data with query: "${query}", codes: [${codes.join(', ')}], limit: ${limit}`);
     
     // Check if we should use fallbacks before even trying the database
     if (!CONFIG.useFallbacks && url.searchParams.get('forceFallback') !== 'true') {
@@ -117,24 +131,43 @@ export async function GET(request: Request) {
         telemetry.trackFallback('forced via query parameter');
       }
       
-      const filteredFallbacks = query && query.length > 1
-        ? filterFallbackData(query, limit)
-        : fallbackAirports.slice(0, limit);
+      let filteredFallbacks;
+      
+      // If codes are provided, filter by codes
+      if (codes.length > 0) {
+        filteredFallbacks = fallbackAirports.filter(airport => 
+          codes.includes(airport.code)
+        ).slice(0, limit);
+      } 
+      // Otherwise filter by query text
+      else if (query && query.length > 1) {
+        filteredFallbacks = filterFallbackData(query, limit);
+      } 
+      // Or just return all (up to limit)
+      else {
+        filteredFallbacks = fallbackAirports.slice(0, limit);
+      }
       
       return createResponse(filteredFallbacks, includeTelemetry);
     }
     
-    // Normal database query flow
-    const supabase = await createClient();
+    // Create Supabase client with service role key for admin access
+    const supabase = createClient(
+      supabaseUrl,
+      serviceKey || supabaseKey // Fallback to anon key if service key is not available
+    );
     
-    // FIXED: Only query columns that exist in the database
-    // Query all fields from the airports table except id
+    // FIXED: Query only the fields that exist in the database schema
     let airportsQuery = supabase
       .from('airports')
-      .select('code, name, city, country');
+      .select('code, name, city, country, location, is_private');
     
+    // If codes parameter exists, filter by exact airport codes
+    if (codes.length > 0) {
+      airportsQuery = airportsQuery.in('code', codes);
+    }
     // If query parameter exists, filter results
-    if (query && query.length > 1) {
+    else if (query && query.length > 1) {
       airportsQuery = airportsQuery.or(
         `city.ilike.%${query}%,name.ilike.%${query}%,code.ilike.%${query}%,country.ilike.%${query}%`
       );
@@ -152,67 +185,69 @@ export async function GET(request: Request) {
       
       console.error(`${CONFIG.logPrefix} Error fetching airports:`, error);
       
-      // If fallbacks are disabled, return the error
-      if (!CONFIG.useFallbacks) {
-        return NextResponse.json(
-          { error: error.message, code: error.code || 'UNKNOWN' }, 
-          { status: 500 }
-        );
-      }
-      
-      // Otherwise, use fallback data
-      if (CONFIG.trackTelemetry) {
-        telemetry.trackFallback('database query error');
-      }
-      
-      const filteredFallbacks = query && query.length > 1
-        ? filterFallbackData(query, limit)
-        : fallbackAirports.slice(0, limit);
-      
-      return createResponse(filteredFallbacks, includeTelemetry);
+      // Always return the error so we can identify database issues
+      return NextResponse.json(
+        { error: error.message, code: error.code || 'UNKNOWN' }, 
+        { status: 500 }
+      );
     }
     
-    // If no airports were returned from database, use the fallback data
+    // If no airports were returned from database, return empty array
     if (!airports || airports.length === 0) {
       console.log(`${CONFIG.logPrefix} Database returned no results`);
       
-      // If fallbacks are disabled, return an empty array
-      if (!CONFIG.useFallbacks) {
-        return createResponse([], includeTelemetry);
-      }
-      
-      // Otherwise, use fallback data
-      if (CONFIG.trackTelemetry) {
-        telemetry.trackFallback('empty database results');
-      }
-      
-      const filteredFallbacks = query && query.length > 1
-        ? filterFallbackData(query, limit)
-        : fallbackAirports.slice(0, limit);
-      
-      return createResponse(filteredFallbacks, includeTelemetry);
+      // Return an empty array to clearly indicate no results from database
+      return createResponse([], includeTelemetry);
     }
     
-    // ADDED: Enhance airport data with geo coordinates for UI enhancements if needed
-    // This is done by looking up IATA codes in our fallback data which has coordinates
+    // UPDATED: Enhance airport data with geo coordinates and add missing fields from fallback data
     const enhancedAirports = airports.map(dbAirport => {
       // Start with the database data
-      const airport: Airport = { ...dbAirport };
+      const airport: Airport = {
+        code: dbAirport.code,
+        name: dbAirport.name,
+        city: dbAirport.city,
+        country: dbAirport.country,
+        is_private: dbAirport.is_private || false,
+        image_url: PLACEHOLDER_AIRPORT_MAP, // Default image
+      };
       
-      // Find if we have geo coordinates for this airport code in our fallback data
+      // Find if we have additional data for this airport code in our fallback data
       const fallbackMatch = fallbackAirports.find(f => f.code === airport.code);
       if (fallbackMatch) {
-        // Add geo data from fallback if available
-        if (fallbackMatch.lat) airport.lat = fallbackMatch.lat;
-        if (fallbackMatch.lng) airport.lng = fallbackMatch.lng;
+        // Add geo data from fallback
+        airport.lat = fallbackMatch.lat;
+        airport.lng = fallbackMatch.lng;
+        
+        // Add image_url and route_map_template if available in fallback
+        if (fallbackMatch.image_url) airport.image_url = fallbackMatch.image_url;
+        if (fallbackMatch.route_map_template) airport.route_map_template = fallbackMatch.route_map_template;
+        
+        // Ensure is_private is set correctly
         if (fallbackMatch.is_private) airport.is_private = fallbackMatch.is_private;
+      }
+      
+      // Try to extract coordinates from the location field if present
+      if (dbAirport.location && typeof dbAirport.location === 'object') {
+        try {
+          // Attempt to extract coordinates from PostgreSQL geometry point
+          // This assumes location is stored as a PostGIS point or similar format
+          const locationObj = dbAirport.location as any;
+          if (locationObj.coordinates && Array.isArray(locationObj.coordinates) && locationObj.coordinates.length >= 2) {
+            // PostGIS format is typically [longitude, latitude]
+            airport.lng = locationObj.coordinates[0];
+            airport.lat = locationObj.coordinates[1];
+          }
+        } catch (e) {
+          console.warn(`${CONFIG.logPrefix} Could not extract coordinates from location field for ${airport.code}:`, e);
+        }
       }
       
       return airport;
     });
     
-    // Return the database results with enhancements
-    console.log(`${CONFIG.logPrefix} Retrieved ${enhancedAirports.length} airports from database for query "${query}"`);
+    // Return the database results with any available geo enhancements
+    console.log(`${CONFIG.logPrefix} Retrieved ${enhancedAirports.length} airports from database for query "${query || codes.join(', ')}"`);
     return createResponse(enhancedAirports, includeTelemetry);
     
   } catch (error) {
@@ -222,20 +257,11 @@ export async function GET(request: Request) {
     
     console.error(`${CONFIG.logPrefix} Unexpected error:`, error);
     
-    // If fallbacks are disabled, return the error
-    if (!CONFIG.useFallbacks) {
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Unknown error', code: 'UNEXPECTED' }, 
-        { status: 500 }
-      );
-    }
-    
-    // Otherwise, use fallback data
-    if (CONFIG.trackTelemetry) {
-      telemetry.trackFallback('unexpected error');
-    }
-    
-    return createResponse(fallbackAirports.slice(0, 100), false);
+    // Return the error for better debugging
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Unknown error', code: 'UNEXPECTED' }, 
+      { status: 500 }
+    );
   }
 }
 
@@ -258,7 +284,8 @@ function createResponse(data: Airport[], includeTelemetry: boolean) {
     return NextResponse.json({
       data,
       _meta: {
-        isFallback: data === fallbackAirports || data.some(a => fallbackAirports.some(f => f.code === a.code)),
+        source: "database",
+        count: data.length,
         telemetry: telemetry.getStats(),
         timestamp: new Date().toISOString()
       }

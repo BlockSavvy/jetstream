@@ -125,14 +125,18 @@ interface JetShareListingsContentProps {
 // Placeholder component for empty state
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-12 text-center">
-    <div className="bg-amber-100 dark:bg-amber-900/30 rounded-full w-16 h-16 flex items-center justify-center mb-6">
-      <Plane className="h-8 w-8 text-amber-500" />
+    <div className="bg-black rounded-full w-20 h-20 flex items-center justify-center mb-6 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
+      <Plane className="h-10 w-10 text-[#DAFF0D]" />
     </div>
-    <h3 className="text-xl font-bold mb-3">No Flight Shares Available</h3>
-    <p className="text-muted-foreground max-w-md mb-6">
+    <h3 className="text-xl font-bold mb-3 text-white">No Flight Shares Available</h3>
+    <p className="text-white max-w-md mb-6">
       There are no flight shares available that match your criteria. Try adjusting your filters or check back later.
     </p>
-    <Button variant="outline" onClick={() => window.location.reload()}>
+    <Button 
+      onClick={() => window.location.reload()} 
+      className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium shadow-md"
+    >
+      <RefreshCw className="h-4 w-4 mr-2" />
       Refresh Listings
     </Button>
   </div>
@@ -140,29 +144,29 @@ const EmptyState = () => (
 
 // Skeleton loader for cards
 const SkeletonCard = () => (
-  <Card className="overflow-hidden">
+  <Card className="overflow-hidden bg-gray-900 border border-gray-800">
     <CardHeader className="pb-2">
-      <Skeleton className="h-6 w-3/4 mb-2" />
-      <Skeleton className="h-4 w-1/2" />
+      <Skeleton className="h-6 w-3/4 mb-2 bg-gray-800" />
+      <Skeleton className="h-4 w-1/2 bg-gray-800" />
     </CardHeader>
     <CardContent>
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-4 rounded-full bg-gray-800" />
+          <Skeleton className="h-4 w-1/3 bg-gray-800" />
         </div>
         <div className="flex items-center space-x-2">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-4 rounded-full bg-gray-800" />
+          <Skeleton className="h-4 w-1/3 bg-gray-800" />
         </div>
         <div className="flex items-center space-x-2">
-          <Skeleton className="h-4 w-4 rounded-full" />
-          <Skeleton className="h-4 w-1/3" />
+          <Skeleton className="h-4 w-4 rounded-full bg-gray-800" />
+          <Skeleton className="h-4 w-1/3 bg-gray-800" />
         </div>
       </div>
     </CardContent>
     <CardFooter>
-      <Skeleton className="h-10 w-full rounded-md" />
+      <Skeleton className="h-10 w-full rounded-md bg-gray-800" />
     </CardFooter>
   </Card>
 );
@@ -940,12 +944,12 @@ export default function JetShareListingsContent() {
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
     <Card 
       key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
-      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative"
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative bg-gray-900 border border-gray-800"
       onClick={() => !offer.isOwnOffer && handleOfferAccept(offer)}
     >
       {/* Add background image based on aircraft model */}
       <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 z-0"
         style={{ 
           backgroundImage: `url(${getJetImageUrl(offer)})`,
           backgroundSize: 'cover',
@@ -956,14 +960,14 @@ export default function JetShareListingsContent() {
       />
       {/* Add semi-transparent gradient overlay for better text readability */}
       <div 
-        className="absolute inset-0 bg-gradient-to-b from-gray-900/70 via-gray-800/60 to-gray-900/80 z-0"
+        className="absolute inset-0 bg-gradient-to-b from-gray-900/90 via-gray-800/70 to-gray-900/90 z-0"
         aria-hidden="true"
       />
       
       <div className="relative z-10">
         {offer.isOwnOffer && (
           <div className="absolute top-0 right-0 m-2 z-10">
-            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 font-semibold">
+            <Badge className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] font-semibold">
               Your Offer
             </Badge>
           </div>
@@ -971,23 +975,23 @@ export default function JetShareListingsContent() {
         <CardHeader className="p-4 pb-2">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-lg">{offer.departure_location} to {offer.arrival_location}</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg text-white">{offer.departure_location} to {offer.arrival_location}</CardTitle>
+              <CardDescription className="text-white">
                 <div className="flex flex-col mt-1">
                   <div className="flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-1 opacity-70" />
+                    <Calendar className="h-3.5 w-3.5 mr-1 text-[#DAFF0D]" />
                     <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center mt-1">
-                    <Clock className="h-3.5 w-3.5 mr-1 opacity-70" />
+                    <Clock className="h-3.5 w-3.5 mr-1 text-[#DAFF0D]" />
                     <span>{offer.departure_time ? formatTime(offer.departure_time) : formatTime(offer.flight_date)}</span>
                   </div>
                 </div>
               </CardDescription>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold">${offer.requested_share_amount.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">
+              <div className="text-lg font-semibold text-[#DAFF0D] drop-shadow-[0_0_5px_rgba(218,255,13,0.3)]">${offer.requested_share_amount.toLocaleString()}</div>
+              <div className="text-xs text-white">
                 {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}% of ${offer.total_flight_cost.toLocaleString()}
               </div>
             </div>
@@ -996,7 +1000,7 @@ export default function JetShareListingsContent() {
         <CardContent className="p-4 pt-2">
           <div className="flex items-center gap-2 mt-2">
             <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">
+              <AvatarFallback className="text-xs bg-gray-800 text-white">
                 {offer.user?.first_name?.[0] || 'U'}
                 {offer.user?.last_name?.[0] || 'U'}
               </AvatarFallback>
@@ -1004,28 +1008,27 @@ export default function JetShareListingsContent() {
                 <AvatarImage src={offer.user.avatar_url} alt={`${offer.user?.first_name || 'User'} ${offer.user?.last_name || ''}`} />
               )}
             </Avatar>
-            <span className="text-sm">
+            <span className="text-sm text-white">
               {offer.isOwnOffer ? 'You' : (offer.user?.first_name ? `${offer.user.first_name} ${offer.user.last_name?.[0] || ''}` : 'Jet Owner')}
               {(offer.user as UserWithVerification)?.verification_status === 'verified' && (
-                <CheckCircle className="h-3 w-3 text-green-500 inline ml-1" />
+                <CheckCircle className="h-3 w-3 text-[#DAFF0D] inline ml-1" />
               )}
             </span>
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{offer.available_seats} of {offer.total_seats} seats available</span>
+            <Users className="h-4 w-4 text-[#DAFF0D]" />
+            <span className="text-sm text-white">{offer.available_seats} of {offer.total_seats} seats available</span>
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <Plane className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{offer.aircraft_model || 'Aircraft info unavailable'}</span>
+            <Plane className="h-4 w-4 text-[#DAFF0D]" />
+            <span className="text-sm text-white">{offer.aircraft_model || 'Aircraft info unavailable'}</span>
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           {offer.isOwnOffer ? (
             <div className="flex w-full gap-2">
               <Button 
-                className="flex-1" 
-                variant="secondary"
+                className="flex-1 bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium" 
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent card onClick from firing
                   router.push(`/jetshare/create?edit=${offer.id}`);
@@ -1034,7 +1037,7 @@ export default function JetShareListingsContent() {
                 Edit Offer
               </Button>
               <Button 
-                className="flex-1" 
+                className="flex-1 bg-gray-800 text-white hover:bg-gray-700 border border-gray-600" 
                 variant="outline"
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent card onClick from firing
@@ -1047,7 +1050,7 @@ export default function JetShareListingsContent() {
             </div>
           ) : (
             <Button 
-              className="w-full" 
+              className="w-full bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium" 
               onClick={(e) => {
                 e.stopPropagation(); // Prevent card onClick from firing
                 setSelectedOffer(offer);
@@ -1104,13 +1107,13 @@ export default function JetShareListingsContent() {
       {/* Debug state */}
       {/* {console.log('Rendering JetShareListingsContent, isLoading:', isLoading, 'filteredOffers:', filteredOffers.length)} */}
       {/* Search and filter bar */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border p-4 mb-8">
+      <div className="bg-gray-900 rounded-lg shadow-md border border-gray-800 p-4 mb-8">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white" />
             <Input
               placeholder="Search by departure or arrival location..."
-              className="pl-10"
+              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -1118,10 +1121,10 @@ export default function JetShareListingsContent() {
           
           <div className="flex gap-2">
             <Select value={sortOption} onValueChange={setSortOption}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700 text-white">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-800 border-gray-700 text-white">
                 <SelectItem value="date-asc">Date (Earliest)</SelectItem>
                 <SelectItem value="date-desc">Date (Latest)</SelectItem>
                 <SelectItem value="price-asc">Price (Low to High)</SelectItem>
@@ -1131,64 +1134,68 @@ export default function JetShareListingsContent() {
             
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700">
                   <Filter className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent>
+              <SheetContent className="bg-gray-900 border-gray-800 text-white">
                 <SheetHeader>
-                  <SheetTitle>Filter Options</SheetTitle>
-                  <SheetDescription>
+                  <SheetTitle className="text-white">Filter Options</SheetTitle>
+                  <SheetDescription className="text-white">
                     Narrow down flight shares based on your preferences.
                   </SheetDescription>
                 </SheetHeader>
                 
                 <div className="space-y-4 py-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Departure Location</label>
+                    <label className="text-sm font-medium text-white">Departure Location</label>
                     <Input
                       placeholder="E.g. New York"
                       value={departureFilter}
                       onChange={(e) => setDepartureFilter(e.target.value)}
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Arrival Location</label>
+                    <label className="text-sm font-medium text-white">Arrival Location</label>
                     <Input
                       placeholder="E.g. Miami"
                       value={arrivalFilter}
                       onChange={(e) => setArrivalFilter(e.target.value)}
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Price Range</label>
+                    <label className="text-sm font-medium text-white">Price Range</label>
                     <div className="flex gap-2 items-center">
                       <Input
                         placeholder="Min"
                         type="number"
                         value={minPriceFilter}
                         onChange={(e) => setMinPriceFilter(e.target.value)}
+                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
                       />
-                      <span>to</span>
+                      <span className="text-white">to</span>
                       <Input
                         placeholder="Max"
                         type="number"
                         value={maxPriceFilter}
                         onChange={(e) => setMaxPriceFilter(e.target.value)}
+                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
                       />
                     </div>
                   </div>
                 </div>
                 
                 <SheetFooter>
-                  <Button variant="outline" onClick={clearFilters}>
+                  <Button variant="outline" onClick={clearFilters} className="text-white bg-gray-800 hover:bg-gray-700 border-gray-600">
                     <X className="h-4 w-4 mr-2" />
                     Clear Filters
                   </Button>
                   <SheetClose asChild>
-                    <Button>Apply Filters</Button>
+                    <Button className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium">Apply Filters</Button>
                   </SheetClose>
                 </SheetFooter>
               </SheetContent>
@@ -1200,30 +1207,30 @@ export default function JetShareListingsContent() {
         {(departureFilter || arrivalFilter || minPriceFilter || maxPriceFilter) && (
           <div className="flex flex-wrap gap-2 mt-3">
             {departureFilter && (
-              <UIBadge variant="secondary" className="flex items-center gap-1">
+              <UIBadge variant="secondary" className="flex items-center gap-1 bg-gray-800 text-white">
                 From: {departureFilter}
                 <X
-                  className="h-3 w-3 cursor-pointer"
+                  className="h-3 w-3 cursor-pointer text-white hover:text-white"
                   onClick={() => setDepartureFilter('')}
                 />
               </UIBadge>
             )}
             
             {arrivalFilter && (
-              <UIBadge variant="secondary" className="flex items-center gap-1">
+              <UIBadge variant="secondary" className="flex items-center gap-1 bg-gray-800 text-white">
                 To: {arrivalFilter}
                 <X
-                  className="h-3 w-3 cursor-pointer"
+                  className="h-3 w-3 cursor-pointer text-white hover:text-white"
                   onClick={() => setArrivalFilter('')}
                 />
               </UIBadge>
             )}
             
             {(minPriceFilter || maxPriceFilter) && (
-              <UIBadge variant="secondary" className="flex items-center gap-1">
+              <UIBadge variant="secondary" className="flex items-center gap-1 bg-gray-800 text-white">
                 Price: {minPriceFilter ? `$${minPriceFilter}` : '$0'} - {maxPriceFilter ? `$${maxPriceFilter}` : 'Any'}
                 <X
-                  className="h-3 w-3 cursor-pointer"
+                  className="h-3 w-3 cursor-pointer text-white hover:text-white"
                   onClick={() => {
                     setMinPriceFilter('');
                     setMaxPriceFilter('');
@@ -1235,7 +1242,7 @@ export default function JetShareListingsContent() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 text-xs"
+              className="h-6 text-xs text-white hover:text-white hover:bg-gray-800"
               onClick={clearFilters}
             >
               Clear All
@@ -1247,16 +1254,16 @@ export default function JetShareListingsContent() {
       {/* Main content */}
       <div className="mb-8">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold flex items-center">
+          <h2 className="text-xl font-semibold text-[#DAFF0D] drop-shadow-[0_0_10px_rgba(218,255,13,0.3)] flex items-center">
             Available Flight Shares
             {!isLoading && filteredOffers.length > 0 && (
-              <Badge className="ml-2 text-xs">
+              <Badge className="ml-2 text-xs bg-[#DAFF0D] text-black">
                 {filteredOffers.length} {filteredOffers.length === 1 ? 'offer' : 'offers'}
               </Badge>
             )}
           </h2>
           <div className="flex gap-2">
-            <Button onClick={() => router.push('/jetshare/offer')}>
+            <Button onClick={() => router.push('/jetshare/offer')} className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium">
               Create Offer
             </Button>
           </div>
@@ -1281,7 +1288,7 @@ export default function JetShareListingsContent() {
           <div className="mt-8">
             <EmptyState />
             {error && (
-              <p className="text-center text-red-500 mt-2">{error}</p>
+              <p className="text-center text-red-400 mt-2">{error}</p>
             )}
           </div>
         )}
@@ -1303,7 +1310,7 @@ export default function JetShareListingsContent() {
         }}
       >
         <DialogContent 
-          className="sm:max-w-md" 
+          className="sm:max-w-md bg-gray-900 border-gray-800 text-white" 
           onInteractOutside={(e) => {
             // Prevent closing the dialog when accepting an offer
             if (isAccepting) {
@@ -1314,41 +1321,41 @@ export default function JetShareListingsContent() {
           {selectedOffer && (
             <>
               <DialogHeader>
-                <DialogTitle>Confirm Flight Share</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-white">Confirm Flight Share</DialogTitle>
+                <DialogDescription className="text-gray-300">
                   You are about to book a shared flight from {selectedOffer.departure_location} to {selectedOffer.arrival_location} for ${selectedOffer.requested_share_amount.toLocaleString()}.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center border-b pb-3">
+                  <div className="flex justify-between items-center border-b border-gray-700 pb-3">
                     <div>
-                      <span className="text-sm text-muted-foreground">From</span>
-                      <p className="font-medium">{selectedOffer.departure_location}</p>
+                      <span className="text-sm text-gray-400">From</span>
+                      <p className="font-medium text-white">{selectedOffer.departure_location}</p>
                     </div>
-                    <Plane className="h-5 w-5 mx-4 transform rotate-90" />
+                    <Plane className="h-5 w-5 mx-4 transform rotate-90 text-[#DAFF0D]" />
                     <div className="text-right">
-                      <span className="text-sm text-muted-foreground">To</span>
-                      <p className="font-medium">{selectedOffer.arrival_location}</p>
+                      <span className="text-sm text-gray-400">To</span>
+                      <p className="font-medium text-white">{selectedOffer.arrival_location}</p>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Flight Date</span>
+                        <Calendar className="h-4 w-4 mr-2 text-[#DAFF0D]" />
+                        <span className="text-sm text-gray-400">Flight Date</span>
                       </div>
-                      <p className="font-medium">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
+                      <p className="font-medium text-white">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
                     </div>
                     
                     <div>
                       <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Your Share Cost</span>
+                        <DollarSign className="h-4 w-4 mr-2 text-[#DAFF0D]" />
+                        <span className="text-sm text-gray-400">Your Share Cost</span>
                       </div>
-                      <p className="font-medium">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                      <p className="font-medium text-white">${selectedOffer.requested_share_amount.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -1366,6 +1373,7 @@ export default function JetShareListingsContent() {
                     }, 300);
                   }}
                   disabled={isAccepting}
+                  className="bg-gray-800 text-white hover:bg-gray-700 border-gray-600"
                 >
                   Cancel
                 </Button>
@@ -1373,7 +1381,7 @@ export default function JetShareListingsContent() {
                 <Button 
                   onClick={() => confirmOfferAccept()}
                   disabled={isAccepting}
-                  className="dialog-content"
+                  className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium shadow-md"
                 >
                   {isAccepting ? (
                     <>
@@ -1403,58 +1411,58 @@ export default function JetShareListingsContent() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-gray-900 border-gray-800 text-white">
           {selectedOffer && (
             <>
               <DialogHeader>
-                <DialogTitle>Flight Share Details</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-white">Flight Share Details</DialogTitle>
+                <DialogDescription className="text-gray-300">
                   Review the details of this flight share offer.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4 py-3">
-                <div className="flex justify-between items-center border-b pb-3">
+                <div className="flex justify-between items-center border-b border-gray-700 pb-3">
                   <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{selectedOffer.departure_location}</span>
+                    <Plane className="h-4 w-4 text-[#DAFF0D]" />
+                    <span className="font-medium text-white">{selectedOffer.departure_location}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 mx-2" />
+                  <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
                   <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 text-muted-foreground rotate-90" />
-                    <span className="font-medium">{selectedOffer.arrival_location}</span>
+                    <Plane className="h-4 w-4 text-[#DAFF0D] rotate-90" />
+                    <span className="font-medium text-white">{selectedOffer.arrival_location}</span>
                   </div>
                 </div>
                 
                 <div className="flex justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-medium">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-400">Date</p>
+                    <p className="font-medium text-white">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Requested Share</p>
-                    <p className="font-medium">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                    <p className="text-sm text-gray-400">Requested Share</p>
+                    <p className="font-medium text-[#DAFF0D]">${selectedOffer.requested_share_amount.toLocaleString()}</p>
                   </div>
                 </div>
                 
                 <div className="flex justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Flight Cost</p>
-                    <p className="font-medium">${selectedOffer.total_flight_cost.toLocaleString()}</p>
+                    <p className="text-sm text-gray-400">Total Flight Cost</p>
+                    <p className="font-medium text-white">${selectedOffer.total_flight_cost.toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Share Percentage</p>
-                    <p className="font-medium">
-                      {((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}
+                    <p className="text-sm text-gray-400">Share Percentage</p>
+                    <p className="font-medium text-white">
+                      {((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
                     </p>
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t">
-                  <p className="text-sm text-muted-foreground">Offered by</p>
+                <div className="pt-3 border-t border-gray-700">
+                  <p className="text-sm text-gray-400">Offered by</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Avatar>
-                      <AvatarFallback>
+                      <AvatarFallback className="bg-gray-800 text-gray-100">
                         {selectedOffer.user?.first_name?.[0] || 'U'}
                         {selectedOffer.user?.last_name?.[0] || 'U'}
                       </AvatarFallback>
@@ -1466,17 +1474,17 @@ export default function JetShareListingsContent() {
                       )}
                     </Avatar>
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium text-white">
                         {selectedOffer.user?.first_name ? 
                           `${selectedOffer.user.first_name} ${selectedOffer.user.last_name || ''}` : 
                           'Jet Owner'}
                         {(selectedOffer.user as UserWithVerification)?.verification_status === 'verified' && (
-                          <CheckCircle className="h-3.5 w-3.5 text-green-500 inline ml-1" />
+                          <CheckCircle className="h-3.5 w-3.5 text-[#DAFF0D] inline ml-1" />
                         )}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-gray-400">
                         This flight share is offered by a verified JetShare user. The requested share amount is
-                        {' '}{((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}
+                        {' '}{((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
                         {' '}of the total flight cost.
                       </p>
                     </div>
@@ -1488,7 +1496,7 @@ export default function JetShareListingsContent() {
                 <DialogFooter className="sm:justify-start">
                   <div className="w-full space-y-2">
                     <Button 
-                      className="w-full details-dialog" 
+                      className="w-full bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium shadow-md" 
                       onClick={() => confirmOfferAccept()}
                       disabled={isAccepting}
                     >
@@ -1514,7 +1522,7 @@ export default function JetShareListingsContent() {
                       // Allow animation to complete before clearing selection
                       setTimeout(() => setSelectedOffer(null), 300);
                     }}
-                    className="details-dialog"
+                    className="bg-gray-800 text-white hover:bg-gray-700 border-gray-600"
                   >
                     Close
                   </Button>

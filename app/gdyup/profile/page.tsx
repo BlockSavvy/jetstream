@@ -26,8 +26,9 @@ import {
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth-provider';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import JetsList from '@/components/jets-list';
 
-export default function JetShareProfilePage() {
+export default function GdyUpProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, updateProfile, refreshProfile } = useUserProfile();
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function JetShareProfilePage() {
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/auth/login?returnUrl=/jetshare/profile');
+      router.push('/auth/login?returnUrl=/gdyup/profile');
     }
   }, [user, authLoading, router]);
 
@@ -146,7 +147,7 @@ export default function JetShareProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Your JetShare Profile</h1>
+        <h1 className="text-2xl font-bold">Your GDY UP Profile</h1>
         {!isEditing ? (
           <Button 
             onClick={() => setIsEditing(true)}
@@ -183,6 +184,7 @@ export default function JetShareProfilePage() {
       <Tabs defaultValue="profile">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="jets">My Jets</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -326,6 +328,10 @@ export default function JetShareProfilePage() {
           </Card>
         </TabsContent>
         
+        <TabsContent value="jets">
+          <JetsList />
+        </TabsContent>
+        
         <TabsContent value="activity">
           <Card>
             <CardHeader>
@@ -336,7 +342,7 @@ export default function JetShareProfilePage() {
                 <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-3" />
                 <h3 className="text-lg font-medium">No Recent Activity</h3>
                 <p className="text-muted-foreground mt-1">
-                  Your JetShare activity will appear here
+                  Your GDY UP activity will appear here
                 </p>
               </div>
             </CardContent>

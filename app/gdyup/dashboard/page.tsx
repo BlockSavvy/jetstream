@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import JetShareDashboard from '../components/JetShareDashboard';
 import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase';
 
 export default function JetShareDashboardPage() {
   const { user, loading, refreshSession } = useAuth();
@@ -17,6 +18,7 @@ export default function JetShareDashboardPage() {
   const [loadingTimeout, setLoadingTimeout] = useState<boolean>(false);
   const [authCheckComplete, setAuthCheckComplete] = useState<boolean>(false);
   const [redirectAttempted, setRedirectAttempted] = useState<boolean>(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   // Set a timeout to prevent endless loading - much longer to allow for auth
   useEffect(() => {
@@ -27,17 +29,47 @@ export default function JetShareDashboardPage() {
     return () => clearTimeout(timer);
   }, []);
   
-  // Also try to refresh the session when the component mounts
+  // Aggressively refresh the session when the component mounts
   useEffect(() => {
-    if (loading) {
-      const attemptRefresh = async () => {
-        console.log("Attempting to refresh session on dashboard mount");
-        await refreshSession();
-      };
+    const attemptRefresh = async () => {
+      console.log("Attempting to refresh session on dashboard mount");
       
-      attemptRefresh();
-    }
-  }, []);
+      try {
+        // Try to refresh using Auth Provider first
+        const refreshed = await refreshSession();
+        console.log("Session refresh result:", refreshed);
+        
+        if (!refreshed) {
+          // If that fails, try a direct approach
+          console.log("Direct session refresh attempt");
+          const supabase = createClient();
+          const { data, error } = await supabase.auth.refreshSession();
+          
+          if (error) {
+            console.error("Direct refresh error:", error);
+            // Try getting session directly as last resort
+            const { data: sessionData } = await supabase.auth.getSession();
+            setDebugInfo({
+              hasSession: !!sessionData.session,
+              hasUser: !!sessionData.session?.user,
+              error: error.message
+            });
+          } else {
+            console.log("Direct refresh succeeded:", !!data.session);
+            setDebugInfo({
+              hasSession: !!data.session,
+              hasUser: !!data.session?.user
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Error during refresh:", e);
+        setDebugInfo({ error: e instanceof Error ? e.message : String(e) });
+      }
+    };
+    
+    attemptRefresh();
+  }, [refreshSession]);
 
   // Get params from URL
   useEffect(() => {
@@ -85,11 +117,20 @@ export default function JetShareDashboardPage() {
     if (!user && !redirectAttempted) {
       console.log('User not authenticated, waiting briefly before redirecting to login');
       
+      // Provide some user feedback
+      toast.warning("Authentication required", { 
+        description: "Please sign in to access your dashboard",
+        duration: 5000
+      });
+      
       // Set a short timer before redirecting to make sure loading is really complete
       const redirectTimer = setTimeout(() => {
         console.log('Redirecting to login after grace period');
         setRedirectAttempted(true);
-        router.push('/auth/login?returnUrl=/jetshare/dashboard');
+        
+        // Add a timestamp to prevent caching issues
+        const timestamp = Date.now();
+        window.location.href = `/auth/login?returnUrl=/gdyup/dashboard&t=${timestamp}`;
       }, 2000); // 2 second grace period
       
       return () => clearTimeout(redirectTimer);
@@ -146,8 +187,13 @@ export default function JetShareDashboardPage() {
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
           <p className="text-yellow-700">
             Still working on loading your information. You can try refreshing the page if data doesn't appear.
-            If you continue to see this message, you may need to <a href="/auth/login?returnUrl=/jetshare/dashboard" className="underline">sign in again</a>.
+            If you continue to see this message, you may need to <a href="/auth/login?returnUrl=/gdyup/dashboard" className="underline">sign in again</a>.
           </p>
+          {debugInfo && (
+            <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+              <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+            </div>
+          )}
         </div>
         <JetShareDashboard 
           initialTab={initialTab} 
@@ -172,51 +218,46 @@ export default function JetShareDashboardPage() {
   }
 
   // When loading times out but there's no user, don't render the dashboard component
-  if (loading && loadingTimeout && !user) {
+  if (loadingTimeout && !user) {
     return (
       <div className="container mx-auto py-8 px-4 flex flex-col items-center justify-center min-h-[50vh]">
         <h1 className="text-2xl font-bold mb-2">Authentication Required</h1>
         <p className="text-muted-foreground mb-4">Please log in to view your dashboard.</p>
         <a 
-          href="/auth/login?returnUrl=/jetshare/dashboard"
+          href="/auth/login?returnUrl=/gdyup/dashboard"
           className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded"
         >
           Sign In
         </a>
+        {debugInfo && (
+          <div className="mt-6 p-4 bg-gray-100 rounded text-xs w-full max-w-lg">
+            <h3 className="font-bold mb-2">Debug Info:</h3>
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
       </div>
     );
   }
 
   // Long timeout - if we get here, auth failed but we'll still show the dashboard with a warning
-  if (loadingTimeout && !loading && !user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-700">
-            You appear to be logged out. Some features may not work correctly.
-            <a href="/auth/login?returnUrl=/jetshare/dashboard" className="ml-2 underline">Sign in now</a>
-          </p>
-        </div>
-        <JetShareDashboard 
-          initialTab={initialTab} 
-          errorMessage={errorMessage || "Authentication required. Please log in to view your complete dashboard."} 
-          successMessage={successMessage}
-        />
-      </div>
-    );
-  }
-
-  // Final fallback if nothing else worked
   return (
-    <div className="container mx-auto py-8 px-4 flex flex-col items-center justify-center min-h-[50vh]">
-      <h1 className="text-2xl font-bold mb-2">Authentication Required</h1>
-      <p className="text-muted-foreground mb-4">Please log in to view your dashboard.</p>
-      <a 
-        href="/auth/login?returnUrl=/jetshare/dashboard"
-        className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded"
-      >
-        Sign In
-      </a>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+        <p className="text-red-700">
+          You appear to be logged out. Some features may not work correctly.
+          <a href="/auth/login?returnUrl=/gdyup/dashboard" className="ml-2 underline">Sign in now</a>
+        </p>
+        {debugInfo && (
+          <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+      <JetShareDashboard 
+        initialTab={initialTab} 
+        errorMessage={errorMessage || "Authentication required. Please log in to view your complete dashboard."} 
+        successMessage={successMessage}
+      />
     </div>
   );
 } 

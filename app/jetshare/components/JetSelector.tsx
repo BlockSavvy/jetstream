@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Check, ChevronsUpDown, Loader2, Search, Plane, ChevronDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Search, Plane, ChevronDown, User } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@headlessui/react';
 import { createPortal } from 'react-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSession } from "next-auth/react";
 
 // Types for jet data
 interface Jet {
@@ -36,6 +37,7 @@ interface Jet {
   is_popular?: boolean;
   display_name?: string;
   year?: number;
+  owner_id?: string;
 }
 
 // Server-friendly props interface
@@ -80,6 +82,12 @@ function JetSelectorImpl({
   const [retryCount, setRetryCount] = useState(0);
   const [selectedJet, setSelectedJet] = useState<Jet | null>(null);
   const [filterByCapacity, setFilterByCapacity] = useState<number | null>(null);
+  // Add new state for filtering by user's own jets
+  const [showOnlyMyJets, setShowOnlyMyJets] = useState(true);
+  
+  // Get user session to determine user's jets
+  const { data: session } = useSession();
+  const userId = session?.user ? (session.user as any).id : null;
   
   // Refs for positioning dropdown correctly
   const inputRef = useRef<HTMLDivElement>(null);
@@ -307,9 +315,14 @@ function JetSelectorImpl({
     } else {
       setShowCustomInput(false);
     }
+    
+    // Set the selected jet for display
+    if (jet) {
+      setSelectedJet(jet);
+    }
   }, [value, jets]);
   
-  // Filter the jets based on search and selected manufacturer
+  // Filter the jets based on search, selected manufacturer, capacity and owner
   const filteredJets = jets.filter(jet => {
     const displayName = jet.display_name || `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`;
     
@@ -323,7 +336,10 @@ function JetSelectorImpl({
     
     const matchesCapacity = filterByCapacity ? jet.capacity >= filterByCapacity : true;
     
-    return matchesSearch && matchesManufacturer && matchesCapacity;
+    // Check if the jet belongs to the current user
+    const isOwnedByUser = !userId || !showOnlyMyJets || jet.owner_id === userId;
+    
+    return matchesSearch && matchesManufacturer && matchesCapacity && isOwnedByUser;
   });
   
   // Fix the UI when a jet is selected to display an image and update label
@@ -359,6 +375,11 @@ function JetSelectorImpl({
     if (onCustomChange) {
       onCustomChange(newValue);
     }
+  };
+  
+  // Toggle My Jets filter
+  const toggleMyJetsFilter = () => {
+    setShowOnlyMyJets(prev => !prev);
   };
   
   // Capacity filter options
@@ -433,26 +454,48 @@ function JetSelectorImpl({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0 max-h-[60vh] md:w-[400px]">
-          <Command className="w-full">
-            <div className="flex items-center border-b px-3">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+        <PopoverContent className="w-[300px] p-0 max-h-[60vh] md:w-[400px] bg-gray-900 border-gray-800 text-gray-100">
+          <Command className="w-full bg-gray-900 text-gray-100">
+            <div className="flex items-center border-b border-gray-800 px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-400" />
               <CommandInput 
                 placeholder="Search jets..." 
-                className="h-9 flex-1"
+                className="h-9 flex-1 bg-transparent text-gray-100 placeholder:text-gray-500 focus:outline-none"
                 value={search}
                 onValueChange={setSearch}
               />
             </div>
             
-            {/* Capacity filters */}
-            <div className="flex items-center gap-1 p-2 border-b overflow-x-auto">
+            {/* Filter toolbar */}
+            <div className="flex items-center gap-1 p-2 border-b border-gray-800 overflow-x-auto">
+              {/* My Jets Filter */}
+              <Button
+                size="sm"
+                variant={showOnlyMyJets ? "default" : "outline"}
+                className={cn(
+                  "text-xs h-7 px-2",
+                  showOnlyMyJets 
+                    ? "bg-amber-600 text-white hover:bg-amber-700" 
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700"
+                )}
+                onClick={toggleMyJetsFilter}
+              >
+                <User className="h-3 w-3 mr-1" />
+                My Jets
+              </Button>
+              
+              {/* Capacity filters */}
               {capacityFilters.map((filter) => (
                 <Button
                   key={filter.label}
                   size="sm"
                   variant={filterByCapacity === filter.value ? "default" : "outline"}
-                  className="text-xs h-7 px-2"
+                  className={cn(
+                    "text-xs h-7 px-2",
+                    filterByCapacity === filter.value 
+                      ? "bg-amber-600 text-white hover:bg-amber-700" 
+                      : "bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700"
+                  )}
                   onClick={() => setFilterByCapacity(filter.value)}
                 >
                   {filter.label}
@@ -460,21 +503,22 @@ function JetSelectorImpl({
               ))}
             </div>
             
-            <CommandList className="max-h-[300px] overflow-auto">
-              <CommandEmpty className="py-6 text-center text-sm">
+            <CommandList className="max-h-[300px] overflow-auto bg-gray-900">
+              <CommandEmpty className="py-6 text-center text-sm text-gray-400">
                 No jets found.
               </CommandEmpty>
-              <CommandGroup>
+              <CommandGroup className="bg-gray-900">
                 {isLoading ? (
                   Array(3).fill(0).map((_, index) => (
                     <div key={index} className="px-2 py-1.5">
-                      <Skeleton className="h-14 w-full rounded-md" />
+                      <Skeleton className="h-14 w-full rounded-md bg-gray-800" />
                     </div>
                   ))
                 ) : (
                   filteredJets.map((jet) => {
                     const jetName = `${jet.manufacturer} ${jet.model}`;
                     const isSelected = selectedJet?.id === jet.id;
+                    const isOwned = jet.owner_id === userId;
                     
                     return (
                       <CommandItem
@@ -483,11 +527,14 @@ function JetSelectorImpl({
                         onSelect={() => handleSelect(jetName, jet)}
                         className={cn(
                           "flex items-center gap-2 px-2 py-3 cursor-pointer transition-colors",
-                          isSelected ? "bg-blue-50 dark:bg-blue-900/20" : ""
+                          isSelected 
+                            ? "bg-amber-900/30 text-amber-50" 
+                            : "text-gray-100 hover:bg-gray-800/80",
+                          "relative"
                         )}
                       >
                         {jet.image_url ? (
-                          <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                          <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800">
                             <img 
                               src={jet.image_url} 
                               alt={jetName}
@@ -495,19 +542,29 @@ function JetSelectorImpl({
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded flex items-center justify-center bg-blue-100 dark:bg-blue-900/30">
-                            <Plane className="h-5 w-5 text-blue-500" />
+                          <div className="w-10 h-10 rounded flex items-center justify-center bg-gray-800">
+                            <Plane className="h-5 w-5 text-amber-500" />
                           </div>
                         )}
                         <div className="flex flex-col">
                           <span className="font-medium">{jetName}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {jet.capacity} seats • {jet.range_nm} nm range
-                            {jet.year && ` • ${jet.year}`}
-                          </span>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-gray-400">
+                              {jet.capacity} seats • {jet.range_nm} nm range
+                              {jet.year && ` • ${jet.year}`}
+                            </span>
+                            {isOwned && (
+                              <Badge 
+                                variant="outline" 
+                                className="ml-1 text-[10px] py-0 h-4 border-amber-600/50 text-amber-300"
+                              >
+                                My Jet
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         {isSelected && (
-                          <Check className="h-4 w-4 text-blue-500 ml-auto" />
+                          <Check className="h-4 w-4 text-amber-500 ml-auto" />
                         )}
                       </CommandItem>
                     );
@@ -525,7 +582,7 @@ function JetSelectorImpl({
           value={customValue}
           onChange={handleCustomInputChange}
           placeholder="Enter custom aircraft model"
-          className="mt-2"
+          className="mt-2 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
         />
       )}
     </div>

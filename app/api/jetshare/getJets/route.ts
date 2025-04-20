@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client with environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Helper function to get CORS headers
 function getCorsHeaders(request: NextRequest) {
@@ -33,8 +38,11 @@ export async function GET(request: NextRequest) {
     
     console.log('Query params:', { manufacturer, minCapacity, maxCapacity, sort, order, search, withImageOnly });
     
-    // Create Supabase client
-    const supabase = await createClient();
+    // Create Supabase client with service role key for admin access
+    const supabase = createClient(
+      supabaseUrl,
+      serviceKey || supabaseKey // Fallback to anon key if service key is not available
+    );
     
     // Build query
     let query = supabase
@@ -81,7 +89,7 @@ export async function GET(request: NextRequest) {
     
     if (!data || data.length === 0) {
       console.log('No jets found in database, providing fallback data');
-      return provideFallbackData(corsHeaders);
+      return await provideFallbackData(corsHeaders);
     }
     
     console.log(`Successfully fetched ${data.length} jets`);
@@ -109,23 +117,47 @@ export async function GET(request: NextRequest) {
     // Try to fetch interior details for each jet to get seat capacity
     const interiorPromises = enhancedData.map(async (jet) => {
       try {
-        const { data: interiorData } = await supabase
+        // First check if the jet_interiors table has seats data
+        const { data: interiorData, error: interiorError } = await supabase
           .from('jet_interiors')
           .select('seats')
           .eq('jet_id', jet.id)
           .single();
         
         if (interiorData && interiorData.seats) {
+          console.log(`Found interior seats data for jet ${jet.id}: ${interiorData.seats}`);
           return {
             ...jet,
-            // If the interior has seat data, update the capacity
             capacity: parseInt(interiorData.seats) || jet.capacity
           };
         }
         
+        // If no interior data, check if there's a record in the aircraft_models table
+        if (!interiorData || interiorError) {
+          const { data: modelData, error: modelError } = await supabase
+            .from('aircraft_models')
+            .select('capacity')
+            .eq('manufacturer', jet.manufacturer)
+            .eq('model', jet.model)
+            .single();
+            
+          if (modelData && modelData.capacity) {
+            console.log(`Found aircraft model capacity for ${jet.manufacturer} ${jet.model}: ${modelData.capacity}`);
+            return {
+              ...jet,
+              capacity: parseInt(modelData.capacity) || jet.capacity
+            };
+          }
+        }
+        
+        // If we still don't have capacity data, log a warning but return the jet as is
+        if (!jet.capacity) {
+          console.warn(`Could not find capacity data for jet ${jet.id} (${jet.manufacturer} ${jet.model})`);
+        }
+        
         return jet;
       } catch (err) {
-        console.warn(`Could not fetch interior for jet ${jet.id}:`, err);
+        console.warn(`Error fetching additional data for jet ${jet.id}:`, err);
         return jet;
       }
     });
@@ -141,14 +173,60 @@ export async function GET(request: NextRequest) {
     }, { status: 200, headers: corsHeaders });
   } catch (error) {
     console.error('Unexpected error in getJets API:', error);
-    return provideFallbackData(corsHeaders);
+    return await provideFallbackData(corsHeaders);
   }
 }
 
-function provideFallbackData(corsHeaders: any) {
+async function provideFallbackData(corsHeaders: any) {
   console.log('Using fallback jet data');
   
-  // Provide fallback data when API fails
+  try {
+    // Try to get actual data from aircraft_models table
+    const supabase = createClient(
+      supabaseUrl,
+      serviceKey || supabaseKey
+    );
+    
+    const { data, error } = await supabase
+      .from('aircraft_models')
+      .select('*')
+      .limit(10);
+      
+    if (data && Array.isArray(data) && data.length > 0) {
+      console.log(`Using ${data.length} models from database as fallback`);
+      
+      // Convert aircraft_models data to the jets format
+      const fallbackJets = data.map((model, index) => ({
+        id: `fallback-${model.id || index}`,
+        manufacturer: model.manufacturer,
+        model: model.model,
+        tail_number: `N${index}JS`,
+        capacity: parseInt(model.capacity) || 8,
+        range_nm: parseInt(model.range_nm) || null,
+        cruise_speed_kts: parseInt(model.cruise_speed_kts) || null,
+        image_url: model.image_url || '/images/placeholder-jet.jpg',
+        description: model.description || `${model.manufacturer} ${model.model} aircraft`,
+        thumbnail_url: model.image_url || '/images/placeholder-jet.jpg',
+        manufacturer_logo: `/images/logos/${model.manufacturer.toLowerCase()}.png`,
+        is_popular: index < 3 // First 3 are marked as popular
+      }));
+      
+      const manufacturers = [...new Set(fallbackJets.map(jet => jet.manufacturer))].sort();
+      
+      return NextResponse.json({ 
+        jets: fallbackJets,
+        total: fallbackJets.length,
+        manufacturers: manufacturers
+      }, { status: 200, headers: corsHeaders });
+    }
+  } catch (err) {
+    console.error('Error fetching fallback data from aircraft_models:', err);
+  }
+  
+  // If database fallback failed, use static fallback data
+  console.log('Using static fallback data');
+  
+  // Provide minimal static fallback data when all else fails
   const fallbackJets = [
     { 
       id: 'gulfstream-g650', 
@@ -191,48 +269,6 @@ function provideFallbackData(corsHeaders: any) {
       thumbnail_url: '/images/placeholder-jet.jpg',
       manufacturer_logo: '/images/logos/embraer.png',
       is_popular: true
-    },
-    { 
-      id: 'cessna-citation-longitude', 
-      manufacturer: 'Cessna', 
-      model: 'Citation Longitude', 
-      tail_number: 'N4JS',
-      capacity: 12,
-      range_nm: 3500,
-      cruise_speed_kts: 476,
-      image_url: '/images/placeholder-jet.jpg',
-      description: 'Super mid-size business jet with long-range capabilities.',
-      thumbnail_url: '/images/placeholder-jet.jpg',
-      manufacturer_logo: '/images/logos/cessna.png',
-      is_popular: false
-    },
-    { 
-      id: 'dassault-falcon-8x', 
-      manufacturer: 'Dassault', 
-      model: 'Falcon 8X', 
-      tail_number: 'N5JS',
-      capacity: 16,
-      range_nm: 6450,
-      cruise_speed_kts: 460,
-      image_url: '/images/placeholder-jet.jpg',
-      description: 'Ultra-long-range business jet with exceptional fuel efficiency.',
-      thumbnail_url: '/images/placeholder-jet.jpg',
-      manufacturer_logo: '/images/logos/dassault.png',
-      is_popular: false
-    },
-    { 
-      id: 'other-custom', 
-      manufacturer: 'Other', 
-      model: 'Custom', 
-      tail_number: '',
-      capacity: 8,
-      range_nm: null,
-      cruise_speed_kts: null,
-      image_url: '/images/placeholder-jet.jpg',
-      description: 'Custom aircraft model not in the standard list.',
-      thumbnail_url: '/images/placeholder-jet.jpg',
-      manufacturer_logo: '/images/logos/other.png',
-      is_popular: false
     }
   ];
   

@@ -1,7 +1,11 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { GetRouteHandler, PostRouteHandler, PatchRouteHandler, DeleteRouteHandler, PutRouteHandler, IdParam } from '@/lib/types/route-types';
+
+// Initialize Supabase client with environment variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Define interface for aircraft layout template
 interface AircraftLayout {
@@ -47,8 +51,143 @@ const AIRCRAFT_LAYOUTS: AircraftLayoutsMap = {
   }
 };
 
+// GET a specific jet by ID
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  console.log(`Fetching jet with ID: ${params.id}`);
+  
+  try {
+    // Get jet data with owner information
+    const { data: jet, error: jetError } = await supabase
+      .from('jets')
+      .select(`
+        *,
+        owner:owner_id(id, first_name, last_name, email, avatar_url)
+      `)
+      .eq('id', params.id)
+      .single();
+    
+    if (jetError) {
+      console.error(`Error fetching jet ${params.id}:`, jetError);
+      return NextResponse.json(
+        { error: 'Failed to fetch jet', details: jetError.message },
+        { status: 500 }
+      );
+    }
+    
+    if (!jet) {
+      return NextResponse.json(
+        { error: 'Jet not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Get jet interior data
+    const { data: interior, error: interiorError } = await supabase
+      .from('jet_interiors')
+      .select('*')
+      .eq('jet_id', params.id)
+      .maybeSingle();
+    
+    if (interiorError) {
+      console.error('Error fetching jet interior:', interiorError);
+      // Continue without interior data
+    }
+    
+    // Try to get jet seat layout data
+    let seatLayout = null;
+    try {
+      const { data: layoutData, error: layoutError } = await supabase
+        .from('jet_seat_layouts')
+        .select('layout')
+        .eq('jet_id', params.id)
+        .maybeSingle();
+        
+      if (layoutError) {
+        console.error('Error fetching seat layout:', layoutError);
+      } else if (layoutData) {
+        seatLayout = layoutData.layout;
+      }
+    } catch (error) {
+      console.error('Error in seat layout query:', error);
+      // Continue without layout data
+    }
+    
+    // Create a default seat layout based on capacity if no custom layout exists
+    if (!seatLayout) {
+      // Get capacity from jet or interior
+      const capacity = jet.capacity || (interior?.seats ? parseInt(interior.seats) : 4);
+      let rows = 0;
+      let seatsPerRow = 0;
+      let skipPositions: number[][] = [];
+      
+      // Configure typical aircraft layout based on capacity
+      if (capacity <= 4) {
+        rows = 2;
+        seatsPerRow = 2;
+      } else if (capacity <= 16) {
+        seatsPerRow = 2;
+        rows = Math.ceil(capacity / seatsPerRow);
+        
+        // Handle odd number of seats
+        if (capacity % 2 !== 0) {
+          skipPositions.push([rows - 1, 1]); 
+        }
+      } else if (capacity <= 30) {
+        seatsPerRow = 3;
+        rows = Math.ceil(capacity / seatsPerRow);
+        
+        // Handle seats that don't fill the last row
+        const lastRowPositions = capacity % seatsPerRow;
+        if (lastRowPositions > 0) {
+          for (let i = lastRowPositions; i < seatsPerRow; i++) {
+            skipPositions.push([rows - 1, i]);
+          }
+        }
+      } else {
+        seatsPerRow = 4;
+        rows = Math.ceil(capacity / seatsPerRow);
+        
+        // Handle seats that don't fill the last row
+        const lastRowPositions = capacity % seatsPerRow;
+        if (lastRowPositions > 0) {
+          for (let i = lastRowPositions; i < seatsPerRow; i++) {
+            skipPositions.push([rows - 1, i]);
+          }
+        }
+      }
+      
+      // Create the default layout object
+      seatLayout = {
+        rows,
+        seatsPerRow,
+        layoutType: 'standard',
+        totalSeats: capacity,
+        seatMap: {
+          skipPositions: skipPositions
+        }
+      };
+    }
+    
+    // Return combined data
+    return NextResponse.json({
+      jet,
+      interior: interior || null,
+      seatLayout
+    });
+  } catch (error) {
+    console.error('Unexpected error:', error);
+    return NextResponse.json(
+      { error: 'An unexpected error occurred' },
+      { status: 500 }
+    );
+  }
+}
+
 // Using the correct Next.js pattern for dynamic route parameters
-export const GET: GetRouteHandler<{ id: string }> = async (
+export const GET_SERVER: GetRouteHandler<{ id: string }> = async (
   request: NextRequest,
   context: IdParam
 ) => {
@@ -69,10 +208,6 @@ export const GET: GetRouteHandler<{ id: string }> = async (
         seatLayout: AIRCRAFT_LAYOUTS['default']
       });
     }
-    
-    // Initialize Supabase client with the correct cookie handling
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({ cookies: () => cookieStore });
     
     // Get jet data
     const { data: jet, error: jetError } = await supabase

@@ -1,14 +1,19 @@
 /* GDY UP Branding Colors */
 :root {
-  --gdyup-primary: #DAFF0D;
+  --gdyup-primary: #DAFF0D; /* Enhanced brightness for better contrast */
   --gdyup-secondary: #FF4B47;
   --gdyup-background: #000000;
   --gdyup-text: #FFFFFF;
-  --gdyup-accent: #3A3A3A;
-  --gdyup-hover-bg: rgba(255, 255, 255, 0.1);
-  --gdyup-active-bg: rgba(218, 255, 13, 0.15);
+  --gdyup-text-medium: #E0E0E0;
+  --gdyup-text-subtle: #D0D0D0; /* Brightened from #A0A0A0 for better contrast */
+  --gdyup-accent: #1A1A1A;
+  --gdyup-hover-bg: rgba(255, 255, 255, 0.15); /* Increased opacity */
+  --gdyup-active-bg: rgba(218, 255, 13, 0.2); /* Increased opacity */
+  --gdyup-card-bg: #121212;
+  --gdyup-card-border: #2a2a2a;
 }
 
+/* Text Colors */
 .gdyup-primary {
   color: var(--gdyup-primary);
 }
@@ -17,9 +22,11 @@
   color: var(--gdyup-secondary);
 }
 
+/* Background Colors */
 .gdyup-bg-primary {
   background-color: var(--gdyup-primary);
-  color: var(--gdyup-background);
+  color: #000000; /* Ensure black text on bright background */
+  font-weight: bold; /* Added for better visibility */
 }
 
 .gdyup-bg-secondary {
@@ -27,11 +34,14 @@
   color: var(--gdyup-text);
 }
 
+/* Gradient Effects */
 .gdyup-gradient {
   background: linear-gradient(90deg, var(--gdyup-primary), var(--gdyup-secondary));
-  color: var(--gdyup-background);
+  color: #000000; /* Ensure black text on bright background */
+  font-weight: bold; /* Added for better visibility */
 }
 
+/* Border Utilities */
 .gdyup-border {
   border-color: var(--gdyup-primary);
 }
@@ -40,53 +50,60 @@
   border-color: var(--gdyup-secondary);
 }
 
-/* Custom Button Styles - Enhanced for better visibility */
+/* Button Styles - Enhanced for better visibility */
 .gdyup-button, 
 button.btn-primary,
 .btn-primary,
-button[type="submit"] {
-  background-color: var(--gdyup-primary);
-  color: var(--gdyup-background);
-  font-weight: bold;
-  transition: all 0.2s ease;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
+button[type="submit"],
+.gdyup-app button.bg-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
 }
 
 .gdyup-button:hover,
 button.btn-primary:hover,
 .btn-primary:hover,
-button[type="submit"]:hover {
-  background-color: #E8FF4D; /* Slightly brighter for hover */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+button[type="submit"]:hover,
+.gdyup-app button.bg-primary:hover {
+  background-color: #E8FF4D !important; /* Slightly brighter for hover */
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
 .gdyup-button-outline,
 button.btn-outline,
 .btn-outline {
-  background-color: transparent;
-  border: 2px solid var(--gdyup-primary);
-  color: var(--gdyup-primary);
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
+  background-color: transparent !important;
+  border: 2px solid var(--gdyup-primary) !important;
+  color: var(--gdyup-primary) !important;
+  font-weight: bold !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .gdyup-button-outline:hover,
 button.btn-outline:hover,
 .btn-outline:hover {
-  background-color: var(--gdyup-primary);
-  color: var(--gdyup-background);
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-background) !important;
+  transform: translateY(-2px) !important;
 }
 
 /* Fix for specific buttons */
@@ -121,16 +138,131 @@ button.btn-outline:hover,
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+/* Icons with glowing effect */
+.gdyup-icon {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 8px rgba(218, 255, 13, 0.5));
+}
+
+.gdyup-icon-container {
+  background-color: black;
+  border: 2px solid var(--gdyup-primary);
+  border-radius: 50%;
+  padding: 0.75rem;
+  box-shadow: 0 0 20px rgba(218, 255, 13, 0.4); /* Increased glow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Typography */
 .gdyup-title {
   color: var(--gdyup-primary);
   font-weight: bold;
   letter-spacing: -0.02em;
+  text-shadow: 0 0 10px rgba(218, 255, 13, 0.3); /* Added glow for better visibility */
+}
+
+.gdyup-subtitle {
+  color: var(--gdyup-text);
+  font-weight: 500;
+}
+
+.gdyup-text {
+  color: var(--gdyup-text-medium);
 }
 
 .gdyup-highlight {
   color: var(--gdyup-secondary);
   font-weight: bold;
+}
+
+/* Override shadcn components for better contrast */
+.gdyup-app .bg-card {
+  background-color: var(--gdyup-card-bg) !important;
+  border-color: var(--gdyup-card-border) !important;
+}
+
+.gdyup-app .text-card-foreground {
+  color: var(--gdyup-text) !important;
+}
+
+.gdyup-app .text-muted-foreground {
+  color: var(--gdyup-text-medium) !important;
+}
+
+.gdyup-app input,
+.gdyup-app select,
+.gdyup-app textarea {
+  background-color: #1a1a1a !important;
+  border: 1px solid #4a4a4a !important; /* Brightened from #3a3a3a */
+  color: var(--gdyup-text) !important;
+}
+
+.gdyup-app input:focus,
+.gdyup-app select:focus,
+.gdyup-app textarea:focus {
+  border-color: var(--gdyup-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(218, 255, 13, 0.25) !important; /* Increased size and opacity */
+}
+
+/* Badge styling with better contrast */
+.gdyup-app .badge-success {
+  background-color: rgba(0, 180, 0, 0.25) !important; /* Increased opacity */
+  color: #5aff5a !important; /* Brightened */
+  border: 1px solid #2ead2e !important;
+  font-weight: bold !important;
+}
+
+.gdyup-app .badge-warning {
+  background-color: rgba(255, 180, 0, 0.25) !important; /* Increased opacity */
+  color: #ffd761 !important; /* Brightened */
+  border: 1px solid #cc9633 !important;
+  font-weight: bold !important;
+}
+
+.gdyup-app .badge-error {
+  background-color: rgba(255, 0, 0, 0.25) !important; /* Increased opacity */
+  color: #ff7a7a !important; /* Brightened */
+  border: 1px solid #cc3e3e !important;
+  font-weight: bold !important;
+}
+
+/* Status indicators with better contrast */
+.gdyup-app .status-available {
+  color: #5aff5a !important; /* Brightened from #4eff4e */
+  font-weight: bold !important;
+}
+
+.gdyup-app .status-pending {
+  color: #ffd761 !important; /* Brightened from #ffcc4d */
+  font-weight: bold !important;
+}
+
+.gdyup-app .status-unavailable {
+  color: #ff7a7a !important; /* Brightened from #ff6b6b */
+  font-weight: bold !important;
+}
+
+/* Dialog/modal styling for better contrast */
+.gdyup-app [role="dialog"] {
+  background-color: #121212 !important;
+  border-color: #3a3a3a !important; /* Brightened from #2a2a2a */
+}
+
+.gdyup-app [role="dialog"] h2 {
+  color: white !important;
+}
+
+.gdyup-app [role="dialog"] p {
+  color: #e0e0e0 !important;
+}
+
+/* Loading indicators */
+.gdyup-app .loading-spinner {
+  border-color: rgba(218, 255, 13, 0.3) !important; /* Increased opacity */
+  border-top-color: var(--gdyup-primary) !important;
 }
 
 /* Mobile-specific Styles */
@@ -146,4 +278,355 @@ button.btn-outline:hover,
   padding: 0.75rem;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
+}
+
+/* Text color overrides for better contrast */
+.text-gray-300, .text-gray-400, .text-gray-500 {
+  color: #D0D0D0 !important; /* Brightened for better visibility */
+}
+
+/* Make sure all text on dark backgrounds has sufficient contrast */
+.bg-gray-900 .text-gray-100, 
+.bg-gray-800 .text-gray-100,
+.bg-black .text-gray-100 {
+  color: #FFFFFF !important; /* Ensure maximum contrast */
+}
+
+/* Make sure links and interactive elements are clearly visible */
+a.text-gray-400:hover, 
+a.text-gray-500:hover, 
+button.text-gray-400:hover, 
+button.text-gray-500:hover {
+  color: var(--gdyup-primary) !important;
+}
+
+/* Ensure headings have good contrast */
+h1, h2, h3, h4, h5, h6 {
+  color: #FFFFFF !important;
+}
+
+h1.gdyup-primary, h2.gdyup-primary, h3.gdyup-primary, 
+h4.gdyup-primary, h5.gdyup-primary, h6.gdyup-primary,
+h1 .gdyup-primary, h2 .gdyup-primary, h3 .gdyup-primary, 
+h4 .gdyup-primary, h5 .gdyup-primary, h6 .gdyup-primary,
+h1.text-\[\#DAFF0D\], h2.text-\[\#DAFF0D\], h3.text-\[\#DAFF0D\],
+h4.text-\[\#DAFF0D\], h5.text-\[\#DAFF0D\], h6.text-\[\#DAFF0D\] {
+  color: var(--gdyup-primary) !important;
+  text-shadow: 0 0 10px rgba(218, 255, 13, 0.3); /* Adding slight glow effect */
+}
+
+/* Add additional contrast for card content */
+.bg-gray-900 .text-gray-100, 
+.bg-gray-800 .text-gray-100,
+.bg-black .text-gray-100 {
+  color: #FFFFFF !important;
+}
+
+/* Icon visibility enhancements */
+svg, .lucide, .lucide-icon {
+  color: #FFFFFF; /* Default white color for all icons */
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.5)); /* Add subtle glow to all icons */
+}
+
+/* Enhance primary icons */
+svg.text-\[\#DAFF0D\], 
+.lucide.text-\[\#DAFF0D\], 
+.text-\[\#DAFF0D\] svg,
+.text-\[\#DAFF0D\] .lucide {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.6)); /* Add glow to primary colored icons */
+}
+
+/* Button background enhancements for landing page */
+.bg-gray-900, .bg-gray-800 {
+  background-color: #0D0D0D !important; /* Darker background for better contrast */
+}
+
+/* Enhance button background contrast */
+.bg-\[\#DAFF0D\] {
+  background-color: #DAFF0D !important; /* Ensure the lime green is bright */
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.3); /* Add glow effect to buttons */
+}
+
+/* Improve border visibility */
+.border-\[\#DAFF0D\] {
+  border-color: #DAFF0D !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.4); /* Add glow to borders */
+}
+
+/* Special treatment for icon containers */
+.rounded-full svg,
+.rounded-full .lucide,
+div[class*="rounded"] svg,
+div[class*="rounded"] .lucide {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.6));
+}
+
+/* Improve card visibility */
+.card, .bg-card, [class*="Card"] {
+  background-color: #111111 !important;
+  border-color: #333333 !important;
+}
+
+/* GDYUP Seat Visualizer Enhancements */
+/* Container for the seat visualizer with improved styling */
+.gdyup-app .seat-visualizer-container {
+  background-color: #0A0A0A !important;
+  border: 1px solid #333333 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+  padding: 16px !important;
+  overflow: hidden !important;
+}
+
+/* Individual seat styling */
+.gdyup-app [data-seat-id] {
+  transition: all 0.2s ease !important;
+  transform: scale(0.95) !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Selected seat styling with GDY UP branding */
+.gdyup-app [data-seat-id].bg-blue-600,
+.gdyup-app [data-seat-id][aria-checked="true"] {
+  background-color: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  border-color: var(--gdyup-primary) !important;
+  transform: scale(1) !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.4) !important;
+}
+
+/* Hover effects for available seats */
+.gdyup-app [data-seat-id]:not([aria-checked="true"]):hover {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  border-color: rgba(218, 255, 13, 0.5) !important;
+  transform: scale(1) !important;
+  cursor: pointer !important;
+}
+
+/* Improved visualization header */
+.gdyup-app .seat-visualizer-header {
+  background-color: #151515 !important;
+  border-bottom: 2px solid #333333 !important;
+  color: white !important;
+  padding: 10px 16px !important;
+  border-radius: 8px 8px 0 0 !important;
+  font-weight: bold !important;
+}
+
+/* Improved control buttons in the visualizer */
+.gdyup-app .seat-control-button {
+  background-color: #222222 !important;
+  border: 1px solid #444444 !important;
+  color: #FFFFFF !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  transition: all 0.2s ease !important;
+  text-transform: uppercase !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.04em !important;
+}
+
+.gdyup-app .seat-control-button:hover {
+  background-color: #333333 !important;
+  border-color: var(--gdyup-primary) !important;
+}
+
+.gdyup-app .seat-control-button.active {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  border-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* Improve seat legend */
+.gdyup-app .seat-legend {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(5px) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin-top: 12px !important;
+  border: 1px solid #333333 !important;
+}
+
+.gdyup-app .seat-legend-item {
+  display: flex !important;
+  align-items: center !important;
+  margin-right: 12px !important;
+}
+
+.gdyup-app .seat-legend-color {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 4px !important;
+  margin-right: 6px !important;
+}
+
+/* Create Offer Form Enhancements */
+/* Section containers with consistent styling */
+.gdyup-app .offer-section {
+  background-color: #0F0F0F !important;
+  border-radius: 12px !important;
+  border: 1px solid #333333 !important;
+  padding: 20px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Section headers */
+.gdyup-app .offer-section-header {
+  color: var(--gdyup-primary) !important;
+  font-size: 1.25rem !important;
+  font-weight: bold !important;
+  margin-bottom: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-bottom: 1px solid #333333 !important;
+  padding-bottom: 10px !important;
+}
+
+.gdyup-app .offer-section-header svg {
+  color: var(--gdyup-primary) !important;
+  margin-right: 8px !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+}
+
+/* Input groups with improved spacing and styling */
+.gdyup-app .form-input-group {
+  margin-bottom: 16px !important;
+}
+
+.gdyup-app .form-input-label {
+  color: #FFFFFF !important;
+  font-weight: 500 !important;
+  margin-bottom: 6px !important;
+  display: block !important;
+}
+
+/* Form error messages with better visibility */
+.gdyup-app .form-error {
+  color: #FF6B6B !important;
+  font-size: 0.875rem !important;
+  margin-top: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.gdyup-app .form-error svg {
+  color: #FF6B6B !important;
+  margin-right: 4px !important;
+}
+
+/* Navigation buttons for the multi-step form */
+.gdyup-app .form-nav-buttons {
+  display: flex !important;
+  justify-content: space-between !important;
+  margin-top: 24px !important;
+}
+
+.gdyup-app .form-back-button {
+  background-color: #222222 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #444444 !important;
+  padding: 8px 16px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.gdyup-app .form-back-button:hover {
+  background-color: #333333 !important;
+  border-color: #555555 !important;
+}
+
+.gdyup-app .form-next-button {
+  background-color: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  font-weight: bold !important;
+  padding: 8px 20px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.3) !important;
+}
+
+.gdyup-app .form-next-button:hover {
+  background-color: #E8FF4D !important; /* Slightly brighter */
+  box-shadow: 0 0 12px rgba(218, 255, 13, 0.5) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Slider component styling */
+.gdyup-app .slider-container {
+  padding: 16px 12px !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 10px !important;
+  border: 1px solid #333333 !important;
+  margin: 20px 0 !important;
+}
+
+.gdyup-app .slider-track {
+  height: 8px !important;
+  background-color: #333333 !important;
+  border-radius: 4px !important;
+}
+
+.gdyup-app .slider-track-active {
+  background-color: var(--gdyup-primary) !important;
+  height: 8px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4) !important;
+}
+
+.gdyup-app .slider-thumb {
+  width: 22px !important;
+  height: 22px !important;
+  background-color: var(--gdyup-primary) !important;
+  border: 2px solid #000000 !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
+  cursor: grab !important;
+}
+
+.gdyup-app .slider-thumb:active {
+  cursor: grabbing !important;
+  transform: scale(1.1) !important;
+}
+
+/* GDY UP SVG Logo Enhancement */
+.gdyup-logo {
+  filter: drop-shadow(0 0 8px rgba(218, 255, 13, 0.3));
+  transition: all 0.3s ease;
+  max-height: 40px;
+  width: auto !important;
+}
+
+.gdyup-logo:hover {
+  filter: drop-shadow(0 0 12px rgba(218, 255, 13, 0.5));
+  transform: scale(1.02);
+}
+
+header a img[src*="gdyup-logo.svg"] {
+  filter: drop-shadow(0 0 8px rgba(218, 255, 13, 0.3));
+  transition: all 0.3s ease;
+}
+
+/* Ensure logo contrast on dark backgrounds */
+@media (prefers-color-scheme: dark) {
+  header a img[src*="gdyup-logo.svg"] {
+    filter: drop-shadow(0 0 10px rgba(218, 255, 13, 0.4)) brightness(1.05);
+  }
+}
+
+/* Mobile optimization for the logo */
+@media (max-width: 768px) {
+  header a img[src*="gdyup-logo.svg"] {
+    height: 38px !important;
+    margin-left: -5px; /* Adjust for optical alignment on small screens */
+  }
+}
+
+/* Add drop shadow glow effect for airport map visualization */
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
 } 

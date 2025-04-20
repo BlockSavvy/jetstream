@@ -13,7 +13,8 @@ import {
   LogOut,
   ChevronLeft,
   LogIn,
-  User
+  User,
+  Plane
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
@@ -106,6 +107,11 @@ export default function GdyupHeader() {
         name: 'Dashboard',
         path: '/gdyup/dashboard',
         icon: <BarChart4 className="h-5 w-5" />
+      },
+      {
+        name: 'My Jets',
+        path: '/gdyup/jets',
+        icon: <Plane className="h-5 w-5" />
       }
     ] : [];
     
@@ -126,7 +132,8 @@ export default function GdyupHeader() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/');
+      // Use direct navigation to avoid router issues
+      window.location.href = '/gdyup';
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -136,7 +143,31 @@ export default function GdyupHeader() {
     // Redirect back to GDY UP after login with current path
     const currentPath = pathname || '/gdyup';
     const timestamp = Date.now(); // Add timestamp to avoid caching issues
-    router.push(`/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`);
+    // Use direct navigation for more reliable auth cookies
+    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`;
+  };
+  
+  // Handle navigation to protected routes
+  const handleProtectedNavigation = (path: string) => {
+    // Special handling for offer pages - always allow during development
+    if (process.env.NODE_ENV === 'development' || 
+        path.startsWith('/gdyup/offer/new') || 
+        path.startsWith('/gdyup/offer/edit')) {
+      console.log('Direct navigation to', path);
+      window.location.href = path;
+      return;
+    }
+
+    // In production, check authentication for other protected routes
+    if (!isAuthenticated) {
+      // If not authenticated, redirect to login with return URL
+      const timestamp = Date.now();
+      window.location.href = `/auth/login?returnUrl=${encodeURIComponent(path)}&t=${timestamp}`;
+      return;
+    }
+    
+    // If authenticated, use direct navigation for better cookie handling
+    window.location.href = path;
   };
 
   // GDY UP brand colors - updated for better contrast
@@ -147,44 +178,74 @@ export default function GdyupHeader() {
     <header className="sticky top-0 z-50 bg-black border-b border-gray-800" style={{ "--primary-color": primaryColor, "--secondary-color": secondaryColor } as React.CSSProperties}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo */}
+          {/* Logo - Updated for better visibility */}
           <div className="flex items-center gap-2">
             <Link href="/gdyup" className="flex items-center">
               <Image 
-                src="/assets/gdyup-logo.jpg" 
-                width={120} 
-                height={40} 
+                src="/assets/gdyup-logo.svg" 
+                width={160} 
+                height={48} 
                 alt="GDY UP Logo"
-                className="h-8 w-auto" 
+                className="h-10 w-auto object-contain gdyup-logo" 
+                priority
+                unoptimized={true}
               />
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex md:items-center md:space-x-6">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={cn(
-                  "flex items-center space-x-1 text-sm font-medium transition-colors",
-                  isActive(item.path)
-                    ? { color: primaryColor }
-                    : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
-                )}
-                style={isActive(item.path) ? { color: primaryColor } : {}}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              // Determine if this is a protected route
+              const isProtectedRoute = ['/gdyup/dashboard', '/gdyup/offer', '/gdyup/jets'].some(route => 
+                item.path.startsWith(route)
+              );
+              
+              // For protected routes, use onClick with the handler
+              if (isProtectedRoute) {
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => handleProtectedNavigation(item.path)}
+                    className={cn(
+                      "flex items-center space-x-1 text-sm font-medium transition-colors",
+                      isActive(item.path)
+                        ? { color: primaryColor }
+                        : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
+                    )}
+                    style={isActive(item.path) ? { color: primaryColor } : {}}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </button>
+                );
+              }
+              
+              // For non-protected routes, use regular Link
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={cn(
+                    "flex items-center space-x-1 text-sm font-medium transition-colors",
+                    isActive(item.path)
+                      ? { color: primaryColor }
+                      : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
+                  )}
+                  style={isActive(item.path) ? { color: primaryColor } : {}}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
             
             {/* Divider */}
             <div className="h-5 w-px bg-gray-700 mx-1" />
             
             {/* Profile link */}
-            <Link 
-              href="/gdyup/profile" 
+            <button 
+              onClick={() => handleProtectedNavigation('/gdyup/profile')}
               className={cn(
                 "flex items-center space-x-1 text-sm font-medium transition-colors",
                 isActive('/gdyup/profile')
@@ -195,7 +256,7 @@ export default function GdyupHeader() {
             >
               <User className="h-5 w-5" />
               <span>Profile</span>
-            </Link>
+            </button>
             
             {/* More dropdown */}
             <div className="relative group">
@@ -262,39 +323,72 @@ export default function GdyupHeader() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <nav className="mt-4 space-y-4 md:hidden">
-            {menuItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
-                  isActive(item.path)
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
-                )}
-                style={isActive(item.path) ? { color: primaryColor } : {}}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.icon}
-                <span>{item.name}</span>
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              // Determine if this is a protected route
+              const isProtectedRoute = ['/gdyup/dashboard', '/gdyup/offer', '/gdyup/jets'].some(route => 
+                item.path.startsWith(route)
+              );
+              
+              // For protected routes, use onClick with the handler
+              if (isProtectedRoute) {
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleProtectedNavigation(item.path);
+                    }}
+                    className={cn(
+                      "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                      isActive(item.path)
+                        ? "bg-gray-800 text-white"
+                        : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
+                    )}
+                    style={isActive(item.path) ? { color: primaryColor } : {}}
+                  >
+                    {item.icon}
+                    <span>{item.name}</span>
+                  </button>
+                );
+              }
+              
+              // For non-protected routes, use regular Link
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                    isActive(item.path)
+                      ? "bg-gray-800 text-white"
+                      : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
+                  )}
+                  style={isActive(item.path) ? { color: primaryColor } : {}}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.icon}
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
             
-            {/* Add Profile link to mobile menu */}
-            <Link
-              href="/gdyup/profile"
+            {/* Profile link */}
+            <button
+              onClick={() => {
+                handleProtectedNavigation('/gdyup/profile');
+                setMobileMenuOpen(false);
+              }}
               className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                "flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
                 isActive('/gdyup/profile')
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
+                  ? { color: primaryColor }
+                  : "text-gray-100 hover:text-white hover:bg-gray-800"
               )}
               style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
-              onClick={() => setMobileMenuOpen(false)}
             >
-              <User className="h-5 w-5" />
+              <User className="h-5 w-5 mr-2" />
               <span>Profile</span>
-            </Link>
+            </button>
             
             <div className="h-px bg-gray-700 my-2" />
             

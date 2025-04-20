@@ -138,10 +138,54 @@ export function LoginForm() {
           finalRedirectUrl = paymentUrl;
         }
         
+        // Store auth info in localStorage for redundancy
+        try {
+          if (session.user) {
+            localStorage.setItem('jetstream_user_id', session.user.id);
+            if (session.user.email) {
+              localStorage.setItem('jetstream_user_email', session.user.email);
+            }
+            localStorage.setItem('auth_last_authenticated', 'true');
+            localStorage.setItem('jetstream_session_time', Date.now().toString());
+            
+            // Store tokens if available
+            if (session.access_token && session.refresh_token) {
+              const tokenData = {
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
+                expires_at: Math.floor(Date.now() / 1000) + 3600
+              };
+              localStorage.setItem('sb-vjhrmizwqhmafkxbmfwa-auth-token', JSON.stringify(tokenData));
+            }
+            
+            // Log what we're storing for debugging
+            console.log('Stored auth info in localStorage for redundancy');
+          }
+        } catch (e) {
+          console.warn('Error storing auth info in localStorage:', e);
+        }
+        
+        console.log('Will redirect to:', finalRedirectUrl);
+        
         // Give the session a moment to fully establish
         setTimeout(() => {
           if (finalRedirectUrl) {
+            // Append timestamp to prevent caching issues
+            if (finalRedirectUrl.includes('?')) {
+              finalRedirectUrl = `${finalRedirectUrl}&t=${Date.now()}`;
+            } else {
+              finalRedirectUrl = `${finalRedirectUrl}?t=${Date.now()}`;
+            }
+            
             console.log('Redirecting to:', finalRedirectUrl)
+            
+            // For GDY UP and Jets pages, use direct navigation to ensure cookies are sent
+            if (finalRedirectUrl.includes('/gdyup/') || finalRedirectUrl.includes('/jets')) {
+              console.log('Using direct navigation for GDY UP/Jets page');
+              window.location.href = finalRedirectUrl;
+              return;
+            }
+            
             // Use the router for same-origin URLs, window.location for cross-origin
             if (finalRedirectUrl.startsWith('/')) {
               router.push(finalRedirectUrl)

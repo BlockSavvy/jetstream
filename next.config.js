@@ -21,6 +21,11 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
+  // Configure allowed image domains
+  images: {
+    domains: ['images.unsplash.com'],
+  },
+  
   // Handle Node.js modules in browser
   webpack: (config, { isServer }) => {
     // If client-side (browser), provide empty modules for Node.js specific imports

@@ -96,16 +96,12 @@ When integrating with the AI Concierge, use these prompt examples to help the AI
 
 **For describing configurations:**
 
-```
-The jet has a {splitOrientation} split with a {splitRatio} ratio. 
+The jet has a {splitOrientation} split with a {splitRatio} ratio.
 This means there are {front.length} seats in the front section and {back.length} seats in the back section.
-```
 
 **For suggesting the visualizer:**
 
-```
 I can help you visualize this better. Would you like me to open the seat configuration tool so you can see exactly how the seats are arranged?
-```
 
 ## Data Structure
 

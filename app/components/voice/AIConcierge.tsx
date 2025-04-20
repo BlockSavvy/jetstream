@@ -313,9 +313,26 @@ const FlightCard = ({ flight }: { flight: FlightData }) => {
   );
 };
 
-export default function AIConcierge() {
+export default function AIConcierge({
+  showButton = true,
+  buttonImage,
+  buttonColor = '#DAFF0D',
+  buttonPosition = { bottom: '1rem', right: '1rem' },
+  initiallyOpen = false
+}: {
+  showButton?: boolean;
+  buttonImage?: string;
+  buttonColor?: string;
+  buttonPosition?: {
+    bottom?: string;
+    right?: string;
+    top?: string;
+    left?: string;
+  };
+  initiallyOpen?: boolean;
+}) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initiallyOpen);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -1469,28 +1486,50 @@ export default function AIConcierge() {
       {/* Audio element for playback */}
       <audio ref={audioRef} style={{ display: 'none' }} />
       
-      {/* Floating button to open concierge */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-blue-600 transition-colors z-50"
-        aria-label="Open AI Concierge"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      {/* Floating button to open concierge - only show if showButton is true */}
+      {showButton && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed z-50 rounded-full shadow-lg hover:brightness-110 transition-all duration-300 hover:scale-105"
+          style={{
+            bottom: buttonPosition.bottom || 'auto',
+            right: buttonPosition.right || 'auto',
+            top: buttonPosition.top || 'auto',
+            left: buttonPosition.left || 'auto',
+            width: '3.5rem',
+            height: '3.5rem',
+            background: buttonColor || '#DAFF0D'
+          }}
+          aria-label="Open AI Concierge"
         >
-          <path d="M12 2a10 10 0 0 1 10 10c0 6-6 10-10 10C8.36 22 5 20 3 17" />
-          <path d="M10 8v4h4" />
-          <path d="m21 8-2.36 2.36a1 1 0 0 1-1.28.13L15 9" />
-        </svg>
-      </button>
+          {buttonImage ? (
+            <img 
+              src={buttonImage} 
+              alt="Concierge" 
+              width={56} 
+              height={56} 
+              className="object-cover w-full h-full rounded-full"
+            />
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-black"
+            >
+              <path d="M12 2a10 10 0 0 1 10 10c0 6-6 10-10 10C8.36 22 5 20 3 17" />
+              <path d="M10 8v4h4" />
+              <path d="m21 8-2.36 2.36a1 1 0 0 1-1.28.13L15 9" />
+            </svg>
+          )}
+        </button>
+      )}
 
       {/* Concierge dialog */}
       {isOpen && (

@@ -1,70 +1,46 @@
-import type React from "react"
-import "./globals.css"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/components/auth-provider"
-import { Toaster } from "sonner"
-import Navbar from "@/components/navbar"
-import { AuthPersistenceProvider } from "@/components/auth-persistence-provider"
-import { ConciergeProvider } from "@/app/components/concierge-provider"
-import { PWAProvider } from "@/components/pwa-provider"
+import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/sonner";
+import { fontSans } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/lib/auth-provider";
+import ConditionalNavbar from "@/components/conditional-navbar";
+import { ConciergeProvider } from "./components/concierge-provider";
+import { AuthPersistenceProvider } from "@/components/auth-persistence-provider";
 
-const inter = Inter({ subsets: ["latin"] })
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "JetStream - Private Jets On-Demand",
-  description:
-    "Redefine luxury travel with JetStream - the Uber of private jets. Seamless fractional jet experiences, personalized flights, effortlessly matched.",
-  generator: 'v0dev',
-  manifest: '/manifest.json',
-  themeColor: '#CEFF00',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'GDY UP',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-  other: {
-    'apple-mobile-web-app-capable': 'yes',
-    'mobile-web-app-capable': 'yes',
-  }
-}
+  title: "JetStream | GDY UP",
+  description: "Manage your private aviation needs seamlessly with GDY UP.",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icons/gdyup-icon-192.png" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
-      <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            <AuthPersistenceProvider>
-              <PWAProvider>
-                <Toaster position="top-center" />
-                <Navbar />
-                <main className="min-h-screen">
-                  {children}
-                </main>
-                {/* Global AI Concierge */}
-                <ConciergeProvider />
-              </PWAProvider>
-            </AuthPersistenceProvider>
-          </AuthProvider>
-        </ThemeProvider>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable
+        )}
+      >
+        <AuthProvider>
+          <AuthPersistenceProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <ConditionalNavbar />
+              <div className="flex-1">{children}</div>
+            </div>
+            <Toaster />
+            <ConciergeProvider />
+          </AuthPersistenceProvider>
+        </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

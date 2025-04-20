@@ -121,8 +121,8 @@ function LocationAutocompleteInternal({
           <span>{match[1]}</span>
           <span className={cn("ml-1 px-1.5 py-0.5 text-xs font-bold rounded shadow-sm", 
             variant === 'departure' 
-              ? "bg-blue-600/40 text-white border border-blue-500/50" 
-              : "bg-amber-600/40 text-white border border-amber-500/50"
+              ? "bg-blue-600/60 text-white border border-blue-500/50" 
+              : "bg-amber-600/60 text-white border border-amber-500/50"
           )}>
             {match[2]}
           </span>
@@ -135,7 +135,35 @@ function LocationAutocompleteInternal({
   // Instead of using a custom input component, conditionally render based on value
   const hasSelectedAirport = value && value.trim() !== '' && value.match(/^(.*)\s+\(([A-Z]{3,4})\)$/);
 
-  // Debounced search function
+  // Add a focus handler to show popular destinations if no search is active
+  const handleFocus = () => {
+    setIsFocused(true);
+    
+    // If we have a search value already, trigger search
+    if (value && value.length >= 2) {
+      debouncedSearch(value);
+    } else if (!showResults) {
+      // Show popular destinations
+      const popularSuggestions = getPopularSuggestions();
+      setResults(popularSuggestions);
+      setFormattedResults(popularSuggestions.map(formatAirportDisplay));
+      setShowResults(true);
+    }
+  };
+
+  // Extend the blur handler to have a small delay
+  const handleBlur = () => {
+    // Use a small timeout to allow for click events on the results dropdown
+    setTimeout(() => {
+      setIsFocused(false);
+      setShowResults(false);
+      
+      // Trigger the provided onBlur handler
+      onBlur();
+    }, 200);
+  };
+  
+  // Debounced search function - UPDATED to prioritize real airport data
   const debouncedSearch = useCallback((searchValue: string) => {
     if (searchValue.length < 2) {
       setResults([]);
@@ -153,41 +181,71 @@ function LocationAutocompleteInternal({
         
         // Check if we have airports data to search
         if (airports && airports.length > 0) {
-          filtered = airports.filter(airport => {
-            const searchLower = searchValue.toLowerCase();
-            return (
-              airport.code.toLowerCase().includes(searchLower) || 
-              airport.city.toLowerCase().includes(searchLower) ||
-              airport.name.toLowerCase().includes(searchLower) ||
-              airport.country.toLowerCase().includes(searchLower)
-            );
-          });
+          console.log(`LocationAutocomplete: Searching ${airports.length} real airports for "${searchValue}"`);
+          
+          const searchLower = searchValue.toLowerCase();
+          
+          // First, prioritize direct code matches
+          const codeMatches = airports.filter(airport => 
+            airport.code.toLowerCase() === searchLower
+          );
+          
+          // Then matches starting with search term (exclude exact matches)
+          const startsWithMatches = airports.filter(airport => 
+            !codeMatches.includes(airport) && (
+              airport.code.toLowerCase().startsWith(searchLower) || 
+              airport.city.toLowerCase().startsWith(searchLower)
+            )
+          );
+          
+          // Finally contains matches (exclude previous matches)
+          const containsMatches = airports.filter(airport => 
+            !codeMatches.includes(airport) &&
+            !startsWithMatches.includes(airport) &&
+            (airport.code.toLowerCase().includes(searchLower) || 
+             airport.city.toLowerCase().includes(searchLower) ||
+             airport.name.toLowerCase().includes(searchLower) ||
+             airport.country.toLowerCase().includes(searchLower))
+          );
+          
+          // Combine results: exact matches first, then starts with, then contains
+          filtered = [...codeMatches, ...startsWithMatches, ...containsMatches];
+
+          // Log the results for debugging
+          console.log(`LocationAutocomplete: Found ${filtered.length} matching airports for "${searchValue}": ${codeMatches.length} exact, ${startsWithMatches.length} starts with, ${containsMatches.length} contains`);
         } else {
-          // Fallback to popular locations if no airports data
+          // ONLY use fallback if absolutely no database data is available
+          console.warn("LocationAutocomplete: No airports data available from database, using popularLocations as last resort");
+          
+          // Convert popular locations to temporary airport objects for consistency
           filtered = popularLocations
             .filter(location => location.toLowerCase().includes(searchValue.toLowerCase()))
             .map(location => {
               // Parse out city and code from format like "New York (JFK)"
-              const match = location.match(/^(.*)\s+\(([A-Z]{3})\)$/);
+              const match = location.match(/^(.*)\s+\(([A-Z]{3,4})\)$/);
               if (match) {
                 return {
                   city: match[1],
                   code: match[2],
                   name: `${match[1]} International Airport`,
-                  country: 'Unknown'
+                  country: 'Unknown',
+                  is_private: false
                 };
               }
               return {
                 city: location,
                 code: 'UNK',
                 name: location,
-                country: 'Unknown'
+                country: 'Unknown',
+                is_private: false
               };
             });
+          
+          console.log(`LocationAutocomplete: Using ${filtered.length} fallback locations for "${searchValue}"`);
         }
         
-        // Limit to 6 results for better mobile UX
-        filtered = filtered.slice(0, 6);
+        // Limit to 15 results for better mobile UX but show more results
+        filtered = filtered.slice(0, 15);
         
         // Also create formatted results for display
         const formatted = filtered.map(formatAirportDisplay);
@@ -204,7 +262,16 @@ function LocationAutocompleteInternal({
   // Handle search when input changes
   const handleSearch = (searchValue: string) => {
     onChange(searchValue);
-    debouncedSearch(searchValue);
+    
+    // Trigger search immediately when we have at least 2 characters
+    if (searchValue.length >= 2) {
+      console.log(`LocationAutocomplete: Triggering search for "${searchValue}"`);
+      debouncedSearch(searchValue);
+    } else {
+      setResults([]);
+      setFormattedResults([]);
+      setShowResults(false);
+    }
   };
 
   // Handle selection from autocomplete
@@ -214,12 +281,35 @@ function LocationAutocompleteInternal({
     setShowResults(false);
     setRecentlySelected(true);
     
+    // Immediately trigger the blur event to ensure form state is updated
+    onBlur();
+    
     // Visual feedback indication that fades after 1.5s
     setTimeout(() => setRecentlySelected(false), 1500);
     
-    // Keep focus on input after selection for mobile UX
+    // Force blur on the input to close keyboard on mobile and properly register the selection
     if (inputRef.current) {
-      inputRef.current.focus();
+      inputRef.current.blur();
+      
+      // Delay focus to prevent immediate reopening of results
+      setTimeout(() => {
+        // Dispatch a custom event to notify the form of the selection
+        const event = new CustomEvent('locationSelect', {
+          detail: { 
+            name: inputRef.current?.name || '', // Ensure name is never undefined
+            value: formattedValue,
+            airport
+          }
+        });
+        
+        // Check if all required data is present before dispatching
+        if (event.detail.name || event.detail.value) {
+          console.log('Dispatching locationSelect event:', event.detail);
+          window.dispatchEvent(event);
+        } else {
+          console.warn('Not dispatching locationSelect event due to missing required data');
+        }
+      }, 50);
     }
   };
 
@@ -242,31 +332,59 @@ function LocationAutocompleteInternal({
 
   // Prepare popular suggestions
   const getPopularSuggestions = useCallback(() => {
-    if (!airports || airports.length === 0) {
-      return popularLocations.slice(0, 4).map(location => {
-        const match = location.match(/^(.*)\s+\(([A-Z]{3})\)$/);
-        if (match) {
-          return {
-            city: match[1],
-            code: match[2],
-            name: `${match[1]} International Airport`,
-            country: 'Unknown'
-          };
-        }
-        return {
-          city: location,
-          code: 'UNK',
-          name: location,
-          country: 'Unknown'
-        };
-      });
+    // Always prioritize real database airports when available
+    if (airports && airports.length > 0) {
+      // Get major international airports first (typically non-private airports in major cities)
+      const majorAirports = airports
+        .filter(airport => 
+          !airport.is_private && 
+          ['new york', 'london', 'paris', 'tokyo', 'los angeles', 'dubai', 'miami'].some(city => 
+            airport.city.toLowerCase().includes(city)
+          )
+        );
+
+      // If we found some major airports, use those
+      if (majorAirports.length > 0) {
+        return majorAirports.slice(0, 8);
+      }
+      
+      // Otherwise, just use the first few non-private airports
+      return airports
+        .filter(airport => airport.is_private !== true)
+        .slice(0, 8);
     }
     
-    // Filter for popular airports (could be enhanced to use actual popularity data)
-    return airports
-      .filter(airport => airport.is_private !== true)
-      .slice(0, 4);
+    // Only use popularLocations as a last resort if no real data is available
+    console.warn("LocationAutocomplete: No database airports available for popular suggestions, using fallback");
+    return popularLocations.slice(0, 6).map(location => {
+      const match = location.match(/^(.*)\s+\(([A-Z]{3,4})\)$/);
+      if (match) {
+        return {
+          city: match[1],
+          code: match[2],
+          name: `${match[1]} International Airport`,
+          country: 'Unknown',
+          is_private: false
+        };
+      }
+      return {
+        city: location,
+        code: 'UNK',
+        name: location,
+        country: 'Unknown',
+        is_private: false
+      };
+    });
   }, [airports, popularLocations]);
+
+  // Initialize with proper state when mounted
+  useEffect(() => {
+    // Check if we have a value on mount and it's valid for search
+    if (value && value.length >= 2) {
+      console.log(`LocationAutocomplete: Initial value "${value}" - triggering search`);
+      debouncedSearch(value);
+    }
+  }, [value, debouncedSearch]);
 
   return (
     <div className={cn("relative w-full", className)}>
@@ -277,7 +395,7 @@ function LocationAutocompleteInternal({
       <div 
         className={cn(
           "relative flex items-center overflow-hidden rounded-lg border",
-          "bg-gray-900/80 text-white transition-all duration-200",
+          "bg-black text-white transition-all duration-200",
           error ? "border-red-500" : isFocused ? (variant === 'departure' ? "border-blue-400 ring-2 ring-blue-500/30" : "border-amber-400 ring-2 ring-amber-500/30") : "border-gray-700",
           recentlySelected && "ring-2 ring-green-500/40"
         )}
@@ -304,16 +422,8 @@ function LocationAutocompleteInternal({
               value={value}
               onChange={(e) => handleSearch(e.target.value)}
               className="sr-only"
-              onFocus={() => {
-                setIsFocused(true);
-                if (value.length > 1) {
-                  debouncedSearch(value);
-                }
-              }}
-              onBlur={() => {
-                setIsFocused(false);
-                onBlur();
-              }}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </div>
         ) : (
@@ -322,18 +432,10 @@ function LocationAutocompleteInternal({
             type="text"
             value={value}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder={placeholder}
+            placeholder={variant === 'departure' ? 'From city or code' : 'To city or code'}
             className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base text-white font-medium placeholder:text-gray-500"
-            onFocus={() => {
-              setIsFocused(true);
-              if (value.length > 1) {
-                debouncedSearch(value);
-              }
-            }}
-            onBlur={() => {
-              setIsFocused(false);
-              onBlur();
-            }}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
           />
         )}
         
@@ -375,12 +477,7 @@ function LocationAutocompleteInternal({
         </AnimatePresence>
       </div>
 
-      {/* Error message */}
-      {error && (
-        <div className="mt-1 text-red-500 text-sm ml-1">{error}</div>
-      )}
-
-      {/* Results dropdown */}
+      {/* Results dropdown - increased z-index to ensure it appears over other elements */}
       <AnimatePresence>
         {showResults && (
           <motion.div 
@@ -389,61 +486,101 @@ function LocationAutocompleteInternal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-20 mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden"
+            className="absolute z-[100] mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden"
+            style={{ 
+              maxHeight: '60vh',
+              position: 'absolute',
+              top: '100%',
+              left: 0
+            }}
           >
-            <div className="max-h-[240px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+            <div className="max-h-[350px] overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
               {results.length > 0 ? (
                 results.map((airport, index) => {
                   return (
                     <div
                       key={`${airport.code}-${index}`}
-                      className="px-3 py-2.5 hover:bg-gray-700 cursor-pointer flex items-center border-b border-gray-700/70 last:border-b-0 group"
+                      className="px-3 py-3 hover:bg-gray-700 cursor-pointer flex items-center border-b border-gray-700/70 last:border-b-0 group"
                       onClick={() => handleSelect(airport)}
                     >
-                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center mr-2", variant === 'departure' ? "bg-blue-500/30" : "bg-amber-500/30")}>
-                        {variant === 'departure' ? (
-                          <MapPin className="h-4 w-4 text-blue-200" />
-                        ) : (
-                          <MapPin className="h-4 w-4 text-amber-200" />
+                      <div className="flex-grow">
+                        <div className="flex items-center flex-wrap">
+                          <span className="text-white font-medium truncate max-w-[150px]">{airport.city}</span>
+                          <span className={cn("ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md shadow-sm", 
+                            variant === 'departure' 
+                              ? "bg-blue-900 text-blue-100 border border-blue-700" 
+                              : "bg-amber-900 text-amber-100 border border-amber-700"
+                          )}>
+                            {airport.code}
+                          </span>
+                          {airport.is_private && (
+                            <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-purple-900/80 text-purple-100 border border-purple-800/70 rounded-md shadow-sm">
+                              Private
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[250px]">{airport.name}</div>
+                        {airport.country && (
+                          <div className="text-[10px] text-gray-500">{airport.country}</div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <span className="font-medium text-white">
-                            {airport.city}
-                          </span>
-                          <Badge className={cn("ml-2 px-2 py-0.5 text-xs font-bold shadow-sm", variant === 'departure' ? "bg-blue-500/40 text-white border-blue-500/50" : "bg-amber-500/40 text-white border-amber-500/50")}>
-                            {airport.code}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-gray-300">{airport.name}</div>
+                      <div className={cn("w-8 h-8 ml-2 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity", 
+                        variant === 'departure' ? "bg-blue-900" : "bg-amber-900")}>
+                        <CheckCircle className="h-4 w-4 text-white" />
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div className="px-3 py-4 text-center text-gray-300">
-                  {isLoading || isPending ? 'Searching...' : 'No results found'}
+                <div className="px-3 py-6 text-center text-gray-400">
+                  <p className="text-sm">No locations found</p>
+                  <p className="text-xs mt-1 text-gray-500">Try a different search term</p>
                 </div>
               )}
-            </div>
-
-            {/* Popular suggestions - now always visible when dropdown is open */}
-            <div className="border-t border-gray-700 px-3 py-2 text-xs text-gray-300 font-medium flex items-center bg-gray-700/80">
-              <Globe className="h-3 w-3 mr-1.5" />
-              Popular destinations
-            </div>
-            <div className="pb-2 px-2 grid grid-cols-2 gap-1 bg-gray-800">
-              {getPopularSuggestions().map((airport, index) => (
-                <div
-                  key={`popular-${index}-${airport.code}`}
-                  className="px-2 py-1.5 hover:bg-gray-700 cursor-pointer rounded-md text-sm text-gray-200 hover:text-white transition-colors flex items-center space-x-1"
-                  onClick={() => handleSelect(airport)}
-                >
-                  <span>{airport.city}</span>
-                  <span className="inline-flex px-1.5 py-0.5 text-xs font-bold rounded bg-gray-600 text-white">{airport.code}</span>
+              
+              {/* Popular destinations section */}
+              {(!value || value.length < 2) && (
+                <div className="mt-2 border-t border-gray-700/50 pt-2">
+                  <div className="px-3 py-1 text-xs text-gray-500 font-medium flex items-center">
+                    <Globe className="h-3 w-3 mr-1 opacity-70" />
+                    Popular destinations
+                  </div>
+                  <div className="py-1">
+                    {getPopularSuggestions().map((airport, index) => (
+                      <div
+                        key={`popular-${airport.code}-${index}`}
+                        className="px-3 py-2 hover:bg-gray-700 cursor-pointer border-b border-gray-700/50 last:border-b-0 flex items-center group"
+                        onClick={() => handleSelect(airport)}
+                      >
+                        <div className="flex-grow">
+                          <div className="flex items-center flex-wrap">
+                            <span className="text-white">{airport.city}</span>
+                            <span className={cn("ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md", 
+                              variant === 'departure' 
+                                ? "bg-blue-900 text-blue-100" 
+                                : "bg-amber-900 text-amber-100"
+                            )}>
+                              {airport.code}
+                            </span>
+                            {airport.is_private && (
+                              <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-purple-900/80 text-purple-100 border border-purple-800/70 rounded-md shadow-sm">
+                                Private
+                              </span>
+                            )}
+                          </div>
+                          {airport.country && (
+                            <div className="text-[10px] text-gray-500 mt-0.5">{airport.country}</div>
+                          )}
+                        </div>
+                        <div className={cn("w-7 h-7 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity", 
+                          variant === 'departure' ? "bg-blue-800" : "bg-amber-800")}>
+                          <CheckCircle className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </motion.div>
         )}

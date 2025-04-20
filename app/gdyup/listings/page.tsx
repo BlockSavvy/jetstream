@@ -1,94 +1,121 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import JetShareListingsContent from '../components/JetShareListingsContent';
+import { Loader2, Plane } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/components/auth-provider';
-import { Loader2 } from 'lucide-react';
 
 export default function JetShareListingsPage() {
-  const { user, loading: authLoading } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   
-  // Check for a pending offer after login
   useEffect(() => {
-    // Only run this once auth is loaded and user is authenticated
-    if (!authLoading && user) {
+    // Initialize - check for pending offer from session after redirect from login
+    const checkForPendingOffer = () => {
       try {
-        const pendingOfferId = sessionStorage.getItem('jetshare_pending_offer');
+        const pendingOfferId = sessionStorage.getItem('jetshare_resume_offer_acceptance');
         if (pendingOfferId) {
-          console.log('Found pending offer after login:', pendingOfferId);
-          // Clear it from session storage
-          sessionStorage.removeItem('jetshare_pending_offer');
-          
-          // This will trigger a confirmation dialog in the JetShareListingsContent component
-          sessionStorage.setItem('jetshare_resume_offer_acceptance', pendingOfferId);
+          console.log('Found pending offer acceptance after login:', pendingOfferId);
         }
       } catch (e) {
-        console.warn('Could not access sessionStorage:', e);
+        console.warn('Error accessing sessionStorage:', e);
       }
-    }
-  }, [user, authLoading]);
+    };
+    
+    const checkAuthStatus = async () => {
+      try {
+        // Check if user is authenticated
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session?.user) {
+          console.log('User is authenticated:', data.session.user.id);
+          checkForPendingOffer();
+        } else {
+          console.log('User is not authenticated');
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      } finally {
+        // Always allow page to load regardless of auth status
+        setLoading(false);
+      }
+    };
+    
+    checkAuthStatus();
+    
+    // Set a timeout to hide loader even if auth check takes too long
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+    
+    return () => clearTimeout(timeout);
+  }, []);
   
-  // After auth is determined, finish loading
-  useEffect(() => {
-    if (!authLoading) {
-      setIsLoading(false);
-      
-      // Log user state for debugging (don't throw errors)
-      if (user) {
-        console.log('User authenticated for JetShare listings:', user.id, user.email);
-      } else {
-        console.log('No authenticated user for JetShare listings, allowing public access');
-      }
-    }
-  }, [user, authLoading]);
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 gdyup-title">Find Available Flight Shares</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="gdyup-card bg-gray-900 border-[#DAFF0D]">
-          <CardHeader>
-            <CardTitle className="text-white">Find Your Perfect Flight Share</CardTitle>
-            <CardDescription className="text-gray-100">Browse available flight shares and connect with fellow travelers.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-200">Use filters and search to find the ideal flight share that matches your travel plans.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="gdyup-card bg-gray-900 border-[#DAFF0D]">
-          <CardHeader>
-            <CardTitle className="text-white">Secure Booking</CardTitle>
-            <CardDescription className="text-gray-100">Safe and transparent transactions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-200">Book with confidence using our secure payment system and verified user profiles.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="gdyup-card bg-gray-900 border-[#DAFF0D]">
-          <CardHeader>
-            <CardTitle className="text-white">Instant Confirmation</CardTitle>
-            <CardDescription className="text-gray-100">Quick and seamless process.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-200">Get instant confirmation and connect with the flight organizer right away.</p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-[#DAFF0D]" />
-          <span className="ml-3 text-lg text-gray-100">Loading flight listings...</span>
-        </div>
-      ) : (
-        <JetShareListingsContent />
-      )}
+    <div className="min-h-screen bg-black">
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        <h1 className="text-3xl font-bold mb-6 text-[#DAFF0D] drop-shadow-[0_0_10px_rgba(218,255,13,0.3)]">
+          Browse Flight Shares
+        </h1>
+        
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-10 w-10 text-[#DAFF0D] animate-spin" />
+          </div>
+        ) : (
+          <div>
+            {/* Info Cards - these appear before the listings and are always visible */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              {/* Card 1 */}
+              <Card className="bg-black border-gray-800 hover:border-[#DAFF0D] transition-colors">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="bg-black rounded-full w-12 h-12 flex items-center justify-center mb-4 mt-2 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
+                    <Plane className="h-6 w-6 text-[#DAFF0D]" />
+                  </div>
+                  <h3 className="font-bold text-white mb-2">Find Flight Shares</h3>
+                  <p className="text-white text-sm">
+                    Browse available shared flights from private jet owners and book your seat instantly.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              {/* Card 2 */}
+              <Card className="bg-black border-gray-800 hover:border-[#DAFF0D] transition-colors">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="bg-black rounded-full w-12 h-12 flex items-center justify-center mb-4 mt-2 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
+                    <svg className="h-6 w-6 text-[#DAFF0D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{filter: 'drop-shadow(0 0 3px rgba(218,255,13,0.6))'}}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-white mb-2">Secure Booking</h3>
+                  <p className="text-white text-sm">
+                    All flights are operated by licensed operators with full insurance and safety verification.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              {/* Card 3 */}
+              <Card className="bg-black border-gray-800 hover:border-[#DAFF0D] transition-colors">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="bg-black rounded-full w-12 h-12 flex items-center justify-center mb-4 mt-2 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
+                    <svg className="h-6 w-6 text-[#DAFF0D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{filter: 'drop-shadow(0 0 3px rgba(218,255,13,0.6))'}}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-bold text-white mb-2">Instant Confirmation</h3>
+                  <p className="text-white text-sm">
+                    Get immediate booking confirmation and detailed flight information upon purchase.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* JetShare Listings Content */}
+            <JetShareListingsContent />
+          </div>
+        )}
+      </main>
     </div>
   );
 } 

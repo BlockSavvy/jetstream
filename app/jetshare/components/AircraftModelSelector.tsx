@@ -435,17 +435,12 @@ function AircraftModelSelectorImpl({
     }
   };
   
-  // Add a rescue button that will appear if no models are loaded
-  const rescueButton = (
-    <Button 
-      onClick={directFetchAircraftModels} 
-      variant="outline" 
-      size="sm" 
-      className="mt-2 w-full"
-    >
-      <Loader2 className="mr-2 h-4 w-4" /> Retry Loading Aircraft Models
-    </Button>
-  );
+  // Get the actual target element
+  const debugImageLoading = (message: string, data?: any) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[ImageDebug] ${message}`, data || '');
+    }
+  };
   
   // Log whenever the models list or filtered models change
   useEffect(() => {
@@ -457,15 +452,8 @@ function AircraftModelSelectorImpl({
       console.log('No models loaded after initial fetch, trying direct fetch...');
       directFetchAircraftModels();
     }
-  }, [aircraftModels, filteredModels, isLoading]);
+  }, [aircraftModels, filteredModels, isLoading, directFetchAttempted, directFetchAircraftModels]);
   
-  // Add a debug log function to track image loading
-  const debugImageLoading = (message: string, data?: any) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[ImageDebug] ${message}`, data || '');
-    }
-  };
-
   // Modify the image error handling to limit retries
   const getJetImagePath = (model: AircraftModel): string => {
     // Extract manufacturer and model components for path construction
@@ -514,7 +502,7 @@ function AircraftModelSelectorImpl({
         <div ref={inputRef} className="relative w-full cursor-default overflow-hidden rounded-lg border border-gray-600 dark:border-gray-600 text-left focus:outline-none">
           <Combobox.Input
             id={id}
-            className="w-full pl-3 pr-10 py-2 text-white dark:text-white bg-gray-700/70 dark:bg-gray-700/90 border-none focus:ring-0 outline-none font-medium"
+            className="w-full pl-3 pr-10 py-2 text-white bg-gray-800 dark:bg-gray-800 border-none focus:ring-0 outline-none font-medium"
             placeholder="Select aircraft model"
             displayValue={(selected: string) => selected || ""}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
@@ -553,11 +541,11 @@ function AircraftModelSelectorImpl({
                     width: `${dropdownPosition.width}px`,
                     maxHeight: '60vh',
                     overflowY: 'auto',
-                    backgroundColor: '#1f2937', // gray-800
+                    backgroundColor: '#0f172a', // dark blue-gray-900
                     zIndex: 99999
                   }}
                 >
-                  <div className="bg-gray-800 dark:bg-gray-800">
+                  <div className="bg-gray-900 dark:bg-gray-900">
                     {isLoading && (
                       <div className="relative cursor-default select-none py-3 px-4 text-gray-300 dark:text-gray-300 flex items-center">
                         <Loader2 className="h-4 w-4 mr-2 animate-spin text-amber-500" />
@@ -581,8 +569,8 @@ function AircraftModelSelectorImpl({
                       {filteredModels.map((model) => (
                         <div
                           key={model.id}
-                          className={`relative cursor-pointer select-none py-3 pl-10 pr-4 hover:bg-gray-700 ${
-                            value === model.display_name ? 'bg-gray-700/60 text-amber-500' : 'text-gray-200'
+                          className={`relative cursor-pointer select-none py-3 pl-10 pr-4 hover:bg-gray-800 ${
+                            value === model.display_name ? 'bg-amber-900/40 text-amber-300' : 'text-gray-200'
                           }`}
                           onClick={() => {
                             const newValue = model.display_name;
@@ -592,7 +580,7 @@ function AircraftModelSelectorImpl({
                         >
                           <div className="flex items-center">
                             {/* Aircraft image */}
-                            <div className="mr-3 h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-700/50">
+                            <div className="mr-3 h-8 w-12 flex items-center justify-center overflow-hidden rounded-sm bg-gray-800/80">
                               {model.image_url || model.thumbnail_url ? (
                                 <img
                                   src={model.thumbnail_url || model.image_url}
@@ -679,7 +667,7 @@ function AircraftModelSelectorImpl({
                             <div>
                               <span
                                 className={`block truncate font-medium ${
-                                  value === model.display_name ? 'text-amber-400 drop-shadow-sm' : ''
+                                  value === model.display_name ? 'text-amber-300 drop-shadow-sm' : ''
                                 }`}
                               >
                                 {model.display_name}
@@ -715,12 +703,21 @@ function AircraftModelSelectorImpl({
           value={customValue}
           onChange={handleCustomInputChange}
           placeholder="Enter custom aircraft model"
-          className="mt-2"
+          className="mt-2 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
         />
       )}
       
       {/* Rescue button */}
-      {error && rescueButton}
+      {error && (
+        <Button 
+          onClick={directFetchAircraftModels} 
+          variant="outline" 
+          size="sm" 
+          className="mt-2 w-full bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white"
+        >
+          <Loader2 className="mr-2 h-4 w-4 animate-spin text-amber-500" /> Retry Loading Aircraft Models
+        </Button>
+      )}
     </div>
   );
 }
