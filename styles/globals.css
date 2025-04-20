@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 6%; /* Dark background */
+    --foreground: 0 0% 98%; /* Light text */
+    
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    
+    --primary: 69 100% 53%; /* DAFF0D - GDY UP green */
+    --primary-foreground: 0 0% 0%;
+    
+    --secondary: 359 94% 64%; /* FF4B47 - GDY UP red */
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 83.1%;
+    
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom utility classes */
+.gdyup-gradient {
+  background: linear-gradient(135deg, rgba(218, 255, 13, 0.1), rgba(255, 75, 71, 0.1));
+}
+
+/* Custom colors used across the application */
+.text-gdyup-primary {
+  color: #DAFF0D;
+}
+
+.bg-gdyup-primary {
+  background-color: #DAFF0D;
+}
+
+.bg-gdyup-secondary {
+  background-color: #FF4B47;
+}
+
+.bg-gdyup-background {
+  background-color: #0D0D0D;
+}
+
+.border-gdyup-primary {
+  border-color: #DAFF0D;
+}
+
+/* Additional styles can be added here */ 
