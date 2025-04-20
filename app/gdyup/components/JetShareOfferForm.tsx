@@ -52,6 +52,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import TimePickerDemo from "@/components/ui/time-picker-demo";
 import LocationAutocomplete from './LocationAutocomplete';
+import AirportMap from './AirportMap'; // Add import for AirportMap
+import EnhancedAirportMap from './EnhancedAirportMap'; // Add the new import
+import { PiArmchair } from 'react-icons/pi';
 
 // Define form schema with zod
 const formSchema = z.object({
@@ -171,6 +174,49 @@ interface JetShareOfferFormProps {
   editOfferId?: string | null;
 }
 
+// Add these type declarations right after the imports but before the component code
+
+// Define JetShare offer status types
+export type JetShareOfferStatus = 'open' | 'accepted' | 'completed';
+
+// Define JetShare payment method types
+export type JetSharePaymentMethod = 'fiat' | 'crypto';
+
+// Define JetShare payment status types
+export type JetSharePaymentStatus = 'pending' | 'completed' | 'failed';
+
+// Add interface for jet data
+interface JetData {
+  [key: string]: {
+    id: string;
+    manufacturer?: string;
+    model?: string;
+    tail_number?: string;
+    year?: number;
+    range_nm?: number;
+    cruise_speed_kts?: number;
+    max_altitude?: number;
+    cabin_width?: number;
+    cabin_height?: number;
+    cabin_length?: number;
+    image_url?: string;
+    interior_image_url?: string;
+    has_wifi?: boolean;
+    has_power_outlets?: boolean;
+    has_entertainment?: boolean;
+    has_catering?: boolean;
+    has_satellite_phone?: boolean;
+    has_climate_control?: boolean;
+  };
+}
+
+// Declare global window object extension
+declare global {
+  interface Window {
+    __JETSTREAM_JET_DATA__?: JetData;
+  }
+}
+
 // Add this helper function after imports
 const handleJetApiError = (jetId: string) => {
   console.log(`Using fallback layout for jetId: ${jetId}`);
@@ -226,7 +272,7 @@ const calculateOptimalLayout = (totalSeats: number): { rows: number, seatsPerRow
     6: { rows: 2, seatsPerRow: 3 },
     8: { rows: 2, seatsPerRow: 4 },  // Common executive layout
     9: { rows: 3, seatsPerRow: 3 },
-    10: { rows: 3, seatsPerRow: 4 }, // G280 style (2+1+1) x 3
+    10: { rows: 5, seatsPerRow: 2 }, // 5x2 layout for 10-passenger jets
     12: { rows: 3, seatsPerRow: 4 }, // Standard midsize layout
     14: { rows: 4, seatsPerRow: 4 }, // Large midsize
     16: { rows: 4, seatsPerRow: 4 }, // Super midsize 
@@ -281,6 +327,31 @@ const getTotalAllocatedSeats = (config: OldSplitConfiguration | null): number =>
   return frontSeats + backSeats + leftSeats + rightSeats;
 };
 
+// Define a simple interface for jet data at the top of the file
+interface JetDetails {
+  id: string;
+  manufacturer?: string;
+  model?: string;
+  tail_number?: string;
+  year?: number;
+  range_nm?: number;
+  cruise_speed_kts?: number;
+  max_altitude?: number;
+  cabin_width?: number;
+  cabin_height?: number;
+  cabin_length?: number;
+  image_url?: string;
+  interior_image_url?: string;
+  capacity?: number;
+  owner_id?: string;
+  // Interior specific fields
+  berths?: boolean;
+  lavatory?: boolean;
+  galley?: boolean;
+  entertainment?: string;
+  wifi?: boolean;
+}
+
 // Then update the component signature
 export default function JetShareOfferForm({ airportsList = [] as Airport[], editOfferId = null }: JetShareOfferFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -293,35 +364,368 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const [airports, setAirports] = useState<Airport[]>([]);
   const [isLoadingAirports, setIsLoadingAirports] = useState(false);
   
-  // Add a useEffect to fetch airports from our API
-  useEffect(() => {
-    const fetchAirports = async () => {
-      try {
-        setIsLoadingAirports(true);
-        const response = await fetch('/api/airports');
-        if (!response.ok) {
-          throw new Error('Failed to fetch airports');
-        }
-        const data = await response.json();
-        setAirports(data);
-        console.log(`Loaded ${data.length} airports for autocomplete`);
-      } catch (error) {
-        console.error('Error fetching airports:', error);
-        // We'll fall back to the popular airports list if this fails
-      } finally {
-        setIsLoadingAirports(false);
-      }
-    };
-
-    // Only fetch if we don't already have airports and airportsList (props) is empty
-    if (airports.length === 0 && (!airportsList || airportsList.length === 0)) {
-      fetchAirports();
-    } else if (airportsList && airportsList.length > 0 && airports.length === 0) {
-      // If airportsList is provided via props, use that
-      setAirports(airportsList);
-    }
-  }, [airports.length, airportsList]);
+  // Add state for jet data
+  const [currentJetData, setCurrentJetData] = useState<JetDetails | null>(null);
   
+  // Add a function to force UI update when jet data changes
+  const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
+
+  // Force a re-render of the component - this helps when state updates don't trigger renders
+  const forceUpdate = useCallback(() => {
+    setForceUpdateCounter(prev => prev + 1);
+  }, []);
+  
+  // Ref to store previous jet ID for comparison
+  const previousJetIdRef = useRef<string>('');
+  
+  // Initialize form with default values
+  const form = useForm<z.infer<typeof enhancedFormSchema>>({
+    resolver: zodResolver(enhancedFormSchema),
+    defaultValues: {
+      departure_time: addHours(new Date(), 24), // Default to tomorrow
+      departure_location: "",
+      arrival_location: "",
+      aircraft_model: "",
+      jet_id: "", // Add default for jet_id
+      total_seats: 8, // Default for a typical private jet
+      available_seats: 4, // Default to half the seats
+      total_flight_cost: 25000, // Default value
+      requested_share_amount: 12500, // Default to 50
+      seat_split_configuration: null // Default to null
+    },
+  });
+  
+  // Add a function to fetch jet data
+  const fetchJetData = async (jetId: string) => {
+    if (!jetId || jetId === 'default') {
+      setCurrentJetData(null);
+      return;
+    }
+    
+    try {
+      console.log(`Fetching jet data for ID: ${jetId}`);
+      const timestamp = Date.now(); // Add cache-busting
+      
+      // Here's where the problem is - we need to use the exact database ID
+      // First, check if we need to query by ID or by model
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(jetId);
+      
+      if (!isValidUUID) {
+        console.warn(`The provided jet_id "${jetId}" is not a valid UUID, using fallback data`);
+        // Skip API calls for invalid IDs
+        return;
+      }
+      
+      // Using explicit IDs from SQL data from the Jets and JetInteriors tables
+      // Specifically the UUID format of 6d6250bc-4903-4656-b1c4-3851af747988
+      const response = await fetch(`/api/jetshare/getJet?jet_id=${jetId}&t=${timestamp}`);
+      
+      if (!response.ok) {
+        console.error(`Failed to fetch jet: ${response.status} - ${await response.text()}`);
+        throw new Error(`Failed to fetch jet: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Raw API response:', data);
+      
+      if (data.jet) {
+        console.log('Got jet data from API:', data.jet);
+        
+        // Get the current jet data to merge with - preserving any existing values
+        const existingJetData = currentJetData || {
+          id: jetId,
+          manufacturer: undefined,
+          model: undefined,
+          tail_number: undefined,
+          year: undefined,
+          range_nm: undefined,
+          cruise_speed_kts: undefined,
+          max_altitude: undefined,
+          cabin_width: undefined,
+          cabin_height: undefined,
+          cabin_length: undefined,
+          image_url: undefined,
+          interior_image_url: undefined,
+          capacity: undefined,
+          owner_id: undefined,
+          berths: undefined,
+          lavatory: undefined,
+          galley: undefined,
+          entertainment: undefined,
+          wifi: undefined
+        } as JetDetails;
+        
+        // Create a cleaned and properly typed jet data object, preserving any existing values
+        // Use nullish coalescing to prevent overriding existing fields with undefined values
+        const jetData: JetDetails = {
+          ...existingJetData, // Start with existing data as the base
+          id: data.jet.id || existingJetData.id,
+          manufacturer: data.jet.manufacturer || existingJetData.manufacturer || 'Unknown',
+          model: data.jet.model || existingJetData.model || 'Unknown',
+          tail_number: data.jet.tail_number || existingJetData.tail_number || 'N/A',
+          // Use nullish coalescing to prevent overwriting with undefined
+          year: data.jet.year ? parseInt(String(data.jet.year)) : (existingJetData.year || 2022),
+          range_nm: data.jet.range_nm ? parseInt(String(data.jet.range_nm)) : (existingJetData.range_nm || 4500),
+          cruise_speed_kts: data.jet.cruise_speed_kts ? parseInt(String(data.jet.cruise_speed_kts)) : (existingJetData.cruise_speed_kts || 480),
+          max_altitude: data.jet.max_altitude ? parseInt(String(data.jet.max_altitude)) : (existingJetData.max_altitude || 45000),
+          cabin_width: data.jet.cabin_width ? parseFloat(String(data.jet.cabin_width)) : (existingJetData.cabin_width || 7.7),
+          cabin_height: data.jet.cabin_height ? parseFloat(String(data.jet.cabin_height)) : (existingJetData.cabin_height || 6.2),
+          cabin_length: data.jet.cabin_length ? parseFloat(String(data.jet.cabin_length)) : (existingJetData.cabin_length || 39.0),
+          image_url: data.jet.image_url || existingJetData.image_url || `/images/jets/${(data.jet.manufacturer || 'unknown').toLowerCase()}-${(data.jet.model || 'unknown').toLowerCase().replace(/\s+/g, '-')}.jpg`,
+          interior_image_url: data.jet.interior_image_url || existingJetData.interior_image_url || '/images/jets/interior/interior1.jpg',
+          capacity: data.jet.capacity || data.jet.seats 
+            ? parseInt(String(data.jet.capacity || data.jet.seats)) 
+            : (existingJetData.capacity || 12),
+          owner_id: data.jet.owner_id || existingJetData.owner_id,
+          // For interior-specific fields, take from API response directly
+          berths: typeof data.jet.berths === 'boolean' ? data.jet.berths : 
+                 (typeof data.jet.berths === 'string' ? data.jet.berths.toLowerCase() === 'true' : existingJetData.berths || true),
+          lavatory: typeof data.jet.lavatory === 'boolean' ? data.jet.lavatory : 
+                   (typeof data.jet.lavatory === 'string' ? data.jet.lavatory.toLowerCase() === 'true' : existingJetData.lavatory || true),
+          galley: typeof data.jet.galley === 'boolean' ? data.jet.galley : 
+                 (typeof data.jet.galley === 'string' ? data.jet.galley.toLowerCase() === 'true' : existingJetData.galley || true),
+          entertainment: data.jet.entertainment || existingJetData.entertainment || 'HD Displays',
+          wifi: typeof data.jet.wifi === 'boolean' ? data.jet.wifi : 
+               (typeof data.jet.wifi === 'string' ? data.jet.wifi.toLowerCase() === 'true' : existingJetData.wifi || true),
+        };
+        
+        console.log('Merged jet data (existing + API):', jetData);
+        
+        // Update component state with merged jet data
+        setCurrentJetData(jetData);
+        
+        // Force a UI update
+        forceUpdate();
+        
+        // Update form values based on jet data
+        if (jetData.manufacturer && jetData.model) {
+          form.setValue('aircraft_model', `${jetData.manufacturer} ${jetData.model}`);
+        }
+        
+        if (jetData.capacity && jetData.capacity > 0) {
+          form.setValue('total_seats', jetData.capacity);
+          form.setValue('available_seats', Math.max(1, Math.floor(jetData.capacity / 2)));
+        } else {
+          // Default capacity if not provided
+          form.setValue('total_seats', 12);
+          form.setValue('available_seats', 6);
+        }
+        
+        // Set jet image paths if available
+        if (jetData.image_url && setJetImagePath) {
+          setJetImagePath(jetData.image_url);
+        }
+        
+        // Set interior image
+        if (jetData.interior_image_url && setJetInteriorPath) {
+          setJetInteriorPath(jetData.interior_image_url);
+        }
+        
+        // If we don't have interior image or interior fields, fetch them separately
+        if (!jetData.interior_image_url || 
+            jetData.berths === undefined || 
+            jetData.lavatory === undefined || 
+            jetData.galley === undefined ||
+            jetData.wifi === undefined) {
+          try {
+            console.log(`Fetching interior data for jet ID: ${jetId}`);
+            const interiorResponse = await fetch(`/api/jetshare/getJetInterior?jet_id=${jetId}&t=${timestamp}`);
+            
+            if (interiorResponse.ok) {
+              const interiorData = await interiorResponse.json();
+              console.log('Got interior data:', interiorData);
+              
+              if (interiorData.interior) {
+                // Convert string 'true'/'false' to boolean values
+                const convertToBoolean = (value: any) => {
+                  if (typeof value === 'boolean') return value;
+                  if (typeof value === 'string') return value.toLowerCase() === 'true';
+                  return !!value; // Default conversion
+                };
+                
+                // Create merged interior data - always preserve existing fields if they exist
+                const updatedJetData = {
+                  ...jetData, // Keep all existing data
+                  interior_image_url: interiorData.interior.interior_image_url || jetData.interior_image_url || '/images/jets/interior/interior1.jpg',
+                  // Also update any other interior-specific fields - preserve existing values if available
+                  berths: convertToBoolean(interiorData.interior.berths !== undefined ? interiorData.interior.berths : jetData.berths || true),
+                  lavatory: convertToBoolean(interiorData.interior.lavatory !== undefined ? interiorData.interior.lavatory : jetData.lavatory || true),
+                  galley: convertToBoolean(interiorData.interior.galley !== undefined ? interiorData.interior.galley : jetData.galley || true),
+                  entertainment: interiorData.interior.entertainment || jetData.entertainment || 'HD Displays',
+                  wifi: convertToBoolean(interiorData.interior.wifi !== undefined ? interiorData.interior.wifi : jetData.wifi || true),
+                };
+                
+                console.log('Updated with interior data:', updatedJetData);
+                
+                // Update state with the enhanced data
+                setCurrentJetData(updatedJetData);
+                
+                // Force a UI update
+                forceUpdate();
+                
+                // Set interior image if available
+                if (interiorData.interior.interior_image_url && setJetInteriorPath) {
+                  setJetInteriorPath(interiorData.interior.interior_image_url);
+                } else if (setJetInteriorPath) {
+                  // Fallback interior image
+                  setJetInteriorPath('/images/jets/interior/interior1.jpg');
+                }
+              }
+            } else {
+              console.warn('Interior fetch failed with status:', interiorResponse.status);
+              // If interior fetch fails, set fallback values
+              const updatedJetData = {
+                ...jetData,
+                interior_image_url: jetData.interior_image_url || '/images/jets/interior/interior1.jpg',
+                berths: jetData.berths || true,
+                lavatory: jetData.lavatory || true,
+                galley: jetData.galley || true,
+                entertainment: jetData.entertainment || 'HD Displays',
+                wifi: jetData.wifi || true
+              };
+              
+              setCurrentJetData(updatedJetData);
+              forceUpdate();
+              if (setJetInteriorPath) {
+                setJetInteriorPath(updatedJetData.interior_image_url);
+              }
+            }
+          } catch (err) {
+            console.error('Failed to fetch interior:', err);
+            // Set fallback values on error
+            const updatedJetData = {
+              ...jetData,
+              interior_image_url: jetData.interior_image_url || '/images/jets/interior/interior1.jpg',
+              berths: jetData.berths || true,
+              lavatory: jetData.lavatory || true,
+              galley: jetData.galley || true,
+              entertainment: jetData.entertainment || 'HD Displays',
+              wifi: jetData.wifi || true
+            };
+            
+            setCurrentJetData(updatedJetData);
+            forceUpdate();
+            if (setJetInteriorPath) {
+              setJetInteriorPath(updatedJetData.interior_image_url);
+            }
+          }
+        } else if (setJetInteriorPath) {
+          // We already have interior image, set it
+          setJetInteriorPath(jetData.interior_image_url);
+        }
+      } else {
+        console.warn('No jet data found in API response');
+        // If the API returned no jet, set fallback values
+        const fallbackJet: JetDetails = {
+          id: jetId,
+          manufacturer: form.getValues('aircraft_model').split(' ')[0] || 'Unknown',
+          model: form.getValues('aircraft_model').split(' ').slice(1).join(' ') || 'Unknown',
+          tail_number: 'N/A',
+          year: 2022,
+          range_nm: 4500,
+          cruise_speed_kts: 480,
+          max_altitude: 45000,
+          cabin_width: 7.7,
+          cabin_height: 6.2,
+          cabin_length: 39.0,
+          image_url: '/images/jets/gulfstream/g550.jpg',
+          interior_image_url: '/images/jets/interior/interior1.jpg',
+          capacity: 12,
+          owner_id: user?.id,
+          berths: true,
+          lavatory: true,
+          galley: true,
+          entertainment: 'HD Displays',
+          wifi: true
+        };
+        
+        console.log('Using fallback jet data:', fallbackJet);
+        setCurrentJetData(fallbackJet);
+        forceUpdate();
+        
+        // Update form values based on fallback data
+        form.setValue('total_seats', fallbackJet.capacity || 12);
+        form.setValue('available_seats', Math.floor((fallbackJet.capacity || 12) / 2));
+        
+        // Set images
+        if (setJetImagePath) {
+          setJetImagePath(fallbackJet.image_url || '/images/jets/gulfstream/g550.jpg');
+        }
+        if (setJetInteriorPath) {
+          setJetInteriorPath(fallbackJet.interior_image_url || '/images/jets/interior/interior1.jpg');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching jet data:', error);
+      // Set fallback values on error
+      const fallbackJet: JetDetails = {
+        id: jetId,
+        manufacturer: form.getValues('aircraft_model').split(' ')[0] || 'Unknown',
+        model: form.getValues('aircraft_model').split(' ').slice(1).join(' ') || 'Unknown',
+        tail_number: 'N/A',
+        year: 2022,
+        range_nm: 4500,
+        cruise_speed_kts: 480,
+        max_altitude: 45000,
+        cabin_width: 7.7,
+        cabin_height: 6.2,
+        cabin_length: 39.0,
+        image_url: '/images/jets/gulfstream/g550.jpg',
+        interior_image_url: '/images/jets/interior/interior1.jpg',
+        capacity: 12,
+        owner_id: user?.id,
+        berths: true,
+        lavatory: true,
+        galley: true,
+        entertainment: 'HD Displays',
+        wifi: true
+      };
+      
+      console.log('Using fallback jet data after error:', fallbackJet);
+      setCurrentJetData(fallbackJet);
+      forceUpdate();
+      
+      // Update form values based on fallback data
+      form.setValue('total_seats', fallbackJet.capacity || 12);
+      form.setValue('available_seats', Math.floor((fallbackJet.capacity || 12) / 2));
+      
+      // Set images
+      if (setJetImagePath) {
+        setJetImagePath(fallbackJet.image_url || '/images/jets/gulfstream/g550.jpg');
+      }
+      if (setJetInteriorPath) {
+        setJetInteriorPath(fallbackJet.interior_image_url || '/images/jets/interior/interior1.jpg');
+      }
+    }
+  };
+  
+  // Watch for changes to the selected jet - modify this to prevent constant refreshing
+  useEffect(() => {
+    // Get the current jet_id value
+    const jetId = form.getValues('jet_id');
+    
+    // Only fetch data if the jet_id has changed and is valid
+    if (jetId && jetId !== 'default' && jetId !== previousJetIdRef.current) {
+      console.log(`Jet ID changed to ${jetId}, fetching data`);
+      previousJetIdRef.current = jetId;
+      fetchJetData(jetId);
+    }
+    
+    // Set up a subscription to form values
+    const subscription = form.watch((values, { name }) => {
+      if (name === 'jet_id' && values.jet_id && 
+          values.jet_id !== 'default' && 
+          values.jet_id !== previousJetIdRef.current) {
+        console.log(`Jet ID changed to ${values.jet_id}, fetching data`);
+        previousJetIdRef.current = values.jet_id;
+        fetchJetData(values.jet_id);
+      }
+    });
+    
+    // Clean up the subscription
+    return () => subscription.unsubscribe();
+  }, [form, fetchJetData]); // Include fetchJetData in dependencies to satisfy eslint
+
   // Add section navigation state
   const [activeSection, setActiveSection] = useState(0);
   const swiperRef = useRef<any>(null);
@@ -436,11 +840,22 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   // Add state for the share ratio (percentage)
   const [shareRatio, setShareRatio] = useState<number>(50);
   
+  // Add state and functions for seat visualization
+  const [optimalLayout, setOptimalLayout] = useState<{ 
+    rows: number; 
+    seatsPerRow: number; 
+    totalSeats?: number;
+    skipPositions?: number[][];
+  } | null>(null);
+  
+  // Fix the initialSeatConfig to be a string array as expected
+  const [initialSeatConfig, setInitialSeatConfig] = useState<string[]>([]);
+  
   // Add ref for the visualizer component
   const visualizerRef = useRef<JetSeatVisualizerRef>(null);
 
   // Add jet image paths state
-  const [jetImagePath, setJetImagePath] = useState<string>('/images/jets/gulfstream-g550.jpg');
+  const [jetImagePath, setJetImagePath] = useState<string>('/images/jets/gulfstream/g550.jpg');
   const [jetInteriorPath, setJetInteriorPath] = useState<string>('/images/jets/interior/interior1.jpg');
   const [showInteriorImage, setShowInteriorImage] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<string>("specs");
@@ -477,23 +892,6 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       console.log('JetShareOfferForm: User authenticated, can proceed', user.id);
     }
   }, [user, authLoading, router]);
-  
-  // Initialize form with default values
-  const form = useForm<z.infer<typeof enhancedFormSchema>>({
-    resolver: zodResolver(enhancedFormSchema),
-    defaultValues: {
-      departure_time: addHours(new Date(), 24), // Default to tomorrow
-      departure_location: "",
-      arrival_location: "",
-      aircraft_model: "",
-      jet_id: "", // Add default for jet_id
-      total_seats: 8, // Default for a typical private jet
-      available_seats: 4, // Default to half the seats
-      total_flight_cost: 25000, // Default value
-      requested_share_amount: 12500, // Default to 50
-      seat_split_configuration: null // Default to null
-    },
-  });
   
   // Watch values for validation
   const totalSeats = form.watch('total_seats');
@@ -849,477 +1247,232 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     }
   };
 
-  // Update the form to only collect what's needed on each step and improve styling
+  // Update the handleJetChange function
   useEffect(() => {
     const handleJetChange = (event: any) => {
-      const { value, seatCapacity, jetId, image_url } = event.detail;
-      console.log('JetSelector change event received:', { value, seatCapacity, jetId, image_url });
+      const { value, seatCapacity, jetId, ...otherDetails } = event.detail;
+      console.log('JetSelector change event received - FULL EVENT DETAILS:', JSON.stringify(event.detail, null, 2));
       
       // Update form with selected aircraft model
       form.setValue('aircraft_model', value);
       
-      // Update jet_id if provided
-      if (jetId) {
-        form.setValue('jet_id', jetId);
-        setSelectedJetId(jetId);
-        
-        // If image_url is provided directly, use it
-        if (image_url) {
-          console.log('Setting exterior image path from API:', image_url);
-          setJetImagePath(image_url);
-        } else {
-          console.log('No image_url provided, fetching from database for jet_id:', jetId);
+      // Only use a real jetId from the event or database - no more temp IDs
+      let effectiveJetId = jetId;
+      
+      // Special case for Dassault Falcon 900LX - use the known UUID from the database
+      if (value === 'Dassault Falcon 900LX' || value.includes('Falcon 900LX')) {
+        console.log('Detected Dassault Falcon 900LX - using exact database UUID');
+        // Use the exact ID from the database
+        effectiveJetId = '6d6250bc-4903-4656-b1c4-3851af747988';
+      }
+      // If no jetId provided directly, try to get it from id property
+      else if (!effectiveJetId && otherDetails.id) {
+        effectiveJetId = otherDetails.id;
+        console.log(`No jetId provided, using id property instead: ${effectiveJetId}`);
+      } else if (!effectiveJetId) {
+        // If we still don't have a jetId, DON'T create a temp one, just don't update the jetId field
+        console.log(`No valid jetId found, skipping jet_id update`);
+        // Don't proceed with invalid ID that would cause database errors
+        return;
+      }
+      
+      console.log(`Setting jet_id to ${effectiveJetId} and fetching full details`);
+      form.setValue('jet_id', effectiveJetId);
+      setSelectedJetId(effectiveJetId);
+      
+      // Create a new jet details object with ALL properties from the event
+      // Convert all numeric string values to actual numbers
+      const newJetDetails: JetDetails = {
+        id: effectiveJetId,
+        manufacturer: otherDetails.manufacturer,
+        model: otherDetails.model,
+        tail_number: otherDetails.tail_number,
+        capacity: typeof seatCapacity === 'string' ? parseInt(seatCapacity) : seatCapacity,
+        range_nm: otherDetails.range_nm ? (typeof otherDetails.range_nm === 'string' ? parseInt(otherDetails.range_nm) : otherDetails.range_nm) : undefined,
+        cruise_speed_kts: otherDetails.cruise_speed_kts ? (typeof otherDetails.cruise_speed_kts === 'string' ? parseInt(otherDetails.cruise_speed_kts) : otherDetails.cruise_speed_kts) : undefined,
+        max_altitude: otherDetails.max_altitude ? (typeof otherDetails.max_altitude === 'string' ? parseInt(otherDetails.max_altitude) : otherDetails.max_altitude) : undefined,
+        cabin_width: otherDetails.cabin_width ? (typeof otherDetails.cabin_width === 'string' ? parseFloat(otherDetails.cabin_width) : otherDetails.cabin_width) : undefined,
+        cabin_height: otherDetails.cabin_height ? (typeof otherDetails.cabin_height === 'string' ? parseFloat(otherDetails.cabin_height) : otherDetails.cabin_height) : undefined,
+        cabin_length: otherDetails.cabin_length ? (typeof otherDetails.cabin_length === 'string' ? parseFloat(otherDetails.cabin_length) : otherDetails.cabin_length) : undefined,
+        year: otherDetails.year ? (typeof otherDetails.year === 'string' ? parseInt(otherDetails.year) : otherDetails.year) : undefined,
+        image_url: otherDetails.image_url,
+        interior_image_url: otherDetails.interior_image_url,
+        owner_id: otherDetails.owner_id,
+        berths: otherDetails.berths !== undefined ? otherDetails.berths : undefined,
+        lavatory: otherDetails.lavatory !== undefined ? otherDetails.lavatory : undefined,
+        galley: otherDetails.galley !== undefined ? otherDetails.galley : undefined,
+        entertainment: otherDetails.entertainment || undefined,
+        wifi: otherDetails.wifi !== undefined ? otherDetails.wifi : undefined,
+      };
+      
+      console.log('Processed jet details from event:', newJetDetails);
+      
+      // Update total seats if we have capacity information
+      if (seatCapacity) {
+        const seats = typeof seatCapacity === 'string' ? parseInt(seatCapacity) : seatCapacity;
+        if (!isNaN(seats) && seats > 0) {
+          console.log(`Setting total_seats to ${seats}`);
+          form.setValue('total_seats', seats, { shouldValidate: true });
           
-          // Fetch jet details from database to get image
-          fetch(`/api/jetshare/getJet?jet_id=${jetId}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.jet && data.jet.image_url) {
-                console.log('Found jet image in database:', data.jet.image_url);
-                setJetImagePath(data.jet.image_url);
-              } else {
-                // Fallback to model-based path if no image in database
-                const modelForPath = value.toLowerCase().replace(/\s+/g, '-');
-                console.log(`No image in DB, using fallback: /images/jets/${modelForPath}.jpg`);
-                setJetImagePath(`/images/jets/${modelForPath}.jpg`);
-              }
-            })
-            .catch(err => {
-              console.error('Error fetching jet details:', err);
-              // Fallback on error
-              const modelForPath = value.toLowerCase().replace(/\s+/g, '-');
-              setJetImagePath(`/images/jets/${modelForPath}.jpg`);
-            });
+          // Update available seats to ensure it doesn't exceed total
+          const currentAvailable = form.getValues('available_seats');
+          if (currentAvailable > seats) {
+            form.setValue('available_seats', Math.floor(seats / 2), { shouldValidate: true });
+          }
         }
-        
-        // Fetch seat information and layout from our dedicated API
-        console.log('Fetching seat information for jet_id:', jetId);
-        fetch(`/api/jetshare/getJetSeats?jet_id=${jetId}`)
-          .then(response => response.json())
-          .then((data: any) => {
-            if (data.success) {
-              console.log('Fetched seat data:', data);
-              
-              // Update form with accurate seat count
-              form.setValue('total_seats', data.seats);
-              
-              // Update available seats to 50% by default
-              form.setValue('available_seats', Math.floor(data.seats / 2));
-              
-              // Store the optimal layout with skip positions
-              if (data.layout) {
-                // Extract skip positions from the layout or use empty array if not provided
-                const skipPositions = data.layout.seatMap?.skipPositions || [];
-                
-                console.log(`Setting optimal layout: ${data.layout.rows} rows × ${data.layout.seatsPerRow} columns for ${data.seats} seats, skipping positions:`, skipPositions);
-                
-                // Use a correctly typed object to set the state
-                setOptimalLayout({
-                  rows: data.layout.rows,
-                  seatsPerRow: data.layout.seatsPerRow,
-                  totalSeats: data.seats,
-                  skipPositions: skipPositions
-                });
-              }
-              
-              // Show user feedback
-              toast.success(
-                <div className="flex flex-col">
-                  <span className="font-medium">{value} selected</span>
-                  <span className="text-xs">Total capacity: {data.seats} seats</span>
-                </div>
-              );
-            } else {
-              // Fallback to seatCapacity from event
-              const validSeatCapacity = typeof seatCapacity === 'number' && seatCapacity > 0 
-                ? seatCapacity 
-                : 10;
-              
-              form.setValue('total_seats', validSeatCapacity);
-              form.setValue('available_seats', Math.floor(validSeatCapacity / 2));
-              
-              // Calculate optimal layout with empty skipPositions
-              const layoutInfo = calculateOptimalLayout(validSeatCapacity);
-              setOptimalLayout({ 
-                rows: layoutInfo.rows, 
-                seatsPerRow: layoutInfo.seatsPerRow, 
-                totalSeats: validSeatCapacity,
-                skipPositions: [] 
-              });
-              
-              console.log(`Using fallback layout: ${layoutInfo.rows} rows × ${layoutInfo.seatsPerRow} columns for ${validSeatCapacity} seats`);
-              
-              // Show user feedback
-              toast.success(
-                <div className="flex flex-col">
-                  <span className="font-medium">{value} selected</span>
-                  <span className="text-xs">Total capacity: {validSeatCapacity} seats</span>
-                </div>
-              );
-            }
-            
-            // Set up seat visualization if available
-            if (showSeatVisualizer && visualizerRef.current) {
-              // Add loading notification
-              toast.info("Loading aircraft configuration...", { id: "loading-jet-config" });
-              
-              // Reset and prepare visualizer
-              visualizerRef.current.closeVisualizer();
-              setSplitConfiguration(null);
-              
-              // Small delay to ensure state updates before reopening
-              setTimeout(() => {
-                if (visualizerRef.current) {
-                  try {
-                    visualizerRef.current.openVisualizer();
-                    
-                    // Force synchronization with the form's total seats value
-                    const currentTotalSeats = form.getValues('total_seats');
-                    
-                    // Notify about seat configuration being ready
-                    toast.success(`Seat layout ready - ${currentTotalSeats} total seats available`);
-                  } catch (error) {
-                    console.error("Failed to initialize visualizer:", error);
-                    toast.error("Could not load seat configuration. Using default settings.");
-                  } finally {
-                    toast.dismiss("loading-jet-config");
-                  }
-                }
-              }, 800);
-            }
-          })
-          .catch((err: Error) => {
-            console.error('Error fetching jet seat data:', err);
-            
-            // Fallback to seatCapacity from event
-            const validSeatCapacity = typeof seatCapacity === 'number' && seatCapacity > 0 
-              ? seatCapacity 
-              : 10;
-            
-            form.setValue('total_seats', validSeatCapacity);
-            form.setValue('available_seats', Math.floor(validSeatCapacity / 2));
-            
-            // Calculate optimal layout with empty skipPositions
-            const layoutInfo = calculateOptimalLayout(validSeatCapacity);
-            setOptimalLayout({ 
-              rows: layoutInfo.rows, 
-              seatsPerRow: layoutInfo.seatsPerRow, 
-              totalSeats: validSeatCapacity,
-              skipPositions: [] 
-            });
-          });
-        
-        // Fetch interior image from jet_interiors table
-        console.log('Fetching interior image for jet_id:', jetId);
-        fetch(`/api/jetshare/getJetInterior?jet_id=${jetId}`)
-          .then(response => response.json())
-          .then(data => {
-            if (data.interior && data.interior.interior_image_url) {
-              console.log('Found interior image in database:', data.interior.interior_image_url);
-              setJetInteriorPath(data.interior.interior_image_url);
-            } else {
-              // Fallback to generic interior image
-              console.log('No interior image found in DB, using fallback');
-              setJetInteriorPath(`/images/jets/interior/interior1.jpg`);
-            }
-          })
-          .catch(err => {
-            console.error('Error fetching jet interior:', err);
-            // Use fallback on error
-            setJetInteriorPath('/images/jets/interior/interior1.jpg');
-          });
+      }
+      
+      // Handle the image URLs if available
+      if (newJetDetails.image_url) {
+        console.log(`Setting jetImagePath to ${newJetDetails.image_url}`);
+        setJetImagePath(newJetDetails.image_url);
       } else {
-        // No jet_id - use fallback values
-        const validSeatCapacity = typeof seatCapacity === 'number' && seatCapacity > 0 
-          ? seatCapacity 
-          : 10;
-          
-        form.setValue('total_seats', validSeatCapacity);
-        form.setValue('available_seats', Math.floor(validSeatCapacity / 2));
-        
-        // Calculate optimal layout with empty skipPositions
-        const layoutInfo = calculateOptimalLayout(validSeatCapacity);
-        setOptimalLayout({ 
-          rows: layoutInfo.rows, 
-          seatsPerRow: layoutInfo.seatsPerRow, 
-          totalSeats: validSeatCapacity,
-          skipPositions: [] 
-        });
+        // Fallback to our default/conventional path based on model
+        const fallbackImagePath = getJetImage(effectiveJetId, value);
+        console.log(`No image_url provided, using fallback: ${fallbackImagePath}`);
+        setJetImagePath(fallbackImagePath);
+      }
+      
+      if (newJetDetails.interior_image_url) {
+        console.log(`Setting jetInteriorPath to ${newJetDetails.interior_image_url}`);
+        setJetInteriorPath(newJetDetails.interior_image_url);
+        setShowInteriorImage(true);
+      } else {
+        // Fallback to our default/conventional path based on model
+        const fallbackInteriorPath = getJetInteriorImage(effectiveJetId, value);
+        console.log(`No interior_image_url provided, using fallback: ${fallbackInteriorPath}`);
+        setJetInteriorPath(fallbackInteriorPath);
+      }
+      
+      // Fetch additional data if needed
+      if (effectiveJetId && isValidUUID(effectiveJetId)) {
+        fetchJetData(effectiveJetId);
       }
     };
     
-    // Add and remove event listeners
-    window.addEventListener('jetchange', handleJetChange);
-    return () => window.removeEventListener('jetchange', handleJetChange);
-  }, [form, showSeatVisualizer]);
+    // Attach event listener - fix event name to match what JetSelector is dispatching
+    window.addEventListener('jetchange', handleJetChange as EventListener);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('jetchange', handleJetChange as EventListener);
+    };
+  }, [form, fetchJetData]); // Only re-run if form or fetchJetData change
   
+  // Add regex to validate UUID format
+  const isValidUUID = (uuid: string): boolean => {
+    const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return regex.test(uuid);
+  };
+  
+  // Add a ref to prevent update loops
+  const isUpdatingRef = useRef(false);
+
   // Update the useEffect for watching total_seats changes
   useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      // Handle changes to total seats
-      if (name === 'total_seats' && showSeatVisualizer && visualizerRef.current) {
-        const newTotalSeats = value.total_seats as number;
-        
-        if (newTotalSeats > 0) {
-          // Calculate optimal layout for this seat count
-          const { rows, seatsPerRow } = calculateOptimalLayout(newTotalSeats);
-          console.log(`Total seats changed: Calculated optimal layout: ${rows} rows × ${seatsPerRow} columns for ${newTotalSeats} seats`);
-          
-          // Update the optimal layout state
-          setOptimalLayout({ rows, seatsPerRow, totalSeats: newTotalSeats });
-          
-          // Small delay to ensure state updates
-          setTimeout(() => {
-            if (visualizerRef.current) {
-              // Reset the visualizer with the new total seats
-              visualizerRef.current.closeVisualizer();
-              
-              // Reset any existing split configuration
-              setSplitConfiguration(null);
-              
-              // Small delay to ensure state updates
-              setTimeout(() => {
-                if (visualizerRef.current) {
-                  visualizerRef.current.openVisualizer();
-                  toast.info(
-                    <div className="flex flex-col">
-                      <span className="font-medium">Seat Configuration Updated</span>
-                      <span className="text-xs">{newTotalSeats} seats available to configure</span>
-                    </div>,
-                    { duration: 2000 }
-                  );
-                }
-              }, 300);
-            }
-          }, 100);
-        }
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form, showSeatVisualizer]);
-  
-  // Add state for optimal layout storage
-  const [optimalLayout, setOptimalLayout] = useState<{
-    rows: number, 
-    seatsPerRow: number, 
-    totalSeats: number,
-    skipPositions?: number[][]
-  } | null>(null);
-  
-  // Handle showing the seat visualizer
-  const toggleSeatVisualizer = () => {
-    const newVisibility = !showSeatVisualizer;
-    setShowSeatVisualizer(newVisibility);
-    
-    // If showing the visualizer, ensure it's correctly initialized
-    if (newVisibility && visualizerRef.current) {
-      // Get the current total seats from the form
-      const currentTotalSeats = form.getValues('total_seats');
-      
-      // Reset the visualizer if needed
-      if (currentTotalSeats > 0 && visualizerRef.current) {
-        // Short delay to ensure state updates first
-        setTimeout(() => {
-          if (visualizerRef.current) {
-            // Also notify the user about the seats configuration
-            toast.info(
-              <div className="flex flex-col">
-                <span className="font-medium">Seat Configuration Ready</span>
-                <span className="text-xs">{currentTotalSeats} seats available to configure</span>
-              </div>,
-              { duration: 3000 }
-            );
-          }
-        }, 300);
-      }
-    }
-  };
-  
-  // Listen for share percentage changes from the form
-  useEffect(() => {
-    if (sharePercentage !== shareRatio) {
-      setShareRatio(sharePercentage);
-    }
-  }, [sharePercentage, shareRatio]);
-
-  // Sync visualizer layout info with form
-  const syncLayoutWithForm = () => {
-    const formValues = form.getValues();
-    const jet_id = formValues.jet_id || selectedJetId || 'default';
-    
-    const configuration: SeatConfiguration = {
-      jet_id, // Update to use jet_id
-      selectedSeats: [],
-      totalSeats: formValues.total_seats,
-      totalSelected: 0,
-      selectionPercentage: 0
-    };
-    
-    if (visualizerRef.current) {
-      visualizerRef.current.selectSeats([]);
-    }
-    
-    return configuration;
-  };
-
-  // Add a check for layout info when visualizer is shown
-  useEffect(() => {
-    if (showSeatVisualizer && visualizerRef.current) {
-      // Delay to ensure visualizer is fully loaded
-      const timer = setTimeout(() => {
-        syncLayoutWithForm();
-      }, 800);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showSeatVisualizer]);
-  
-  // Function to convert from SeatConfiguration to OldSplitConfiguration
-  const convertToOldFormat = (seatConfig: SeatConfiguration): OldSplitConfiguration => {
-    const horizontal = seatConfig.selectedSeats.length > 0;
-    // Determine if seats are selected from the front or back
-    const frontSeats = seatConfig.selectedSeats.filter(seat => 
-      seat.startsWith('A') || seat.startsWith('B')
-    );
-    const backSeats = seatConfig.selectedSeats.filter(seat => 
-      !frontSeats.includes(seat)
-    );
-    
-    return {
-      jetId: seatConfig.jet_id, // Update to use seatConfig.jet_id
-      splitOrientation: horizontal ? 'horizontal' : 'vertical',
-      splitRatio: `${seatConfig.selectionPercentage}/${100 - seatConfig.selectionPercentage}`,
-      splitPercentage: seatConfig.selectionPercentage,
-      allocatedSeats: {
-        front: frontSeats,
-        back: backSeats
-      }
-    };
-  };
-
-  // Function to convert from OldSplitConfiguration to SeatConfiguration
-  const convertToNewFormat = (oldConfig: OldSplitConfiguration): SeatConfiguration => {
-    // Combine allocated seats from front, back, left, right
-    const allSeats = [
-      ...(oldConfig.allocatedSeats.front || []),
-      ...(oldConfig.allocatedSeats.back || []),
-      ...(oldConfig.allocatedSeats.left || []),
-      ...(oldConfig.allocatedSeats.right || [])
-    ];
-    
-    return {
-      jet_id: oldConfig.jetId, // Use oldConfig.jetId as jet_id
-      selectedSeats: allSeats,
-      totalSeats: form.getValues('total_seats'),
-      totalSelected: allSeats.length,
-      selectionPercentage: oldConfig.splitPercentage || 50
-    };
-  };
-
-  // Add a fix for JetSeatVisualizer to handle API errors
-  const handleSplitConfigurationChange = (config: SeatConfiguration) => {
-    console.log('Visualizer sent new configuration:', config);
-    
-    // Convert the new format to the old format for backward compatibility
-    const oldFormatConfig = convertToOldFormat(config);
-    
-    setSplitConfiguration(oldFormatConfig);
-    form.setValue('seat_split_configuration', oldFormatConfig);
-    
-    // Update the share ratio based on the seat selection percentage
-    const newRatio = config.selectionPercentage > 0 ? config.selectionPercentage : shareRatio;
-    
-    if (newRatio !== shareRatio) {
-      console.log(`Updating share ratio from ${shareRatio} to ${newRatio}`);
-      setShareRatio(newRatio);
-      
-      // Update the form's requested share amount based on the new ratio
-      updateShareAmount(newRatio);
-      
-      // Update the slider UI to reflect the new ratio
-      const slider = document.getElementById('share-ratio');
-      if (slider) {
-        // Attempt to programmatically update the slider
-        try {
-          const event = new Event('input', { bubbles: true });
-          Object.defineProperty(event, 'target', { value: slider });
-          slider.dispatchEvent(event);
-        } catch (error) {
-          console.error('Error updating slider:', error);
-        }
-      }
-    }
-  };
-  
-  // Function to update seat selection based on ratio
-  const updateSeatSelectionByRatio = (ratio: number) => {
-    if (!visualizerRef.current || !totalSeats) return;
-
-    // Get layout info from visualizer
-    const layoutInfo = visualizerRef.current.getLayoutInfo();
-    if (!layoutInfo || !layoutInfo.totalSeats) return;
-
-    // Calculate how many seats should be selected based on ratio
-    const totalSeatsCount = layoutInfo.totalSeats;
-    const targetSeatCount = Math.max(0, Math.min(
-      totalSeatsCount, 
-      Math.round((ratio / 100) * totalSeatsCount)
-    ));
-
-    // Get all possible seat IDs
-    const allSeatIds: string[] = [];
-    for (let row = 0; row < layoutInfo.rows; row++) {
-      for (let col = 0; col < layoutInfo.seatsPerRow; col++) {
-        const rowLetter = String.fromCharCode(65 + row); // A, B, C, etc.
-        allSeatIds.push(`${rowLetter}${col + 1}`);
-      }
-    }
-
-    // Take the first N seats (could be improved to select specific sections)
-    const seatsToSelect = allSeatIds.slice(0, targetSeatCount);
-    
-    // Update the visualizer
-    visualizerRef.current.selectSeats(seatsToSelect);
-    
-    // Log what happened
-    console.log(`Updated selection to ${seatsToSelect.length} seats based on ratio ${ratio}%`);
-  };
-  
-  // Fix the seat visualization initialization by adding initial configuration
-  const initialSeatConfig: SeatConfiguration = {
-    jet_id: selectedJetId,
-    selectedSeats: [],
-    totalSeats: form.getValues('total_seats'),
-    totalSelected: 0,
-    selectionPercentage: shareRatio
-  };
-  
-  // Listen for location autocomplete events
-  useEffect(() => {
     const handleLocationChange = (event: CustomEvent<{ name: string; value: string }>) => {
+      console.log('Location change event:', event.detail);
+      
+      // Update form value based on event name
       if (event.detail.name === 'departure_location') {
-        form.setValue('departure_location', event.detail.value, { shouldValidate: true });
+        form.setValue('departure_location', event.detail.value);
+        handleDepartureSearch(event.detail.value);
       } else if (event.detail.name === 'arrival_location') {
-        form.setValue('arrival_location', event.detail.value, { shouldValidate: true });
+        form.setValue('arrival_location', event.detail.value);
+        handleArrivalSearch(event.detail.value);
+      } else {
+        console.warn(`Unknown location field: ${event.detail.name}`);
       }
     };
     
     const handleLocationBlur = (event: CustomEvent<{ name: string; value: string }>) => {
+      console.log('Location blur event:', event.detail);
+      
+      // Validate the field on blur
       if (event.detail.name === 'departure_location' || event.detail.name === 'arrival_location') {
         form.trigger(event.detail.name as any);
+      }
+    };
+    
+    // Add event listener for airport selection
+    const handleLocationSelect = (event: CustomEvent<{ name: string; value: string; airport: any }>) => {
+      console.log('Location select event:', event.detail);
+      
+      // Make sure we have a valid name - if empty, try to determine from value
+      if (!event.detail.name && event.detail.value) {
+        // Try to guess the field from the value content
+        const isArrival = event.detail.value.includes('arrival') || 
+                         (event.detail.airport?.code && form.getValues('arrival_location').includes(event.detail.airport.code));
+        const isDeparture = event.detail.value.includes('departure') || 
+                           (event.detail.airport?.code && form.getValues('departure_location').includes(event.detail.airport.code));
+        
+        if (isArrival) {
+          event.detail.name = 'arrival_location';
+        } else if (isDeparture) {
+          event.detail.name = 'departure_location';
+        } else {
+          // Default to using the active field that most closely matches the value
+          const departureValue = form.getValues('departure_location');
+          const arrivalValue = form.getValues('arrival_location');
+          
+          if (departureValue === '' || (event.detail.value && !departureValue.includes(event.detail.value))) {
+            event.detail.name = 'departure_location';
+          } else {
+            event.detail.name = 'arrival_location';
+          }
+        }
+        
+        console.log(`Determined missing field name as: ${event.detail.name}`);
+      }
+      
+      if (!event.detail.value) {
+        console.warn('Location select event missing value', event);
+        return;
+      }
+      
+      // Set the form value with the selected airport
+      if (event.detail.name === 'departure_location' || event.detail.name === '') {
+        form.setValue('departure_location', event.detail.value, { shouldValidate: true });
+        console.log(`Selected departure airport: ${event.detail.value}`, event.detail.airport);
+      } else if (event.detail.name === 'arrival_location') {
+        form.setValue('arrival_location', event.detail.value, { shouldValidate: true });
+        console.log(`Selected arrival airport: ${event.detail.value}`, event.detail.airport);
+      } else {
+        console.warn(`Unknown location field: ${event.detail.name}, using arrival as default`);
+        form.setValue('arrival_location', event.detail.value, { shouldValidate: true });
       }
     };
     
     // Add event listeners with type casting
     window.addEventListener('locationChange', handleLocationChange as EventListener);
     window.addEventListener('locationBlur', handleLocationBlur as EventListener);
+    window.addEventListener('locationSelect', handleLocationSelect as EventListener);
+    
+    // Add a utility function to debug form values on this screen
+    const debugFormValues = () => {
+      console.log('Current form values:', {
+        departure: form.getValues('departure_location'),
+        arrival: form.getValues('arrival_location'),
+        airportsCount: airports.length
+      });
+    };
+    
+    // Set an interval to log form values every 5 seconds in development mode
+    let interval: NodeJS.Timeout | null = null;
+    if (process.env.NODE_ENV === 'development') {
+      interval = setInterval(debugFormValues, 5000);
+    }
+    
+    // Call once initially
+    debugFormValues();
     
     return () => {
       window.removeEventListener('locationChange', handleLocationChange as EventListener);
       window.removeEventListener('locationBlur', handleLocationBlur as EventListener);
+      window.removeEventListener('locationSelect', handleLocationSelect as EventListener);
+      if (interval) clearInterval(interval);
     };
-  }, [form]);
+  }, [form, airports.length]);
   
   // Show loading state while authentication is in progress
   if (isAuthenticating || authLoading) {
@@ -1358,17 +1511,86 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     );
   }
   
+  // Handle changes to seat configuration from the visualizer
+  const handleSplitConfigurationChange = (newConfig: SeatConfiguration) => {
+    console.log('Received new seat configuration:', newConfig);
+    
+    if (!newConfig || !newConfig.selectedSeats) {
+      console.warn('Invalid configuration received from seat visualizer');
+      return;
+    }
+    
+    // Create an updated split configuration
+    const updatedConfig: OldSplitConfiguration = {
+      jetId: selectedJetId,
+      splitOrientation: 'horizontal',
+      splitRatio: `${shareRatio}:${100 - shareRatio}`,
+      splitPercentage: shareRatio,
+      allocatedSeats: {
+        front: newConfig.selectedSeats
+      }
+    };
+    
+    setSplitConfiguration(updatedConfig);
+    
+    // Update available seats to match selected
+    const totalSelected = newConfig.selectedSeats.length;
+    form.setValue('available_seats', totalSelected, { shouldValidate: true });
+    
+    console.log(`Updated seat configuration with ${totalSelected} selected seats`);
+  };
+  
+  // Function to update seat selection based on the share ratio
+  const updateSeatSelectionByRatio = (ratio: number) => {
+    if (!visualizerRef.current) return;
+    
+    const totalSeatsValue = form.getValues('total_seats');
+    if (!totalSeatsValue) return;
+    
+    // Calculate how many seats should be selected based on the ratio
+    const seatsToSelect = Math.max(1, Math.round((ratio / 100) * totalSeatsValue));
+    
+    // Since getAllSeats isn't available, get the layout info instead
+    const layoutInfo = visualizerRef.current.getLayoutInfo();
+    if (!layoutInfo || layoutInfo.totalSeats <= 0) return;
+    
+    // Generate seats based on layout (rows * columns)
+    const generatedSeatIds: string[] = [];
+    const rows = layoutInfo.rows;
+    const seatsPerRow = layoutInfo.seatsPerRow;
+    
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < seatsPerRow; col++) {
+        // Use same seat ID generation logic as in the visualizer
+        const rowLetter = String.fromCharCode(65 + row); // A, B, C, etc.
+        const seatId = `${rowLetter}${col + 1}`;
+        generatedSeatIds.push(seatId);
+      }
+    }
+    
+    // Only take as many seats as needed based on the ratio
+    const seatsToSelectIds = generatedSeatIds.slice(0, seatsToSelect);
+    
+    // Update the visualizer with the new selection
+    visualizerRef.current.selectSeats(seatsToSelectIds);
+    
+    // Update form values
+    form.setValue('available_seats', seatsToSelect, { shouldValidate: true });
+    
+    console.log(`Updated seat selection to ${seatsToSelect} seats based on ${ratio}% ratio`);
+  };
+  
   // Continue with the normal form render if authenticated
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="relative bg-gray-900 dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden dark">
         {/* Current Section Label with path-style heading */}
-        <div className="px-4 pt-3 pb-2 sticky top-0 z-10 bg-gray-800 text-white border-b border-gray-700">
+        <div className="px-4 pt-3 pb-2 sticky top-0 z-10 bg-gray-800/80 backdrop-blur-md text-white border-b border-gray-700/60">
           <div className="flex items-center text-sm text-gray-400">
-            <span className="text-amber-500 font-medium">Create Offer</span>
+            <span className="text-[#DAFF0D] font-medium">Create Offer</span>
             <ChevronRight className="h-4 w-4 mx-1 text-gray-600" />
             <span className="font-medium text-white">{sections[activeSection]}</span>
-        </div>
+          </div>
         </div>
         
         {/* Swipeable Sections */}
@@ -1403,9 +1625,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
           <SwiperSlide className="h-full">
             <div className="p-4 space-y-4 h-full overflow-y-auto pb-16 bg-gradient-to-b from-gray-900 to-gray-950">
               {/* Enhanced Departure Date and Time with better visuals */}
-              <div className="mb-6 p-4 bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700 shadow-lg">
+              <div className="mb-6 p-4 bg-gray-800/70 backdrop-blur-sm rounded-xl border border-gray-700/60 shadow-lg">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                  <Plane className="w-5 h-5 mr-2 text-blue-400" />
+                  <Plane className="w-5 h-5 mr-2 text-[#DAFF0D]" />
                   Flight Details
                 </h2>
                 
@@ -1422,7 +1644,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "pl-3 text-left font-normal h-14 bg-gray-900/70 hover:bg-gray-800 border-gray-700 text-white w-full",
+                                  "pl-3 text-left font-normal h-14 bg-gray-900/80 hover:bg-gray-800 border-gray-700/80 text-white w-full",
                                   !field.value && "text-muted-foreground"
                                 )}
                               >
@@ -1474,11 +1696,10 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                             value={field.value}
                             name="departure_location"
                             placeholder="Enter departure location (city or airport)"
-                            popularLocations={POPULAR_AIRPORTS}
-                            airports={airports}
+                            popularLocations={[]}
+                            airports={airportsList}
                             className="bg-gray-900/70"
                             variant="departure"
-                            error={form.formState.errors.departure_location?.message}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1497,11 +1718,10 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                             value={field.value}
                             name="arrival_location"
                             placeholder="Enter arrival location (city or airport)"
-                            popularLocations={POPULAR_AIRPORTS}
-                            airports={airports}
+                            popularLocations={[]}
+                            airports={airportsList}
                             className="bg-gray-900/70"
                             variant="arrival"
-                            error={form.formState.errors.arrival_location?.message}
                           />
                         </FormControl>
                         <FormMessage />
@@ -1513,45 +1733,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
 
               {/* Route Visualization - Fixed and Enhanced */}
               {form.watch('departure_location') && form.watch('arrival_location') && (
-                <div className="relative h-28 my-6 overflow-hidden bg-gray-800/20 backdrop-blur-sm rounded-xl border border-gray-700/30 shadow-inner">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-gradient-to-r from-blue-500 via-amber-500 to-amber-500 relative">
-                      <div className="absolute -top-2 left-0 w-4 h-4 rounded-full bg-blue-600 border-2 border-gray-800 shadow-lg shadow-blue-500/50 animate-pulse"></div>
-                      <div className="absolute -top-2 right-0 w-4 h-4 rounded-full bg-amber-500 border-2 border-gray-800 shadow-lg shadow-amber-500/50 animate-pulse"></div>
-                      
-                      {/* Animated plane along the route */}
-                      <div className="absolute -top-3 left-1/3 transform -translate-x-1/2 animate-pulse">
-                        <Plane className="h-6 w-6 text-white transform rotate-45" />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="absolute left-0 top-1/3 transform -translate-y-1/2 text-sm text-blue-300 ml-4 font-medium">
-                    {form.watch('departure_location') && typeof form.watch('departure_location') === 'string' 
-                      ? form.watch('departure_location').split(' ')[0] 
-                      : ''}
-                  </div>
-                  
-                  <div className="absolute right-0 top-1/3 transform -translate-y-1/2 text-sm text-amber-300 mr-4 font-medium">
-                    {form.watch('arrival_location') && typeof form.watch('arrival_location') === 'string'
-                      ? form.watch('arrival_location').split(' ')[0]
-                      : ''}
-                  </div>
-
-                  {/* City visualization */}
-                  <div className="absolute bottom-0 left-0 w-1/3 h-10">
-                    <div className="absolute bottom-0 left-4 w-2 h-4 bg-blue-500/40 rounded-t-sm"></div>
-                    <div className="absolute bottom-0 left-8 w-2 h-6 bg-blue-500/60 rounded-t-sm"></div>
-                    <div className="absolute bottom-0 left-12 w-2 h-8 bg-blue-500/80 rounded-t-sm"></div>
-                    <div className="absolute bottom-0 left-16 w-2 h-5 bg-blue-500/50 rounded-t-sm"></div>
-                  </div>
-
-                  <div className="absolute bottom-0 right-0 w-1/3 h-10">
-                    <div className="absolute bottom-0 right-4 w-2 h-5 bg-amber-500/40 rounded-t-sm"></div>
-                    <div className="absolute bottom-0 right-8 w-2 h-7 bg-amber-500/60 rounded-t-sm"></div>
-                    <div className="absolute bottom-0 right-12 w-2 h-9 bg-amber-500/80 rounded-t-sm"></div>
-                    <div className="absolute bottom-0 right-16 w-2 h-6 bg-amber-500/50 rounded-t-sm"></div>
-                  </div>
+                <div className="relative h-36 sm:h-40 my-6 overflow-hidden bg-gray-800/30 backdrop-blur-sm rounded-xl border border-gray-700/40 shadow-lg z-10">
+                  <EnhancedAirportMap
+                    departure={form.watch('departure_location')}
+                    arrival={form.watch('arrival_location')}
+                    className="w-full h-full"
+                  />
                 </div>
               )}
             </div>
@@ -1561,9 +1748,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
           <SwiperSlide className="h-full">
             <div className="p-4 space-y-4 h-full overflow-y-auto pb-16 bg-gradient-to-b from-gray-900 to-gray-950">
               {/* Aircraft Model - Enhanced */}
-              <div className="mb-6 p-4 bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700 shadow-lg">
+              <div className="mb-6 p-4 bg-gray-800/70 backdrop-blur-sm rounded-xl border border-gray-700/60 shadow-lg">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2 text-amber-400"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="M22 7H2"></path><path d="M7 12h7"></path><path d="M7 9h4"></path><path d="M7 15h4"></path></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2 text-[#DAFF0D]"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><path d="M22 7H2"></path><path d="M7 12h7"></path><path d="M7 9h4"></path><path d="M7 15h4"></path></svg>
                   Aircraft Selection
                 </h2>
 
@@ -1575,14 +1762,6 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     <FormItem className="mb-4">
                       <FormLabel className="text-white">
                         <span>Aircraft</span>
-                        {(() => {
-                          const jetId = form.getValues('jet_id');
-                          return jetId && typeof jetId === 'string' && jetId.length > 0 ? (
-                            <Badge className="ml-2 bg-blue-500/30 border border-blue-500/40 text-blue-200">
-                              ID: {jetId.substring(0, 8)}
-                            </Badge>
-                          ) : null;
-                        })()}
                       </FormLabel>
                       <FormControl>
                         <JetSelector
@@ -1611,12 +1790,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                         /* Exterior image - shown when specs tab is active */
                         <div className="w-full h-full">
                           <img 
-                            src={jetImagePath || "/images/jets/gulfstream-g550.jpg"}
+                            src={jetImagePath || "/images/jets/gulfstream/g550.jpg"}
                             alt={form.getValues('aircraft_model') || "Jet exterior"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               console.error("Error loading exterior image:", e.currentTarget.src);
-                              e.currentTarget.src = "/images/jets/gulfstream-g550.jpg";
+                              e.currentTarget.src = "/images/placeholder-jet.jpg";
                             }}
                           />
                           <div className="absolute top-3 right-3">
@@ -1650,20 +1829,18 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       {/* Aircraft name overlay with badge */}
                       <div className="absolute bottom-0 left-0 p-4 flex flex-col">
                         <div className="flex items-center space-x-2">
-                          <h3 className="font-bold text-2xl text-white">{form.getValues('aircraft_model')}</h3>
+                          <h3 className="font-bold text-2xl text-white">
+                            {currentJetData?.manufacturer || ''} {currentJetData?.model || form.getValues('aircraft_model') || 'Not selected'}
+                          </h3>
                           <Badge className="bg-amber-500/90 text-amber-50 border-0">
-                            {form.getValues('jet_id')?.substring(0, 6) || 'N867JS'}
+                            {currentJetData?.tail_number || 'No Reg'}
                           </Badge>
                         </div>
                         <div className="flex items-center mt-1">
                           <Badge variant="outline" className="bg-blue-900/50 border-blue-500/50 text-blue-100 font-semibold">
-                            <span className="text-lg mr-1.5">{form.getValues('total_seats') || 10}</span> seats
+                            <span className="text-lg mr-1.5">{currentJetData?.capacity || form.getValues('total_seats') || 10}</span> seats
                           </Badge>
-                          {form.getValues('jet_id') && (
-                            <Badge variant="outline" className="ml-2 bg-blue-900/50 border-blue-500/50 text-blue-100">
-                              <span className="text-sm">ID: {form.getValues('jet_id')?.substring(0, 6)}</span>
-                            </Badge>
-                          )}
+                          {/* Removed redundant jet_id badge */}
                         </div>
                       </div>
                     </div>
@@ -1691,38 +1868,83 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                         
                         {/* Specifications Tab - Enhanced for better luxury feel */}
                         <TabsContent value="specs" className="p-4 bg-gray-800/30">
+                          {/* Removed jet data debugger section */}
                           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Range</span>
-                              <span className="text-base font-bold text-white">3,600 nm</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.range_nm 
+                                  ? `${typeof currentJetData.range_nm === 'string' 
+                                      ? parseInt(String(currentJetData.range_nm)) 
+                                      : currentJetData.range_nm} nm` 
+                                  : '4,500 nm'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Cruise Speed</span>
-                              <span className="text-base font-bold text-white">459 kts</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.cruise_speed_kts 
+                                  ? `${typeof currentJetData.cruise_speed_kts === 'string' 
+                                      ? parseInt(String(currentJetData.cruise_speed_kts)) 
+                                      : currentJetData.cruise_speed_kts} kts` 
+                                  : '480 kts'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Max Altitude</span>
-                              <span className="text-base font-bold text-white">45,000 ft</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.max_altitude 
+                                  ? `${typeof currentJetData.max_altitude === 'string' 
+                                      ? parseInt(String(currentJetData.max_altitude)) 
+                                      : currentJetData.max_altitude} ft` 
+                                  : '45,000 ft'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Cabin Width</span>
-                              <span className="text-base font-bold text-white">7.3 ft</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.cabin_width 
+                                  ? `${typeof currentJetData.cabin_width === 'string' 
+                                      ? parseFloat(String(currentJetData.cabin_width)) 
+                                      : currentJetData.cabin_width} ft` 
+                                  : '7.7 ft'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Cabin Height</span>
-                              <span className="text-base font-bold text-white">6.3 ft</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.cabin_height 
+                                  ? `${typeof currentJetData.cabin_height === 'string' 
+                                      ? parseFloat(String(currentJetData.cabin_height)) 
+                                      : currentJetData.cabin_height} ft` 
+                                  : '6.2 ft'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Cabin Length</span>
-                              <span className="text-base font-bold text-white">25.8 ft</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.cabin_length 
+                                  ? `${typeof currentJetData.cabin_length === 'string' 
+                                      ? parseFloat(String(currentJetData.cabin_length)) 
+                                      : currentJetData.cabin_length} ft` 
+                                  : '39.0 ft'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Year</span>
-                              <span className="text-base font-bold text-white">2020</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.year !== undefined
+                                  ? (typeof currentJetData.year === 'string' 
+                                      ? parseInt(String(currentJetData.year)) 
+                                      : currentJetData.year)
+                                  : '2022'}
+                              </span>
                             </div>
                             <div className="flex flex-col space-y-1 border-l-2 border-blue-500/30 pl-3">
                               <span className="text-xs text-blue-300 font-medium uppercase tracking-wider">Registration</span>
-                              <span className="text-base font-bold text-white">N867JS</span>
+                              <span className="text-base font-bold text-white">
+                                {currentJetData?.tail_number || 'N/A'}
+                              </span>
                             </div>
                           </div>
                         </TabsContent>
@@ -1741,7 +1963,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-white">Wi-Fi</span>
-                                <span className="text-xs text-gray-400">High-speed satellite</span>
+                                <span className="text-xs text-gray-400">{currentJetData?.wifi ? "Available" : "Not available"}</span>
                               </div>
                             </div>
                             
@@ -1755,7 +1977,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-white">Catering</span>
-                                <span className="text-xs text-gray-400">Premium service</span>
+                                <span className="text-xs text-gray-400">{currentJetData?.galley ? "Full service" : "Limited"}</span>
                               </div>
                             </div>
                             
@@ -1768,7 +1990,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-white">Entertainment</span>
-                                <span className="text-xs text-gray-400">HD displays</span>
+                                <span className="text-xs text-gray-400">{currentJetData?.entertainment || "Standard"}</span>
                               </div>
                             </div>
                             
@@ -1780,7 +2002,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-white">Power Outlets</span>
-                                <span className="text-xs text-gray-400">At every seat</span>
+                                <span className="text-xs text-gray-400">Available</span>
                               </div>
                             </div>
                             
@@ -1794,7 +2016,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               </div>
                               <div className="flex flex-col">
                                 <span className="text-sm font-medium text-white">Satellite Phone</span>
-                                <span className="text-xs text-gray-400">Global connectivity</span>
+                                <span className="text-xs text-gray-400">Available</span>
                               </div>
                             </div>
                             
@@ -1832,38 +2054,38 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               {/* Row 1 */}
                               <div className="bg-gray-800/70 rounded-lg py-2 px-1 border border-gray-700/40 text-center">
                                 <Users2 className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-                                <p className="text-base font-semibold text-white">{form.getValues('total_seats') || 10}</p>
+                                <p className="text-base font-semibold text-white">{currentJetData?.capacity || form.getValues('total_seats') || 'N/A'}</p>
                                 <p className="text-[10px] text-gray-400">Seats</p>
                               </div>
                               
                               <div className="bg-gray-800/70 rounded-lg py-2 px-1 border border-gray-700/40 text-center">
                                 <Bath className="w-4 h-4 text-amber-400 mx-auto mb-1" />
-                                <p className="text-base font-semibold text-white">Private</p>
+                                <p className="text-base font-semibold text-white">{currentJetData?.lavatory ? "Private" : "Standard"}</p>
                                 <p className="text-[10px] text-gray-400">Lavatory</p>
                               </div>
                               
                               <div className="bg-gray-800/70 rounded-lg py-2 px-1 border border-gray-700/40 text-center">
                                 <Utensils className="w-4 h-4 text-emerald-400 mx-auto mb-1" />
-                                <p className="text-base font-semibold text-white">Full</p>
+                                <p className="text-base font-semibold text-white">{currentJetData?.galley ? "Full" : "Basic"}</p>
                                 <p className="text-[10px] text-gray-400">Galley</p>
                               </div>
                               
                               {/* Row 2 */}
                               <div className="bg-gray-800/70 rounded-lg py-2 px-1 border border-gray-700/40 text-center">
                                 <Tv className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-                                <p className="text-base font-semibold text-white">HD</p>
+                                <p className="text-base font-semibold text-white">{currentJetData?.entertainment?.includes("HD") ? "HD" : "Standard"}</p>
                                 <p className="text-[10px] text-gray-400">Displays</p>
                               </div>
                               
                               <div className="bg-gray-800/70 rounded-lg py-2 px-1 border border-gray-700/40 text-center">
                                 <Armchair className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-                                <p className="text-base font-semibold text-white">Luxury</p>
+                                <p className="text-base font-semibold text-white">{currentJetData?.berths ? "Luxury" : "Premium"}</p>
                                 <p className="text-[10px] text-gray-400">Seating</p>
                               </div>
                               
                               <div className="bg-gray-800/70 rounded-lg py-2 px-1 border border-gray-700/40 text-center">
                                 <Wifi className="w-4 h-4 text-amber-400 mx-auto mb-1" />
-                                <p className="text-base font-semibold text-white">High</p>
+                                <p className="text-base font-semibold text-white">{currentJetData?.wifi ? "High" : "Limited"}</p>
                                 <p className="text-[10px] text-gray-400">Speed WiFi</p>
                               </div>
                             </div>
@@ -1880,9 +2102,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               
                               {/* Cabin Dimensions */}
                               <div className="flex justify-between text-xs text-gray-400 mt-2 pt-2 border-t border-gray-700/30">
-                                <span>Height: <span className="text-white">6.3 ft</span></span>
-                                <span>Width: <span className="text-white">7.3 ft</span></span>
-                                <span>Length: <span className="text-white">25.8 ft</span></span>
+                                <span>Height: <span className="text-white">{currentJetData?.cabin_height ? `${currentJetData.cabin_height} ft` : '--'}</span></span>
+                                <span>Width: <span className="text-white">{currentJetData?.cabin_width ? `${currentJetData.cabin_width} ft` : '--'}</span></span>
+                                <span>Length: <span className="text-white">{currentJetData?.cabin_length ? `${currentJetData.cabin_length} ft` : '--'}</span></span>
                               </div>
                             </div>
                           </div>
@@ -1907,39 +2129,14 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 )}
                 
                 {/* Slim route visualization at bottom */}
-                <div className="mt-4 h-12 relative bg-gray-800/40 rounded-lg border border-gray-700/40 overflow-hidden">
+                <div className="mt-4 h-16 relative bg-gray-800/40 backdrop-blur-sm rounded-lg border border-gray-700/40 overflow-hidden shadow-inner">
                   {form.watch('departure_location') && form.watch('arrival_location') && (
-                    <>
-                      {/* Route line */}
-                      <div className="absolute inset-0 flex items-center justify-center px-8">
-                        <div className="w-full h-[1px] bg-gradient-to-r from-blue-500 to-amber-500 relative">
-                          {/* Animated plane along the route */}
-                          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 animate-pulse">
-                            <Plane className="h-4 w-4 text-white transform rotate-45" />
-                          </div>
-                          
-                          {/* Departure dot */}
-                          <div className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-blue-500 border border-gray-900 shadow-lg"></div>
-                          
-                          {/* Arrival dot */}
-                          <div className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-amber-500 border border-gray-900 shadow-lg"></div>
-                        </div>
-                      </div>
-                      
-                      {/* City labels */}
-                      <div className="absolute inset-0 flex justify-between items-center px-6 pointer-events-none">
-                        <div className="text-xs font-medium text-blue-400">
-                          {form.watch('departure_location') && typeof form.watch('departure_location') === 'string' 
-                            ? form.watch('departure_location').split(' ')[0] 
-                            : ''}
-                        </div>
-                        <div className="text-xs font-medium text-amber-400">
-                          {form.watch('arrival_location') && typeof form.watch('arrival_location') === 'string'
-                            ? form.watch('arrival_location').split(' ')[0]
-                            : ''}
-                        </div>
-                      </div>
-                    </>
+                    <EnhancedAirportMap
+                      departure={form.watch('departure_location')}
+                      arrival={form.watch('arrival_location')}
+                      className="w-full h-full"
+                      compact={true}
+                    />
                   )}
                 </div>
               </div>
@@ -1992,7 +2189,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               
               {/* Compact summary cards showing split allocation - moved up to replace seat preview */}
               <div className="grid grid-cols-2 gap-3 mb-3">
-                <div className="bg-blue-900/20 rounded-lg p-2 border border-blue-900/20">
+                <div className="bg-blue-900/30 rounded-lg p-2 border border-blue-900/30 backdrop-blur-sm">
                   <div className="flex justify-between text-xs text-gray-400 mb-1">
                     <span>Your seats</span>
                     <span className="text-blue-400 font-medium">{shareRatio}%</span>
@@ -2003,7 +2200,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                   </div>
                 </div>
                 
-                <div className="bg-amber-900/20 rounded-lg p-2 border border-amber-900/20">
+                <div className="bg-amber-900/30 rounded-lg p-2 border border-amber-900/30 backdrop-blur-sm">
                   <div className="flex justify-between text-xs text-gray-400 mb-1">
                     <span>Partner's seats</span>
                     <span className="text-amber-400 font-medium">{100 - shareRatio}%</span>
@@ -2016,13 +2213,13 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               </div>
               
               {/* Streamlined seat visualizer with integrated slider and controls to reduce vertical space */}
-              <div className="bg-gray-800/40 backdrop-blur-sm rounded-xl overflow-hidden shadow-xl border border-gray-700/50 mb-3">
-                <div className="p-2 bg-gray-800/80 border-b border-gray-700/50 flex items-center">
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl overflow-hidden shadow-xl border border-gray-700/50 mb-3">
+                <div className="p-2 bg-gray-800/90 border-b border-gray-700/50 flex items-center">
                   {/* Seat legend in header where "Select Seat Allocation" was */}
                   <div className="flex items-center justify-around text-xs">
                     <div className="flex items-center mr-3">
-                      <div className="w-4 h-4 rounded-sm bg-blue-600 border border-blue-400 mr-1.5 opacity-80"></div>
-                      <span className="text-blue-300 font-medium">Selected</span>
+                      <div className="w-4 h-4 rounded-sm bg-[#DAFF0D] border border-[#DAFF0D]/70 mr-1.5 opacity-90"></div>
+                      <span className="text-[#DAFF0D] font-medium">Selected</span>
                     </div>
                     <div className="flex items-center mr-3">
                       <div className="w-4 h-4 rounded-sm bg-gray-700 border border-gray-600 mr-1.5 opacity-80"></div>
@@ -2036,38 +2233,50 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 </div>
                 
                 <div className="p-1">
-                  <JetSeatVisualizer 
-                    ref={visualizerRef}
-                    jet_id={selectedJetId}
-                    totalSeats={form.getValues('total_seats')}
-                    onChange={handleSplitConfigurationChange}
-                    initialSelection={initialSeatConfig}
-                    readOnly={false}
-                    className="mb-1"
-                    onError={(err) => {
-                      console.error('Visualizer error:', err);
-                      setShowSeatVisualizer(false);
-                    }}
-                    showControls={false} // Hide default controls for cleaner UI
-                    showLegend={false} // Hide the built-in legend since we have our own in the header
-                    showSummary={false} // Hide the top-right selection summary
-                    customLayout={optimalLayout ? {
-                      rows: optimalLayout.rows,
-                      seatsPerRow: optimalLayout.seatsPerRow,
-                      layoutType: 'custom',
-                      totalSeats: optimalLayout.totalSeats,
-                      seatMap: {
-                        skipPositions: optimalLayout.skipPositions || []
-                      }
-                    } : undefined}
-                    forceExactLayout={true} // Force the visualizer to use exactly the seats we specify
-                  />
+                  {showSeatVisualizer ? (
+                    <JetSeatVisualizer 
+                      ref={visualizerRef}
+                      jet_id={selectedJetId === '6d6250bc-4903-4656-b1c4-3851af747988' ? '6d6250bc-4903-4656-b1c4-3851af747988' : selectedJetId}
+                      totalSeats={currentJetData?.capacity || form.getValues('total_seats')}
+                      onChange={handleSplitConfigurationChange}
+                      initialSelection={{
+                        jet_id: selectedJetId,
+                        selectedSeats: initialSeatConfig,
+                        totalSeats: currentJetData?.capacity || form.getValues('total_seats') || 0,
+                        totalSelected: initialSeatConfig.length,
+                        selectionPercentage: shareRatio
+                      }}
+                      readOnly={false}
+                      className="mb-1"
+                      onError={(err) => {
+                        console.error('Visualizer error:', err);
+                        setShowSeatVisualizer(false);
+                      }}
+                      showControls={false} // Hide default controls for cleaner UI
+                      showLegend={false} // Hide the built-in legend since we have our own in the header
+                      showSummary={false} // Hide the top-right selection summary
+                      customLayout={optimalLayout ? {
+                        rows: optimalLayout.rows,
+                        seatsPerRow: optimalLayout.seatsPerRow,
+                        layoutType: 'custom',
+                        totalSeats: optimalLayout.totalSeats,
+                        seatMap: {
+                          skipPositions: optimalLayout.skipPositions || []
+                        }
+                      } : undefined}
+                      forceExactLayout={true} // Force the visualizer to use exactly the seats we specify
+                    />
+                  ) : (
+                    <div className="p-4 text-gray-400 text-center">
+                      No seat configuration available
+                    </div>
+                  )}
                 </div>
                 
                 {/* Selection status display - fixed to ensure visibility and not covered by visualizer */}
-                <div className="p-2 border-t border-gray-700/50 bg-gray-800/80 flex justify-between items-center text-xs text-gray-400">
+                <div className="p-2 border-t border-gray-700/50 bg-gray-800/90 flex justify-between items-center text-xs text-gray-400">
                   <div>
-                    <span className="text-blue-300 font-medium">
+                    <span className="text-[#DAFF0D] font-medium">
                       {(() => {
                         const frontSeats = splitConfiguration?.allocatedSeats?.front?.length ?? 0;
                         const backSeats = splitConfiguration?.allocatedSeats?.back?.length ?? 0;
@@ -2076,23 +2285,23 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     </span> of {form.getValues('total_seats')} selected
                   </div>
                   <div className="text-xs">
-                    <span className="text-blue-300 font-medium">{shareRatio}%</span> selected
+                    <span className="text-[#DAFF0D] font-medium">{shareRatio}%</span> selected
                   </div>
                 </div>
               </div>
               
               {/* Slider moved below visualization - optimized for space efficiency */}
-              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-gray-700/50">
+              <div className="bg-gray-800/70 backdrop-blur-sm rounded-xl p-2 shadow-lg border border-gray-700/60">
                 <div className="flex items-center justify-between mb-1">
                   <FormLabel htmlFor="share-ratio" className="flex items-center text-xs font-medium text-gray-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 mr-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#DAFF0D] mr-1">
                       <path d="M8 3H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h1" />
                       <path d="M16 3h1a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2h-1" />
                       <path d="M12 2v20" />
                     </svg>
                     Share Ratio
                   </FormLabel>
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-800 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold shadow-md text-white">
+                  <div className="bg-[#DAFF0D]/20 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-semibold shadow-md text-[#DAFF0D]">
                     {shareRatio}% / {100 - shareRatio}%
                   </div>
                 </div>
@@ -2101,11 +2310,11 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 <div className="h-2 rounded-full bg-gray-700 p-0.5 border border-gray-600 shadow-inner mb-1.5 relative overflow-hidden">
                   <div className="flex h-full rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-l-full transition-all duration-300 ease-out shadow-md"
+                      className="h-full bg-gradient-to-r from-[#DAFF0D]/80 to-[#DAFF0D] rounded-l-full transition-all duration-300 ease-out shadow-md"
                       style={{ width: `${shareRatio}%` }}
                     />
                     <div 
-                      className="h-full bg-gradient-to-r from-amber-500 to-amber-700 rounded-r-full transition-all duration-300 ease-out shadow-md"
+                      className="h-full bg-gradient-to-r from-gray-600 to-gray-700 rounded-r-full transition-all duration-300 ease-out shadow-md"
                       style={{ width: `${100 - shareRatio}%` }}
                     />
                   </div>
@@ -2159,7 +2368,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="bg-gray-800/50 text-gray-300 border-gray-700 h-7 text-xs"
+                    className="bg-gray-800/50 text-gray-300 border-gray-700/80 h-7 text-xs hover:text-white hover:bg-gray-700/60"
                     onClick={() => {
                       if (visualizerRef.current) {
                         visualizerRef.current.selectSeats([]);
@@ -2175,7 +2384,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="bg-gray-800/50 text-gray-300 border-gray-700 h-7 text-xs"
+                    className="bg-gray-800/50 text-gray-300 border-gray-700/80 h-7 text-xs hover:text-white hover:bg-gray-700/60"
                     onClick={() => {
                       // Reset to default 50/50 split
                       setShareRatio(50);
@@ -2295,14 +2504,14 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               
               <div className="space-y-6">
                 {/* Total Flight Cost with enhanced styling */}
-                <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-700/50">
+                <div className="bg-gray-800/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-700/60">
                   <FormField
                     control={form.control}
                     name="total_flight_cost"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="total_flight_cost" className="flex items-center text-gray-200 mb-2">
-                          <DollarSign className="h-5 w-5 mr-2 text-amber-500" />
+                          <DollarSign className="h-5 w-5 mr-2 text-[#DAFF0D]" />
                           <span className="font-medium">Total Flight Cost ($)</span>
                         </FormLabel>
                         <FormControl>
@@ -2311,7 +2520,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               id="total_flight_cost"
                               type="number"
                               min={1}
-                              className="pl-3 min-h-[44px] bg-gray-700/70 border-gray-600 focus:ring-amber-500 focus:border-amber-500 rounded-lg text-white"
+                              className="pl-3 min-h-[44px] bg-gray-900/80 border-gray-700/80 focus:ring-[#DAFF0D] focus:border-[#DAFF0D] rounded-lg text-white"
                               {...field}
                               onChange={(e) => {
                                 field.onChange(parseInt(e.target.value) || 0);
@@ -2330,14 +2539,14 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 </div>
                 
                 {/* Requested Share Amount with enhanced styling */}
-                <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-700/50">
+                <div className="bg-gray-800/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-gray-700/60">
                   <FormField
                     control={form.control}
                     name="requested_share_amount"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel htmlFor="requested_share_amount" className="flex items-center text-gray-200 mb-2">
-                          <DollarSign className="h-5 w-5 mr-2 text-amber-500" />
+                          <DollarSign className="h-5 w-5 mr-2 text-[#DAFF0D]" />
                           <span className="font-medium">Requested Share Amount ($)</span>
                         </FormLabel>
                         <FormControl>
@@ -2347,7 +2556,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                               type="number"
                               min={1}
                               max={totalFlightCost || 999999999}
-                              className="pl-3 min-h-[44px] bg-gray-700/70 border-gray-600 focus:ring-amber-500 focus:border-amber-500 rounded-lg text-white"
+                              className="pl-3 min-h-[44px] bg-gray-900/80 border-gray-700/80 focus:ring-[#DAFF0D] focus:border-[#DAFF0D] rounded-lg text-white"
                               {...field}
                               onChange={(e) => {
                                 const requestedAmount = parseInt(e.target.value) || 0;
@@ -2368,11 +2577,21 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 </div>
                 
                 {/* Enhanced Summary with visual representation */}
-                <div className="mt-6 overflow-hidden rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 shadow-xl">
-                  <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-4 py-3">
+                <div className="mt-6 overflow-hidden rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 shadow-xl">
+                  {/* Add the airport map above the summary */}
+                  {form.watch('departure_location') && form.watch('arrival_location') && (
+                    <div className="w-full h-60 relative rounded-t-xl overflow-hidden border-b border-gray-700/50">
+                      <EnhancedAirportMap
+                        departure={form.watch('departure_location')}
+                        arrival={form.watch('arrival_location')}
+                        className="w-full h-full"
+                      />
+                    </div>
+                  )}
+                  <div className="bg-gradient-to-r from-gray-800/90 to-gray-700/90 text-white px-4 py-3">
                     <h3 className="font-bold text-base">Flight Share Offer Summary</h3>
                   </div>
-                  <div className="bg-gray-800/80 px-4 py-3 space-y-3 shadow-inner">
+                  <div className="bg-gray-800/90 px-4 py-3 space-y-3 shadow-inner">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400 text-sm">Flight Date:</span>
                       <span className="font-medium text-white text-sm">{form.getValues('departure_time') ? format(form.getValues('departure_time'), "MMM d, yyyy h:mm a") : "Not set"}</span>
@@ -2392,8 +2611,8 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                         <span className="text-gray-400 text-sm">Share Ratio:</span>
                         <div className="flex items-center gap-2">
                           <div className="w-16 h-2 rounded-full bg-gray-700 overflow-hidden flex">
-                            <div className="bg-blue-600 h-full" style={{ width: `${shareRatio}%` }}></div>
-                            <div className="bg-amber-500 h-full" style={{ width: `${100 - shareRatio}%` }}></div>
+                            <div className="bg-[#DAFF0D] h-full" style={{ width: `${shareRatio}%` }}></div>
+                            <div className="bg-gray-600 h-full" style={{ width: `${100 - shareRatio}%` }}></div>
                           </div>
                           <span className="font-medium text-white text-sm">{shareRatio}% / {100 - shareRatio}%</span>
                         </div>
@@ -2401,32 +2620,32 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     </div>
                     
                     {/* Cost breakdown with enhanced styling */}
-                    <div className="mt-4 bg-gray-900/50 rounded-lg p-3 border border-gray-800/80">
+                    <div className="mt-4 bg-gray-900/70 rounded-lg p-3 border border-gray-800/80">
                       <div className="flex justify-between items-center mb-2">
                         <span className="font-medium text-gray-300 text-sm">Total Flight Cost:</span>
                         <span className="font-bold text-white">${totalFlightCost || 0}</span>
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-blue-400 text-sm">You Pay:</span>
-                        <span className="font-bold text-blue-300">${totalFlightCost ? totalFlightCost - requestedShareAmount : 0}</span>
+                        <span className="font-medium text-[#DAFF0D]/80 text-sm">You Pay:</span>
+                        <span className="font-bold text-[#DAFF0D]">${totalFlightCost ? totalFlightCost - requestedShareAmount : 0}</span>
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-amber-400 text-sm">Sharer Pays:</span>
-                        <span className="font-bold text-amber-300">${requestedShareAmount || 0}</span>
+                        <span className="font-medium text-gray-400 text-sm">Sharer Pays:</span>
+                        <span className="font-bold text-gray-300">${requestedShareAmount || 0}</span>
                       </div>
                     </div>
                   </div>
                 </div>
                 
                 {/* Add a new final submission review section */}
-                <div className="mt-6 overflow-hidden rounded-xl bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 shadow-xl">
-                  <div className="bg-gradient-to-r from-green-900 to-green-800 text-white px-4 py-3 flex items-center">
-                    <CheckCircle className="w-5 h-5 mr-2" />
+                <div className="mt-6 overflow-hidden rounded-xl bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 shadow-xl">
+                  <div className="bg-gradient-to-r from-[#DAFF0D]/20 to-[#DAFF0D]/10 text-white px-4 py-3 flex items-center border-b border-[#DAFF0D]/20">
+                    <CheckCircle className="w-5 h-5 mr-2 text-[#DAFF0D]" />
                     <h3 className="font-bold text-base">Ready to Submit</h3>
                   </div>
-                  <div className="bg-gray-800/80 px-4 py-3 shadow-inner">
+                  <div className="bg-gray-800/90 px-4 py-3 shadow-inner">
                     <p className="text-gray-300 text-sm mb-3">
                       Your JetShare offer is ready to submit. Once published, it will appear in the marketplace
                       where other members can see it and request to join your flight.
@@ -2435,7 +2654,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     <div className="space-y-2 mt-4">
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400 text-sm">Seat Configuration:</span>
-                        <Badge className="bg-blue-900/50 text-blue-200 border-blue-800/50">
+                        <Badge className="bg-[#DAFF0D]/20 text-[#DAFF0D] border-[#DAFF0D]/30">
                           {splitConfiguration 
                             ? `${getTotalAllocatedSeats(splitConfiguration)} seats selected` 
                             : 'Default configuration'}
@@ -2444,21 +2663,21 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400 text-sm">Available to Book:</span>
-                        <Badge className="bg-amber-900/50 text-amber-200 border-amber-800/50">
+                        <Badge className="bg-gray-700/50 text-gray-200 border-gray-600/50">
                           {form.getValues('available_seats')} seats
                         </Badge>
                       </div>
                       
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400 text-sm">Offer Status:</span>
-                        <Badge className="bg-green-900/50 text-green-200 border-green-800/50">
+                        <Badge className="bg-[#DAFF0D]/20 text-[#DAFF0D] border-[#DAFF0D]/30">
                           Open
                         </Badge>
                       </div>
                     </div>
                     
-                    <div className="mt-5 bg-blue-900/20 rounded-lg p-3 border border-blue-900/30">
-                      <p className="text-blue-300 text-xs">
+                    <div className="mt-5 bg-[#DAFF0D]/10 rounded-lg p-3 border border-[#DAFF0D]/20">
+                      <p className="text-[#DAFF0D]/90 text-xs">
                         Click the Submit button below to publish your offer to the JetShare marketplace.
                         You can always edit or cancel your offer from your dashboard later.
                       </p>
@@ -2472,13 +2691,13 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         
         {/* Move navigation indicators to the bottom of the form */}
         {/* Sticky Navigation Footer with integrated section indicators */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-3 flex items-center justify-between shadow-lg z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-800/90 backdrop-blur-md border-t border-gray-700/80 p-3 flex items-center justify-between shadow-lg z-20">
           {activeSection > 0 ? (
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => goToPrevSection()}
-              className="min-h-[44px] px-4 border-gray-600 text-white text-sm font-medium hover:bg-gray-700"
+              className="min-h-[44px] px-4 border-gray-600/80 text-white text-sm font-medium hover:bg-gray-700/80 hover:border-gray-500"
               aria-label="Go back to previous section"
             >
               <ChevronLeft className="w-4 h-4 mr-1" />
@@ -2489,7 +2708,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               type="button"
               variant="outline"
               onClick={() => router.push('/jetshare/dashboard?tab=offers')}
-              className="min-h-[44px] px-4 border-gray-600 text-white text-sm font-medium hover:bg-gray-700"
+              className="min-h-[44px] px-4 border-gray-600/80 text-white text-sm font-medium hover:bg-gray-700/80 hover:border-gray-500"
               disabled={isSubmitting}
               aria-label="Cancel and go back to dashboard"
             >
@@ -2507,7 +2726,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 className={cn(
                   "w-2 h-2 rounded-full transition-all",
                   activeSection === index 
-                    ? "bg-amber-500" 
+                    ? "bg-[#DAFF0D]" 
                     : "bg-gray-600"
                 )}
                 aria-label={`Go to ${section}`}
@@ -2519,7 +2738,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
             <Button 
               type="button" 
               onClick={() => goToNextSection()}
-              className="min-h-[44px] px-4 bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm"
+              className="min-h-[44px] px-4 bg-[#DAFF0D] hover:bg-[#C8EA00] text-black font-medium text-sm"
               aria-label={`Continue to ${sections[activeSection + 1]}`}
             >
               Next
@@ -2529,7 +2748,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
             <Button 
               type="button" 
               disabled={isSubmitting || isAuthenticating}
-              className="min-h-[44px] px-4 bg-amber-500 hover:bg-amber-600 text-white font-medium text-sm"
+              className="min-h-[44px] px-4 bg-[#DAFF0D] hover:bg-[#C8EA00] text-black font-medium text-sm"
               aria-label="Review and submit offer"
               onClick={() => {
                 // Validate form before submitting
@@ -2561,3 +2780,4 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     </Form>
   );
 } 
+
