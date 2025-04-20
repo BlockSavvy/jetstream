@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import Image from 'next/image';
 import { Check, ChevronsUpDown, Loader2, Search, Plane, ChevronDown, User } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,7 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@headlessui/react';
 import { createPortal } from 'react-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/components/auth-provider";
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Types for jet data
 interface Jet {
@@ -89,46 +90,9 @@ function JetSelectorImpl({
   // Add new state for filtering by user's own jets
   const [showOnlyMyJets, setShowOnlyMyJets] = useState(true);
   
-  // Get user session to determine user's jets - with safer implementation
-  const [userId, setUserId] = useState<string | null>(null);
-  
-  // Safely try to get session using try/catch to handle missing SessionProvider
-  useEffect(() => {
-    // Function to safely get the session
-    const safelyGetSession = async () => {
-      try {
-        // Remove the dynamic import that's causing issues and use a safer approach
-        // Instead of trying to use useSession directly, just check for a user ID in localStorage
-        try {
-          const localUserId = localStorage.getItem('jetstream_user_id');
-          if (localUserId) {
-            setUserId(localUserId);
-            console.log("JetSelector: Using user ID from localStorage:", localUserId);
-          } else {
-            // Try to get user info through a simple fetch if needed
-            const sessionResponse = await fetch('/api/auth/session', {
-              method: 'GET',
-              credentials: 'include'
-            });
-            
-            if (sessionResponse.ok) {
-              const sessionData = await sessionResponse.json();
-              if (sessionData.user?.id) {
-                setUserId(sessionData.user.id);
-                console.log("JetSelector: Got user ID from session API:", sessionData.user.id);
-              }
-            }
-          }
-        } catch (e) {
-          console.warn("JetSelector: Error reading user data:", e);
-        }
-      } catch (error) {
-        console.warn("JetSelector: Session error:", error);
-      }
-    };
-    
-    safelyGetSession();
-  }, []);
+  // Get user session to determine user's jets
+  const { user, session } = useAuth();
+  const userId = user ? user.id : null;
   
   // Add ref to prevent update loops
   const isUpdatingRef = useRef(false);

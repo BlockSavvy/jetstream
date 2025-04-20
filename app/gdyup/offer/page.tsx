@@ -3,7 +3,8 @@
 import JetShareOfferForm from '../components/JetShareOfferForm';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { SessionProvider } from "next-auth/react";
+import React from 'react';
+import { redirect } from 'next/navigation';
 
 // Extract a component that uses searchParams to properly handle suspense
 function JetShareOfferContent() {
@@ -181,14 +182,12 @@ function JetShareOfferContent() {
 // Main page component with suspense boundary
 export default function JetShareOfferPage() {
   return (
-    <SessionProvider>
-      <Suspense fallback={
-        <div className="container mx-auto px-4 py-2 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-        </div>
-      }>
-        <JetShareOfferContent />
-      </Suspense>
-    </SessionProvider>
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-2 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+      </div>
+    }>
+      <JetShareOfferContent />
+    </Suspense>
   );
 } 

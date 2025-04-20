@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import Image from 'next/image';
 import { Check, ChevronsUpDown, Loader2, Search, Plane, ChevronDown, User } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,7 +20,8 @@ import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@headlessui/react';
 import { createPortal } from 'react-dom';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/components/auth-provider";
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Types for jet data
 interface Jet {
@@ -86,8 +87,8 @@ function JetSelectorImpl({
   const [showOnlyMyJets, setShowOnlyMyJets] = useState(true);
   
   // Get user session to determine user's jets
-  const { data: session } = useSession();
-  const userId = session?.user ? (session.user as any).id : null;
+  const { user, session } = useAuth();
+  const userId = user ? user.id : null;
   
   // Refs for positioning dropdown correctly
   const inputRef = useRef<HTMLDivElement>(null);

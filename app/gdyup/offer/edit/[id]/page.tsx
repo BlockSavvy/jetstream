@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import JetShareOfferEditForm from '@/app/gdyup/components/JetShareOfferEditForm';
 import { Suspense } from 'react';
-import { SessionProvider } from "next-auth/react";
+import JetShareOfferForm from '../../../components/JetShareOfferForm';
 import { JetShareOfferWithUser } from '@/types/jetshare';
 
 export default function EditOfferPage() {
@@ -67,19 +67,17 @@ export default function EditOfferPage() {
   }
   
   return (
-    <SessionProvider>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-white">Edit Your JetShare Offer</h1>
-        {offer && (
-          <Suspense fallback={
-            <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#DAFF0D]"></div>
-            </div>
-          }>
-            <JetShareOfferEditForm offer={offer} userId={offer.user_id} />
-          </Suspense>
-        )}
-      </div>
-    </SessionProvider>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8 text-white">Edit Your JetShare Offer</h1>
+      {offer && (
+        <Suspense fallback={
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#DAFF0D]"></div>
+          </div>
+        }>
+          <JetShareOfferEditForm offer={offer} userId={offer.user_id} />
+        </Suspense>
+      )}
+    </div>
   );
 } 
