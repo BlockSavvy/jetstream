@@ -55,12 +55,29 @@ const nextConfig = {
           source: '/',
           destination: '/gdyup',
         },
-        // Preserve API routes for both GDYUP and JetShare
+        // Preserve API routes
         {
           source: '/api/:path*',
           destination: '/api/:path*',
         },
-        // Catch-all to redirect non-GDYUP routes to GDYUP
+        // Preserve static assets
+        {
+          source: '/_next/:path*',
+          destination: '/_next/:path*',
+        },
+        {
+          source: '/favicon.ico',
+          destination: '/favicon.ico',
+        },
+        {
+          source: '/icons/:path*',
+          destination: '/icons/:path*',
+        },
+        {
+          source: '/assets/:path*',
+          destination: '/assets/:path*',
+        },
+        // Redirect all other routes to GDYUP if on the proper host
         {
           source: '/:path*',
           destination: '/gdyup/:path*',
@@ -68,14 +85,8 @@ const nextConfig = {
             {
               type: 'host',
               value: 'gdyup\\.xyz|gdyup\\.vercel\\.app',
-            },
-          ],
-          missing: [
-            {
-              type: 'path',
-              value: '^/gdyup|^/api|^/_next|^/favicon\\.ico|\\.(jpg|jpeg|png|gif|svg|ico|css|js)$',
-            },
-          ],
+            }
+          ]
         },
       ];
     }
