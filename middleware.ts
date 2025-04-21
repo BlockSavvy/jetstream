@@ -74,7 +74,7 @@ const hasAuthCookies = (req: NextRequest) => {
  */
 const isPublicRoute = (path: string): boolean => {
   // Check for static files
-  if (path.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js)$/)) {
+  if (path.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js)$/) || path === '/manifest.json') {
     return true;
   }
   
