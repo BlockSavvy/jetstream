@@ -13,14 +13,15 @@ import {
   LogOut,
   ChevronLeft,
   LogIn,
+  UserPlus,
   User,
   Plane
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/lib/auth-provider';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase';
 import Image from 'next/image';
+import { toast } from 'sonner';
 
 export default function GdyupHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -28,67 +29,26 @@ export default function GdyupHeader() {
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const [isClient, setIsClient] = useState(false);
-  const [hasLocalAuth, setHasLocalAuth] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    
-    // Check for auth in localStorage as a fallback
-    const checkLocalAuth = () => {
-      try {
-        const tokenData = localStorage.getItem('sb-vjhrmizwqhmafkxbmfwa-auth-token');
-        const userId = localStorage.getItem('jetstream_user_id');
-        
-        // If we have either token data or user_id stored, consider this as potential auth
-        setHasLocalAuth(!!(tokenData || userId));
-        
-        // If we have token but no user in Auth provider, try to restore session
-        if ((tokenData || userId) && !user && !loading) {
-          console.log('Header: Found auth data in localStorage but no user in context - refreshing auth state');
-          
-          // This will trigger the auth provider to try restoring the session
-          const refreshAuth = async () => {
-            try {
-              const supabase = createClient();
-              await supabase.auth.refreshSession();
-            } catch (e) {
-              console.warn('Header: Error refreshing session:', e);
-            }
-          };
-          
-          refreshAuth();
-        }
-      } catch (e) {
-        console.warn('Header: Error checking localStorage:', e);
-        setHasLocalAuth(false);
-      }
-    };
-    
-    checkLocalAuth();
-    
-    // Re-check authentication every 5 seconds in case it changes
-    // This helps when redirecting from auth page back to GDY UP
-    const intervalId = setInterval(checkLocalAuth, 5000);
-    
-    return () => clearInterval(intervalId);
-  }, [user, loading]);
+  }, []);
   
-  // Determine if user is authenticated - either through Auth provider or localStorage
-  const isAuthenticated = !!user || (!loading && isClient && hasLocalAuth);
+  // Determine if user is authenticated
+  const isAuthenticated = !!user && !loading;
 
   const isActive = (path: string) => {
-    return pathname === path;
+    if (!pathname) return false;
+    if (path === '/gdyup' && pathname === '/gdyup') return true;
+    if (path !== '/gdyup' && pathname.startsWith(path)) return true;
+    return false;
   };
 
   // Define menu items based on authentication status
   const getMenuItems = () => {
     // Items available to all users
     const publicItems = [
-      {
-        name: 'Home',
-        path: '/gdyup',
-        icon: <Home className="h-5 w-5" />
-      },
       {
         name: 'Listings',
         path: '/gdyup/listings',
@@ -102,11 +62,6 @@ export default function GdyupHeader() {
         name: 'Offer a Share',
         path: '/gdyup/offer',
         icon: <PlaneTakeoff className="h-5 w-5" />
-      },
-      {
-        name: 'Dashboard',
-        path: '/gdyup/dashboard',
-        icon: <BarChart4 className="h-5 w-5" />
       },
       {
         name: 'My Jets',
@@ -132,53 +87,42 @@ export default function GdyupHeader() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      // Use direct navigation to avoid router issues
-      window.location.href = '/gdyup';
+      toast.success('Signed out successfully');
+      router.push('/gdyup');
     } catch (error) {
       console.error('Sign out error:', error);
+      toast.error('Sign out failed');
     }
   };
   
   const handleSignIn = () => {
-    // Redirect back to GDY UP after login with current path
-    const currentPath = pathname || '/gdyup';
-    const timestamp = Date.now(); // Add timestamp to avoid caching issues
-    // Use direct navigation for more reliable auth cookies
-    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`;
+    router.push('/gdyup/auth/login');
+  };
+  
+  const handleSignUp = () => {
+    router.push('/gdyup/auth/signup');
   };
   
   // Handle navigation to protected routes
   const handleProtectedNavigation = (path: string) => {
-    // Special handling for offer pages - always allow during development
-    if (process.env.NODE_ENV === 'development' || 
-        path.startsWith('/gdyup/offer/new') || 
-        path.startsWith('/gdyup/offer/edit')) {
-      console.log('Direct navigation to', path);
-      window.location.href = path;
-      return;
-    }
-
-    // In production, check authentication for other protected routes
     if (!isAuthenticated) {
-      // If not authenticated, redirect to login with return URL
-      const timestamp = Date.now();
-      window.location.href = `/auth/login?returnUrl=${encodeURIComponent(path)}&t=${timestamp}`;
+      toast.info('Please sign in to continue');
+      router.push(`/gdyup/auth/login?returnUrl=${encodeURIComponent(path)}`);
       return;
     }
     
-    // If authenticated, use direct navigation for better cookie handling
-    window.location.href = path;
+    router.push(path);
   };
 
-  // GDY UP brand colors - updated for better contrast
-  const primaryColor = "#DAFF0D"; // Enhanced brightness for better contrast against dark bg
-  const secondaryColor = "#FF4B47"; // Keep the secondary color
+  // GDY UP brand colors
+  const primaryColor = "#DAFF0D"; 
+  const secondaryColor = "#FF4B47";
 
   return (
     <header className="sticky top-0 z-50 bg-black border-b border-gray-800" style={{ "--primary-color": primaryColor, "--secondary-color": secondaryColor } as React.CSSProperties}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo - Updated for better visibility */}
+          {/* Logo */}
           <div className="flex items-center gap-2">
             <Link href="/gdyup" className="flex items-center">
               <Image 
@@ -209,7 +153,7 @@ export default function GdyupHeader() {
                       "flex items-center space-x-1 text-sm font-medium transition-colors",
                       isActive(item.path)
                         ? { color: primaryColor }
-                        : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
+                        : "text-gray-100 hover:text-white"
                     )}
                     style={isActive(item.path) ? { color: primaryColor } : {}}
                   >
@@ -228,7 +172,7 @@ export default function GdyupHeader() {
                     "flex items-center space-x-1 text-sm font-medium transition-colors",
                     isActive(item.path)
                       ? { color: primaryColor }
-                      : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
+                      : "text-gray-100 hover:text-white"
                   )}
                   style={isActive(item.path) ? { color: primaryColor } : {}}
                 >
@@ -238,89 +182,124 @@ export default function GdyupHeader() {
               );
             })}
             
-            {/* Divider */}
+            {/* Authentication Buttons for Desktop */}
             <div className="h-5 w-px bg-gray-700 mx-1" />
             
-            {/* Profile link */}
-            <button 
-              onClick={() => handleProtectedNavigation('/gdyup/profile')}
-              className={cn(
-                "flex items-center space-x-1 text-sm font-medium transition-colors",
-                isActive('/gdyup/profile')
-                  ? { color: primaryColor }
-                  : "text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
-              )}
-              style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
-            >
-              <User className="h-5 w-5" />
-              <span>Profile</span>
-            </button>
-            
-            {/* More dropdown */}
-            <div className="relative group">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-sm text-gray-100 hover:text-white" // Improved from gray-300 to gray-100
-              >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                More
-              </Button>
-              <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="py-1">
-                  <Link 
-                    href="/" 
-                    className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
-                  >
-                    <ChevronLeft className="h-5 w-5 mr-2" />
-                    <span>Back to JetStream</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            
-            {/* Conditional auth buttons */}
             {isAuthenticated ? (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleSignOut}
-                className="text-red-300 hover:text-red-200 hover:bg-red-900/30" // Improved from red-400 to red-300 for better contrast
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
+              <div className="relative">
+                <button 
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className={cn(
+                    "flex items-center space-x-1 text-sm font-medium transition-colors",
+                    isActive('/gdyup/profile')
+                      ? { color: primaryColor }
+                      : "text-gray-100 hover:text-white"
+                  )}
+                  style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
+                >
+                  <User className="h-5 w-5" />
+                  <span>{user?.email?.split('@')[0] || 'Profile'}</span>
+                </button>
+                
+                {profileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                    <div className="py-1">
+                      <Link 
+                        href="/gdyup/profile" 
+                        className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
+                        onClick={() => setProfileMenuOpen(false)}
+                      >
+                        <User className="h-5 w-5 mr-2" />
+                        <span>Edit Profile</span>
+                      </Link>
+                      
+                      <Link 
+                        href="/gdyup/dashboard" 
+                        className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
+                        onClick={() => setProfileMenuOpen(false)}
+                      >
+                        <BarChart4 className="h-5 w-5 mr-2" />
+                        <span>Dashboard</span>
+                      </Link>
+                      
+                      <Link 
+                        href="/" 
+                        className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
+                        onClick={() => setProfileMenuOpen(false)}
+                      >
+                        <ChevronLeft className="h-5 w-5 mr-2" />
+                        <span>Back to JetStream</span>
+                      </Link>
+                      
+                      <button 
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          handleSignOut();
+                        }}
+                        className="flex w-full px-4 py-2 text-sm text-red-300 hover:bg-red-900/30 hover:text-red-200"
+                      >
+                        <LogOut className="h-5 w-5 mr-2" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleSignIn}
-                style={{ color: primaryColor }}
-                className="hover:bg-gray-800 hover:brightness-110" // Added brightness increase on hover
-              >
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleSignIn}
+                  className="text-white hover:text-white hover:bg-gray-800"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+                
+                <Button 
+                  onClick={handleSignUp}
+                  size="sm"
+                  style={{ backgroundColor: primaryColor, color: 'black' }}
+                  className="hover:brightness-110"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Sign Up
+                </Button>
+              </div>
             )}
           </nav>
 
           {/* Mobile Menu Button */}
-          <button
-            type="button"
-            className="md:hidden rounded-md p-2 text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-400 to gray-100
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
+          <div className="flex items-center space-x-4 md:hidden">
+            {!isAuthenticated && (
+              <Button
+                onClick={handleSignUp}
+                size="sm"
+                style={{ backgroundColor: primaryColor, color: 'black' }}
+                className="hover:brightness-110"
+              >
+                Sign Up
+              </Button>
             )}
-          </button>
+            
+            <button
+              type="button"
+              className="rounded-md p-2 text-gray-100 hover:bg-gray-800 hover:text-white"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="mt-4 space-y-4 md:hidden">
+          <nav className="mt-4 space-y-2 md:hidden">
             {menuItems.map((item) => {
               // Determine if this is a protected route
               const isProtectedRoute = ['/gdyup/dashboard', '/gdyup/offer', '/gdyup/jets'].some(route => 
@@ -340,7 +319,7 @@ export default function GdyupHeader() {
                       "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                       isActive(item.path)
                         ? "bg-gray-800 text-white"
-                        : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
+                        : "text-gray-100 hover:bg-gray-800 hover:text-white"
                     )}
                     style={isActive(item.path) ? { color: primaryColor } : {}}
                   >
@@ -359,7 +338,7 @@ export default function GdyupHeader() {
                     "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                     isActive(item.path)
                       ? "bg-gray-800 text-white"
-                      : "text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-300 to gray-100
+                      : "text-gray-100 hover:bg-gray-800 hover:text-white"
                   )}
                   style={isActive(item.path) ? { color: primaryColor } : {}}
                   onClick={() => setMobileMenuOpen(false)}
@@ -370,57 +349,89 @@ export default function GdyupHeader() {
               );
             })}
             
-            {/* Profile link */}
-            <button
-              onClick={() => {
-                handleProtectedNavigation('/gdyup/profile');
-                setMobileMenuOpen(false);
-              }}
-              className={cn(
-                "flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left",
-                isActive('/gdyup/profile')
-                  ? { color: primaryColor }
-                  : "text-gray-100 hover:text-white hover:bg-gray-800"
-              )}
-              style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
-            >
-              <User className="h-5 w-5 mr-2" />
-              <span>Profile</span>
-            </button>
-            
             <div className="h-px bg-gray-700 my-2" />
             
-            {/* Conditional auth buttons for mobile */}
+            {/* Mobile Authentication Options */}
             {isAuthenticated ? (
-              <button
-                onClick={handleSignOut}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-900/30" // Improved from red-400 to red-300
-              >
-                <LogOut className="h-5 w-5" />
-                <span>Sign Out</span>
-              </button>
+              <>
+                <Link
+                  href="/gdyup/profile"
+                  className={cn(
+                    "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                    isActive('/gdyup/profile')
+                      ? "bg-gray-800"
+                      : "text-gray-100 hover:bg-gray-800 hover:text-white"
+                  )}
+                  style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <User className="h-5 w-5" />
+                  <span>Profile</span>
+                </Link>
+                
+                <Link
+                  href="/gdyup/dashboard"
+                  className={cn(
+                    "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                    isActive('/gdyup/dashboard')
+                      ? "bg-gray-800"
+                      : "text-gray-100 hover:bg-gray-800 hover:text-white"
+                  )}
+                  style={isActive('/gdyup/dashboard') ? { color: primaryColor } : {}}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <BarChart4 className="h-5 w-5" />
+                  <span>Dashboard</span>
+                </Link>
+                
+                <Link
+                  href="/"
+                  className="flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                  <span>Back to JetStream</span>
+                </Link>
+                
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-900/30"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span>Sign Out</span>
+                </button>
+              </>
             ) : (
-              <button
-                onClick={handleSignIn}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 hover:brightness-110" // Added brightness increase on hover
-                style={{ color: primaryColor }}
-              >
-                <LogIn className="h-5 w-5" />
-                <span>Sign In</span>
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignIn();
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white"
+                >
+                  <LogIn className="h-5 w-5" />
+                  <span>Sign In</span>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignUp();
+                  }}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-opacity-90"
+                  style={{ backgroundColor: primaryColor, color: 'black' }}
+                >
+                  <UserPlus className="h-5 w-5" />
+                  <span>Sign Up</span>
+                </button>
+              </>
             )}
             
-            {/* Move back to JetStream link to bottom */}
             <div className="h-px bg-gray-700 my-2" />
-            
-            <Link 
-              href="/"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white" // Improved from gray-400 to gray-100
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <ChevronLeft className="h-5 w-5" />
-              <span>Back to JetStream</span>
-            </Link>
           </nav>
         )}
       </div>
