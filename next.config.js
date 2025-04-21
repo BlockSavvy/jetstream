@@ -26,6 +26,62 @@ const nextConfig = {
     domains: ['images.unsplash.com'],
   },
   
+  // Custom headers for PWA support
+  async headers() {
+    // Only add PWA headers for GDYUP deployment
+    if (process.env.NEXT_PUBLIC_APP_MODE === 'gdyup') {
+      return [
+        {
+          source: '/(.*)',
+          headers: [
+            {
+              key: 'X-App-Mode',
+              value: 'gdyup',
+            },
+          ],
+        },
+      ];
+    }
+    return [];
+  },
+
+  // Rewrite rules for GDYUP-specific deployment
+  async rewrites() {
+    // Only apply rewrites for GDYUP deployment
+    if (process.env.NEXT_PUBLIC_APP_MODE === 'gdyup') {
+      return [
+        // Redirect root to /gdyup
+        {
+          source: '/',
+          destination: '/gdyup',
+        },
+        // Preserve API routes for both GDYUP and JetShare
+        {
+          source: '/api/:path*',
+          destination: '/api/:path*',
+        },
+        // Catch-all to redirect non-GDYUP routes to GDYUP
+        {
+          source: '/:path*',
+          destination: '/gdyup/:path*',
+          has: [
+            {
+              type: 'host',
+              value: 'gdyup\\.xyz|gdyup\\.vercel\\.app',
+            },
+          ],
+          missing: [
+            {
+              type: 'path',
+              value: '^/gdyup|^/api|^/_next|^/favicon\\.ico|\\.(jpg|jpeg|png|gif|svg|ico|css|js)$',
+            },
+          ],
+        },
+      ];
+    }
+    return [];
+  },
+  
   // Handle Node.js modules in browser
   webpack: (config, { isServer }) => {
     // If client-side (browser), provide empty modules for Node.js specific imports

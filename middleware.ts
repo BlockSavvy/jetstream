@@ -107,7 +107,59 @@ const getRedirectCount = (req: NextRequest): number => {
   return count ? parseInt(count, 10) : 0;
 };
 
+/**
+ * Check if this is the GDYUP-specific deployment
+ */
+const isGdyupDeployment = (req: NextRequest): boolean => {
+  // Check if we're on the GDYUP domain (e.g., gdyup.xyz)
+  const host = req.headers.get('host') || '';
+  if (host.includes('gdyup.xyz') || host.includes('gdyup.vercel.app')) {
+    return true;
+  }
+  
+  // Check for the environment variable that marks this as the GDYUP deployment
+  return process.env.NEXT_PUBLIC_APP_MODE === 'gdyup';
+};
+
+/**
+ * Check if the path is a GDYUP route
+ */
+const isGdyupRoute = (path: string): boolean => {
+  return path.startsWith('/gdyup') || 
+         path.startsWith('/api/gdyup') || 
+         path.startsWith('/api/jetshare') || // Shared API
+         path === '/' ||
+         !!path.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js)$/);
+};
+
 export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  
+  // GDYUP-only deployment logic
+  if (isGdyupDeployment(req)) {
+    // If this is not a GDYUP route, redirect to GDYUP home
+    if (!isGdyupRoute(pathname)) {
+      console.log(`Redirecting non-GDYUP route ${pathname} to GDYUP home`);
+      return NextResponse.redirect(new URL('/gdyup', req.url));
+    }
+    
+    // For root path, redirect to GDYUP home
+    if (pathname === '/') {
+      return NextResponse.redirect(new URL('/gdyup', req.url));
+    }
+    
+    // Add GDYUP app mode header to all requests
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-app-mode', 'gdyup');
+    
+    // Continue with modified headers
+    const response = NextResponse.next({
+      request: { headers: requestHeaders }
+    });
+    
+    return response;
+  }
+
   // DEV MODE: Bypass all auth checks when in dev mode
   if (process.env.NEXT_PUBLIC_AUTH_DEV_MODE === 'true') {
     console.log(`DEV MODE: Bypassing auth checks for ${req.nextUrl.pathname}`);
@@ -126,8 +178,6 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const { pathname } = req.nextUrl;
-  
   // Skip for public routes
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
@@ -184,6 +234,17 @@ export function middleware(req: NextRequest) {
     if (hasAuthRedirectParams(req.nextUrl) && redirectCount > 0) {
       console.log(`Skipping auth redirect for request with params: ${req.nextUrl.search}`);
       return NextResponse.next();
+    }
+    
+    // For GDYUP routes, use GDYUP login
+    if (pathname.startsWith('/gdyup')) {
+      const loginUrl = new URL('/gdyup/auth/login', req.url);
+      loginUrl.searchParams.set('returnUrl', pathname + req.nextUrl.search);
+      loginUrl.searchParams.set('t', Date.now().toString());
+      loginUrl.searchParams.set('auth_redirect', (redirectCount + 1).toString());
+      
+      console.log(`Redirecting unauthenticated GDYUP request from ${pathname} to GDYUP login`);
+      return NextResponse.redirect(loginUrl);
     }
     
     // Build the login URL with return path
