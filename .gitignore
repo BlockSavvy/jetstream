@@ -53,3 +53,5 @@ logs/
 # IDE
 .idea/
 .vscode/
+.env.gdyup
+storybook-static/
