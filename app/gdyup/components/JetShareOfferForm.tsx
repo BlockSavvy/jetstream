@@ -2136,6 +2136,8 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       arrival={form.watch('arrival_location')}
                       className="w-full h-full"
                       compact={true}
+                      hideBackground={true}
+                      animationDuration={6}
                     />
                   )}
                 </div>

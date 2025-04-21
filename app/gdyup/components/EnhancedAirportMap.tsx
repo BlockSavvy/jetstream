@@ -21,13 +21,17 @@ interface EnhancedAirportMapProps {
   arrival?: string;
   className?: string;
   compact?: boolean;
+  hideBackground?: boolean;
+  animationDuration?: number;
 }
 
 export default function EnhancedAirportMap({
   departure,
   arrival,
   className = '',
-  compact = false
+  compact = false,
+  hideBackground = false,
+  animationDuration = 3
 }: EnhancedAirportMapProps) {
   const [departureCode, setDepartureCode] = useState<string | null>(null);
   const [arrivalCode, setArrivalCode] = useState<string | null>(null);
@@ -121,7 +125,6 @@ export default function EnhancedAirportMap({
   // Helper to get image path for an airport
   const getAirportImagePath = (airport: Airport | null, code: string | null) => {
     if (!airport || !code) {
-      console.log(`No airport or code provided for image path`);
       return '/images/airports/placeholder_airport_map.png';
     }
     
@@ -130,19 +133,20 @@ export default function EnhancedAirportMap({
     
     // Check if this airport code has an image file
     if (availableAirportImages.has(code.toUpperCase())) {
-      const imagePath = `/images/airports/${code.toLowerCase()}.png`;
-      console.log(`Using airport image for ${code}: ${imagePath}`);
-      return imagePath;
+      return `/images/airports/${code.toLowerCase()}.png`;
     }
     
-    // In other cases, always use the placeholder to prevent 404 errors
+    // In other cases, use the placeholder
     return '/images/airports/placeholder_airport_map.png';
   };
 
   // Handle image loading errors
   const handleImageError = (code: string) => {
-    console.error(`Failed to load airport image for ${code} - setting error state`);
-    setImageError(prev => ({ ...prev, [code]: true }));
+    // Only log once per code
+    if (!imageError[code]) {
+      console.log(`Image not found for ${code}, falling back to placeholder`);
+      setImageError(prev => ({ ...prev, [code]: true }));
+    }
   };
 
   // For debugging - log all state values
@@ -185,32 +189,10 @@ export default function EnhancedAirportMap({
     console.log('FINAL IMAGE PATHS:', {
       departureCode,
       arrivalCode,
-      departureImage,
-      arrivalImage,
+      departureImage: departureImage || 'Using fallback color',
+      arrivalImage: arrivalImage || 'Using fallback color',
       showBothAirports
     });
-
-    // Verify if these files actually exist by testing image loading
-    function testImageExists(src: string, label: string) {
-      const img = document.createElement('img');
-      img.onload = () => {
-        console.log(`✅ Image EXISTS for ${label}: ${src}`);
-        // Keep the loading state tracking but remove visual indicators
-        if (label === 'KFLL' || label === 'KJFK') {
-          setSuccessfullyLoaded(prev => ({...prev, [label]: true}));
-        }
-      };
-      img.onerror = () => console.error(`❌ Image MISSING for ${label}: ${src}`);
-      img.src = src;
-    }
-
-    if (departureCode) {
-      testImageExists(departureImage, departureCode);
-    }
-    
-    if (arrivalCode) {
-      testImageExists(arrivalImage, arrivalCode);
-    }
   }, [departureCode, arrivalCode, departureImage, arrivalImage, showBothAirports]);
 
   return (
@@ -243,20 +225,25 @@ export default function EnhancedAirportMap({
             {departureCode && (
               <>
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30" style={{ minHeight: '120px', height: '100%' }}>
-                  <div className="relative w-full h-full shadow-inner" style={{ minHeight: '120px' }}>
-                    <img 
-                      src={imageError[departureCode] 
-                        ? '/images/airports/placeholder_airport_map.png' 
-                        : departureImage
-                      }
-                      alt={`${departureAirport?.city || departureCode} Airport`}
-                      className="absolute inset-0 object-cover w-full h-full"
-                      style={{ objectPosition: '50% 50%' }}
-                      onError={() => handleImageError(departureCode)}
-                      width={500}
-                      height={300}
-                      loading="eager"
-                    />
+                  <div className="relative w-full h-full shadow-inner" style={{ 
+                    minHeight: '120px',
+                    backgroundColor: hideBackground ? 'transparent' : 'rgba(17, 24, 39, 0.7)'
+                  }}>
+                    {!hideBackground && (
+                      <img 
+                        src={imageError[departureCode] 
+                          ? '/images/airports/placeholder_airport_map.png' 
+                          : departureImage
+                        }
+                        alt={`${departureAirport?.city || departureCode} Airport`}
+                        className="absolute inset-0 object-cover w-full h-full"
+                        style={{ objectPosition: '50% 50%' }}
+                        onError={() => handleImageError(departureCode)}
+                        width={500}
+                        height={300}
+                        loading="eager"
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
@@ -288,20 +275,25 @@ export default function EnhancedAirportMap({
             {arrivalCode && (
               <>
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30" style={{ minHeight: '120px', height: '100%' }}>
-                  <div className="relative w-full h-full shadow-inner" style={{ minHeight: '120px' }}>
-                    <img 
-                      src={imageError[arrivalCode] 
-                        ? '/images/airports/placeholder_airport_map.png' 
-                        : arrivalImage
-                      }
-                      alt={`${arrivalAirport?.city || arrivalCode} Airport`}
-                      className="absolute inset-0 object-cover w-full h-full"
-                      style={{ objectPosition: '50% 50%' }}
-                      onError={() => handleImageError(arrivalCode)}
-                      width={500}
-                      height={300}
-                      loading="eager"
-                    />
+                  <div className="relative w-full h-full shadow-inner" style={{ 
+                    minHeight: '120px',
+                    backgroundColor: hideBackground ? 'transparent' : 'rgba(17, 24, 39, 0.7)'
+                  }}>
+                    {!hideBackground && (
+                      <img 
+                        src={imageError[arrivalCode] 
+                          ? '/images/airports/placeholder_airport_map.png' 
+                          : arrivalImage
+                        }
+                        alt={`${arrivalAirport?.city || arrivalCode} Airport`}
+                        className="absolute inset-0 object-cover w-full h-full"
+                        style={{ objectPosition: '50% 50%' }}
+                        onError={() => handleImageError(arrivalCode)}
+                        width={500}
+                        height={300}
+                        loading="eager"
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
@@ -316,31 +308,44 @@ export default function EnhancedAirportMap({
 
       {/* When showing just one airport or in compact mode */}
       {!showBothAirports && (
-        <div className="relative w-full h-full overflow-hidden" style={{ minHeight: '120px' }}>
+        <div className="relative w-full h-full overflow-hidden" 
+          style={{ 
+            minHeight: '120px',
+            background: hideBackground ? 'linear-gradient(to right, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 0.7))' : 'transparent' 
+          }}>
           {(hasDeparture || hasArrival) && (
             <>
               <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30" style={{ minHeight: '120px', height: '100%' }}>
-                <div className="relative w-full h-full shadow-inner" style={{ minHeight: '120px' }}>
-                  <img 
-                    src={hasDeparture 
-                      ? (imageError[departureCode!] ? '/images/airports/placeholder_airport_map.png' : departureImage)
-                      : (imageError[arrivalCode!] ? '/images/airports/placeholder_airport_map.png' : arrivalImage)
-                    }
-                    alt={`${
-                      hasDeparture 
-                        ? (departureAirport?.city || departureCode) 
-                        : (arrivalAirport?.city || arrivalCode)
-                    } Airport`}
-                    className="absolute inset-0 object-cover w-full h-full"
-                    style={{ objectPosition: '50% 50%' }}
-                    onError={() => hasDeparture
-                      ? handleImageError(departureCode!)
-                      : handleImageError(arrivalCode!)
-                    }
-                    width={500}
-                    height={300}
-                    loading="eager"
-                  />
+                <div className="relative w-full h-full shadow-inner" style={{ 
+                  minHeight: '120px',
+                  backgroundColor: hideBackground ? 'transparent' : 'rgba(17, 24, 39, 0.8)'
+                }}>
+                  {!hideBackground && (
+                    <>
+                      {hasDeparture && (
+                        <img 
+                          src={hasDeparture 
+                            ? (imageError[departureCode!] ? '/images/airports/placeholder_airport_map.png' : departureImage)
+                            : (imageError[arrivalCode!] ? '/images/airports/placeholder_airport_map.png' : arrivalImage)
+                          }
+                          alt={`${
+                            hasDeparture 
+                              ? (departureAirport?.city || departureCode) 
+                              : (arrivalAirport?.city || arrivalCode)
+                          } Airport`}
+                          className="absolute inset-0 object-cover w-full h-full"
+                          style={{ objectPosition: '50% 50%' }}
+                          onError={() => hasDeparture
+                            ? handleImageError(departureCode!)
+                            : handleImageError(arrivalCode!)
+                          }
+                          width={500}
+                          height={300}
+                          loading="eager"
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
@@ -350,19 +355,23 @@ export default function EnhancedAirportMap({
                 <div className="absolute inset-0 pointer-events-none">
                   {/* Route line */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-3/4 h-1 bg-gradient-to-r from-blue-500 via-[#DAFF0D] to-amber-500 relative z-10">
+                    <div className="w-3/4 h-1 bg-gradient-to-r from-blue-500 via-[#DAFF0D] to-amber-500 relative z-10"
+                      style={{
+                        height: hideBackground ? '2px' : '1px',
+                        boxShadow: hideBackground ? '0 0 8px rgba(218, 255, 13, 0.6)' : 'none'
+                      }}>
                       {/* Animated plane along the route */}
                       <motion.div 
                         className="absolute -top-2.5 z-20"
                         initial={{ left: '0%' }}
                         animate={{ left: '100%' }}
                         transition={{ 
-                          duration: 3,
+                          duration: animationDuration,
                           repeat: Infinity,
                           ease: 'linear'
                         }}
                       >
-                        <Plane className="h-5 w-5 text-[#DAFF0D] transform rotate-45 drop-shadow-glow" />
+                        <Plane className={`${hideBackground ? 'h-6 w-6' : 'h-5 w-5'} text-[#DAFF0D] transform rotate-45 drop-shadow-glow`} />
                       </motion.div>
                       
                       {/* Origin marker */}

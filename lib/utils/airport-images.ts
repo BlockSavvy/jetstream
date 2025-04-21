@@ -12,90 +12,77 @@ export const airportImageMap: Record<string, string[]> = {
   'KFLL': ['/images/airports/kfll.png', '/images/airports/kfll.png'],
   
   // Other US airports
-  'KLAX': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KPBI': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KMIA': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KLAS': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KSFO': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KTEB': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KVAN': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KHPN': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
-  'KSDL': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'],
+  'KLAX': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KPBI': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KMIA': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KLAS': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KSFO': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KTEB': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KVAN': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KHPN': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
+  'KSDL': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP],
   
   // International airports
-  'EGLL': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // London Heathrow
-  'LFPB': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Paris Le Bourget
-  'EGGW': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // London Luton
-  'EDDM': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Munich
-  'EDDB': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Berlin Brandenburg
-  'RJTT': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Tokyo Haneda
-  'VHHH': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Hong Kong
-  'YSSY': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Sydney
-  'OMDB': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // Dubai
-  'VIDP': ['/images/airports/placeholder_airport_map.png', '/images/airports/placeholder_airport_map.png'], // New Delhi
+  'EGLL': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // London Heathrow
+  'LFPB': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Paris Le Bourget
+  'EGGW': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // London Luton
+  'EDDM': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Munich
+  'EDDB': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Berlin Brandenburg
+  'RJTT': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Tokyo Haneda
+  'VHHH': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Hong Kong
+  'YSSY': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Sydney
+  'OMDB': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // Dubai
+  'VIDP': [PLACEHOLDER_AIRPORT_MAP, PLACEHOLDER_AIRPORT_MAP], // New Delhi
   
   // Default fallback
-  'default': ['/images/airports/placeholder_airport_map.png']
+  'default': [PLACEHOLDER_AIRPORT_MAP]
 };
 
 /**
- * Get image paths for a specific airport based on ICAO code
- * @param airportCode The airport ICAO code (e.g., 'KJFK')
- * @returns Array of image paths
+ * Get array of image paths for the given airport code
  */
 export function getAirportImagePaths(airportCode: string): string[] {
-  // If the exact code match exists, return it
   if (airportImageMap[airportCode]) {
     return airportImageMap[airportCode];
   }
   
-  // Otherwise return the default fallback
+  // Fallback
   return airportImageMap['default'];
 }
 
 /**
- * Get the primary image for an airport from its data
+ * Get an appropriate airport image path based on the airport details
+ * 
  * @param airport The airport object with image_url property
- * @param fallbackUrl A fallback URL to use if no matching image is found
+ * @param fallbackUrl A URL to use if no airport image is found
  * @returns The airport image path or fallback URL
  */
 export function getAirportImage(
   airport: { code: string; image_url?: string | null },
   fallbackUrl: string = PLACEHOLDER_AIRPORT_MAP
 ): string {
+  // Return fallback if no airport
   if (!airport || !airport.code) {
     return fallbackUrl;
   }
   
-  // First, check for a code-specific image file
-  const code = airport.code.toLowerCase();
-  const codeSpecificPath = `/images/airports/${code}.png`;
-  
-  // Try to see if this file exists by checking in the airportImageMap
-  if (airportImageMap[airport.code.toUpperCase()]) {
-    return airportImageMap[airport.code.toUpperCase()][0];
-  }
-  
-  // Next, if the airport object has an image_url property, use it
-  if (airport.image_url) {
-    return airport.image_url;
-  }
-  
-  // For supported airport codes, try the code-specific path directly
-  // This allows direct use of airport code-named files without updating the map
   try {
-    // Check if we have a custom image for this airport
-    // Since we can't check file existence on client, we'll return the path
-    // and let the Image component handle fallback if needed
-    if (['kjfk', 'kfll', 'klax', 'kord', 'ksfo'].includes(code)) {
-      return codeSpecificPath;
+    // Try to see if this file exists by checking in the airportImageMap
+    if (airportImageMap[airport.code.toUpperCase()]) {
+      return airportImageMap[airport.code.toUpperCase()][0];
     }
+    
+    // Next, if the airport object has an image_url property, use it
+    if (airport.image_url) {
+      return airport.image_url;
+    }
+    
+    // Use the fallback if provided
+    return fallbackUrl;
   } catch (e) {
     console.warn(`Error checking for code-specific airport image: ${e}`);
+    return fallbackUrl;
   }
-  
-  // Finally, return the default fallback
-  return fallbackUrl;
 }
 
 /**
@@ -122,23 +109,20 @@ export function extractAirportDetails(formattedString: string): { city: string; 
 
 /**
  * Get an airport map image for a route between two airports
- * This will first try to get a specific route map if available,
+ * 
+ * First tries to find a specific route map template for this pair of airports,
  * then fallback to the departure airport's map
- * @param departureAirport The departure airport object
- * @param arrivalAirport The arrival airport object 
- * @returns The route map image path or fallback URL
  */
 export function getRouteMapImage(
   departureAirport: { code: string; image_url?: string | null; route_map_template?: string | null } | null,
   arrivalAirport: { code: string; image_url?: string | null } | null
 ): string {
-  // If we don't have both airports, return the placeholder
+  // If no airports, return the placeholder
   if (!departureAirport || !arrivalAirport) {
     return PLACEHOLDER_AIRPORT_MAP;
   }
   
   // If the departure airport has a route map template, use it
-  // This would be used if we have a special template for routes from this airport
   if (departureAirport.route_map_template) {
     return departureAirport.route_map_template;
   }
@@ -148,17 +132,9 @@ export function getRouteMapImage(
 }
 
 /**
- * Get a route map for two airport codes
- * This is a convenience function that takes codes instead of airport objects
- * @param departureCode ICAO code of departure airport
- * @param arrivalCode ICAO code of arrival airport
- * @returns Placeholder image path until actual airport data is fetched
+ * Get a route map image path for the given departure and arrival codes
  */
-export function getRouteMapForCodes(
-  departureCode: string | null,
-  arrivalCode: string | null
-): string {
-  // When just using codes, we can only return the placeholder
-  // The component using this should fetch the actual airport data
+export function getRouteMapForCodes(departureCode: string, arrivalCode: string): string {
+  // This is just a placeholder function that returns the placeholder map
   return PLACEHOLDER_AIRPORT_MAP;
 } 

@@ -10,8 +10,8 @@ interface Airport {
   is_private?: boolean;
   lat?: number;
   lng?: number;
-  image_url?: string;
-  route_map_template?: string;
+  image_url?: string | null;
+  route_map_template?: string | null;
 }
 
 // Initialize Supabase client with service role key to bypass authentication issues
@@ -46,7 +46,7 @@ const fallbackAirports: Airport[] = [
   { code: "KMIA", name: "Miami International Airport", city: "Miami", country: "USA", lat: 25.7932, lng: -80.2906, image_url: PLACEHOLDER_AIRPORT_MAP },
   { code: "EDDM", name: "Munich Airport", city: "Munich", country: "Germany", lat: 48.3538, lng: 11.7861, image_url: PLACEHOLDER_AIRPORT_MAP },
   { code: "VIDP", name: "Indira Gandhi International Airport", city: "New Delhi", country: "India", lat: 28.5562, lng: 77.1000, image_url: PLACEHOLDER_AIRPORT_MAP },
-  { code: "KJFK", name: "John F. Kennedy International Airport", city: "New York", country: "USA", lat: 40.6413, lng: -73.7781, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KJFK", name: "John F. Kennedy International Airport", city: "New York", country: "USA", lat: 40.6413, lng: -73.7781, image_url: "/images/airports/kjfk.png" },
   { code: "KPBI", name: "Palm Beach International Airport", city: "Palm Beach", country: "USA", lat: 26.6832, lng: -80.0956, image_url: PLACEHOLDER_AIRPORT_MAP },
   { code: "LFPB", name: "Paris–Le Bourget Airport", city: "Paris", country: "France", lat: 48.9698, lng: 2.4383, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
   { code: "KSFO", name: "San Francisco International Airport", city: "San Francisco", country: "USA", lat: 37.6213, lng: -122.3790, image_url: PLACEHOLDER_AIRPORT_MAP },
@@ -54,7 +54,8 @@ const fallbackAirports: Airport[] = [
   { code: "YSSY", name: "Sydney Kingsford Smith Airport", city: "Sydney", country: "Australia", lat: -33.9399, lng: 151.1753, image_url: PLACEHOLDER_AIRPORT_MAP },
   { code: "KTEB", name: "Teterboro Airport", city: "Teterboro", country: "USA", lat: 40.8499, lng: -74.0610, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
   { code: "RJTT", name: "Tokyo Haneda Airport", city: "Tokyo", country: "Japan", lat: 35.5494, lng: 139.7798, image_url: PLACEHOLDER_AIRPORT_MAP },
-  { code: "KHPN", name: "Westchester County Airport", city: "White Plains", country: "USA", lat: 41.0670, lng: -73.7076, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP }
+  { code: "KHPN", name: "Westchester County Airport", city: "White Plains", country: "USA", lat: 41.0670, lng: -73.7076, is_private: true, image_url: PLACEHOLDER_AIRPORT_MAP },
+  { code: "KFLL", name: "Fort Lauderdale-Hollywood International Airport", city: "Fort Lauderdale", country: "USA", lat: 26.0742, lng: -80.1506, image_url: "/images/airports/kfll.png" }
 ];
 
 // Telemetry capture for monitoring
@@ -209,7 +210,7 @@ export async function GET(request: NextRequest) {
         city: dbAirport.city,
         country: dbAirport.country,
         is_private: dbAirport.is_private || false,
-        image_url: PLACEHOLDER_AIRPORT_MAP, // Default image
+        image_url: PLACEHOLDER_AIRPORT_MAP, // Now using the placeholder instead of null
       };
       
       // Find if we have additional data for this airport code in our fallback data

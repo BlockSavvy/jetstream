@@ -2,7 +2,8 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import GdyupHeader from './components/GdyupHeader';
-import { useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/lib/auth-provider';
+import { OnboardingMiddleware } from './components/onboarding/onboarding-middleware';
 import './gdyup.css';
 
 export default function GdyupLayout({ children }: { children: ReactNode }) {
@@ -63,10 +64,12 @@ export default function GdyupLayout({ children }: { children: ReactNode }) {
   return (
     <main className={`min-h-screen bg-background dark gdyup-app ${isMobile ? 'gdyup-mobile' : ''}`} 
           style={{ "--primary-color": "#DAFF0D", "--secondary-color": "#FF4B47" } as React.CSSProperties}>
-      <GdyupHeader />
-      <div className={`gdyup-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
-        {children}
-      </div>
+      <OnboardingMiddleware>
+        <GdyupHeader />
+        <div className={`gdyup-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
+          {children}
+        </div>
+      </OnboardingMiddleware>
     </main>
   );
 } 
