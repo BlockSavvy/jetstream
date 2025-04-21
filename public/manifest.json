@@ -4,8 +4,12 @@
   "description": "Peer-to-peer flight splitting and luxury air travel experiences.",
   "start_url": "/gdyup",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "background_color": "#000000",
   "theme_color": "#CEFF00",
+  "orientation": "portrait",
+  "scope": "/",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/gdyup-icon-512.png",

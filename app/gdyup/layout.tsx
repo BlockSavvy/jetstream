@@ -1,9 +1,7 @@
 import { ReactNode } from 'react';
-import GdyupHeader from './components/GdyupHeader';
-import { OnboardingMiddleware } from './components/onboarding/onboarding-middleware';
+import { ClientLayoutWrapper } from './client-layout-wrapper';
 import './gdyup.css';
 import type { Metadata, Viewport } from 'next';
-import { ClientLayoutWrapper } from './client-layout-wrapper';
 
 // Define PWA metadata for the GDYUP section
 export const metadata: Metadata = {
@@ -12,13 +10,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: [
     { rel: "apple-touch-icon", url: "/icons/gdyup-icon-192.png" },
+    { rel: "apple-touch-icon", sizes: "152x152", url: "/icons/gdyup-icon-192.png" },
+    { rel: "apple-touch-icon", sizes: "180x180", url: "/icons/gdyup-icon-192.png" },
+    { rel: "apple-touch-icon", sizes: "167x167", url: "/icons/gdyup-icon-192.png" },
     { rel: "icon", url: "/icons/gdyup-icon-512.png" },
   ],
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "GDY UP",
-  },
+  }
 };
 
 export const viewport: Viewport = {
