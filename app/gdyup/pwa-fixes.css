@@ -1,0 +1,47 @@
+/* Special CSS fixes for iOS PWA fullscreen mode */
+
+/* Attempt to fix bottom toolbar in standalone mode */
+@media all and (display-mode: standalone) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  body {
+    height: 100vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix for iOS navigation bar */
+  body::after {
+    content: "";
+    display: block;
+    position: fixed;
+    width: 100%;
+    height: env(safe-area-inset-bottom, 0);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background-color: black;
+    touch-action: none;
+    pointer-events: none;
+  }
+  
+  /* Fix for iOS status bar */
+  body::before {
+    content: "";
+    display: block;
+    position: fixed;
+    width: 100%;
+    height: env(safe-area-inset-top, 0);
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background-color: black;
+    touch-action: none;
+  }
+} 

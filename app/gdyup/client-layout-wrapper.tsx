@@ -5,6 +5,7 @@ import GdyupHeader from './components/GdyupHeader';
 import { useAuth } from '@/lib/auth-provider';
 import { OnboardingMiddleware } from './components/onboarding/onboarding-middleware';
 import CustomHead from './head';
+import './pwa-fixes.css';
 
 export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
