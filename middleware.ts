@@ -27,6 +27,11 @@ const PUBLIC_ROUTES = [
   '/jetshare/listings',
   '/gdyup',
   '/gdyup/listings',
+  '/gdyup/auth/signup',
+  '/gdyup/auth/login',
+  '/gdyup/auth/profile-setup',
+  '/api/gdyup/profile',
+  '/api/gdyup/jets',
   
   // Static assets
   '/_next'
