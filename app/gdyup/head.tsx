@@ -11,6 +11,14 @@ export default function CustomHead() {
       document.querySelectorAll('meta[name="apple-touch-fullscreen"]').forEach(el => el.remove());
       document.querySelectorAll('meta[name="apple-mobile-web-app-status-bar-style"]').forEach(el => el.remove());
       document.querySelectorAll('meta[name="mobile-web-app-capable"]').forEach(el => el.remove());
+      document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove());
+      
+      // Add manifest link - adding it dynamically to ensure it's there
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = '/manifest.json';
+      manifestLink.crossOrigin = 'use-credentials'; // Add credentials if needed
+      document.head.insertBefore(manifestLink, document.head.firstChild);
       
       // Create and inject the PWA meta tags in a specific order
       
