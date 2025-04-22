@@ -57,11 +57,11 @@ export function LoginForm() {
         console.log('Login successful')
         toast.success('Signed in successfully!')
         
-        // Check if the user has completed onboarding 
+        // Use window.location.href for direct navigation instead of router.push for better iOS compatibility
         if (needsOnboarding) {
-          router.push('/gdyup/auth/profile-setup')
+          window.location.href = '/gdyup/auth/profile-setup';
         } else {
-          router.push(returnUrl)
+          window.location.href = returnUrl;
         }
       }
     } catch (error) {
@@ -117,6 +117,10 @@ export function LoginForm() {
             <a 
               href="/gdyup/auth/forgot-password" 
               className="text-sm font-medium text-primary hover:text-primary/80"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = '/gdyup/auth/forgot-password';
+              }}
             >
               Forgot Password?
             </a>
@@ -140,7 +144,14 @@ export function LoginForm() {
       </Form>
       <div className="text-center text-sm mt-6">
         <span className="text-gray-400">Don't have an account?</span>{' '}
-        <a href="/gdyup/auth/signup" className="font-medium text-primary hover:text-primary/80">
+        <a 
+          href="/gdyup/auth/signup" 
+          className="font-medium text-primary hover:text-primary/80"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = '/gdyup/auth/signup';
+          }}
+        >
           Sign up
         </a>
       </div>

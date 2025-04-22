@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, MouseEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
@@ -84,39 +84,54 @@ export default function GdyupHeader() {
 
   const menuItems = getMenuItems();
 
-  const handleSignOut = async () => {
+  const handleSignOut = async (e: MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => {
+    e.preventDefault();
     try {
       await signOut();
       toast.success('Signed out successfully');
-      router.push('/gdyup');
+      // Use direct window location for more reliable navigation on iOS
+      window.location.href = '/gdyup';
     } catch (error) {
       console.error('Sign out error:', error);
       toast.error('Sign out failed');
     }
   };
   
-  const handleSignIn = () => {
-    router.push('/gdyup/auth/login');
+  const handleSignIn = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // Use direct window location for more reliable navigation on iOS
+    window.location.href = '/gdyup/auth/login';
   };
   
-  const handleSignUp = () => {
-    router.push('/gdyup/auth/signup');
+  const handleSignUp = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // Use direct window location for more reliable navigation on iOS
+    window.location.href = '/gdyup/auth/signup';
   };
   
   // Handle navigation to protected routes
-  const handleProtectedNavigation = (path: string) => {
+  const handleProtectedNavigation = (path: string, e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     if (!isAuthenticated) {
       toast.info('Please sign in to continue');
-      router.push(`/gdyup/auth/login?returnUrl=${encodeURIComponent(path)}`);
+      // Use direct window location for more reliable navigation on iOS
+      window.location.href = `/gdyup/auth/login?returnUrl=${encodeURIComponent(path)}`;
       return;
     }
     
-    router.push(path);
+    // Use direct window location for more reliable navigation on iOS
+    window.location.href = path;
   };
 
   // GDY UP brand colors
   const primaryColor = "#DAFF0D"; 
   const secondaryColor = "#FF4B47";
+
+  // Handle direct link navigation with fallback
+  const handleLinkClick = (e: MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    window.location.href = href;
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-black border-b border-gray-800" style={{ "--primary-color": primaryColor, "--secondary-color": secondaryColor } as React.CSSProperties}>
@@ -124,7 +139,7 @@ export default function GdyupHeader() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Link href="/gdyup" className="flex items-center">
+            <a href="/gdyup" className="flex items-center" onClick={(e) => handleLinkClick(e, '/gdyup')}>
               <Image 
                 src="/assets/gdyup-logo-v2.svg"
                 alt="GDYUP Logo"
@@ -132,7 +147,7 @@ export default function GdyupHeader() {
                 height={40}
                 className="h-10 w-auto object-contain gdyup-logo"
               />
-            </Link>
+            </a>
           </div>
 
           {/* Desktop Navigation */}
@@ -148,7 +163,7 @@ export default function GdyupHeader() {
                 return (
                   <button
                     key={item.path}
-                    onClick={() => handleProtectedNavigation(item.path)}
+                    onClick={(e) => handleProtectedNavigation(item.path, e)}
                     className={cn(
                       "flex items-center space-x-1 text-sm font-medium transition-colors",
                       isActive(item.path)
@@ -163,9 +178,9 @@ export default function GdyupHeader() {
                 );
               }
               
-              // For non-protected routes, use regular Link
+              // For non-protected routes, use regular anchor tags for better iOS compatibility
               return (
-                <Link
+                <a
                   key={item.path}
                   href={item.path}
                   className={cn(
@@ -175,10 +190,11 @@ export default function GdyupHeader() {
                       : "text-gray-100 hover:text-white"
                   )}
                   style={isActive(item.path) ? { color: primaryColor } : {}}
+                  onClick={(e) => handleLinkClick(e, item.path)}
                 >
                   {item.icon}
                   <span>{item.name}</span>
-                </Link>
+                </a>
               );
             })}
             
@@ -188,7 +204,10 @@ export default function GdyupHeader() {
             {isAuthenticated ? (
               <div className="relative">
                 <button 
-                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
+                    setProfileMenuOpen(!profileMenuOpen);
+                  }}
                   className={cn(
                     "flex items-center space-x-1 text-sm font-medium transition-colors",
                     isActive('/gdyup/profile')
@@ -204,37 +223,50 @@ export default function GdyupHeader() {
                 {profileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
                     <div className="py-1">
-                      <Link 
+                      <a 
                         href="/gdyup/profile" 
                         className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setProfileMenuOpen(false);
+                          window.location.href = '/gdyup/profile';
+                        }}
                       >
                         <User className="h-5 w-5 mr-2" />
                         <span>Edit Profile</span>
-                      </Link>
+                      </a>
                       
-                      <Link 
+                      <a 
                         href="/gdyup/dashboard" 
                         className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setProfileMenuOpen(false);
+                          window.location.href = '/gdyup/dashboard';
+                        }}
                       >
                         <BarChart4 className="h-5 w-5 mr-2" />
                         <span>Dashboard</span>
-                      </Link>
+                      </a>
                       
-                      <Link 
+                      <a 
                         href="/" 
                         className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setProfileMenuOpen(false);
+                          window.location.href = '/';
+                        }}
                       >
                         <ChevronLeft className="h-5 w-5 mr-2" />
                         <span>Back to JetStream</span>
-                      </Link>
+                      </a>
                       
                       <button 
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
                           setProfileMenuOpen(false);
-                          handleSignOut();
+                          handleSignOut(e);
                         }}
                         className="flex w-full px-4 py-2 text-sm text-red-300 hover:bg-red-900/30 hover:text-red-200"
                       >
@@ -286,7 +318,10 @@ export default function GdyupHeader() {
             <button
               type="button"
               className="rounded-md p-2 text-gray-100 hover:bg-gray-800 hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                e.preventDefault();
+                setMobileMenuOpen(!mobileMenuOpen);
+              }}
             >
               {mobileMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -311,9 +346,10 @@ export default function GdyupHeader() {
                 return (
                   <button
                     key={item.path}
-                    onClick={() => {
+                    onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                      e.preventDefault();
                       setMobileMenuOpen(false);
-                      handleProtectedNavigation(item.path);
+                      handleProtectedNavigation(item.path, e);
                     }}
                     className={cn(
                       "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
@@ -329,9 +365,9 @@ export default function GdyupHeader() {
                 );
               }
               
-              // For non-protected routes, use regular Link
+              // For non-protected routes, use regular anchor tags for better iOS compatibility
               return (
-                <Link
+                <a
                   key={item.path}
                   href={item.path}
                   className={cn(
@@ -341,11 +377,15 @@ export default function GdyupHeader() {
                       : "text-gray-100 hover:bg-gray-800 hover:text-white"
                   )}
                   style={isActive(item.path) ? { color: primaryColor } : {}}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    window.location.href = item.path;
+                  }}
                 >
                   {item.icon}
                   <span>{item.name}</span>
-                </Link>
+                </a>
               );
             })}
             
@@ -354,7 +394,7 @@ export default function GdyupHeader() {
             {/* Mobile Authentication Options */}
             {isAuthenticated ? (
               <>
-                <Link
+                <a
                   href="/gdyup/profile"
                   className={cn(
                     "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
@@ -363,13 +403,17 @@ export default function GdyupHeader() {
                       : "text-gray-100 hover:bg-gray-800 hover:text-white"
                   )}
                   style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    window.location.href = '/gdyup/profile';
+                  }}
                 >
                   <User className="h-5 w-5" />
                   <span>Profile</span>
-                </Link>
+                </a>
                 
-                <Link
+                <a
                   href="/gdyup/dashboard"
                   className={cn(
                     "flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
@@ -378,25 +422,34 @@ export default function GdyupHeader() {
                       : "text-gray-100 hover:bg-gray-800 hover:text-white"
                   )}
                   style={isActive('/gdyup/dashboard') ? { color: primaryColor } : {}}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    window.location.href = '/gdyup/dashboard';
+                  }}
                 >
                   <BarChart4 className="h-5 w-5" />
                   <span>Dashboard</span>
-                </Link>
+                </a>
                 
-                <Link
+                <a
                   href="/"
                   className="flex w-full items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    window.location.href = '/';
+                  }}
                 >
                   <ChevronLeft className="h-5 w-5" />
                   <span>Back to JetStream</span>
-                </Link>
+                </a>
                 
                 <button
-                  onClick={() => {
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
                     setMobileMenuOpen(false);
-                    handleSignOut();
+                    handleSignOut(e);
                   }}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-900/30"
                 >
@@ -407,9 +460,10 @@ export default function GdyupHeader() {
             ) : (
               <>
                 <button
-                  onClick={() => {
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
                     setMobileMenuOpen(false);
-                    handleSignIn();
+                    window.location.href = '/gdyup/auth/login';
                   }}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white"
                 >
@@ -418,9 +472,10 @@ export default function GdyupHeader() {
                 </button>
                 
                 <button
-                  onClick={() => {
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                    e.preventDefault();
                     setMobileMenuOpen(false);
-                    handleSignUp();
+                    window.location.href = '/gdyup/auth/signup';
                   }}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium bg-opacity-90"
                   style={{ backgroundColor: primaryColor, color: 'black' }}
