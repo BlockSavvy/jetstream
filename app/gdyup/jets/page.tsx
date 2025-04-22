@@ -338,6 +338,11 @@ export default function GdyupJets() {
     }
   };
 
+  // Function for handling navigation
+  const navigateTo = (path: string) => {
+    window.location.href = path;
+  };
+
   // UI rendering based on authentication and data states
   if (loading) {
     return (
@@ -389,7 +394,7 @@ export default function GdyupJets() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">My Jets</h2>
           <Button
-            onClick={() => router.push('/gdyup/jets/models')}
+            onClick={() => navigateTo('/gdyup/jets/models')}
             className="bg-[#DAFF0D] hover:brightness-105 text-black"
           >
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -422,7 +427,7 @@ export default function GdyupJets() {
                   You haven't added any jets to your profile. Add your first jet to start managing your aircraft in GDY UP.
                 </p>
                 <Button
-                  onClick={() => router.push('/gdyup/jets/models')}
+                  onClick={() => navigateTo('/gdyup/jets/models')}
                   className="bg-[#DAFF0D] hover:brightness-105 text-black"
                 >
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -492,14 +497,14 @@ export default function GdyupJets() {
                   <div className="flex space-x-2 w-full">
                     <Button
                       variant="outline"
-                      onClick={() => router.push(`/gdyup/jets/${jet.id}`)}
+                      onClick={() => navigateTo(`/gdyup/jets/${jet.id}`)}
                       className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
                     >
                       View Details
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => router.push(`/gdyup/jets/${jet.id}/edit`)}
+                      onClick={() => navigateTo(`/gdyup/jets/${jet.id}/edit`)}
                       className="border-gray-700 hover:bg-gray-800"
                     >
                       <Settings className="h-4 w-4" style={{ color: primaryColor }} />
