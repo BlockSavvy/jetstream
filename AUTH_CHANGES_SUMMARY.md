@@ -57,12 +57,11 @@
 
 Added environment variables for development mode:
 
-```
 # Development Mode Authentication
+
 NEXT_PUBLIC_AUTH_DEV_MODE=false
 NEXT_PUBLIC_AUTH_DEV_USER_ID=26209e07-7600-4df6-ab1e-4b338f760aff
-NEXT_PUBLIC_AUTH_DEV_USER_EMAIL=m@aiya.sh
-```
+NEXT_PUBLIC_AUTH_DEV_USER_EMAIL=<m@aiya.sh>
 
 ## Outstanding Tasks
 
