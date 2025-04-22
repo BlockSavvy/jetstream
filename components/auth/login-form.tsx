@@ -33,8 +33,8 @@ export function LoginForm() {
   const { signIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const returnUrl = searchParams.get('returnUrl')
-  const errorParam = searchParams.get('error')
+  const returnUrl = searchParams?.get('returnUrl')
+  const errorParam = searchParams?.get('error')
 
   // Check for error parameter in URL and display it
   useEffect(() => {

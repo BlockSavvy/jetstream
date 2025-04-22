@@ -14,7 +14,7 @@ export default function BoardingPassPage({ params }: ClientIdParams) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = params.id as string;
-  const isTestMode = searchParams.get('test') === 'true';
+  const isTestMode = searchParams?.get('test') === 'true';
   
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
