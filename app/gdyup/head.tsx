@@ -46,14 +46,14 @@ export default function CustomHead() {
       mobileCapable.content = 'yes';
       document.head.insertBefore(mobileCapable, document.head.firstChild);
       
-      // 5. viewport with minimal-ui
+      // 5. viewport - removed minimal-ui as it can interfere with navigation
       const existingViewport = document.querySelector('meta[name="viewport"]');
       if (existingViewport) {
-        (existingViewport as HTMLMetaElement).content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui';
+        (existingViewport as HTMLMetaElement).content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover';
       } else {
         const viewport = document.createElement('meta');
         viewport.name = 'viewport';
-        viewport.content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover, minimal-ui';
+        viewport.content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover';
         document.head.insertBefore(viewport, document.head.firstChild);
       }
       
@@ -73,14 +73,13 @@ export default function CustomHead() {
         document.head.appendChild(link);
       });
       
-      // Add an event listener to hide the Safari UI on first load
+      // Add an event listener to hide the Safari UI on first load, but without fixed positioning
       window.addEventListener('load', () => {
         // Check if running in standalone mode (home screen)
         if (navigator && 'standalone' in navigator && (navigator as any).standalone) {
+          // Removed fixed positioning that could interfere with navigation
           document.documentElement.style.height = '100vh';
           document.body.style.height = '100vh';
-          document.body.style.position = 'fixed';
-          document.body.style.overflow = 'hidden';
           document.body.style.width = '100%';
         }
       });
