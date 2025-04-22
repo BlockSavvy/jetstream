@@ -32,6 +32,8 @@ const PUBLIC_ROUTES = [
   '/gdyup/auth/profile-setup',
   '/api/gdyup/profile',
   '/api/gdyup/jets',
+  '/api/gdyup/activity',
+  '/api/gdyup/transactions',
   
   // Static assets
   '/_next'
