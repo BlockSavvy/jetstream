@@ -22,11 +22,10 @@ export const metadata: Metadata = {
   }
 };
 
+// Simplified viewport settings to ensure proper navigation
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
   viewportFit: "cover",
 };
 

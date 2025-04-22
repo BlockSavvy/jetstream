@@ -17,7 +17,6 @@ export default function CustomHead() {
       const manifestLink = document.createElement('link');
       manifestLink.rel = 'manifest';
       manifestLink.href = '/manifest.json';
-      manifestLink.crossOrigin = 'use-credentials'; // Add credentials if needed
       document.head.insertBefore(manifestLink, document.head.firstChild);
       
       // Create and inject the PWA meta tags in a specific order
@@ -46,14 +45,14 @@ export default function CustomHead() {
       mobileCapable.content = 'yes';
       document.head.insertBefore(mobileCapable, document.head.firstChild);
       
-      // 5. viewport - removed minimal-ui as it can interfere with navigation
+      // 5. viewport - standard settings to ensure proper navigation
       const existingViewport = document.querySelector('meta[name="viewport"]');
       if (existingViewport) {
-        (existingViewport as HTMLMetaElement).content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover';
+        (existingViewport as HTMLMetaElement).content = 'width=device-width, initial-scale=1, viewport-fit=cover';
       } else {
         const viewport = document.createElement('meta');
         viewport.name = 'viewport';
-        viewport.content = 'width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover';
+        viewport.content = 'width=device-width, initial-scale=1, viewport-fit=cover';
         document.head.insertBefore(viewport, document.head.firstChild);
       }
       
@@ -73,16 +72,8 @@ export default function CustomHead() {
         document.head.appendChild(link);
       });
       
-      // Add an event listener to hide the Safari UI on first load, but without fixed positioning
-      window.addEventListener('load', () => {
-        // Check if running in standalone mode (home screen)
-        if (navigator && 'standalone' in navigator && (navigator as any).standalone) {
-          // Removed fixed positioning that could interfere with navigation
-          document.documentElement.style.height = '100vh';
-          document.body.style.height = '100vh';
-          document.body.style.width = '100%';
-        }
-      });
+      // We've completely removed any manipulation of body styling
+      // to ensure it doesn't interfere with navigation
     }
   }, []);
 

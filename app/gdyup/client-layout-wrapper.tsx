@@ -65,7 +65,7 @@ export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
   return (
     <>
       <CustomHead />
-      <main className={`min-h-screen bg-background dark gdyup-app ${isMobile ? 'gdyup-mobile' : ''}`} 
+      <main className="min-h-screen bg-background dark gdyup-app" 
             style={{ "--primary-color": "#DAFF0D", "--secondary-color": "#FF4B47" } as React.CSSProperties}>
         <OnboardingMiddleware>
           <GdyupHeader />
