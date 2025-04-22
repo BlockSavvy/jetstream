@@ -61,7 +61,7 @@ export default function ProfilePage() {
           </div>
           
           <div className="bg-black/50 rounded-xl p-6 shadow-xl border border-gray-800">
-            <ProfileSetupForm email={email} />
+            <ProfileSetupForm email={email} isProfileEdit={true} />
           </div>
         </div>
       </div>

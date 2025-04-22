@@ -42,6 +42,16 @@ const jetSchema = z.object({
   baseAirport: z.string().optional(),
 })
 
+// Profile-only schema for the first step
+const profileOnlySchema = z.object({
+  firstName: profileSchema.shape.firstName,
+  lastName: profileSchema.shape.lastName,
+  role: profileSchema.shape.role,
+  affiliation: profileSchema.shape.affiliation,
+  bio: profileSchema.shape.bio,
+  ownsJet: profileSchema.shape.ownsJet,
+})
+
 // Combine schemas based on user selection
 const combinedSchema = z.discriminatedUnion('ownsJet', [
   z.object({
@@ -69,11 +79,39 @@ const combinedSchema = z.discriminatedUnion('ownsJet', [
 
 type ProfileFormValues = z.infer<typeof combinedSchema>
 
-interface ProfileSetupFormProps {
-  email: string
+// Custom interface for type checking our fields
+interface JetOwnerFields {
+  ownsJet: 'yes';
+  firstName: string;
+  lastName: string;
+  role?: string;
+  affiliation?: string;
+  bio?: string;
+  tailNumber: string;
+  model: string;
+  capacity: string;
+  operator?: string;
+  baseAirport?: string;
 }
 
-export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
+interface NonJetOwnerFields {
+  ownsJet: 'no';
+  firstName: string;
+  lastName: string;
+  role?: string;
+  affiliation?: string;
+  bio?: string;
+}
+
+// Use this type for the form value references
+type ProfileFormValuesTyped = JetOwnerFields | NonJetOwnerFields;
+
+interface ProfileSetupFormProps {
+  email: string;
+  isProfileEdit?: boolean; // Add this to indicate if it's being used for profile editing
+}
+
+export function ProfileSetupForm({ email, isProfileEdit = false }: ProfileSetupFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [step, setStep] = useState<'profile' | 'jet' | 'complete'>('profile')
   const router = useRouter()
@@ -88,8 +126,11 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
     }
   }, [searchParams])
   
+  // Use different resolver based on the step
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(combinedSchema),
+    resolver: step === 'profile' 
+      ? zodResolver(profileOnlySchema) 
+      : zodResolver(combinedSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -97,14 +138,27 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
       affiliation: '',
       bio: '',
       ownsJet: 'no',
+      // Add default empty values for jet fields too
+      tailNumber: '',
+      model: '',
+      capacity: '',
+      operator: '',
+      baseAirport: '',
     } as ProfileFormValues,
+    mode: 'onSubmit',
   })
+  
+  // Effect to update resolver when step changes
+  useEffect(() => {
+    form.clearErrors();
+    form.setValue('ownsJet', form.getValues('ownsJet') || 'no', { shouldValidate: false });
+  }, [step, form]);
   
   // Effect to set default values for jet fields when ownsJet changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'ownsJet' && value.ownsJet === 'yes') {
-        // When user selects they own a jet, initialize the jet fields with empty values
+        // When user selects they own a jet, initialize the jet fields with default values
         form.setValue('tailNumber', '', { shouldValidate: false });
         form.setValue('model', '', { shouldValidate: false });
         form.setValue('capacity', '', { shouldValidate: false });
@@ -161,6 +215,15 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
   
   // Handle form submission for profile step
   async function onProfileSubmit(data: Partial<ProfileFormValues>) {
+    console.log('onProfileSubmit called with data:', data);
+    console.log('Form state:', form.formState);
+    
+    // Simplified validation check - just verify required fields
+    if (!data.firstName || !data.lastName) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    
     setIsLoading(true)
     
     try {
@@ -199,15 +262,27 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
       
       toast.success('Profile information saved')
       
-      // If user owns a jet, proceed to jet info form
-      if (data.ownsJet === 'yes') {
-        setStep('jet')
+      // If this is a profile edit, we don't need to redirect to jet form
+      if (isProfileEdit) {
+        if (data.ownsJet === 'yes') {
+          setStep('jet')
+        } else {
+          // For profile edit without jet, just stay on the same page
+          setTimeout(() => {
+            router.push('/gdyup/profile')
+          }, 1500)
+        }
       } else {
-        // Otherwise, mark as completed and redirect to dashboard
-        setStep('complete')
-        setTimeout(() => {
-          router.push('/gdyup/dashboard')
-        }, 1500)
+        // Original onboarding flow
+        if (data.ownsJet === 'yes') {
+          setStep('jet')
+        } else {
+          // Otherwise, mark as completed and redirect to dashboard
+          setStep('complete')
+          setTimeout(() => {
+            router.push('/gdyup/dashboard')
+          }, 1500)
+        }
       }
     } catch (error) {
       console.error('Error saving profile:', error)
@@ -219,6 +294,9 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
   
   // Handle form submission for jet step
   async function onJetSubmit(data: ProfileFormValues) {
+    console.log('onJetSubmit called with data:', data);
+    console.log('Form state:', form.formState);
+    
     if (data.ownsJet !== 'yes') return
     
     // Log form debug info
@@ -288,7 +366,13 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
       
       // Redirect to dashboard
       setTimeout(() => {
-        router.push('/gdyup/dashboard')
+        // For profile edit, go back to profile page
+        if (isProfileEdit) {
+          router.push('/gdyup/profile')
+        } else {
+          // For onboarding, go to dashboard
+          router.push('/gdyup/dashboard')
+        }
       }, 1500)
     } catch (error) {
       console.error('Error saving jet information:', error)
@@ -324,9 +408,14 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
   if (step === 'profile') {
     return (
       <div className="w-full space-y-6">
-        {renderProgressIndicator()}
+        {!isProfileEdit && renderProgressIndicator()}
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onProfileSubmit)} className="space-y-4">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const data = form.getValues();
+            console.log('Form submitted with values:', data);
+            onProfileSubmit(data);
+          }} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -335,7 +424,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                   <FormItem>
                     <FormLabel className="text-gray-200">First Name*</FormLabel>
                     <FormControl>
-                      <Input placeholder="John" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                      <Input 
+                        placeholder="John" 
+                        className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                        {...field} 
+                        value={field.value || ''} 
+                      />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
@@ -348,7 +442,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                   <FormItem>
                     <FormLabel className="text-gray-200">Last Name*</FormLabel>
                     <FormControl>
-                      <Input placeholder="Doe" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                      <Input 
+                        placeholder="Doe" 
+                        className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                        {...field} 
+                        value={field.value || ''} 
+                      />
                     </FormControl>
                     <FormMessage className="text-red-400" />
                   </FormItem>
@@ -363,7 +462,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 <FormItem>
                   <FormLabel className="text-gray-200">Role</FormLabel>
                   <FormControl>
-                    <Input placeholder="Pilot, Executive, etc." className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                    <Input 
+                      placeholder="Pilot, Executive, etc." 
+                      className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                      {...field} 
+                      value={field.value || ''} 
+                    />
                   </FormControl>
                   <FormDescription className="text-gray-400">
                     Your role in the aviation industry (optional)
@@ -380,7 +484,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 <FormItem>
                   <FormLabel className="text-gray-200">Affiliation</FormLabel>
                   <FormControl>
-                    <Input placeholder="Company or organization" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                    <Input 
+                      placeholder="Company or organization" 
+                      className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                      {...field} 
+                      value={field.value || ''} 
+                    />
                   </FormControl>
                   <FormDescription className="text-gray-400">
                     Your company or organization (optional)
@@ -401,6 +510,7 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                       placeholder="Tell us a bit about yourself" 
                       className="min-h-[100px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
                       {...field} 
+                      value={field.value || ''} 
                     />
                   </FormControl>
                   <FormDescription className="text-gray-400">
@@ -453,7 +563,7 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                   Saving...
                 </>
               ) : (
-                'Continue'
+                isProfileEdit ? 'Save Changes' : 'Continue'
               )}
             </Button>
           </form>
@@ -481,7 +591,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 <FormItem>
                   <FormLabel className="text-gray-200">Tail Number*</FormLabel>
                   <FormControl>
-                    <Input placeholder="N123AB" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                    <Input 
+                      placeholder="N123AB" 
+                      className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormMessage className="text-red-400" />
                 </FormItem>
@@ -495,7 +610,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 <FormItem>
                   <FormLabel className="text-gray-200">Aircraft Model*</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Gulfstream G650" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                    <Input 
+                      placeholder="e.g. Gulfstream G650" 
+                      className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormMessage className="text-red-400" />
                 </FormItem>
@@ -515,6 +635,7 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                       type="number" 
                       min="1"
                       {...field} 
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage className="text-red-400" />
@@ -529,7 +650,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 <FormItem>
                   <FormLabel className="text-gray-200">Operator</FormLabel>
                   <FormControl>
-                    <Input placeholder="Operating company" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                    <Input 
+                      placeholder="Operating company" 
+                      className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormDescription className="text-gray-400">
                     The company that operates this aircraft (optional)
@@ -546,7 +672,12 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 <FormItem>
                   <FormLabel className="text-gray-200">Base Airport</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. KTEB" className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" {...field} />
+                    <Input 
+                      placeholder="e.g. KTEB" 
+                      className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                      {...field} 
+                      value={field.value || ''}
+                    />
                   </FormControl>
                   <FormDescription className="text-gray-400">
                     The primary airport where this aircraft is based (optional)
@@ -570,11 +701,6 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
                 type="submit" 
                 className="flex-1 h-12" 
                 disabled={isLoading}
-                onClick={() => {
-                  console.log('Submit clicked, form state:', form.formState);
-                  console.log('Current form values:', form.getValues());
-                  console.log('Form errors:', form.formState.errors);
-                }}
               >
                 {isLoading ? (
                   <>
@@ -600,9 +726,11 @@ export function ProfileSetupForm({ email }: ProfileSetupFormProps) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
-      <h2 className="text-2xl font-bold text-white">Setup Complete!</h2>
+      <h2 className="text-2xl font-bold text-white">{isProfileEdit ? 'Profile Updated!' : 'Setup Complete!'}</h2>
       <p className="text-gray-400">
-        Your account has been successfully set up. Redirecting you to the dashboard...
+        {isProfileEdit 
+          ? 'Your profile has been successfully updated.'
+          : 'Your account has been successfully set up. Redirecting you to the dashboard...'}
       </p>
       <div className="flex justify-center mt-6">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
