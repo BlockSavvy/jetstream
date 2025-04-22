@@ -173,8 +173,8 @@ function SuccessCard({
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const offerId = searchParams.get('offer_id');
-  const paymentIntentId = searchParams.get('payment_intent_id') || searchParams.get('txn');
+  const offerId = searchParams?.get('offer_id');
+  const paymentIntentId = searchParams?.get('payment_intent_id') || searchParams?.get('txn');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [offerDetails, setOfferDetails] = useState<any>(null);
@@ -274,7 +274,7 @@ function PaymentSuccessContent() {
   const viewTransaction = () => {
     if (offerId) {
       // Preserve test mode flag for test transactions
-      const testParam = searchParams.get('test') === 'true' ? '&test=true' : '';
+      const testParam = searchParams?.get('test') === 'true' ? '&test=true' : '';
       const url = `/jetshare/transaction/${offerId}?from=payment&payment_complete=true${testParam}&t=${Date.now()}`;
       
       // Set a cookie to remember the transaction
@@ -297,7 +297,7 @@ function PaymentSuccessContent() {
   const goToBoardingPass = () => {
     if (offerId) {
       // Preserve test mode flag for test transactions
-      const testParam = searchParams.get('test') === 'true' ? '&test=true' : '';
+      const testParam = searchParams?.get('test') === 'true' ? '&test=true' : '';
       router.push(`/jetshare/boardingpass/${offerId}?${testParam}`);
     } else {
       router.push('/jetshare/dashboard?tab=bookings');
@@ -315,12 +315,12 @@ function PaymentSuccessContent() {
   return (
     <SuccessCard 
       offerDetails={offerDetails}
-      paymentIntentId={paymentIntentId}
+      paymentIntentId={paymentIntentId ?? null}
       isRedirecting={isRedirecting}
       onViewDetails={viewTransaction}
       onDashboard={goToDashboard}
       onBoardingPass={goToBoardingPass}
-      offerId={offerId}
+      offerId={offerId ?? null}
     />
   );
 }
