@@ -182,7 +182,7 @@ export default function JetsList() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">My Jets</h2>
           <Button
-            onClick={() => router.push('/jets/models')}
+            onClick={() => router.push('/gdyup/jets/models')}
             className="bg-[#DAFF0D] hover:brightness-105 text-black"
           >
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -213,7 +213,7 @@ export default function JetsList() {
               <Button 
                 onClick={() => {
                   const timestamp = Date.now();
-                  router.push(`/auth/login?returnUrl=/jets&t=${timestamp}`);
+                  router.push(`/auth/login?returnUrl=/gdyup/jets&t=${timestamp}`);
                 }}
                 className="bg-blue-900/60 hover:bg-blue-900 text-white"
               >
@@ -234,7 +234,7 @@ export default function JetsList() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">My Jets</h2>
           <Button
-            onClick={() => router.push('/jets/models')}
+            onClick={() => router.push('/gdyup/jets/models')}
             className="bg-[#DAFF0D] hover:brightness-105 text-black"
           >
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -252,7 +252,7 @@ export default function JetsList() {
               You currently don't have any jets in your fleet. Add your first jet to start managing your aircraft in GDY UP.
             </p>
             <Button
-              onClick={() => router.push('/jets/models')}
+              onClick={() => router.push('/gdyup/jets/models')}
               className="bg-[#DAFF0D] hover:brightness-105 text-black"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -270,7 +270,7 @@ export default function JetsList() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">My Jets ({jets.length})</h2>
         <Button
-          onClick={() => router.push('/jets/models')}
+          onClick={() => router.push('/gdyup/jets/models')}
           className="bg-[#DAFF0D] hover:brightness-105 text-black"
         >
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -335,14 +335,14 @@ export default function JetsList() {
               <div className="flex space-x-2 w-full">
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/jets/${jet.id}`)}
+                  onClick={() => router.push(`/gdyup/jets/${jet.id}`)}
                   className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
                 >
                   View Details
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => router.push(`/jets/${jet.id}/edit`)}
+                  onClick={() => router.push(`/gdyup/jets/${jet.id}/edit`)}
                   className="border-gray-700 hover:bg-gray-800"
                 >
                   <Settings className="h-4 w-4" style={{ color: primaryColor }} />
