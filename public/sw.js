@@ -1,8 +1,9 @@
-const CACHE_NAME = 'gdyup-v1';
+const CACHE_NAME = 'gdyup-v2';
 const urlsToCache = [
   '/',
   '/gdyup',
   '/gdyup/listings',
+  '/gdyup/dashboard',
   '/manifest.json',
   '/icons/gdyup-icon-512.png',
   '/icons/gdyup-icon-192.png',
@@ -10,7 +11,20 @@ const urlsToCache = [
   '/assets/gdyup-logo-v2.svg',
 ];
 
+// Helper function to determine if this is an API request
+function isApiRequest(url) {
+  return url.includes('/api/') || url.includes('_next/data');
+}
+
+// Helper function to determine if this is a jets page request
+function isJetsPageRequest(url) {
+  return url.includes('/gdyup/jets');
+}
+
 self.addEventListener('install', (event) => {
+  // Force immediate activation to avoid delays
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -20,6 +34,46 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Special handling for iOS PWA and Jets page
+  if (isJetsPageRequest(event.request.url)) {
+    // For Jets page in iOS PWA, use network-first strategy with timeout
+    event.respondWith(
+      fetchWithTimeout(event.request, 5000)
+        .catch(() => {
+          console.log('Jets page fetch failed, falling back to cache');
+          return caches.match(event.request)
+            .then(cachedResponse => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // If no cached response for jets page, redirect to dashboard
+              return caches.match('/gdyup/dashboard');
+            });
+        })
+    );
+    return;
+  }
+  
+  // For API requests, use network-only with no caching
+  if (isApiRequest(event.request.url)) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(error => {
+          console.error('API fetch error:', error);
+          // Return a custom error response that won't trigger iOS retry loops
+          return new Response(JSON.stringify({
+            error: 'Network error',
+            message: 'Failed to fetch data. Please check your connection.'
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        })
+    );
+    return;
+  }
+  
+  // Standard cache-first strategy for other requests
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -27,6 +81,7 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
+        
         return fetch(event.request)
           .then((response) => {
             // Return the response if it's not valid or isn't a GET request
@@ -50,9 +105,38 @@ self.addEventListener('fetch', (event) => {
         if (event.request.url.indexOf('/gdyup') !== -1) {
           return caches.match('/gdyup');
         }
+        
+        // For other paths, return a generic error response
+        return new Response('Network error. Please try again later.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain' }
+        });
       })
   );
 });
+
+// Helper function for timed network requests
+function fetchWithTimeout(request, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    // Set timeout
+    const timeoutId = setTimeout(() => {
+      reject(new Error(`Request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    
+    fetch(request).then(
+      (response) => {
+        // Clear timeout
+        clearTimeout(timeoutId);
+        resolve(response);
+      },
+      (err) => {
+        // Clear timeout
+        clearTimeout(timeoutId);
+        reject(err);
+      }
+    );
+  });
+}
 
 self.addEventListener('push', function (event) {
   if (event.data) {
@@ -78,6 +162,9 @@ self.addEventListener('notificationclick', function (event) {
 
 // Service worker activate - clean up old caches
 self.addEventListener('activate', (event) => {
+  // Take control of all clients immediately
+  event.waitUntil(clients.claim());
+  
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then((cacheNames) => {

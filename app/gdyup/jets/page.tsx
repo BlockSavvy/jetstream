@@ -86,8 +86,45 @@ export default function GdyupJets() {
     }
   ];
 
-  // Fix fetchJets to bypass rate limiting issues and handle auth properly
+  // Modify the fetchJets function to prevent retry loops
   const fetchJets = useCallback(async () => {
+    // Set a flag in localStorage to detect and prevent retry loops
+    const now = Date.now();
+    const lastFetchAttempt = parseInt(localStorage.getItem('gdyup_jets_last_fetch') || '0', 10);
+    const fetchCount = parseInt(localStorage.getItem('gdyup_jets_fetch_count') || '0', 10);
+    
+    // If we've tried fetching too many times in a short period, use cached data or fallback
+    const TEN_SECONDS = 10000;
+    if (now - lastFetchAttempt < TEN_SECONDS && fetchCount > 3) {
+      console.warn('Detected potential fetch loop - using fallback data instead');
+      
+      // Try to get cached data from localStorage first
+      try {
+        const cachedJets = localStorage.getItem('gdyup_jets_cache');
+        if (cachedJets) {
+          const parsedJets = JSON.parse(cachedJets);
+          console.log('Using cached jets data', parsedJets);
+          setJets(parsedJets);
+          setLoading(false);
+          // Reset the counter after a successful use of cache
+          localStorage.setItem('gdyup_jets_fetch_count', '0');
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing cached jets', e);
+      }
+      
+      // If no cache, use mock data in all environments when in a loop
+      console.log('No cached data available, using mock data as fallback');
+      setJets(MOCK_JETS);
+      setLoading(false);
+      return;
+    }
+    
+    // Update fetch attempt tracking
+    localStorage.setItem('gdyup_jets_last_fetch', now.toString());
+    localStorage.setItem('gdyup_jets_fetch_count', (fetchCount + 1).toString());
+    
     setLoading(true);
     setError(null);
     
@@ -137,11 +174,20 @@ export default function GdyupJets() {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      const response = await fetch(url, {
+      // Use fetch with timeout to prevent infinite waiting
+      const fetchPromise = fetch(url, {
         method: 'GET',
         headers,
         credentials: 'include', // Send cookies
       });
+      
+      // Set a timeout of 10 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 10000);
+      });
+      
+      // Race the fetch against the timeout
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
       
       if (!response.ok) {
         if (response.status === 401) {
@@ -164,7 +210,11 @@ export default function GdyupJets() {
           const fallbackData = await fallbackResponse.json();
           if (fallbackData && fallbackData.data && Array.isArray(fallbackData.data)) {
             console.log(`Loaded ${fallbackData.data.length} jets from API (fallback method)`);
+            // Cache the successful response
+            localStorage.setItem('gdyup_jets_cache', JSON.stringify(fallbackData.data));
             setJets(fallbackData.data);
+            // Reset the fetch counter after success
+            localStorage.setItem('gdyup_jets_fetch_count', '0');
             setLoading(false);
             return;
           } else {
@@ -180,7 +230,11 @@ export default function GdyupJets() {
       
       if (data && data.data && Array.isArray(data.data)) {
         console.log(`Loaded ${data.data.length} jets from API`);
+        // Cache the successful response
+        localStorage.setItem('gdyup_jets_cache', JSON.stringify(data.data));
         setJets(data.data);
+        // Reset the fetch counter after success
+        localStorage.setItem('gdyup_jets_fetch_count', '0');
       } else if (data && data.error) {
         console.error(`API returned error: ${data.error}`);
         setError(data.message || data.error);
@@ -192,15 +246,34 @@ export default function GdyupJets() {
       console.error('Error fetching jets:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch jets');
       
-      // In development, show mock data as fallback
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: Loading mock data as fallback');
+      // Try to use cached data first before falling back to mock data
+      try {
+        const cachedJets = localStorage.getItem('gdyup_jets_cache');
+        if (cachedJets) {
+          const parsedJets = JSON.parse(cachedJets);
+          console.log('Error occurred, using cached jets data', parsedJets);
+          setJets(parsedJets);
+        } else if (process.env.NODE_ENV === 'development' || fetchCount > 3) {
+          // In development or after multiple failed attempts, show mock data
+          console.log('No cached data available, using mock data as fallback');
+          setJets(MOCK_JETS);
+        }
+      } catch (e) {
+        console.error('Error using cache, falling back to mock data', e);
         setJets(MOCK_JETS);
       }
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  // Add a cleanup function to reset fetch attempt tracking
+  useEffect(() => {
+    return () => {
+      // Reset fetch counters when component unmounts
+      localStorage.setItem('gdyup_jets_fetch_count', '0');
+    };
+  }, []);
 
   // Fix the useEffect that checks for auth to be less aggressive with redirects
   useEffect(() => {
