@@ -47,45 +47,6 @@ export default function GdyupJets() {
   const secondaryColor = "#FF4B47";
   const backgroundColor = "#000000";
 
-  const MOCK_JETS = [
-    {
-      id: '1',
-      manufacturer: 'Bombardier',
-      model: 'Global 7500',
-      year: '2022',
-      tail_number: 'N7500X',
-      capacity: '19',
-      status: 'Available',
-      image_url: 'https://images.unsplash.com/photo-1540962351504-03099e0a754b?q=80&w=2070&auto=format&fit=crop',
-      home_base_airport: 'KTEB',
-      category: 'Ultra Long Range'
-    },
-    {
-      id: '2',
-      manufacturer: 'Gulfstream',
-      model: 'G650ER',
-      year: '2021',
-      tail_number: 'N650GL',
-      capacity: '16',
-      status: 'Maintenance',
-      image_url: 'https://images.unsplash.com/photo-1588412079929-790b9f593d8e?q=80&w=2070&auto=format&fit=crop',
-      home_base_airport: 'KLAS',
-      category: 'Ultra Long Range'
-    },
-    {
-      id: '3',
-      manufacturer: 'Cessna',
-      model: 'Citation X',
-      year: '2020',
-      tail_number: 'N123CX',
-      capacity: '12',
-      status: 'Reserved',
-      image_url: 'https://images.unsplash.com/photo-1570710891163-6d3b5c47248b?q=80&w=2070&auto=format&fit=crop',
-      home_base_airport: 'KJFK',
-      category: 'Super Mid-Size'
-    }
-  ];
-
   // Modify the fetchJets function to use the correct API endpoint
   const fetchJets = useCallback(async () => {
     // Set a flag in localStorage to detect and prevent retry loops
@@ -93,10 +54,10 @@ export default function GdyupJets() {
     const lastFetchAttempt = parseInt(localStorage.getItem('gdyup_jets_last_fetch') || '0', 10);
     const fetchCount = parseInt(localStorage.getItem('gdyup_jets_fetch_count') || '0', 10);
     
-    // If we've tried fetching too many times in a short period, use cached data or fallback
+    // If we've tried fetching too many times in a short period, use cached data or empty state
     const TEN_SECONDS = 10000;
     if (now - lastFetchAttempt < TEN_SECONDS && fetchCount > 3) {
-      console.warn('Detected potential fetch loop - using fallback data instead');
+      console.warn('Detected potential fetch loop - using cached data or empty state');
       
       // Try to get cached data from localStorage first
       try {
@@ -114,9 +75,9 @@ export default function GdyupJets() {
         console.error('Error parsing cached jets', e);
       }
       
-      // If no cache, use mock data in all environments when in a loop
-      console.log('No cached data available, using mock data as fallback');
-      setJets(MOCK_JETS);
+      // If no cache, show empty state
+      console.log('No cached data available, showing empty state');
+      setJets([]);
       setLoading(false);
       return;
     }
@@ -144,8 +105,7 @@ export default function GdyupJets() {
       
       console.log(`Starting jets fetch for user ID: ${userId}`);
       
-      // *** FIXED: Use the same API endpoint as the dashboard page ***
-      // Using the gdyup API endpoint instead of the jets/user endpoint
+      // Using the gdyup API endpoint
       const timestamp = Date.now();
       const url = `/api/gdyup/jets?userId=${userId}&t=${timestamp}`;
       
@@ -249,7 +209,7 @@ export default function GdyupJets() {
       console.error('Error fetching jets:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch jets');
       
-      // Try to use cached data first before falling back to mock data
+      // Try to use cached data first before showing empty state
       try {
         const cachedJets = localStorage.getItem('gdyup_jets_cache');
         if (cachedJets) {
@@ -257,24 +217,13 @@ export default function GdyupJets() {
           console.log('Error occurred, using cached jets data', parsedJets);
           setJets(parsedJets);
         } else {
-          // Only in development mode should we show mock data
-          if (process.env.NODE_ENV === 'development') {
-            console.log('Dev mode - using mock data as fallback');
-            setJets(MOCK_JETS);
-          } else {
-            // In production, show empty data instead of mock
-            setJets([]);
-            console.log('Production mode - showing empty jets list instead of mocks');
-          }
-        }
-      } catch (e) {
-        console.error('Error using cache, using empty data in production', e);
-        // In production, don't show mock data
-        if (process.env.NODE_ENV === 'development') {
-          setJets(MOCK_JETS);
-        } else {
+          // No cached data, show empty state
+          console.log('No cached data available, showing empty state');
           setJets([]);
         }
+      } catch (e) {
+        console.error('Error using cache, showing empty state', e);
+        setJets([]);
       }
     } finally {
       setLoading(false);
@@ -372,7 +321,7 @@ export default function GdyupJets() {
               setIsAuthenticated(false);
               if (process.env.NODE_ENV === 'development') {
                 console.log('Development mode: Loading mock data for unauthenticated user');
-                setJets(MOCK_JETS);
+                setJets([]);
               }
             }
           } catch (error) {
@@ -466,45 +415,8 @@ export default function GdyupJets() {
       </div>
     );
   }
-  
-  // Replace the authentication required view with mock data
-  /*
-  if (isAuthenticated === false) {
-    return (
-      <div className="grid h-[70vh] place-content-center gap-4 text-center">
-        <h2 className="text-xl font-semibold">Authentication Required</h2>
-        <p>Please sign in to view your jets</p>
-        <div className="mt-4">
-          <Link href="/login" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
-  */
-  
-  // Error state (not auth related) - only for network issues
-  if (error && user && shouldShowErrorPage(error)) {
-    return (
-      <div className="grid h-[70vh] place-content-center gap-4 text-center">
-        <h2 className="text-xl font-semibold text-red-600">Connection Error</h2>
-        <p>{error}</p>
-        <button 
-          onClick={() => {
-            // Reset flags so we don't trigger mock data usage
-            localStorage.setItem('gdyup_jets_fetch_count', '0');
-            setRetryCount(0); // Reset retry count on manual retry
-            fetchJets();
-          }}
-          className="mx-auto mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
 
+  // Show empty state - No jets
   return (
     <div className="bg-black min-h-screen text-white">
       <div className="container mx-auto px-4 py-6">
@@ -531,8 +443,35 @@ export default function GdyupJets() {
           </div>
         )}
 
+        {/* Error state (not auth related) - only for network issues */}
+        {error && user && shouldShowErrorPage(error) && (
+          <div className="bg-[#0D0D0D] border-gray-800 p-6 text-center rounded-lg">
+            <div className="flex flex-col items-center py-10">
+              <div className="rounded-full bg-red-900/30 p-4 mb-4">
+                <AlertTriangle className="h-10 w-10 text-red-500" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-red-400">Connection Error</h3>
+              <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                {error}
+              </p>
+              <Button
+                onClick={() => {
+                  // Reset flags so we don't trigger fallbacks
+                  localStorage.setItem('gdyup_jets_fetch_count', '0');
+                  setRetryCount(0);
+                  fetchJets();
+                }}
+                className="bg-[#DAFF0D] hover:brightness-105 text-black"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Empty state - No jets */}
-        {!authLoading && !isRetryingAuth && user && !loading && !error && jets.length === 0 && (
+        {!authLoading && !isRetryingAuth && user && !loading && (!error || !shouldShowErrorPage(error)) && jets.length === 0 && (
           <div>
             <Card className="bg-[#0D0D0D] border-gray-800 p-6 text-center">
               <div className="flex flex-col items-center py-10">
@@ -556,7 +495,7 @@ export default function GdyupJets() {
         )}
 
         {/* Jets list */}
-        {!authLoading && !isRetryingAuth && user && !loading && !error && jets.length > 0 && (
+        {!authLoading && !isRetryingAuth && user && !loading && (!error || !shouldShowErrorPage(error)) && jets.length > 0 && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {jets.map((jet) => (
               <Card key={jet.id} className="bg-[#0D0D0D] border-gray-800 overflow-hidden">
