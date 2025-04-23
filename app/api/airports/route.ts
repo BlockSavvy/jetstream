@@ -104,12 +104,7 @@ const telemetry = {
 
 export async function GET(request: NextRequest) {
   try {
-    // Track the request
-    if (CONFIG.trackTelemetry) {
-      telemetry.trackRequest();
-    }
-    
-    // Always set proper headers to prevent 404/HTML responses
+    // Always set proper headers to ensure consistent JSON response
     const headers = {
       'Access-Control-Allow-Origin': '*',
       'Content-Type': 'application/json',
@@ -117,182 +112,40 @@ export async function GET(request: NextRequest) {
       'Pragma': 'no-cache'
     };
     
-    // Get query parameters
+    // For the beta launch, use the reliable embedded data instead of database
+    console.log(`${CONFIG.logPrefix} Using embedded airport data for reliable beta launch`);
+    
+    // Get query parameters for filtering
     const url = new URL(request.url);
     const query = url.searchParams.get('query') || '';
     const codesParam = url.searchParams.get('codes') || '';
     const limit = parseInt(url.searchParams.get('limit') || '100');
-    const includeTelemetry = url.searchParams.get('telemetry') === 'true' && CONFIG.isDev;
     
     // Parse codes parameter (comma-separated list of airport codes)
     const codes = codesParam ? codesParam.split(',').map(c => c.trim().toUpperCase()) : [];
     
-    console.log(`${CONFIG.logPrefix} Fetching airports data with query: "${query}", codes: [${codes.join(', ')}], limit: ${limit}`);
+    let filteredData = fallbackAirports;
     
-    // Check if we should use fallbacks before even trying the database
-    if (!CONFIG.useFallbacks && url.searchParams.get('forceFallback') !== 'true') {
-      console.log(`${CONFIG.logPrefix} Fallbacks disabled by configuration`);
-    }
-    
-    // If forceFallback is set (for testing), skip DB query
-    if (url.searchParams.get('forceFallback') === 'true' && CONFIG.isDev) {
-      if (CONFIG.trackTelemetry) {
-        telemetry.trackFallback('forced via query parameter');
-      }
-      
-      let filteredFallbacks;
-      
-      // If codes are provided, filter by codes
-      if (codes.length > 0) {
-        filteredFallbacks = fallbackAirports.filter(airport => 
-          codes.includes(airport.code)
-        ).slice(0, limit);
-      } 
-      // Otherwise filter by query text
-      else if (query && query.length > 1) {
-        filteredFallbacks = filterFallbackData(query, limit);
-      } 
-      // Or just return all (up to limit)
-      else {
-        filteredFallbacks = fallbackAirports.slice(0, limit);
-      }
-      
-      return createResponse(filteredFallbacks, includeTelemetry);
-    }
-    
-    // Create Supabase client with service role key for admin access
-    const supabase = createClient(
-      supabaseUrl,
-      serviceKey || supabaseKey // Fallback to anon key if service key is not available
-    );
-    
-    // Log Supabase client creation status
-    console.log(`${CONFIG.logPrefix} Supabase client created with URL: ${supabaseUrl.substring(0, 20)}...`);
-    
-    try {
-      // FIXED: Query only the fields that exist in the database schema
-      let airportsQuery = supabase
-        .from('airports')
-        .select('code, name, city, country, location, is_private');
-      
-      // If codes parameter exists, filter by exact airport codes
-      if (codes.length > 0) {
-        airportsQuery = airportsQuery.in('code', codes);
-      }
-      // If query parameter exists, filter results
-      else if (query && query.length > 1) {
-        airportsQuery = airportsQuery.or(
-          `city.ilike.%${query}%,name.ilike.%${query}%,code.ilike.%${query}%,country.ilike.%${query}%`
-        );
-      }
-      
-      // Execute the query with limit and order
-      const { data: airports, error } = await airportsQuery
-        .order('city')
-        .limit(limit);
-      
-      console.log(`${CONFIG.logPrefix} Query executed. Result:`, error ? 'ERROR' : `${airports?.length || 0} airports`);
-      
-      if (error) {
-        if (CONFIG.trackTelemetry) {
-          telemetry.trackError('database_query', error);
-        }
-        
-        console.error(`${CONFIG.logPrefix} Error fetching airports:`, error);
-        
-        // Return fallback data instead of an error
-        console.log(`${CONFIG.logPrefix} Using fallback data due to database error`);
-        return NextResponse.json(
-          query && query.length > 1 
-            ? filterFallbackData(query, limit) 
-            : fallbackAirports.slice(0, limit),
-          { headers }
-        );
-      }
-      
-      // If no airports were returned from database, use fallbacks
-      if (!airports || airports.length === 0) {
-        console.log(`${CONFIG.logPrefix} Database returned no results`);
-        
-        // Return fallback data for better user experience
-        console.log(`${CONFIG.logPrefix} Using fallback data due to empty results`);
-        return NextResponse.json(
-          query && query.length > 1 
-            ? filterFallbackData(query, limit) 
-            : fallbackAirports.slice(0, limit),
-          { headers }
-        );
-      }
-      
-      // UPDATED: Enhance airport data with geo coordinates and add missing fields from fallback data
-      const enhancedAirports = airports.map(dbAirport => {
-        // Start with the database data
-        const airport: Airport = {
-          code: dbAirport.code,
-          name: dbAirport.name,
-          city: dbAirport.city,
-          country: dbAirport.country,
-          is_private: dbAirport.is_private || false,
-          image_url: PLACEHOLDER_AIRPORT_MAP, // Now using the placeholder instead of null
-        };
-        
-        // Find if we have additional data for this airport code in our fallback data
-        const fallbackMatch = fallbackAirports.find(f => f.code === airport.code);
-        if (fallbackMatch) {
-          // Add geo data from fallback
-          airport.lat = fallbackMatch.lat;
-          airport.lng = fallbackMatch.lng;
-          
-          // Add image_url and route_map_template if available in fallback
-          if (fallbackMatch.image_url) airport.image_url = fallbackMatch.image_url;
-          if (fallbackMatch.route_map_template) airport.route_map_template = fallbackMatch.route_map_template;
-          
-          // Ensure is_private is set correctly
-          if (fallbackMatch.is_private) airport.is_private = fallbackMatch.is_private;
-        }
-        
-        // Try to extract coordinates from the location field if present
-        if (dbAirport.location && typeof dbAirport.location === 'object') {
-          try {
-            // Attempt to extract coordinates from PostgreSQL geometry point
-            // This assumes location is stored as a PostGIS point or similar format
-            const locationObj = dbAirport.location as any;
-            if (locationObj.coordinates && Array.isArray(locationObj.coordinates) && locationObj.coordinates.length >= 2) {
-              // PostGIS format is typically [longitude, latitude]
-              airport.lng = locationObj.coordinates[0];
-              airport.lat = locationObj.coordinates[1];
-            }
-          } catch (e) {
-            console.warn(`${CONFIG.logPrefix} Could not extract coordinates from location field for ${airport.code}:`, e);
-          }
-        }
-        
-        return airport;
-      });
-      
-      // Return the database results with any available geo enhancements
-      console.log(`${CONFIG.logPrefix} Retrieved ${enhancedAirports.length} airports from database for query "${query || codes.join(', ')}"`);
-      return createResponse(enhancedAirports, includeTelemetry);
-    } catch (dbError) {
-      console.error(`${CONFIG.logPrefix} Database operation error:`, dbError);
-      
-      // Return fallback data for better user experience
-      console.log(`${CONFIG.logPrefix} Using fallback data due to database operation error`);
-      return NextResponse.json(
-        query && query.length > 1 
-          ? filterFallbackData(query, limit) 
-          : fallbackAirports.slice(0, limit),
-        { headers }
+    // Filter by codes if provided
+    if (codes.length > 0) {
+      filteredData = fallbackAirports.filter(airport => 
+        codes.includes(airport.code)
       );
-    }
-  } catch (error) {
-    if (CONFIG.trackTelemetry) {
-      telemetry.trackError('unexpected', error);
+    } 
+    // Or filter by query text
+    else if (query && query.length > 1) {
+      filteredData = filterFallbackData(query, 100);
     }
     
+    // Apply limit
+    const limitedData = filteredData.slice(0, limit);
+    
+    // Return the embedded data directly - no database lookups
+    return NextResponse.json(limitedData, { headers });
+  } catch (error) {
     console.error(`${CONFIG.logPrefix} Unexpected error:`, error);
     
-    // Always return JSON fallback data with proper headers
+    // Always return a valid JSON response even on errors
     const headers = {
       'Access-Control-Allow-Origin': '*',
       'Content-Type': 'application/json',
@@ -300,12 +153,8 @@ export async function GET(request: NextRequest) {
       'Pragma': 'no-cache'
     };
     
-    // Return fallback data for better UX
-    console.log(`${CONFIG.logPrefix} Using fallback data due to unexpected error`);
-    return NextResponse.json(
-      fallbackAirports.slice(0, 20),
-      { headers }
-    );
+    // Return all fallback data
+    return NextResponse.json(fallbackAirports, { headers });
   }
 }
 

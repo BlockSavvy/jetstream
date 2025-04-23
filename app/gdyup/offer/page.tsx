@@ -34,8 +34,12 @@ function JetShareOfferContent() {
         const timestamp = new Date().getTime();
         console.log(`Fetching airports data (attempt ${retryCount + 1})...`);
         
-        // Add debugging info for the URL
-        const url = `/api/airports?t=${timestamp}`;
+        // Use the fully qualified URL in production to avoid routing issues
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const url = baseUrl 
+          ? `${baseUrl}/api/airports?t=${timestamp}` 
+          : `/api/airports?t=${timestamp}`;
+          
         console.log(`Airport API URL: ${url}`);
         
         // Include credentials and explicit headers to ensure proper authentication
@@ -52,7 +56,8 @@ function JetShareOfferContent() {
         const response = await fetch(url, {
           method: 'GET',
           headers,
-          credentials: 'include' // Important: include credentials for cross-domain requests
+          credentials: 'include', // Important: include credentials for cross-domain requests
+          next: { revalidate: 0 } // Ensure no Next.js caching
         });
         
         // Log the response status
@@ -62,6 +67,24 @@ function JetShareOfferContent() {
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
           console.error(`Unexpected content type from airports API: ${contentType}. Expected JSON.`);
+          
+          // For production resilience, load the embedded fallback data directly
+          if (retryCount >= 1 || process.env.NODE_ENV === 'production') {
+            console.log('Loading embedded fallback airport data after content type error');
+            const fallbackData = getFallbackAirportData();
+            setAirports(fallbackData);
+            setIsLoadingAirports(false);
+            
+            // Store in sessionStorage for future use
+            try {
+              sessionStorage.setItem('jetstream_airports', JSON.stringify(fallbackData));
+              console.log('Cached fallback airports in sessionStorage');
+            } catch (e) {
+              console.warn('Failed to cache airports in sessionStorage:', e);
+            }
+            
+            return true;
+          }
           
           // Retry once if this is the first attempt
           if (retryCount === 0) {
@@ -87,6 +110,24 @@ function JetShareOfferContent() {
           } catch (jsonError) {
             console.error('Failed to parse airports API response as JSON:', jsonError);
             console.log('First 100 characters of response:', rawText.substring(0, 100));
+            
+            // For production resilience, load the embedded fallback data directly
+            if (retryCount >= 1 || process.env.NODE_ENV === 'production') {
+              console.log('Loading embedded fallback airport data after JSON parse error');
+              const fallbackData = getFallbackAirportData();
+              setAirports(fallbackData);
+              setIsLoadingAirports(false);
+              
+              // Store in sessionStorage for future use
+              try {
+                sessionStorage.setItem('jetstream_airports', JSON.stringify(fallbackData));
+                console.log('Cached fallback airports in sessionStorage');
+              } catch (e) {
+                console.warn('Failed to cache airports in sessionStorage:', e);
+              }
+              
+              return true;
+            }
             
             // Retry once if this is the first attempt
             if (retryCount === 0) {
@@ -119,6 +160,15 @@ function JetShareOfferContent() {
           } else {
             console.error('API returned empty or invalid airports data', data);
             
+            // For production resilience, load the embedded fallback data directly
+            if (retryCount >= 1 || process.env.NODE_ENV === 'production') {
+              console.log('Loading embedded fallback airport data after empty API response');
+              const fallbackData = getFallbackAirportData();
+              setAirports(fallbackData);
+              setIsLoadingAirports(false);
+              return true;
+            }
+            
             // Retry once if this is the first attempt
             if (retryCount === 0) {
               console.log('Retrying airport data fetch...');
@@ -142,6 +192,15 @@ function JetShareOfferContent() {
           
           console.error(`Failed to fetch airports: ${response.status} ${errorDetails}`);
           
+          // For production resilience, load the embedded fallback data directly
+          if (retryCount >= 1 || process.env.NODE_ENV === 'production') {
+            console.log('Loading embedded fallback airport data after fetch error');
+            const fallbackData = getFallbackAirportData();
+            setAirports(fallbackData);
+            setIsLoadingAirports(false);
+            return true;
+          }
+          
           // Retry once on server errors (5xx) if this is the first attempt
           if (response.status >= 500 && retryCount === 0) {
             console.log('Server error, retrying airport data fetch...');
@@ -154,6 +213,15 @@ function JetShareOfferContent() {
         }
       } catch (error) {
         console.error('Error fetching airports:', error);
+        
+        // For production resilience, load the embedded fallback data directly
+        if (retryCount >= 1 || process.env.NODE_ENV === 'production') {
+          console.log('Loading embedded fallback airport data after fetch exception');
+          const fallbackData = getFallbackAirportData();
+          setAirports(fallbackData);
+          setIsLoadingAirports(false);
+          return true;
+        }
         
         // Retry once if this is the first attempt
         if (retryCount === 0) {
@@ -181,14 +249,54 @@ function JetShareOfferContent() {
           if (Array.isArray(parsed) && parsed.length > 0) {
             console.log(`Using ${parsed.length} cached airports from sessionStorage`);
             setAirports(parsed);
+            setIsLoadingAirports(false);
             return true;
           }
         }
-        return false;
+        
+        // If no cached data, fall back to embedded data
+        console.log('No cached airports available, using embedded fallback data');
+        const fallbackData = getFallbackAirportData();
+        setAirports(fallbackData);
+        setIsLoadingAirports(false);
+        return true;
       } catch (e) {
         console.warn('Error reading cached airports from sessionStorage:', e);
-        return false;
+        
+        // If session storage fails, use embedded fallback data
+        console.log('Using embedded fallback airport data after sessionStorage error');
+        const fallbackData = getFallbackAirportData();
+        setAirports(fallbackData);
+        setIsLoadingAirports(false);
+        return true;
       }
+    };
+    
+    // Helper function that provides embedded fallback airport data
+    const getFallbackAirportData = () => {
+      // Ensure this data matches the Airport interface
+      return [
+        { code: "KJFK", name: "John F. Kennedy International Airport", city: "New York, NY", country: "USA", is_private: false, image_url: "/images/airports/kjfk.png", lat: 40.6413, lng: -73.7781 },
+        { code: "KFLL", name: "Fort Lauderdale-Hollywood International Airport", city: "Fort Lauderdale, FL", country: "USA", is_private: false, image_url: "/images/airports/kfll.png", lat: 26.0742, lng: -80.1506 },
+        { code: "KLAX", name: "Los Angeles International Airport", city: "Los Angeles, CA", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 33.9416, lng: -118.4085 },
+        { code: "KLAS", name: "Harry Reid International Airport", city: "Las Vegas, NV", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 36.0840, lng: -115.1537 },
+        { code: "KMIA", name: "Miami International Airport", city: "Miami, FL", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 25.7932, lng: -80.2906 },
+        { code: "KSFO", name: "San Francisco International Airport", city: "San Francisco, CA", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 37.6213, lng: -122.3790 },
+        { code: "KSDL", name: "Scottsdale Airport", city: "Scottsdale, AZ", country: "USA", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 33.6229, lng: -111.9107 },
+        { code: "KTEB", name: "Teterboro Airport", city: "Teterboro, NJ", country: "USA", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 40.8499, lng: -74.0610 },
+        { code: "EGLL", name: "London Heathrow Airport", city: "London", country: "UK", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 51.4700, lng: -0.4543 },
+        { code: "LFPB", name: "Paris–Le Bourget Airport", city: "Paris", country: "France", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 48.9698, lng: 2.4383 },
+        { code: "EDDM", name: "Munich Airport", city: "Munich", country: "Germany", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 48.3538, lng: 11.7861 },
+        { code: "KPBI", name: "Palm Beach International Airport", city: "West Palm Beach, FL", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 26.6832, lng: -80.0956 },
+        { code: "KHPN", name: "Westchester County Airport", city: "White Plains, NY", country: "USA", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 41.0670, lng: -73.7076 },
+        { code: "KDEN", name: "Denver International Airport", city: "Denver, CO", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 39.8560, lng: -104.6737 },
+        { code: "KAPA", name: "Centennial Airport", city: "Denver, CO", country: "USA", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 39.5697, lng: -104.8493 },
+        { code: "KDAL", name: "Dallas Love Field", city: "Dallas, TX", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 32.8471, lng: -96.8518 },
+        { code: "KHOU", name: "William P. Hobby Airport", city: "Houston, TX", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 29.6454, lng: -95.2789 },
+        { code: "KFXE", name: "Fort Lauderdale Executive Airport", city: "Fort Lauderdale, FL", country: "USA", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 26.1972, lng: -80.1707 },
+        { code: "KOPF", name: "Opa Locka Executive Airport", city: "Miami, FL", country: "USA", is_private: true, image_url: "/images/airports/placeholder_airport_map.png", lat: 25.9135, lng: -80.2763 },
+        { code: "KAUS", name: "Austin-Bergstrom International Airport", city: "Austin, TX", country: "USA", is_private: false, image_url: "/images/airports/placeholder_airport_map.png", lat: 30.1975, lng: -97.6664 }
+      ].sort((a, b) => a.city.localeCompare(b.city));
     };
     
     // Try to use cached airports first for immediate rendering
