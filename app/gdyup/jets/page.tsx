@@ -86,7 +86,7 @@ export default function GdyupJets() {
     }
   ];
 
-  // Modify the fetchJets function to prevent retry loops
+  // Modify the fetchJets function to use the correct API endpoint
   const fetchJets = useCallback(async () => {
     // Set a flag in localStorage to detect and prevent retry loops
     const now = Date.now();
@@ -144,9 +144,12 @@ export default function GdyupJets() {
       
       console.log(`Starting jets fetch for user ID: ${userId}`);
       
-      // Add t={timestamp} to prevent caching
+      // *** FIXED: Use the same API endpoint as the dashboard page ***
+      // Using the gdyup API endpoint instead of the jets/user endpoint
       const timestamp = Date.now();
-      const url = `/api/jets/user?user_id=${userId}&t=${timestamp}`;
+      const url = `/api/gdyup/jets?userId=${userId}&t=${timestamp}`;
+      
+      console.log(`Fetching jets from URL: ${url}`);
       
       // First check if we have an auth token to include
       let authToken = null;
@@ -194,8 +197,8 @@ export default function GdyupJets() {
           // Auth error - try again with a fallback approach
           console.log('Authentication error, trying alternative fetch method');
           
-          // Direct fetch without auth to our modified endpoint
-          const fallbackResponse = await fetch(`/api/jets/user?user_id=${userId}&t=${Date.now()}`, {
+          // Direct fetch without auth to our modified endpoint - still using gdyup endpoint
+          const fallbackResponse = await fetch(`/api/gdyup/jets?userId=${userId}&t=${Date.now()}`, {
             method: 'GET',
             headers: {
               'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -253,14 +256,25 @@ export default function GdyupJets() {
           const parsedJets = JSON.parse(cachedJets);
           console.log('Error occurred, using cached jets data', parsedJets);
           setJets(parsedJets);
-        } else if (process.env.NODE_ENV === 'development' || fetchCount > 3) {
-          // In development or after multiple failed attempts, show mock data
-          console.log('No cached data available, using mock data as fallback');
-          setJets(MOCK_JETS);
+        } else {
+          // Only in development mode should we show mock data
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Dev mode - using mock data as fallback');
+            setJets(MOCK_JETS);
+          } else {
+            // In production, show empty data instead of mock
+            setJets([]);
+            console.log('Production mode - showing empty jets list instead of mocks');
+          }
         }
       } catch (e) {
-        console.error('Error using cache, falling back to mock data', e);
-        setJets(MOCK_JETS);
+        console.error('Error using cache, using empty data in production', e);
+        // In production, don't show mock data
+        if (process.env.NODE_ENV === 'development') {
+          setJets(MOCK_JETS);
+        } else {
+          setJets([]);
+        }
       }
     } finally {
       setLoading(false);
@@ -416,6 +430,34 @@ export default function GdyupJets() {
     window.location.href = path;
   };
 
+  // Logic to determine if we should show an error page or empty state
+  const shouldShowErrorPage = (error: string | null) => {
+    if (!error) return false;
+    
+    // Network errors should show error page with retry
+    const networkErrorPatterns = [
+      'network',
+      'fetch',
+      'timeout',
+      'offline',
+      'failed to fetch',
+      'connection',
+      'cors',
+      '500',
+      '503'
+    ];
+    
+    for (const pattern of networkErrorPatterns) {
+      if (error.toLowerCase().includes(pattern)) {
+        return true;
+      }
+    }
+    
+    // For other errors (especially "no jets found" type errors),
+    // we should just show an empty state
+    return false;
+  };
+
   // UI rendering based on authentication and data states
   if (loading) {
     return (
@@ -442,14 +484,16 @@ export default function GdyupJets() {
   }
   */
   
-  // Error state (not auth related)
-  if (error && user) {
+  // Error state (not auth related) - only for network issues
+  if (error && user && shouldShowErrorPage(error)) {
     return (
       <div className="grid h-[70vh] place-content-center gap-4 text-center">
-        <h2 className="text-xl font-semibold text-red-600">Error</h2>
+        <h2 className="text-xl font-semibold text-red-600">Connection Error</h2>
         <p>{error}</p>
         <button 
           onClick={() => {
+            // Reset flags so we don't trigger mock data usage
+            localStorage.setItem('gdyup_jets_fetch_count', '0');
             setRetryCount(0); // Reset retry count on manual retry
             fetchJets();
           }}
