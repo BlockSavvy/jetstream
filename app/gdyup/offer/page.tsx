@@ -22,7 +22,7 @@ function JetShareOfferContent() {
   const [airports, setAirports] = useState<Airport[]>([]);
   const [isLoadingAirports, setIsLoadingAirports] = useState(true);
   const searchParams = useSearchParams();
-  const editId = searchParams.get('edit');
+  const editId = searchParams ? searchParams.get('edit') : null;
   
   // Fetch airports data when component mounts - IMPROVED with better error handling and retries
   useEffect(() => {
@@ -33,10 +33,45 @@ function JetShareOfferContent() {
         // Add timestamp to prevent caching
         const timestamp = new Date().getTime();
         console.log(`Fetching airports data (attempt ${retryCount + 1})...`);
-        const response = await fetch(`/api/airports?t=${timestamp}`);
+        
+        // Add debugging info for the URL
+        const url = `/api/airports?t=${timestamp}`;
+        console.log(`Airport API URL: ${url}`);
+        
+        // Include credentials and explicit headers to ensure proper authentication
+        const headers = {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        };
+        
+        // Log that we're making the fetch request
+        console.log('Sending fetch request to airports API...');
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers,
+          credentials: 'include' // Important: include credentials for cross-domain requests
+        });
+        
+        // Log the response status
+        console.log(`Airports API response status: ${response.status}`);
         
         if (response.ok) {
-          const data = await response.json();
+          // Attempt to parse the response as text first to debug any JSON parse issues
+          const rawText = await response.text();
+          console.log(`Raw API response length: ${rawText.length} characters`);
+          
+          let data;
+          try {
+            // Try to parse the text as JSON
+            data = JSON.parse(rawText);
+            console.log(`Successfully parsed airports data: ${data.length} airports found`);
+          } catch (jsonError) {
+            console.error('Failed to parse airports API response as JSON:', jsonError);
+            console.log('First 100 characters of response:', rawText.substring(0, 100));
+            throw new Error('Invalid JSON response from airports API');
+          }
           
           if (Array.isArray(data) && data.length > 0) {
             console.log(`Successfully loaded ${data.length} airports from API`);

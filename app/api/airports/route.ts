@@ -158,99 +158,159 @@ export async function GET(request: NextRequest) {
       serviceKey || supabaseKey // Fallback to anon key if service key is not available
     );
     
-    // FIXED: Query only the fields that exist in the database schema
-    let airportsQuery = supabase
-      .from('airports')
-      .select('code, name, city, country, location, is_private');
+    // Log Supabase client creation status
+    console.log(`${CONFIG.logPrefix} Supabase client created with URL: ${supabaseUrl.substring(0, 20)}...`);
     
-    // If codes parameter exists, filter by exact airport codes
-    if (codes.length > 0) {
-      airportsQuery = airportsQuery.in('code', codes);
-    }
-    // If query parameter exists, filter results
-    else if (query && query.length > 1) {
-      airportsQuery = airportsQuery.or(
-        `city.ilike.%${query}%,name.ilike.%${query}%,code.ilike.%${query}%,country.ilike.%${query}%`
-      );
-    }
-    
-    // Execute the query with limit and order
-    const { data: airports, error } = await airportsQuery
-      .order('city')
-      .limit(limit);
-    
-    if (error) {
-      if (CONFIG.trackTelemetry) {
-        telemetry.trackError('database_query', error);
+    try {
+      // FIXED: Query only the fields that exist in the database schema
+      let airportsQuery = supabase
+        .from('airports')
+        .select('code, name, city, country, location, is_private');
+      
+      // If codes parameter exists, filter by exact airport codes
+      if (codes.length > 0) {
+        airportsQuery = airportsQuery.in('code', codes);
+      }
+      // If query parameter exists, filter results
+      else if (query && query.length > 1) {
+        airportsQuery = airportsQuery.or(
+          `city.ilike.%${query}%,name.ilike.%${query}%,code.ilike.%${query}%,country.ilike.%${query}%`
+        );
       }
       
-      console.error(`${CONFIG.logPrefix} Error fetching airports:`, error);
+      // Execute the query with limit and order
+      const { data: airports, error } = await airportsQuery
+        .order('city')
+        .limit(limit);
       
-      // Always return the error so we can identify database issues
-      return NextResponse.json(
-        { error: error.message, code: error.code || 'UNKNOWN' }, 
-        { status: 500 }
-      );
-    }
-    
-    // If no airports were returned from database, return empty array
-    if (!airports || airports.length === 0) {
-      console.log(`${CONFIG.logPrefix} Database returned no results`);
+      console.log(`${CONFIG.logPrefix} Query executed. Result:`, error ? 'ERROR' : `${airports?.length || 0} airports`);
       
-      // Return an empty array to clearly indicate no results from database
-      return createResponse([], includeTelemetry);
-    }
-    
-    // UPDATED: Enhance airport data with geo coordinates and add missing fields from fallback data
-    const enhancedAirports = airports.map(dbAirport => {
-      // Start with the database data
-      const airport: Airport = {
-        code: dbAirport.code,
-        name: dbAirport.name,
-        city: dbAirport.city,
-        country: dbAirport.country,
-        is_private: dbAirport.is_private || false,
-        image_url: PLACEHOLDER_AIRPORT_MAP, // Now using the placeholder instead of null
-      };
-      
-      // Find if we have additional data for this airport code in our fallback data
-      const fallbackMatch = fallbackAirports.find(f => f.code === airport.code);
-      if (fallbackMatch) {
-        // Add geo data from fallback
-        airport.lat = fallbackMatch.lat;
-        airport.lng = fallbackMatch.lng;
-        
-        // Add image_url and route_map_template if available in fallback
-        if (fallbackMatch.image_url) airport.image_url = fallbackMatch.image_url;
-        if (fallbackMatch.route_map_template) airport.route_map_template = fallbackMatch.route_map_template;
-        
-        // Ensure is_private is set correctly
-        if (fallbackMatch.is_private) airport.is_private = fallbackMatch.is_private;
-      }
-      
-      // Try to extract coordinates from the location field if present
-      if (dbAirport.location && typeof dbAirport.location === 'object') {
-        try {
-          // Attempt to extract coordinates from PostgreSQL geometry point
-          // This assumes location is stored as a PostGIS point or similar format
-          const locationObj = dbAirport.location as any;
-          if (locationObj.coordinates && Array.isArray(locationObj.coordinates) && locationObj.coordinates.length >= 2) {
-            // PostGIS format is typically [longitude, latitude]
-            airport.lng = locationObj.coordinates[0];
-            airport.lat = locationObj.coordinates[1];
-          }
-        } catch (e) {
-          console.warn(`${CONFIG.logPrefix} Could not extract coordinates from location field for ${airport.code}:`, e);
+      if (error) {
+        if (CONFIG.trackTelemetry) {
+          telemetry.trackError('database_query', error);
         }
+        
+        console.error(`${CONFIG.logPrefix} Error fetching airports:`, error);
+        
+        // Return fallback data instead of an error in production
+        if (process.env.NODE_ENV === 'production') {
+          console.log(`${CONFIG.logPrefix} Using fallback data in production due to database error`);
+          // Return filtered fallback data
+          return createResponse(
+            query && query.length > 1 
+              ? filterFallbackData(query, limit) 
+              : fallbackAirports.slice(0, limit), 
+            includeTelemetry
+          );
+        }
+        
+        // Always return the error for development so we can fix the issue
+        return NextResponse.json(
+          { error: error.message, code: error.code || 'UNKNOWN' }, 
+          { 
+            status: 500,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Content-Type': 'application/json'
+            }
+          }
+        );
       }
       
-      return airport;
-    });
-    
-    // Return the database results with any available geo enhancements
-    console.log(`${CONFIG.logPrefix} Retrieved ${enhancedAirports.length} airports from database for query "${query || codes.join(', ')}"`);
-    return createResponse(enhancedAirports, includeTelemetry);
-    
+      // If no airports were returned from database, use fallbacks in production
+      if (!airports || airports.length === 0) {
+        console.log(`${CONFIG.logPrefix} Database returned no results`);
+        
+        // In production, return fallback data for better user experience
+        if (process.env.NODE_ENV === 'production') {
+          console.log(`${CONFIG.logPrefix} Using fallback data in production due to empty results`);
+          return createResponse(
+            query && query.length > 1 
+              ? filterFallbackData(query, limit) 
+              : fallbackAirports.slice(0, limit),
+            includeTelemetry
+          );
+        }
+        
+        // In development, return an empty array to clearly indicate no results from database
+        return createResponse([], includeTelemetry);
+      }
+      
+      // UPDATED: Enhance airport data with geo coordinates and add missing fields from fallback data
+      const enhancedAirports = airports.map(dbAirport => {
+        // Start with the database data
+        const airport: Airport = {
+          code: dbAirport.code,
+          name: dbAirport.name,
+          city: dbAirport.city,
+          country: dbAirport.country,
+          is_private: dbAirport.is_private || false,
+          image_url: PLACEHOLDER_AIRPORT_MAP, // Now using the placeholder instead of null
+        };
+        
+        // Find if we have additional data for this airport code in our fallback data
+        const fallbackMatch = fallbackAirports.find(f => f.code === airport.code);
+        if (fallbackMatch) {
+          // Add geo data from fallback
+          airport.lat = fallbackMatch.lat;
+          airport.lng = fallbackMatch.lng;
+          
+          // Add image_url and route_map_template if available in fallback
+          if (fallbackMatch.image_url) airport.image_url = fallbackMatch.image_url;
+          if (fallbackMatch.route_map_template) airport.route_map_template = fallbackMatch.route_map_template;
+          
+          // Ensure is_private is set correctly
+          if (fallbackMatch.is_private) airport.is_private = fallbackMatch.is_private;
+        }
+        
+        // Try to extract coordinates from the location field if present
+        if (dbAirport.location && typeof dbAirport.location === 'object') {
+          try {
+            // Attempt to extract coordinates from PostgreSQL geometry point
+            // This assumes location is stored as a PostGIS point or similar format
+            const locationObj = dbAirport.location as any;
+            if (locationObj.coordinates && Array.isArray(locationObj.coordinates) && locationObj.coordinates.length >= 2) {
+              // PostGIS format is typically [longitude, latitude]
+              airport.lng = locationObj.coordinates[0];
+              airport.lat = locationObj.coordinates[1];
+            }
+          } catch (e) {
+            console.warn(`${CONFIG.logPrefix} Could not extract coordinates from location field for ${airport.code}:`, e);
+          }
+        }
+        
+        return airport;
+      });
+      
+      // Return the database results with any available geo enhancements
+      console.log(`${CONFIG.logPrefix} Retrieved ${enhancedAirports.length} airports from database for query "${query || codes.join(', ')}"`);
+      return createResponse(enhancedAirports, includeTelemetry);
+    } catch (dbError) {
+      console.error(`${CONFIG.logPrefix} Database operation error:`, dbError);
+      
+      // In production, fallback to static data for better user experience
+      if (process.env.NODE_ENV === 'production') {
+        console.log(`${CONFIG.logPrefix} Using fallback data in production due to database operation error`);
+        return createResponse(
+          query && query.length > 1 
+            ? filterFallbackData(query, limit) 
+            : fallbackAirports.slice(0, limit),
+          includeTelemetry
+        );
+      }
+      
+      // In development, return the error for debugging
+      return NextResponse.json(
+        { error: dbError instanceof Error ? dbError.message : 'Database operation error', code: 'DB_ERROR' }, 
+        { 
+          status: 500,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
   } catch (error) {
     if (CONFIG.trackTelemetry) {
       telemetry.trackError('unexpected', error);
@@ -258,10 +318,22 @@ export async function GET(request: NextRequest) {
     
     console.error(`${CONFIG.logPrefix} Unexpected error:`, error);
     
-    // Return the error for better debugging
+    // Return fallback data in production for better UX
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`${CONFIG.logPrefix} Using fallback data in production due to unexpected error`);
+      return createResponse(fallbackAirports.slice(0, 20), false);
+    }
+    
+    // Return the error for better debugging in development
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error', code: 'UNEXPECTED' }, 
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        }
+      }
     );
   }
 }
@@ -281,6 +353,13 @@ function filterFallbackData(query: string, limit: number): Airport[] {
 
 // Helper function to create response with optional telemetry
 function createResponse(data: Airport[], includeTelemetry: boolean) {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache'
+  };
+  
   if (includeTelemetry) {
     return NextResponse.json({
       data,
@@ -290,8 +369,8 @@ function createResponse(data: Airport[], includeTelemetry: boolean) {
         telemetry: telemetry.getStats(),
         timestamp: new Date().toISOString()
       }
-    });
+    }, { headers });
   }
   
-  return NextResponse.json(data);
+  return NextResponse.json(data, { headers });
 } 
