@@ -41,6 +41,7 @@ function JetShareOfferContent() {
         // Include credentials and explicit headers to ensure proper authentication
         const headers = {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache'
         };
@@ -57,6 +58,22 @@ function JetShareOfferContent() {
         // Log the response status
         console.log(`Airports API response status: ${response.status}`);
         
+        // Check content type to ensure we're getting JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error(`Unexpected content type from airports API: ${contentType}. Expected JSON.`);
+          
+          // Retry once if this is the first attempt
+          if (retryCount === 0) {
+            console.log('Unexpected content type, retrying airport data fetch...');
+            setTimeout(() => fetchAirports(1), 1500); // Wait 1.5 seconds before retry
+            return false;
+          }
+          
+          // Fallback to cached data if retry fails
+          return loadCachedAirports();
+        }
+        
         if (response.ok) {
           // Attempt to parse the response as text first to debug any JSON parse issues
           const rawText = await response.text();
@@ -70,7 +87,16 @@ function JetShareOfferContent() {
           } catch (jsonError) {
             console.error('Failed to parse airports API response as JSON:', jsonError);
             console.log('First 100 characters of response:', rawText.substring(0, 100));
-            throw new Error('Invalid JSON response from airports API');
+            
+            // Retry once if this is the first attempt
+            if (retryCount === 0) {
+              console.log('JSON parse error, retrying airport data fetch...');
+              setTimeout(() => fetchAirports(1), 1500); // Wait 1.5 seconds before retry
+              return false;
+            }
+            
+            // Fallback to cached data
+            return loadCachedAirports();
           }
           
           if (Array.isArray(data) && data.length > 0) {

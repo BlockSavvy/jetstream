@@ -109,6 +109,14 @@ export async function GET(request: NextRequest) {
       telemetry.trackRequest();
     }
     
+    // Always set proper headers to prevent 404/HTML responses
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache'
+    };
+    
     // Get query parameters
     const url = new URL(request.url);
     const query = url.searchParams.get('query') || '';
@@ -192,48 +200,28 @@ export async function GET(request: NextRequest) {
         
         console.error(`${CONFIG.logPrefix} Error fetching airports:`, error);
         
-        // Return fallback data instead of an error in production
-        if (process.env.NODE_ENV === 'production') {
-          console.log(`${CONFIG.logPrefix} Using fallback data in production due to database error`);
-          // Return filtered fallback data
-          return createResponse(
-            query && query.length > 1 
-              ? filterFallbackData(query, limit) 
-              : fallbackAirports.slice(0, limit), 
-            includeTelemetry
-          );
-        }
-        
-        // Always return the error for development so we can fix the issue
+        // Return fallback data instead of an error
+        console.log(`${CONFIG.logPrefix} Using fallback data due to database error`);
         return NextResponse.json(
-          { error: error.message, code: error.code || 'UNKNOWN' }, 
-          { 
-            status: 500,
-            headers: {
-              'Access-Control-Allow-Origin': '*',
-              'Content-Type': 'application/json'
-            }
-          }
+          query && query.length > 1 
+            ? filterFallbackData(query, limit) 
+            : fallbackAirports.slice(0, limit),
+          { headers }
         );
       }
       
-      // If no airports were returned from database, use fallbacks in production
+      // If no airports were returned from database, use fallbacks
       if (!airports || airports.length === 0) {
         console.log(`${CONFIG.logPrefix} Database returned no results`);
         
-        // In production, return fallback data for better user experience
-        if (process.env.NODE_ENV === 'production') {
-          console.log(`${CONFIG.logPrefix} Using fallback data in production due to empty results`);
-          return createResponse(
-            query && query.length > 1 
-              ? filterFallbackData(query, limit) 
-              : fallbackAirports.slice(0, limit),
-            includeTelemetry
-          );
-        }
-        
-        // In development, return an empty array to clearly indicate no results from database
-        return createResponse([], includeTelemetry);
+        // Return fallback data for better user experience
+        console.log(`${CONFIG.logPrefix} Using fallback data due to empty results`);
+        return NextResponse.json(
+          query && query.length > 1 
+            ? filterFallbackData(query, limit) 
+            : fallbackAirports.slice(0, limit),
+          { headers }
+        );
       }
       
       // UPDATED: Enhance airport data with geo coordinates and add missing fields from fallback data
@@ -288,27 +276,13 @@ export async function GET(request: NextRequest) {
     } catch (dbError) {
       console.error(`${CONFIG.logPrefix} Database operation error:`, dbError);
       
-      // In production, fallback to static data for better user experience
-      if (process.env.NODE_ENV === 'production') {
-        console.log(`${CONFIG.logPrefix} Using fallback data in production due to database operation error`);
-        return createResponse(
-          query && query.length > 1 
-            ? filterFallbackData(query, limit) 
-            : fallbackAirports.slice(0, limit),
-          includeTelemetry
-        );
-      }
-      
-      // In development, return the error for debugging
+      // Return fallback data for better user experience
+      console.log(`${CONFIG.logPrefix} Using fallback data due to database operation error`);
       return NextResponse.json(
-        { error: dbError instanceof Error ? dbError.message : 'Database operation error', code: 'DB_ERROR' }, 
-        { 
-          status: 500,
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json'
-          }
-        }
+        query && query.length > 1 
+          ? filterFallbackData(query, limit) 
+          : fallbackAirports.slice(0, limit),
+        { headers }
       );
     }
   } catch (error) {
@@ -318,22 +292,19 @@ export async function GET(request: NextRequest) {
     
     console.error(`${CONFIG.logPrefix} Unexpected error:`, error);
     
-    // Return fallback data in production for better UX
-    if (process.env.NODE_ENV === 'production') {
-      console.log(`${CONFIG.logPrefix} Using fallback data in production due to unexpected error`);
-      return createResponse(fallbackAirports.slice(0, 20), false);
-    }
+    // Always return JSON fallback data with proper headers
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache'
+    };
     
-    // Return the error for better debugging in development
+    // Return fallback data for better UX
+    console.log(`${CONFIG.logPrefix} Using fallback data due to unexpected error`);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error', code: 'UNEXPECTED' }, 
-      { 
-        status: 500,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json'
-        }
-      }
+      fallbackAirports.slice(0, 20),
+      { headers }
     );
   }
 }

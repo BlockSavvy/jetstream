@@ -81,6 +81,11 @@ const isPublicRoute = (path: string): boolean => {
     return true;
   }
   
+  // Special case for airports API
+  if (path === '/api/airports' || path.startsWith('/api/airports?')) {
+    return true;
+  }
+  
   // Check if the route is in our public routes list
   return PUBLIC_ROUTES.some(route => {
     // Handle wildcard paths
