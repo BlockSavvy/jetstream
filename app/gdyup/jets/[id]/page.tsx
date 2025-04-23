@@ -70,7 +70,9 @@ export default function JetDetailPage() {
         
         // Add timestamp to prevent caching
         const timestamp = Date.now();
-        const url = `/api/jets/${jetId}?user_id=${userId}&t=${timestamp}`;
+        
+        // FIXED: Use the gdyup API endpoint instead of the jets API
+        const url = `/api/gdyup/jets/${jetId}?userId=${userId}&t=${timestamp}`;
         
         // First check if we have an auth token to include
         let authToken = null;
@@ -116,8 +118,9 @@ export default function JetDetailPage() {
         
         const data = await response.json();
         
-        if (data && data.jet) {
-          setJet(data.jet);
+        if (data && data.data) {
+          // FIXED: Updated to match the gdyup API response format
+          setJet(data.data);
         } else {
           throw new Error('Invalid response format from API');
         }
