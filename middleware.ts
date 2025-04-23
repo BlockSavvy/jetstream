@@ -81,7 +81,7 @@ const isPublicRoute = (path: string): boolean => {
     return true;
   }
   
-  // Special case for airports API
+  // Special case for airports API - most important fix!
   if (path === '/api/airports' || path.startsWith('/api/airports?')) {
     return true;
   }
@@ -142,6 +142,12 @@ const isGdyupRoute = (path: string): boolean => {
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
+  // CRITICAL FIX: Always bypass middleware for airports API to ensure direct database access
+  if (pathname === '/api/airports' || pathname.startsWith('/api/airports?')) {
+    // Return immediately, allowing direct access to the API route without any middleware processing
+    return NextResponse.next();
+  }
   
   // GDYUP-only deployment logic
   if (isGdyupDeployment(req)) {
