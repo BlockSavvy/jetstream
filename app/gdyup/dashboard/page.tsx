@@ -84,12 +84,32 @@ export default function DashboardPage() {
           setJets(jetsData || []);
         }
         
-        // Fetch user activity
+        // Fetch user activity - use JetShare API directly
         try {
-          const activityResponse = await fetch(`/api/gdyup/activity?userId=${user.id}`);
+          // Generate unique request ID and timestamp for cache busting
+          const timestamp = Date.now();
+          const requestId = `gdyup-activity-${Math.random().toString(36).substring(2, 9)}`;
+          
+          // For activity, we'll use transactions as a proxy for activity
+          const activityResponse = await fetch(`/api/jetshare/getTransactions?user_id=${user.id}&t=${timestamp}&rid=${requestId}`);
+          
           if (activityResponse.ok) {
-            const { data: activityData } = await activityResponse.json();
-            setActivities(activityData || []);
+            const data = await activityResponse.json();
+            
+            if (data && data.transactions) {
+              // Transform transaction data into activity format
+              const activityData = data.transactions.map((txn: any) => ({
+                id: txn.id,
+                type: txn.payment_status === 'completed' ? 'booking' : 'payment',
+                description: txn.description || 'JetShare transaction',
+                date: new Date(txn.transaction_date).toISOString().split('T')[0],
+                status: txn.payment_status
+              }));
+              
+              setActivities(activityData || []);
+            }
+          } else {
+            throw new Error('Failed to fetch activity data');
           }
         } catch (error) {
           console.error('Error fetching activity:', error);
@@ -119,12 +139,31 @@ export default function DashboardPage() {
           ]);
         }
         
-        // Fetch transactions
+        // Fetch transactions - use JetShare API directly
         try {
-          const transactionsResponse = await fetch(`/api/gdyup/transactions?userId=${user.id}`);
+          // Generate unique request ID and timestamp for cache busting
+          const timestamp = Date.now();
+          const requestId = `gdyup-txn-${Math.random().toString(36).substring(2, 9)}`;
+          
+          const transactionsResponse = await fetch(`/api/jetshare/getTransactions?user_id=${user.id}&t=${timestamp}&rid=${requestId}`);
+          
           if (transactionsResponse.ok) {
-            const { data: transactionsData } = await transactionsResponse.json();
-            setTransactions(transactionsData || []);
+            const data = await transactionsResponse.json();
+            
+            if (data && data.transactions) {
+              // Transform to expected format
+              const transactionsData = data.transactions.map((txn: any) => ({
+                id: txn.id,
+                amount: txn.amount,
+                date: new Date(txn.transaction_date).toISOString().split('T')[0],
+                description: txn.description || 'JetShare transaction',
+                status: txn.payment_status
+              }));
+              
+              setTransactions(transactionsData || []);
+            }
+          } else {
+            throw new Error('Failed to fetch transactions');
           }
         } catch (error) {
           console.error('Error fetching transactions:', error);

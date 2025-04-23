@@ -29,6 +29,7 @@ const PUBLIC_ROUTES = [
   '/gdyup/listings',
   '/gdyup/auth/signup',
   '/gdyup/auth/login',
+  '/gdyup/auth/forgot-password',
   '/gdyup/auth/profile-setup',
   '/api/gdyup/profile',
   '/api/gdyup/jets',
