@@ -143,9 +143,13 @@ const isGdyupRoute = (path: string): boolean => {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
-  // CRITICAL FIX: Always bypass middleware for airports API to ensure direct database access
-  if (pathname === '/api/airports' || pathname.startsWith('/api/airports?')) {
-    // Return immediately, allowing direct access to the API route without any middleware processing
+  // CRITICAL FIX: Always bypass middleware for airports and jets API requests
+  if (pathname === '/api/airports' || 
+      pathname.startsWith('/api/airports?') ||
+      pathname.startsWith('/api/jets/') ||
+      pathname === '/api/gdyup/jets' ||
+      pathname.startsWith('/api/gdyup/jets/')) {
+    // Return immediately, allowing direct access to the API route
     return NextResponse.next();
   }
   
