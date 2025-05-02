@@ -53,7 +53,7 @@ export default function GdyupHeader() {
       {
         name: 'Listings',
         path: '/gdyup/listings',
-        icon: <Search className="h-5 w-5 gdyup-icon" />,
+        icon: (active: boolean) => active ? <Search className="h-5 w-5 text-black" /> : <Search className="h-5 w-5 text-white" />,
         protected: false
       }
     ];
@@ -63,13 +63,13 @@ export default function GdyupHeader() {
       {
         name: 'Offer a Share',
         path: '/gdyup/offer',
-        icon: <PlaneTakeoff className="h-5 w-5 gdyup-icon" />,
+        icon: (active: boolean) => active ? <PlaneTakeoff className="h-5 w-5 text-black" /> : <PlaneTakeoff className="h-5 w-5 text-white" />,
         protected: true
       },
       {
         name: 'My Jets',
         path: '/gdyup/jets',
-        icon: <Plane className="h-5 w-5 gdyup-icon" />,
+        icon: (active: boolean) => active ? <Plane className="h-5 w-5 text-black" /> : <Plane className="h-5 w-5 text-white" />,
         protected: true
       }
     ] : [];
@@ -79,7 +79,7 @@ export default function GdyupHeader() {
       {
         name: 'Debug',
         path: '/gdyup/debug',
-        icon: <span className="text-xs p-1 bg-amber-100 text-amber-800 rounded">DEV</span>,
+        icon: (active: boolean) => <span className="text-xs p-1 bg-amber-100 text-amber-800 rounded">DEV</span>,
         protected: true
       }
     ] : [];
@@ -179,7 +179,7 @@ export default function GdyupHeader() {
                       : "text-white hover:bg-gray-800 hover:text-[#DAFF0D]"
                   )}
                 >
-                  {item.icon}
+                  {item.icon(isActive(item.path))}
                   <span>{item.name}</span>
                 </button>
               );
@@ -203,12 +203,12 @@ export default function GdyupHeader() {
                   )}
                   style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
                 >
-                  <User className="h-5 w-5 gdyup-icon" />
+                  <User className={isActive('/gdyup/profile') ? "h-5 w-5 text-black" : "h-5 w-5 text-white"} />
                   <span>{user?.email?.split('@')[0] || 'Profile'}</span>
                 </button>
                 
                 {profileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-[#DAFF0D]/20 border border-gray-700 z-50">
+                  <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-[#DAFF0D]/20 border border-gray-700 z-50 profile-menu">
                     <div className="py-1">
                       <a 
                         href="/gdyup/profile" 
@@ -219,7 +219,7 @@ export default function GdyupHeader() {
                           window.location.href = '/gdyup/profile';
                         }}
                       >
-                        <User className="h-5 w-5 mr-2 gdyup-icon" />
+                        <User className="h-5 w-5 mr-2 text-white" />
                         <span>Edit Profile</span>
                       </a>
                       
@@ -232,7 +232,7 @@ export default function GdyupHeader() {
                           window.location.href = '/gdyup/dashboard';
                         }}
                       >
-                        <BarChart4 className="h-5 w-5 mr-2 gdyup-icon" />
+                        <BarChart4 className="h-5 w-5 mr-2 text-white" />
                         <span>Dashboard</span>
                       </a>
                       
@@ -245,7 +245,7 @@ export default function GdyupHeader() {
                           window.location.href = '/';
                         }}
                       >
-                        <ChevronLeft className="h-5 w-5 mr-2 gdyup-icon" />
+                        <ChevronLeft className="h-5 w-5 mr-2 text-white" />
                         <span>Back to JetStream</span>
                       </a>
                       
@@ -257,7 +257,7 @@ export default function GdyupHeader() {
                         }}
                         className="flex w-full px-4 py-2 text-sm text-[#FF4B47] hover:bg-red-900/30 hover:text-[#FF6B67]"
                       >
-                        <LogOut className="h-5 w-5 mr-2 gdyup-icon" />
+                        <LogOut className="h-5 w-5 mr-2 text-[#FF4B47]" />
                         <span>Sign Out</span>
                       </button>
                     </div>
@@ -272,7 +272,7 @@ export default function GdyupHeader() {
                   onClick={handleSignIn}
                   className="text-white hover:text-[#DAFF0D] hover:bg-gray-800"
                 >
-                  <LogIn className="h-4 w-4 mr-2 gdyup-icon" />
+                  <LogIn className="h-4 w-4 mr-2 text-white" />
                   Sign In
                 </Button>
                 
@@ -281,7 +281,7 @@ export default function GdyupHeader() {
                   size="sm"
                   className="gdyup-button hover:brightness-110"
                 >
-                  <UserPlus className="h-4 w-4 mr-2 gdyup-icon" />
+                  <UserPlus className="h-4 w-4 mr-2 text-black" />
                   Sign Up
                 </Button>
               </div>
@@ -296,6 +296,7 @@ export default function GdyupHeader() {
                 size="sm"
                 className="gdyup-button hover:brightness-110"
               >
+                <UserPlus className="h-4 w-4 mr-2 text-black" />
                 Sign Up
               </Button>
             )}
@@ -309,9 +310,9 @@ export default function GdyupHeader() {
               }}
             >
               {mobileMenuOpen ? (
-                <X className="h-6 w-6 gdyup-icon" />
+                <X className="h-6 w-6 text-white" />
               ) : (
-                <Menu className="h-6 w-6 gdyup-icon" />
+                <Menu className="h-6 w-6 text-white" />
               )}
             </button>
           </div>
@@ -319,7 +320,7 @@ export default function GdyupHeader() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="mt-4 space-y-2 md:hidden">
+          <nav className="mt-4 space-y-2 md:hidden mobile-menu">
             {menuItems.map((item) => {
               // Use button for all navigation items in mobile view too
               return (
@@ -343,7 +344,7 @@ export default function GdyupHeader() {
                       : "text-white hover:bg-gray-800 hover:text-[#DAFF0D]"
                   )}
                 >
-                  {item.icon}
+                  {item.icon(isActive(item.path))}
                   <span>{item.name}</span>
                 </button>
               );
@@ -368,7 +369,10 @@ export default function GdyupHeader() {
                     window.location.href = '/gdyup/profile';
                   }}
                 >
-                  <User className="h-5 w-5 gdyup-icon" />
+                  {isActive('/gdyup/profile') ? 
+                    <User className="h-5 w-5 text-black" /> : 
+                    <User className="h-5 w-5 text-white" />
+                  }
                   <span>Profile</span>
                 </a>
                 
@@ -386,7 +390,10 @@ export default function GdyupHeader() {
                     window.location.href = '/gdyup/dashboard';
                   }}
                 >
-                  <BarChart4 className="h-5 w-5 gdyup-icon" />
+                  {isActive('/gdyup/dashboard') ? 
+                    <BarChart4 className="h-5 w-5 text-black" /> : 
+                    <BarChart4 className="h-5 w-5 text-white" />
+                  }
                   <span>Dashboard</span>
                 </a>
                 
@@ -399,7 +406,7 @@ export default function GdyupHeader() {
                     window.location.href = '/';
                   }}
                 >
-                  <ChevronLeft className="h-5 w-5 gdyup-icon" />
+                  <ChevronLeft className="h-5 w-5 text-white" />
                   <span>Back to JetStream</span>
                 </a>
                 
@@ -409,9 +416,9 @@ export default function GdyupHeader() {
                     setMobileMenuOpen(false);
                     handleSignOut(e);
                   }}
-                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-[#FF4B47] hover:bg-red-900/30 hover:text-[#FF6B67]"
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-[#FF4B47]"
                 >
-                  <LogOut className="h-5 w-5 gdyup-icon" />
+                  <LogOut className="h-5 w-5 text-white" />
                   <span>Sign Out</span>
                 </button>
               </>
@@ -425,7 +432,7 @@ export default function GdyupHeader() {
                   }}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-gray-800 hover:text-[#DAFF0D]"
                 >
-                  <LogIn className="h-5 w-5 gdyup-icon" />
+                  <LogIn className="h-5 w-5 text-white" />
                   <span>Sign In</span>
                 </button>
                 
@@ -437,7 +444,7 @@ export default function GdyupHeader() {
                   }}
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium gdyup-button"
                 >
-                  <UserPlus className="h-5 w-5 gdyup-icon" />
+                  <UserPlus className="h-5 w-5 text-black" />
                   <span>Sign Up</span>
                 </button>
               </>

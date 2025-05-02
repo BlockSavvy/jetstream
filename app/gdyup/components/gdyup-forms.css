@@ -17,8 +17,19 @@
 
 /* Enhanced icon styling */
 .gdyup-icon {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  /* Remove color and stroke declarations so they can be overridden by context */
+}
+
+/* .gdyup-icon in specific contexts */
+button:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
+a:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
+.gdyup-form .gdyup-icon {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+  fill: none !important;
 }
 
 .gdyup-button-primary .gdyup-icon {
@@ -759,6 +770,143 @@ button:has(.lucide-filter) svg {
   --text-muted: #D0D0D0;
 }
 
+/* ====== ICON VISIBILITY - PROFESSIONAL STYLING ====== */
+
+/* Default styling for icons - clean and professional */
+.gdyup-icon {
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  /* Remove color and stroke declarations so they can be overridden by context */
+}
+
+/* .gdyup-icon in specific contexts */
+button:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
+a:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
+.gdyup-form .gdyup-icon {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+  fill: none !important;
+}
+
+/* CRITICAL FIX: Proper contrast for yellow background elements */
+.bg-\[\#DAFF0D\] svg,
+.bg-\[\#DAFF0D\] span,
+.bg-\[\#DAFF0D\] .gdyup-icon,
+button.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] .gdyup-icon,
+a.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] .gdyup-icon,
+[class*="gdyup-button"] svg,
+[class*="gdyup-button"] span,
+[class*="gdyup-button"] .gdyup-icon,
+[style*="background-color: #DAFF0D"] svg,
+[style*="background: #DAFF0D"] svg,
+[style*="background-color:#DAFF0D"] svg,
+[style*="background:#DAFF0D"] svg,
+nav button.bg-\[\#DAFF0D\] svg,
+header button.bg-\[\#DAFF0D\] svg,
+.mobile-menu button.bg-\[\#DAFF0D\] svg {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+}
+
+/* Mobile menu specific fixes */
+.mobile-menu .bg-\[\#DAFF0D\] svg,
+.mobile-menu .bg-\[\#DAFF0D\] span,
+.mobile-menu .bg-\[\#DAFF0D\] .gdyup-icon,
+.mobile-menu button.bg-\[\#DAFF0D\] svg,
+.mobile-menu button.bg-\[\#DAFF0D\] span,
+.mobile-menu button.bg-\[\#DAFF0D\] .gdyup-icon {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+}
+
+/* Mobile menu button text */
+.mobile-menu button span {
+  font-weight: 500 !important;
+}
+
+/* Specific color override for red sign-out button */
+.text-\[\#FF4B47\] svg,
+[class*="text-[#FF4B47]"] svg {
+  color: #FF4B47 !important;
+  stroke: #FF4B47 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+}
+
+/* Remove any amateur glow effects */
+svg {
+  filter: none !important;
+}
+
+/* ====== CLEAN PROFESSIONAL ICON STYLING ====== */
+
+/* Default navigation icon styling - clean, professional lime green */
+.gdyup-icon, 
+header button:not(.bg-\[\#DAFF0D\]) svg,
+header nav button:not(.bg-\[\#DAFF0D\]) svg,
+header a:not(.bg-\[\#DAFF0D\]) svg {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important; /* No glow effect */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Clean, professional black icons on lime background */
+.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] svg,
+.gdyup-button svg,
+.gdyup-button-primary svg {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important; /* No glow effect */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Consistent clean styling for text alongside icons */
+.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] span,
+.gdyup-button span,
+.gdyup-button-primary span {
+  color: black !important;
+  font-weight: 500 !important;
+  text-shadow: none !important; /* No text shadow */
+}
+
+/* Clean, sharp menu item styles */
+header button, 
+header nav button,
+.mobile-menu button,
+.profile-menu a {
+  transition: all 0.2s ease;
+}
+
+/* Red button/link styling */
+[class*="text-[#FF4B47]"] svg,
+[class*="text-[#FF4B47]"] span {
+  color: #FF4B47 !important;
+  stroke: #FF4B47 !important;
+  stroke-width: 2px !important;
+}
+
 /* ====== ICON VISIBILITY RULES - Comprehensive styling for all icons ====== */
 
 /* Default icon styling - lime green with shadow for visibility */
@@ -790,34 +938,48 @@ button.bg-[#DAFF0D] svg,
   stroke-width: 2px !important;
 }
 
-/* Active menu items - ensure black text on lime background */
-.bg-gray-800.text-\[\#DAFF0D\],
-[class*="active"].bg-[#DAFF0D],
-[data-state="active"],
-button[data-state="active"],
-.text-\[\#DAFF0D\].bg-gray-800,
-nav button.bg-\[\#DAFF0D\],
-nav a.bg-\[\#DAFF0D\],
-.gdyup-button {
+/* Active menu items - ensure black text and icons on lime background */
+.bg-\[\#DAFF0D\] svg,
+.bg-\[\#DAFF0D\] span,
+.bg-\[\#DAFF0D\] .gdyup-icon,
+button.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] .gdyup-icon,
+a.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] .gdyup-icon {
   color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  filter: none !important;
 }
 
-/* Active menu item text specifically */
-.bg-gray-800.text-\[\#DAFF0D\] span,
-[class*="active"].bg-[#DAFF0D] span,
-button[data-state="active"] span,
-.text-\[\#DAFF0D\].bg-gray-800 span {
+/* Active state and text in navigation specific */
+nav button.bg-\[\#DAFF0D\] svg,
+nav button.bg-\[\#DAFF0D\] span,
+nav button.bg-\[\#DAFF0D\] .gdyup-icon,
+nav a.bg-\[\#DAFF0D\] svg,
+nav a.bg-\[\#DAFF0D\] span,
+nav a.bg-\[\#DAFF0D\] .gdyup-icon,
+[class*="active"].bg-\[\#DAFF0D\] svg,
+[class*="active"].bg-\[\#DAFF0D\] span,
+[class*="active"].bg-\[\#DAFF0D\] .gdyup-icon,
+button[data-state="active"] svg,
+button[data-state="active"] span {
   color: black !important;
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
 }
 
 /* Menu icon specific styling with higher specificity */
 button svg.lucide-menu,
 .gdyup-header-menu svg.lucide-menu,
 header button svg.lucide-menu {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
   stroke-width: 2.5px !important;
-  filter: drop-shadow(0 0 5px rgba(218, 255, 13, 0.7)) !important;
+  filter: none !important;
 }
 
 /* Special case for filter icon with higher specificity */
@@ -855,4 +1017,545 @@ nav [role="menuitem"] svg {
   filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
 }
 
-/* ====== Existing Dialog styling - Enhanced ====== */ 
+/* ====== Existing Dialog styling - Enhanced ====== */
+
+/* Dialog close button styling - ensure it's visible against any background */
+button[data-dialog-close],
+.gdyup-dialog [data-dialog-close],
+.gdyup-dialog [aria-label="Close"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #333333 !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: absolute !important;
+  z-index: 100 !important;
+  top: 8px !important;
+  right: 8px !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Add specific styling for close button icon */
+button[data-dialog-close] svg,
+.gdyup-dialog [data-dialog-close] svg,
+.gdyup-dialog [aria-label="Close"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 3px !important;
+  width: 16px !important;
+  height: 16px !important;
+  filter: none !important;
+}
+
+/* ====== NAVIGATION SPECIFIC ICON STYLES ====== */
+
+/* Ensure all navigation icons are visible with specific targeting */
+header nav button svg,
+header nav a svg,
+.gdyup-header-menu svg,
+nav [role="menuitem"] svg,
+header .gdyup-icon {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure black icons on yellow background for active state in navigation */
+header nav button.bg-\[\#DAFF0D\] svg,
+header nav a.bg-\[\#DAFF0D\] svg,
+nav button.bg-\[\#DAFF0D\] svg,
+nav a.bg-\[\#DAFF0D\] svg {
+  color: black !important;
+  stroke: black !important;
+  filter: none !important;
+  stroke-width: 2.5px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Make non-active navigation icons more visible */
+header button:not(.bg-\[\#DAFF0D\]) svg,
+header a:not(.bg-\[\#DAFF0D\]) svg,
+nav button:not(.bg-\[\#DAFF0D\]) svg,
+nav a:not(.bg-\[\#DAFF0D\]) svg {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5)) !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Specific style for mobile menu items */
+.mobile-menu button svg,
+.mobile-menu a svg,
+[class*="mobile"] button svg,
+[class*="mobile"] a svg {
+  color: var(--gdyup-primary) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Specific style for profile menu options */
+.profile-menu button svg,
+.profile-menu a svg,
+[data-state="open"] button svg,
+[data-state="open"] a svg {
+  color: var(--gdyup-primary) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* ====== DIRECT ICON FIXES FOR HEADER NAVIGATION ====== */
+
+/* Most specific targeting for inactive navigation icons - direct SVG fix */
+header button:not(.bg-\[\#DAFF0D\]) svg.lucide,
+header nav button:not(.bg-\[\#DAFF0D\]) svg.lucide,
+header a:not(.bg-\[\#DAFF0D\]) svg.lucide,
+.gdyup-header-menu svg.lucide,
+svg.lucide.gdyup-icon {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8)) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+}
+
+/* Override for text in icons - fix contrast */
+header button:not(.bg-\[\#DAFF0D\]) span,
+header nav button:not(.bg-\[\#DAFF0D\]) span {
+  color: white !important;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for specific SVG path elements inside icons */
+svg.lucide path,
+svg.lucide-plane path,
+svg.lucide-search path,
+svg.lucide-plane-takeoff path {
+  stroke: #DAFF0D !important;
+  stroke-width: 2.5px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ====== NAVIGATION BUTTONS STYLING ====== */
+
+/* Default state for navigation buttons - clean white text */
+header button:not(.bg-\[\#DAFF0D\]),
+header a:not(.bg-\[\#DAFF0D\]),
+nav button:not(.bg-\[\#DAFF0D\]),
+nav a:not(.bg-\[\#DAFF0D\]),
+.mobile-menu button:not(.bg-\[\#DAFF0D\]),
+.mobile-menu a:not(.bg-\[\#DAFF0D\]) {
+  color: white !important;
+  transition: all 0.2s ease;
+}
+
+/* Default state for icons in navigation - clean white icons without glow */
+header button:not(.bg-\[\#DAFF0D\]) svg,
+header a:not(.bg-\[\#DAFF0D\]) svg,
+nav button:not(.bg-\[\#DAFF0D\]) svg,
+nav a:not(.bg-\[\#DAFF0D\]) svg,
+.mobile-menu button:not(.bg-\[\#DAFF0D\]) svg,
+.mobile-menu a:not(.bg-\[\#DAFF0D\]) svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Hover state for inactive nav buttons */
+header button:not(.bg-\[\#DAFF0D\]):hover,
+header a:not(.bg-\[\#DAFF0D\]):hover,
+nav button:not(.bg-\[\#DAFF0D\]):hover,
+nav a:not(.bg-\[\#DAFF0D\]):hover,
+.mobile-menu button:not(.bg-\[\#DAFF0D\]):hover,
+.mobile-menu a:not(.bg-\[\#DAFF0D\]):hover {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: #DAFF0D !important;
+  text-decoration: none !important;
+}
+
+/* Hover state for icons in inactive buttons */
+header button:not(.bg-\[\#DAFF0D\]):hover svg,
+header a:not(.bg-\[\#DAFF0D\]):hover svg,
+nav button:not(.bg-\[\#DAFF0D\]):hover svg,
+nav a:not(.bg-\[\#DAFF0D\]):hover svg,
+.mobile-menu button:not(.bg-\[\#DAFF0D\]):hover svg,
+.mobile-menu a:not(.bg-\[\#DAFF0D\]):hover svg {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+}
+
+/* Active navigation buttons - yellow bg with black text and subtle highlight */
+.bg-\[\#DAFF0D\],
+button.bg-\[\#DAFF0D\],
+a.bg-\[\#DAFF0D\],
+header button.bg-\[\#DAFF0D\],
+header a.bg-\[\#DAFF0D\],
+nav button.bg-\[\#DAFF0D\],
+nav a.bg-\[\#DAFF0D\],
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  background-color: #DAFF0D !important;
+  color: black !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+  border: none !important;
+  font-weight: 500 !important;
+}
+
+/* Ensure all text in active buttons is black */
+.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] span {
+  color: black !important;
+  font-weight: 500 !important;
+}
+
+/* ====== MENU TEXT STYLING - CLEAN PROFESSIONAL LOOK ====== */
+
+/* Clean text styling for all navigation elements */
+header button span,
+header a span,
+nav button span,
+nav a span, 
+.mobile-menu button span,
+.mobile-menu a span {
+  color: #FFFFFF !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  font-weight: 500 !important;
+  filter: none !important;
+}
+
+/* Text styling for active yellow background buttons */
+.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] span,
+header .bg-\[\#DAFF0D\] span,
+header button.bg-\[\#DAFF0D\] span,
+header a.bg-\[\#DAFF0D\] span,
+nav .bg-\[\#DAFF0D\] span,
+nav button.bg-\[\#DAFF0D\] span,
+nav a.bg-\[\#DAFF0D\] span,
+.mobile-menu .bg-\[\#DAFF0D\] span,
+.mobile-menu button.bg-\[\#DAFF0D\] span,
+.mobile-menu a.bg-\[\#DAFF0D\] span {
+  color: #000000 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  font-weight: 600 !important;
+  filter: none !important;
+}
+
+/* Ensure all buttons have solid background colors without transparency */
+header button,
+header a,
+nav button,
+nav a,
+.mobile-menu button,
+.mobile-menu a {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Clean hover effects without blurs or glows */
+header button:hover span,
+header a:hover span,
+nav button:hover span,
+nav a:hover span,
+.mobile-menu button:hover span,
+.mobile-menu a:hover span {
+  color: #DAFF0D !important;
+  text-shadow: none !important;
+}
+
+/* Specific styling for Sign Out text */
+.text-\[\#FF4B47\] span,
+[class*="text-[#FF4B47]"] span {
+  color: #FF4B47 !important;
+  text-shadow: none !important;
+}
+
+/* Mobile menu specific styles - clean professional appearance */
+.mobile-menu button,
+.mobile-menu a {
+  padding: 0.5rem 0.75rem !important;
+  margin: 0.25rem 0 !important;
+  border-radius: 6px !important;
+  height: auto !important;
+}
+
+/* Clean active state for mobile menu */
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  background-color: #DAFF0D !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Clean hover state for mobile menu */
+.mobile-menu button:hover,
+.mobile-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix for backdrop and transparency issues */
+.mobile-menu {
+  padding: 0.75rem !important;
+  background-color: #000000 !important; 
+  margin-top: 0.5rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Ensure all icons are crisp without blurring or fading */
+svg {
+  filter: none !important;
+  opacity: 1 !important;
+  text-rendering: geometricPrecision !important;
+  shape-rendering: geometricPrecision !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+/* Remove any blur or backdrop filters from all elements */
+* {
+  text-rendering: optimizeLegibility !important;
+  -webkit-font-smoothing: antialiased !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ====== ENHANCED BUTTON STYLING ====== */
+
+/* Add thin border to all navigation buttons in inactive state */
+header button:not(.bg-\[\#DAFF0D\]),
+header a:not(.bg-\[\#DAFF0D\]),
+nav button:not(.bg-\[\#DAFF0D\]),
+nav a:not(.bg-\[\#DAFF0D\]),
+.mobile-menu button:not(.bg-\[\#DAFF0D\]),
+.mobile-menu a:not(.bg-\[\#DAFF0D\]) {
+  border: 1px solid rgba(218, 255, 13, 0.2) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Hover state for inactive buttons */
+header button:not(.bg-\[\#DAFF0D\]):hover,
+header a:not(.bg-\[\#DAFF0D\]):hover,
+nav button:not(.bg-\[\#DAFF0D\]):hover,
+nav a:not(.bg-\[\#DAFF0D\]):hover,
+.mobile-menu button:not(.bg-\[\#DAFF0D\]):hover,
+.mobile-menu a:not(.bg-\[\#DAFF0D\]):hover {
+  border-color: rgba(218, 255, 13, 0.6) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Active buttons - more defined */
+.bg-\[\#DAFF0D\],
+button.bg-\[\#DAFF0D\],
+a.bg-\[\#DAFF0D\],
+header .bg-\[\#DAFF0D\],
+header button.bg-\[\#DAFF0D\],
+header a.bg-\[\#DAFF0D\],
+nav .bg-\[\#DAFF0D\],
+nav button.bg-\[\#DAFF0D\],
+nav a.bg-\[\#DAFF0D\],
+.mobile-menu .bg-\[\#DAFF0D\],
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  font-weight: 600 !important;
+}
+
+/* Style for Profile and Dashboard menu items to make them look like buttons */
+a[href="/gdyup/profile"],
+a[href="/gdyup/dashboard"],
+.mobile-menu a[href="/gdyup/profile"],
+.mobile-menu a[href="/gdyup/dashboard"] {
+  border-radius: 6px !important;
+  padding: 0.5rem 0.75rem !important;
+  margin: 0.25rem 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* Special styling for Back to JetStream button */
+a[href="/"],
+.mobile-menu a[href="/"] {
+  border: 1px solid rgba(218, 255, 13, 0.2) !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 0.75rem !important;
+  margin: 0.25rem 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Special styling for Sign Out button */
+.text-\[\#FF4B47\],
+button.text-\[\#FF4B47\],
+[class*="text-[#FF4B47]"] {
+  border: 1px solid rgba(255, 75, 71, 0.2) !important;
+  background-color: rgba(255, 75, 71, 0.05) !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 0.75rem !important;
+  margin: 0.25rem 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Hover state for Sign Out button */
+.text-\[\#FF4B47\]:hover,
+button.text-\[\#FF4B47\]:hover,
+[class*="text-[#FF4B47]"]:hover {
+  background-color: rgba(255, 75, 71, 0.15) !important;
+  border-color: rgba(255, 75, 71, 0.6) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Refinement for desktop navigation buttons */
+header nav button,
+header nav a {
+  padding: 0.4rem 0.75rem !important;
+  height: auto !important;
+  margin: 0 0.15rem !important;
+  border-radius: 6px !important;
+}
+
+/* Ensure consistent spacing for icon and text */
+button svg,
+a svg {
+  margin-right: 0.5rem !important;
+}
+
+/* ====== STANDARDIZED BUTTON STYLING ====== */
+
+/* Base styling for all menu buttons - consistent sizing/alignment */
+.mobile-menu button,
+.mobile-menu a {
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0.5rem 0 !important;
+  border-radius: 8px !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid rgba(218, 255, 13, 0.15) !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Consistent text styling for all buttons */
+.mobile-menu button span,
+.mobile-menu a span {
+  flex: 1 !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+}
+
+/* Icon positioning */
+.mobile-menu button svg,
+.mobile-menu a svg {
+  flex-shrink: 0 !important;
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 12px !important;
+}
+
+/* Active state for buttons - same height, width and alignment */
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  background-color: #DAFF0D !important;
+  color: black !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Fixed Sign Out button styling */
+.mobile-menu button.text-\[\#FF4B47\],
+.mobile-menu a.text-\[\#FF4B47\],
+.mobile-menu [class*="text-[#FF4B47]"] {
+  color: white !important;
+  background-color: rgba(255, 75, 71, 0.8) !important;
+  border: 1px solid rgba(255, 75, 71, 0.3) !important;
+}
+
+/* Sign Out button text and icon */
+.mobile-menu button.text-\[\#FF4B47\] span,
+.mobile-menu a.text-\[\#FF4B47\] span,
+.mobile-menu [class*="text-[#FF4B47]"] span {
+  color: white !important;
+}
+
+.mobile-menu button.text-\[\#FF4B47\] svg,
+.mobile-menu a.text-\[\#FF4B47\] svg,
+.mobile-menu [class*="text-[#FF4B47]"] svg {
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Consistent hover effect for all buttons */
+.mobile-menu button:hover:not(.bg-\[\#DAFF0D\]):not(.text-\[\#FF4B47\]),
+.mobile-menu a:hover:not(.bg-\[\#DAFF0D\]):not(.text-\[\#FF4B47\]) {
+  background-color: rgba(218, 255, 13, 0.1) !important;
+  border-color: rgba(218, 255, 13, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Hover effect for Sign Out button */
+.mobile-menu button.text-\[\#FF4B47\]:hover,
+.mobile-menu a.text-\[\#FF4B47\]:hover,
+.mobile-menu [class*="text-[#FF4B47]"]:hover {
+  background-color: rgba(255, 75, 71, 1) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Ensure proper vertical spacing between button groups */
+.mobile-menu .h-px {
+  height: 1px !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  margin: 0.75rem 0 !important;
+  width: 100% !important;
+}
+
+/* Clean up mobile close button */
+button[aria-label="Close"] {
+  padding: 0.5rem !important;
+  border: 1px solid rgba(255, 166, 0, 0.5) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  border-radius: 8px !important;
+}
+
+button[aria-label="Close"] svg {
+  color: orange !important;
+  stroke: orange !important;
+} 

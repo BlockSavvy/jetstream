@@ -25,7 +25,8 @@ import {
   MoreVertical,
   LoaderCircle,
   RefreshCw,
-  Clock
+  Clock,
+  Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -888,182 +889,230 @@ export default function JetShareListingsContent() {
   
   // Function to get a valid jet image URL with fallbacks
   const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
-    // Log debug information
-    console.log('Offer debug for image URL:', {
-      id: offer.id,
-      aircraft_model: offer.aircraft_model || '',
-      jet_id: offer.jet_id,
-      has_jet: !!offer.jet,
-      jet_details: offer.jet ? {
-        id: offer.jet.id,
-        model: offer.jet.model,
-        manufacturer: offer.jet.manufacturer,
-        image_url: offer.jet.image_url,
-        has_images_array: !!offer.jet.images && offer.jet.images.length > 0
-      } : null
-    });
+    console.log(`Getting image for offer ${offer.id}`);
     
-    // Use proper cascading fallbacks in order of preference:
-    
-    // 1. First, check if the offer has a direct image_url property
+    // Priority 1: Direct image_url from the offer itself
     if (offer.image_url) {
       console.log(`Using direct image_url from offer: ${offer.image_url}`);
       return offer.image_url;
     }
     
-    // 2. Next, try to get the image from the jet relation
+    // Priority 2: Get from the jet relation
     if (offer.jet) {
-      // 2a. Check for direct image_url on the jet
+      // Check for direct image_url on the jet - this should be the main source
       if (offer.jet.image_url) {
         console.log(`Using image_url from jet object: ${offer.jet.image_url}`);
         return offer.jet.image_url;
       }
       
-      // 2b. Check for images array on the jet
+      // Check for images array on the jet (alternative field)
       if (offer.jet.images && offer.jet.images.length > 0) {
         console.log(`Using first image from jet.images array: ${offer.jet.images[0]}`);
         return offer.jet.images[0];
       }
       
-      // 2c. Construct path from manufacturer and model if available
+      // If we have manufacturer and model but no image, use simple path construction
       if (offer.jet.manufacturer && offer.jet.model) {
-        const manufacturer = offer.jet.manufacturer.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const model = offer.jet.model.toLowerCase().replace(/[^a-z0-9]/g, '');
-        const path = `/images/jets/${manufacturer}/${model}.jpg`;
-        console.log(`Constructed path from jet manufacturer/model: ${path}`);
-        return path;
+        // Use proper case for manufacturer (capitalize first letter)
+        const manufacturer = offer.jet.manufacturer.trim().toLowerCase();
+        const manufacturerFormatted = manufacturer.charAt(0).toUpperCase() + manufacturer.slice(1);
+        
+        // Use model directly, preserving case and spacing
+        const model = offer.jet.model.trim();
+        
+        // Try with different capitalizations
+        const paths = [
+          `/images/jets/${manufacturerFormatted}/${model}.jpg`,
+          `/images/jets/${manufacturer}/${model}.jpg`,
+          `/images/jets/${manufacturer.toLowerCase()}/${model}.jpg`
+        ];
+        
+        console.log(`Trying multiple paths for manufacturer/model: ${paths[0]}`);
+        return paths[0]; // Return the first path, but the img tag will have onerror handler
       }
     }
     
-    // 3. Final fallback - use the placeholder image
-    console.log('No suitable image found, using placeholder');
+    // Priority 3: Use aircraft_model field to build a path
+    if (offer.aircraft_model) {
+      try {
+        const parts = offer.aircraft_model.split(' ');
+        if (parts.length > 1) {
+          // Get manufacturer and capitalize first letter
+          const manufacturer = parts[0].trim();
+          const manufacturerProper = manufacturer.charAt(0).toUpperCase() + manufacturer.slice(1);
+          
+          // Get model (rest of the string) preserving original format
+          const model = parts.slice(1).join(' ').trim();
+          
+          // Standard path format
+          const path = `/images/jets/${manufacturerProper}/${model}.jpg`;
+          console.log(`Using aircraft_model path: ${path}`);
+          return path;
+        }
+      } catch (e) {
+        console.warn('Error building path from aircraft_model:', e);
+      }
+    }
+    
+    // Final fallback - use a standard default image that exists in the project
+    console.log('No specific image found, using default');
     return '/images/placeholder-jet.jpg';
   };
   
   // Render flight share cards
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
     <Card 
-      key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
-      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer relative bg-gray-900 border border-gray-800 gdyup-card"
-      onClick={() => !offer.isOwnOffer && handleOfferAccept(offer)}
+      key={offer.id} 
+      className="bg-gray-900 border-gray-800 overflow-hidden hover:border-gray-700 transition-all cursor-pointer hover:shadow-md gdyup-form"
+      onClick={() => {
+        setSelectedOffer(offer);
+        setShowDetailDialog(true);
+      }}
     >
-      {/* Add background image based on aircraft model */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 z-0"
-        style={{ 
-          backgroundImage: `url(${getJetImageUrl(offer)})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'brightness(0.8) contrast(1.2)'
-        }}
-        aria-hidden="true"
-      />
-      {/* Add semi-transparent gradient overlay for better text readability */}
-      <div 
-        className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-800/60 to-gray-900/80 z-0"
-        aria-hidden="true"
-      />
-      
-      <div className="relative z-10">
-        {offer.isOwnOffer && (
-          <div className="absolute top-0 right-0 m-2 z-10">
-            <Badge className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] font-semibold shadow-[0_0_8px_rgba(218,255,13,0.5)] gdyup-badge">
-              Your Listing
-            </Badge>
-          </div>
-        )}
-        <CardHeader className="p-4 pb-2">
+      <div className="flex flex-col h-full">
+        {/* Card hero - with background image and info overlay */}
+        <div className="relative h-40 bg-gray-800 overflow-hidden">
+          {/* Background image with fallback handling */}
+          <img
+            src={getJetImageUrl(offer)}
+            alt={offer.aircraft_model || "Private Jet"}
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={(e) => {
+              // If the specific image fails, try a series of fallbacks
+              const target = e.currentTarget;
+              
+              // Try some known fallbacks that might exist
+              const fallbacks = [
+                '/images/jets/gulfstream/G650.jpg',
+                '/images/jets/gulfstream/g650.jpg',
+                '/images/jets/Gulfstream/G650.jpg',
+                '/images/placeholder-jet.jpg'
+              ];
+              
+              // If not already on the last fallback, try the next one
+              const currentIndex = fallbacks.indexOf(target.src);
+              if (currentIndex < fallbacks.length - 1) {
+                console.log(`Image failed to load: ${target.src}, trying fallback`);
+                target.src = fallbacks[currentIndex + 1];
+              } else {
+                // If all fallbacks failed, use a gradient background instead
+                console.log('All image fallbacks failed, using gradient');
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.classList.add('bg-gradient-to-br', 'from-gray-700', 'to-gray-900');
+                }
+              }
+            }}
+          />
+          
+          {/* Gradient overlay for better text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-transparent pointer-events-none"></div>
+          
+          {/* Own offer badge */}
+          {offer.isOwnOffer && (
+            <div className="absolute top-2 right-2 z-20">
+              <Badge className="bg-[#DAFF0D] text-black border-transparent text-xs">Your Offer</Badge>
+            </div>
+          )}
+        </div>
+        
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-lg text-white">{offer.departure_location} to {offer.arrival_location}</CardTitle>
-              <CardDescription className="text-white">
-                <div className="flex flex-col mt-1">
-                  <div className="flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-1 gdyup-icon" />
-                    <span>{new Date(offer.flight_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center mt-1">
-                    <Clock className="h-3.5 w-3.5 mr-1 gdyup-icon" />
-                    <span>{offer.departure_time ? formatTime(offer.departure_time) : formatTime(offer.flight_date)}</span>
-                  </div>
-                </div>
+              <CardTitle className="text-base font-semibold gdyup-text-primary">
+                {offer.departure_location} to {offer.arrival_location}
+              </CardTitle>
+              <CardDescription className="text-gray-400 text-sm">
+                {new Date(offer.flight_date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
               </CardDescription>
             </div>
             <div className="text-right">
-              <div className="text-lg font-semibold text-[#DAFF0D] drop-shadow-[0_0_5px_rgba(218,255,13,0.3)] gdyup-text-primary">${offer.requested_share_amount.toLocaleString()}</div>
-              <div className="text-xs text-white">
-                {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}% of ${offer.total_flight_cost.toLocaleString()}
-              </div>
+              <p className="text-[#DAFF0D] font-medium">${offer.requested_share_amount.toLocaleString()}</p>
+              <p className="text-xs text-gray-400">
+                {offer.available_seats && offer.available_seats > 1
+                  ? `${offer.available_seats} seats left`
+                  : '1 seat left'}
+              </p>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-2">
-          <div className="flex items-center gap-2 mt-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-gray-800 text-white">
-                {offer.user?.first_name?.[0] || 'U'}
-                {offer.user?.last_name?.[0] || 'U'}
-              </AvatarFallback>
-              {offer.user?.avatar_url && (
-                <AvatarImage src={offer.user.avatar_url} alt={`${offer.user?.first_name || 'User'} ${offer.user?.last_name || ''}`} />
-              )}
-            </Avatar>
-            <span className="text-sm text-white">
-              {offer.isOwnOffer ? 'You' : (offer.user?.first_name ? `${offer.user.first_name} ${offer.user.last_name?.[0] || ''}` : 'Jet Owner')}
-              {(offer.user as UserWithVerification)?.verification_status === 'verified' && (
-                <CheckCircle className="h-3 w-3 text-[#DAFF0D] inline ml-1 gdyup-icon" />
-              )}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Users className="h-4 w-4 text-[#DAFF0D] gdyup-icon" />
-            <span className="text-sm text-white">{offer.available_seats} of {offer.total_seats} seats available</span>
-          </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Plane className="h-4 w-4 text-[#DAFF0D] gdyup-icon" />
-            <span className="text-sm text-white">{offer.aircraft_model || 'Aircraft info unavailable'}</span>
+        
+        <CardContent className="py-2">
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-start space-x-2">
+              <Users className="h-4 w-4 mt-0.5 text-gray-400" />
+              <div>
+                <p className="text-white font-medium">
+                  {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}%
+                </p>
+                <p className="text-xs text-gray-400">Share</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-2">
+              <Plane className="h-4 w-4 mt-0.5 text-gray-400" />
+              <div>
+                <p className="text-white font-medium">
+                  {offer.aircraft_model 
+                    ? offer.aircraft_model.split(' ').slice(0, 2).join(' ') 
+                    : offer.jet?.model || 'Private Jet'}
+                </p>
+                <p className="text-xs text-gray-400">Aircraft</p>
+              </div>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="p-4 pt-0">
-          {offer.isOwnOffer ? (
-            <div className="flex w-full gap-2">
+        
+        <div className="mt-auto">
+          <CardFooter className="pt-2">
+            {offer.isOwnOffer ? (
+              <div className="w-full grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gdyup-button-secondary"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card onClick from firing
+                    router.push(`/gdyup/offer/edit/${offer.id}`);
+                  }}
+                >
+                  <Pencil className="h-4 w-4 mr-2 gdyup-icon" />
+                  Edit
+                </Button>
+                <Button 
+                  className="gdyup-button-primary" 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card onClick from firing
+                    setSelectedOffer(offer);
+                    setShowDetailDialog(true);
+                  }}
+                >
+                  <Info className="h-4 w-4 mr-2 gdyup-icon" />
+                  Details
+                </Button>
+              </div>
+            ) : (
               <Button 
-                className="flex-1 gdyup-button-primary" 
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent card onClick from firing
-                  router.push(`/jetshare/create?edit=${offer.id}`);
-                }}
-              >
-                Edit Offer
-              </Button>
-              <Button 
-                className="flex-1 gdyup-button-secondary" 
+                className="w-full gdyup-button-primary" 
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent card onClick from firing
                   setSelectedOffer(offer);
-                  setShowDetailDialog(true);
+                  if (user) {
+                    setShowConfirmDialog(true);
+                  } else {
+                    setShowDetailDialog(true);
+                  }
                 }}
               >
                 View Details
               </Button>
-            </div>
-          ) : (
-            <Button 
-              className="w-full gdyup-button-primary" 
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent card onClick from firing
-                setSelectedOffer(offer);
-                if (user) {
-                  setShowConfirmDialog(true);
-                } else {
-                  setShowDetailDialog(true);
-                }
-              }}
-            >
-              View Details
-            </Button>
-          )}
-        </CardFooter>
+            )}
+          </CardFooter>
+        </div>
       </div>
     </Card>
   );
@@ -1263,7 +1312,7 @@ export default function JetShareListingsContent() {
             )}
           </h2>
           <div className="flex gap-2">
-            <Button onClick={() => router.push('/jetshare/offer')} className="gdyup-button-primary">
+            <Button onClick={() => router.push('/gdyup/offer/create')} className="gdyup-button-primary">
               Create Offer
             </Button>
           </div>
