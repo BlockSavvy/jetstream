@@ -2399,3 +2399,212 @@ button[data-ai-concierge="true"][style*="background"],
 .gdyup-theme-pink .ai-concierge-button[style*="background"] {
   background: #F7931A !important;
 }
+
+/* Primary button icons must always be black for contrast */
+.gdyup-primary-button svg,
+.bg-primary svg, 
+a.bg-primary svg,
+button.bg-primary svg,
+.bg-\[var\(--gdyup-primary\)\] svg,
+a.bg-\[var\(--gdyup-primary\)\] svg,
+button.bg-\[var\(--gdyup-primary\)\] svg,
+.gdyup-theme-default .gdyup-primary-button svg,
+.gdyup-theme-default .bg-primary svg,
+.gdyup-theme-pink .gdyup-primary-button svg,
+.gdyup-theme-pink .bg-primary svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Special case for blue theme which needs white icons instead for contrast */
+.gdyup-theme-blue .gdyup-primary-button svg,
+.gdyup-theme-blue .bg-primary svg,
+.gdyup-theme-blue a.bg-primary svg,
+.gdyup-theme-blue button.bg-primary svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Force the correct text colors on primary buttons */
+.gdyup-primary-button,
+.bg-primary,
+a.bg-primary,
+button.bg-primary,
+.gdyup-theme-default .gdyup-primary-button,
+.gdyup-theme-default .bg-primary,
+.gdyup-theme-pink .gdyup-primary-button,
+.gdyup-theme-pink .bg-primary {
+  color: #000000 !important;
+}
+
+.gdyup-theme-blue .gdyup-primary-button,
+.gdyup-theme-blue .bg-primary,
+.gdyup-theme-blue a.bg-primary,
+.gdyup-theme-blue button.bg-primary {
+  color: #FFFFFF !important;
+}
+
+/* Additional specificity for primary button icons - targeting nested elements */
+.bg-primary svg.lucide,
+.gdyup-primary-button svg.lucide,
+a.bg-primary svg.lucide,
+.bg-\[var\(--gdyup-primary\)\] svg.lucide,
+[class*="bg-primary"] svg,
+[class*="bg-\[var\(--gdyup-primary\)\]"] svg,
+a[class*="bg-primary"] svg,
+button[class*="bg-primary"] svg,
+a[href="/gdyup/offer"] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Target direct children of elements with bg-primary */
+.bg-primary > svg,
+.gdyup-primary-button > svg,
+a.bg-primary > svg,
+[class*="bg-primary"] > svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Target the path elements directly inside SVG */
+.bg-primary svg path,
+.gdyup-primary-button svg path,
+a.bg-primary svg path,
+[class*="bg-primary"] svg path,
+a[href="/gdyup/offer"] svg path {
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+}
+
+/* Add special case for luxury theme (blue) */
+.gdyup-theme-blue .bg-primary svg.lucide,
+.gdyup-theme-blue .gdyup-primary-button svg.lucide,
+.gdyup-theme-blue a.bg-primary svg.lucide,
+.gdyup-theme-blue [class*="bg-primary"] svg,
+.gdyup-theme-blue a[href="/gdyup/offer"] svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.gdyup-theme-blue .bg-primary svg path,
+.gdyup-theme-blue .gdyup-primary-button svg path,
+.gdyup-theme-blue a.bg-primary svg path,
+.gdyup-theme-blue [class*="bg-primary"] svg path,
+.gdyup-theme-blue a[href="/gdyup/offer"] svg path {
+  stroke: #FFFFFF !important;
+}
+
+/* ULTRA HIGH SPECIFICITY ICON FIX FOR PRIMARY BUTTONS - CRITICAL OVERRIDE */
+html body .gdyup-app [class*="bg-primary"] svg,
+html body .gdyup-app [class*="bg-primary"] svg *,
+html body .gdyup-app a.bg-primary svg,
+html body .gdyup-app a.bg-primary svg *,
+html body .gdyup-app button.bg-primary svg,
+html body .gdyup-app button.bg-primary svg *,
+html body .gdyup-app a[href="/gdyup/offer"] svg,
+html body .gdyup-app a[href="/gdyup/offer"] svg *,
+html body .gdyup-app a[class*="bg-primary"] svg,
+html body .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg,
+html body .gdyup-app [class*="inline-flex"][class*="justify-center"][class*="bg-primary"] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Direct path override with maximum specificity */
+html body .gdyup-app [class*="bg-primary"] svg path,
+html body .gdyup-app a.bg-primary svg path,
+html body .gdyup-app button.bg-primary svg path,
+html body .gdyup-app a[href="/gdyup/offer"] svg path {
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+}
+
+/* Extremely specific selectors for the luxury blue theme */
+html body .gdyup-theme-blue .gdyup-app [class*="bg-primary"] svg,
+html body .gdyup-theme-blue .gdyup-app [class*="bg-primary"] svg *,
+html body .gdyup-theme-blue .gdyup-app a.bg-primary svg,
+html body .gdyup-theme-blue .gdyup-app a.bg-primary svg *,
+html body .gdyup-theme-blue .gdyup-app button.bg-primary svg,
+html body .gdyup-theme-blue .gdyup-app button.bg-primary svg *,
+html body .gdyup-theme-blue .gdyup-app a[href="/gdyup/offer"] svg,
+html body .gdyup-theme-blue .gdyup-app a[href="/gdyup/offer"] svg *,
+html body .gdyup-theme-blue .gdyup-app a[class*="bg-primary"] svg,
+html body .gdyup-theme-blue .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+html body .gdyup-theme-blue .gdyup-app [class*="bg-primary"] svg path,
+html body .gdyup-theme-blue .gdyup-app a.bg-primary svg path,
+html body .gdyup-theme-blue .gdyup-app button.bg-primary svg path,
+html body .gdyup-theme-blue .gdyup-app a[href="/gdyup/offer"] svg path {
+  stroke: #FFFFFF !important;
+  stroke-width: 2px !important;
+}
+
+/* Direct targeting of inline SVG attributes for maximum compatibility */
+html body .gdyup-app [class*="bg-primary"] svg[stroke="currentColor"],
+html body .gdyup-app [class*="bg-primary"] [stroke="currentColor"],
+html body .gdyup-app a[class*="bg-primary"] svg[stroke="currentColor"],
+html body .gdyup-app a[href="/gdyup/offer"] svg[stroke="currentColor"],
+html body .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg[stroke="currentColor"] {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Target lucide icons specifically */
+html body .gdyup-app [class*="bg-primary"] svg.lucide,
+html body .gdyup-app [class*="bg-primary"] [class*="lucide"],
+html body .gdyup-app a[class*="bg-primary"] svg.lucide,
+html body .gdyup-app a[href="/gdyup/offer"] svg.lucide,
+html body .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg.lucide,
+html body .gdyup-app [class*="inline-flex"][class*="justify-center"][class*="bg-primary"] svg.lucide-share {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Target by exact class structure from example */
+html body .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg,
+html body .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg *,
+html body .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg,
+html body .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Specific variant for the blue theme */
+html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg,
+html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg *,
+html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg,
+html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg * {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
