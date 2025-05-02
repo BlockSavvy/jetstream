@@ -8,5 +8,11 @@
   "cleanUrls": true,
   "github": {
     "silent": true
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/update-embeddings",
+      "schedule": "*/15 * * * *"
+    }
+  ]
 } 
