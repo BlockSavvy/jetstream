@@ -1,12 +1,15 @@
 import { ReactNode } from 'react';
 import { ClientLayoutWrapper } from './client-layout-wrapper';
 import './gdyup.css';
+import './index.css';
+import './components/gdyup-forms.css';
+import './pwa-fixes.css';
 import type { Metadata, Viewport } from 'next';
 
 // Define PWA metadata for the GDYUP section
 export const metadata: Metadata = {
-  title: "GDY UP",
-  description: "Peer-to-peer flight splitting and luxury air travel experiences.",
+  title: 'GDY UP | Private Jet Sharing Platform',
+  description: 'Share private jets and reduce your flying costs',
   manifest: "/manifest.json",
   icons: [
     { rel: "apple-touch-icon", url: "/icons/gdyup-icon-192.png" },
@@ -32,7 +35,9 @@ export const viewport: Viewport = {
 export default function GdyupLayout({ children }: { children: ReactNode }) {
   return (
     <ClientLayoutWrapper>
-      {children}
+      <div className="gdyup-app">
+        {children}
+      </div>
     </ClientLayoutWrapper>
   );
 } 

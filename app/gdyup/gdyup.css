@@ -632,4 +632,332 @@ header a img[src*="gdyup-logo"] {
 /* Add drop shadow glow effect for airport map visualization */
 .drop-shadow-glow {
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+/* ====== NEW STYLES BELOW ====== */
+
+/* GDYUP JetShareOfferForm Specific Theming */
+/* Replace all blue/amber colors with GDYUP branding */
+
+/* Fix jet selector contrast issue */
+.gdyup-app .aircraft-model-field button,
+button[class*="TabsTrigger"] {
+  background-color: #151515 !important;
+  border: 1px solid #333333 !important;
+  color: #FFFFFF !important;
+}
+
+.gdyup-app .aircraft-model-field button[data-state="active"],
+button[class*="TabsTrigger"][data-state="active"] {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+  border-color: rgba(218, 255, 13, 0.4) !important;
+  font-weight: bold !important;
+}
+
+/* Improve contrast for selected items in dropdowns */
+.gdyup-app [data-state="active"] {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+  font-weight: bold !important;
+}
+
+/* Replace blue backgrounds in offer form */
+.gdyup-app .bg-blue-900\/30,
+.gdyup-app .bg-blue-900\/20,
+.gdyup-app .bg-blue-600\/30,
+.gdyup-app .bg-blue-500\/20,
+.gdyup-app [class*="bg-blue-"] {
+  background-color: rgba(218, 255, 13, 0.1) !important;
+  border-color: rgba(218, 255, 13, 0.3) !important;
+}
+
+/* Replace amber backgrounds */
+.gdyup-app .bg-amber-900\/30,
+.gdyup-app .bg-amber-600\/30,
+.gdyup-app .bg-amber-500\/20,
+.gdyup-app [class*="bg-amber-"] {
+  background-color: rgba(255, 75, 71, 0.1) !important; /* Using secondary color */
+  border-color: rgba(255, 75, 71, 0.3) !important;
+}
+
+/* Replace blue text colors */
+.gdyup-app .text-blue-300,
+.gdyup-app .text-blue-400,
+.gdyup-app .text-blue-500,
+.gdyup-app .text-blue-100,
+.gdyup-app [class*="text-blue-"] {
+  color: var(--gdyup-primary) !important;
+}
+
+/* Replace amber text colors */
+.gdyup-app .text-amber-300,
+.gdyup-app .text-amber-400,
+.gdyup-app .text-amber-500,
+.gdyup-app .text-amber-100,
+.gdyup-app [class*="text-amber-"] {
+  color: var(--gdyup-secondary) !important;
+}
+
+/* Border and focus replacements */
+.gdyup-app .border-blue-500\/30,
+.gdyup-app .border-blue-400,
+.gdyup-app .border-blue-700,
+.gdyup-app [class*="border-blue-"] {
+  border-color: rgba(218, 255, 13, 0.5) !important;
+}
+
+.gdyup-app .border-amber-500\/30,
+.gdyup-app .border-amber-400,
+.gdyup-app .border-amber-700,
+.gdyup-app [class*="border-amber-"] {
+  border-color: rgba(255, 75, 71, 0.5) !important;
+}
+
+/* Fix ring focus colors */
+.gdyup-app .ring-blue-500\/30,
+.gdyup-app .focus\:ring-blue-500:focus,
+.gdyup-app .focus-visible\:ring-blue-500:focus-visible,
+.gdyup-app [class*="ring-blue-"] {
+  --tw-ring-color: rgba(218, 255, 13, 0.3) !important;
+  --tw-ring-opacity: 0.3 !important;
+}
+
+/* Improved contrast for badge components */
+.gdyup-app .bg-blue-900\/20,
+.gdyup-app .bg-blue-900\/50 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  border: 1px solid rgba(218, 255, 13, 0.3) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* Fix hover effects */
+.gdyup-app .hover\:bg-blue-700:hover,
+.gdyup-app .hover\:bg-blue-600:hover,
+.gdyup-app .hover\:bg-gray-700:hover {
+  background-color: rgba(218, 255, 13, 0.2) !important;
+}
+
+.gdyup-app .hover\:text-blue-500:hover,
+.gdyup-app .hover\:text-white:hover {
+  color: var(--gdyup-primary) !important;
+}
+
+/* Fix form field focus */
+.gdyup-app .focus\:border-blue-500:focus,
+.gdyup-app .focus\:border-amber-500:focus {
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Fix specific backgrounds in jet selector */
+.gdyup-app .bg-gradient-to-r.from-blue-500,
+.gdyup-app .bg-gradient-to-b.from-blue-500 {
+  background: linear-gradient(to right, rgba(218, 255, 13, 0.7), rgba(218, 255, 13, 0.3)) !important;
+}
+
+.gdyup-app .bg-gradient-to-b.from-gray-900 {
+  background: linear-gradient(to bottom, #151515, #0F0F0F) !important;
+}
+
+/* Enhanced offer states styling */
+.gdyup-app .offer-status-open {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+  border: 1px solid rgba(218, 255, 13, 0.4) !important;
+  font-weight: bold !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .offer-status-pending {
+  background-color: rgba(255, 170, 13, 0.15) !important;
+  color: #FFAA0D !important;
+  border: 1px solid rgba(255, 170, 13, 0.4) !important;
+  font-weight: bold !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .offer-status-accepted {
+  background-color: rgba(0, 200, 83, 0.15) !important;
+  color: #00C853 !important;
+  border: 1px solid rgba(0, 200, 83, 0.4) !important;
+  font-weight: bold !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .offer-status-completed {
+  background-color: rgba(100, 100, 255, 0.15) !important;
+  color: #6464FF !important;
+  border: 1px solid rgba(100, 100, 255, 0.4) !important;
+  font-weight: bold !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .offer-status-cancelled {
+  background-color: rgba(255, 75, 71, 0.15) !important;
+  color: var(--gdyup-secondary) !important;
+  border: 1px solid rgba(255, 75, 71, 0.4) !important;
+  font-weight: bold !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.75rem !important;
+}
+
+/* Payment status styling */
+.gdyup-app .payment-status-unpaid {
+  background-color: rgba(255, 75, 71, 0.15) !important;
+  color: var(--gdyup-secondary) !important;
+  border: 1px solid rgba(255, 75, 71, 0.4) !important;
+  font-weight: bold !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .payment-status-pending {
+  background-color: rgba(255, 170, 13, 0.15) !important;
+  color: #FFAA0D !important;
+  border: 1px solid rgba(255, 170, 13, 0.4) !important;
+  font-weight: bold !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .payment-status-paid {
+  background-color: rgba(0, 200, 83, 0.15) !important;
+  color: #00C853 !important;
+  border: 1px solid rgba(0, 200, 83, 0.4) !important;
+  font-weight: bold !important;
+  font-size: 0.75rem !important;
+}
+
+.gdyup-app .payment-status-refunded {
+  background-color: rgba(100, 100, 255, 0.15) !important;
+  color: #6464FF !important;
+  border: 1px solid rgba(100, 100, 255, 0.4) !important;
+  font-weight: bold !important;
+  font-size: 0.75rem !important;
+}
+
+/* Fix specific Button colors in submit form */
+.gdyup-app button.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
+}
+
+.gdyup-app button.hover\:bg-\[\#C8EA00\]:hover {
+  background-color: #C8EA00 !important;
+  box-shadow: 0 0 15px rgba(200, 234, 0, 0.4) !important;
+}
+
+/* Enhanced Specific Element Selectors */
+
+/* Fix location autocomplete fields */
+.gdyup-app div[class*="LocationAutocomplete"] {
+  --input-border-color: #333333 !important;
+  --input-bg-color: rgba(0, 0, 0, 0.5) !important;
+  --input-text-color: white !important;
+  --input-focus-border: var(--gdyup-primary) !important;
+  --input-focus-ring: rgba(218, 255, 13, 0.3) !important;
+}
+
+/* Fix background issues in JetShareOfferForm */
+.gdyup-app form[class*="JetShareOfferForm"] {
+  --form-bg-color: #0A0A0A !important;
+  --form-card-bg: #151515 !important;
+  --form-input-bg: #202020 !important;
+  --form-border-color: #333333 !important;
+  --form-text-color: white !important;
+  --form-accent-color: var(--gdyup-primary) !important;
+}
+
+/* Fix specific JetSelector styling */
+.gdyup-app .aircraft-model-field button,
+.gdyup-app div[class*="JetSelector"] button {
+  text-align: left !important;
+  padding: 12px !important;
+  background-color: #151515 !important;
+  border: 1px solid #333333 !important;
+  color: white !important;
+  border-radius: 8px !important;
+}
+
+/* Fix dropdown list items in jet selector */
+.gdyup-app div[class*="Command"] [cmdk-item][data-selected="true"] {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+.gdyup-app div[class*="Command"] [cmdk-item]:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Fix tabs in the jet details card */
+.gdyup-app div[class*="Tabs"] [role="tablist"] {
+  background-color: #151515 !important;
+  border-color: #333333 !important;
+}
+
+.gdyup-app div[class*="Tabs"] [role="tab"][data-state="active"] {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* Fix selected element background in JetShareOfferForm */
+.gdyup-app .selected-aircraft {
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.2) !important;
+}
+
+/* Seat map overrides */
+.gdyup-app div[class*="JetSeatVisualizer"] [data-selected="true"],
+.gdyup-app div[class*="JetSeatVisualizer"] .bg-blue-500 {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Fix progress indicator dots */
+.gdyup-app .w-2.h-2.rounded-full.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 5px rgba(218, 255, 13, 0.6) !important;
+}
+
+/* Fix share ratio slider */
+.gdyup-app [class*="Slider"] span {
+  background-color: #333333 !important;
+}
+
+.gdyup-app [class*="Slider"] [data-orientation="horizontal"] > span {
+  height: 6px !important;
+  border-radius: 3px !important;
+}
+
+.gdyup-app [class*="Slider"] [data-orientation="horizontal"] > span > span {
+  background-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4) !important;
+}
+
+.gdyup-app [class*="Slider"] [role="slider"] {
+  background-color: var(--gdyup-primary) !important;
+  border: 2px solid black !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
+  width: 18px !important;
+  height: 18px !important;
 } 

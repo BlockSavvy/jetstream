@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
     // Execute query
     const { data, error } = await query;
     
+    console.log('Raw data fetched from jets table:', data);
+    
     if (error) {
       console.error('Error fetching jets from Supabase:', error);
       
@@ -88,8 +90,13 @@ export async function GET(request: NextRequest) {
     }
     
     if (!data || data.length === 0) {
-      console.log('No jets found in database, providing fallback data');
-      return await provideFallbackData(corsHeaders);
+      console.log('No jets found in database.');
+      // Return empty list instead of fallback
+      return NextResponse.json({ 
+        jets: [],
+        total: 0,
+        manufacturers: []
+      }, { status: 200, headers: corsHeaders });
     }
     
     console.log(`Successfully fetched ${data.length} jets`);
@@ -173,112 +180,12 @@ export async function GET(request: NextRequest) {
     }, { status: 200, headers: corsHeaders });
   } catch (error) {
     console.error('Unexpected error in getJets API:', error);
-    return await provideFallbackData(corsHeaders);
+    return NextResponse.json({ 
+      jets: [],
+      total: 0,
+      manufacturers: []
+    }, { status: 200, headers: corsHeaders });
   }
-}
-
-async function provideFallbackData(corsHeaders: any) {
-  console.log('Using fallback jet data');
-  
-  try {
-    // Try to get actual data from aircraft_models table
-    const supabase = createClient(
-      supabaseUrl,
-      serviceKey || supabaseKey
-    );
-    
-    const { data, error } = await supabase
-      .from('aircraft_models')
-      .select('*')
-      .limit(10);
-      
-    if (data && Array.isArray(data) && data.length > 0) {
-      console.log(`Using ${data.length} models from database as fallback`);
-      
-      // Convert aircraft_models data to the jets format
-      const fallbackJets = data.map((model, index) => ({
-        id: `fallback-${model.id || index}`,
-        manufacturer: model.manufacturer,
-        model: model.model,
-        tail_number: `N${index}JS`,
-        capacity: parseInt(model.capacity) || 8,
-        range_nm: parseInt(model.range_nm) || null,
-        cruise_speed_kts: parseInt(model.cruise_speed_kts) || null,
-        image_url: model.image_url || '/images/placeholder-jet.jpg',
-        description: model.description || `${model.manufacturer} ${model.model} aircraft`,
-        thumbnail_url: model.image_url || '/images/placeholder-jet.jpg',
-        manufacturer_logo: `/images/logos/${model.manufacturer.toLowerCase()}.png`,
-        is_popular: index < 3 // First 3 are marked as popular
-      }));
-      
-      const manufacturers = [...new Set(fallbackJets.map(jet => jet.manufacturer))].sort();
-      
-      return NextResponse.json({ 
-        jets: fallbackJets,
-        total: fallbackJets.length,
-        manufacturers: manufacturers
-      }, { status: 200, headers: corsHeaders });
-    }
-  } catch (err) {
-    console.error('Error fetching fallback data from aircraft_models:', err);
-  }
-  
-  // If database fallback failed, use static fallback data
-  console.log('Using static fallback data');
-  
-  // Provide minimal static fallback data when all else fails
-  const fallbackJets = [
-    { 
-      id: 'gulfstream-g650', 
-      manufacturer: 'Gulfstream', 
-      model: 'G650', 
-      tail_number: 'N1JS',
-      capacity: 19,
-      range_nm: 7000,
-      cruise_speed_kts: 516,
-      image_url: '/images/placeholder-jet.jpg',
-      description: 'Ultra-long-range business jet with exceptional comfort and performance.',
-      thumbnail_url: '/images/placeholder-jet.jpg',
-      manufacturer_logo: '/images/logos/gulfstream.png',
-      is_popular: true
-    },
-    { 
-      id: 'bombardier-global-7500', 
-      manufacturer: 'Bombardier', 
-      model: 'Global 7500', 
-      tail_number: 'N2JS',
-      capacity: 19,
-      range_nm: 7700,
-      cruise_speed_kts: 516,
-      image_url: '/images/placeholder-jet.jpg',
-      description: 'Ultra-long-range business jet with four living spaces.',
-      thumbnail_url: '/images/placeholder-jet.jpg',
-      manufacturer_logo: '/images/logos/bombardier.png',
-      is_popular: true
-    },
-    { 
-      id: 'embraer-phenom-300e', 
-      manufacturer: 'Embraer', 
-      model: 'Phenom 300E', 
-      tail_number: 'N3JS',
-      capacity: 10,
-      range_nm: 2010,
-      cruise_speed_kts: 453,
-      image_url: '/images/placeholder-jet.jpg',
-      description: 'Light business jet with exceptional performance and comfort.',
-      thumbnail_url: '/images/placeholder-jet.jpg',
-      manufacturer_logo: '/images/logos/embraer.png',
-      is_popular: true
-    }
-  ];
-  
-  const manufacturers = [...new Set(fallbackJets.map(jet => jet.manufacturer))].sort();
-  
-  return NextResponse.json({ 
-    jets: fallbackJets,
-    total: fallbackJets.length,
-    manufacturers: manufacturers
-  }, { status: 200, headers: corsHeaders });
 }
 
 // Handle OPTIONS requests for CORS preflight

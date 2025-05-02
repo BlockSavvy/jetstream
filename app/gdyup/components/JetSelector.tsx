@@ -43,6 +43,12 @@ interface Jet {
   cabin_width?: number | string;
   cabin_height?: number | string;
   cabin_length?: number | string;
+  interior_image_url?: string;
+  berths?: boolean;
+  lavatory?: boolean;
+  galley?: boolean;
+  entertainment?: string;
+  wifi?: boolean;
 }
 
 // Server-friendly props interface
@@ -321,6 +327,11 @@ function JetSelectorImpl({
           return;
         }
         
+        // *** ADD DETAILED LOGGING BEFORE FALLBACK ***
+        console.error('[JetSelector Fetch Error] All API fetch attempts failed. Error:', error);
+        setError('API Error: Could not load jet list. Using fallback data for selection.');
+        // *** END LOGGING ***
+        
         // If all attempts fail, use fallback data
         setError('Using fallback jet data - you can still select models');
         
@@ -420,6 +431,7 @@ function JetSelectorImpl({
   }, [value, jets]);
   
   // Filter the jets based on search, selected manufacturer, and owner
+  console.log('[JetSelector] Current jets state before filtering:', jets);
   const filteredJets = jets.filter(jet => {
     const displayName = jet.display_name || `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`;
     
@@ -442,90 +454,92 @@ function JetSelectorImpl({
   });
   
   // Modify the updateSelectedState function to include more detailed jet information
-  const updateSelectedState = (jet: Jet) => {
-    // Prevent re-entrancy
-    if (isUpdatingRef.current) return;
-    
+  const updateSelectedState = (jet: Jet | null) => {
+    console.log('[updateSelectedState] Called with jet:', jet);
+    if (!jet) {
+        console.error('[updateSelectedState] Received null or undefined jet object.');
+        // Ensure flag is reset if it was somehow set before early exit
+        // isUpdatingRef.current = false; 
+        return;
+    }
+
+    // Set the lock *here* 
+    if (isUpdatingRef.current) {
+        console.warn('[updateSelectedState] Update already in progress, skipping.');
+        return;
+    }
     isUpdatingRef.current = true;
-    
-    setSelectedJet(jet);
-    
-    // Use the safe image URL helper function
-    const imageUrl = getSafeImageUrl(jet);
-    
-    // Ensure numeric fields are properly parsed
-    const capacity = typeof jet.capacity === 'string' ? parseInt(jet.capacity) : jet.capacity;
-    const range = jet.range_nm ? (typeof jet.range_nm === 'string' ? parseInt(jet.range_nm) : jet.range_nm) : null;
-    const cruiseSpeed = jet.cruise_speed_kts ? (typeof jet.cruise_speed_kts === 'string' ? parseInt(jet.cruise_speed_kts) : jet.cruise_speed_kts) : null;
-    const maxAltitude = jet.max_altitude ? (typeof jet.max_altitude === 'string' ? parseInt(jet.max_altitude) : jet.max_altitude) : null;
-    const cabinWidth = jet.cabin_width ? (typeof jet.cabin_width === 'string' ? parseFloat(jet.cabin_width) : jet.cabin_width) : null;
-    const cabinHeight = jet.cabin_height ? (typeof jet.cabin_height === 'string' ? parseFloat(jet.cabin_height) : jet.cabin_height) : null;
-    const cabinLength = jet.cabin_length ? (typeof jet.cabin_length === 'string' ? parseFloat(jet.cabin_length) : jet.cabin_length) : null;
-    const year = jet.year ? (typeof jet.year === 'string' ? parseInt(jet.year) : jet.year) : null;
-    
-    // Log the jet data for debugging
-    console.log('Selected jet data:', {
-      id: jet.id,
-      manufacturer: jet.manufacturer,
-      model: jet.model,
-      capacity,
-      range,
-      cruiseSpeed,
-      tailNumber: jet.tail_number,
-      imageUrl
-    });
-    
-    // Dispatch the custom event with the full jet data
-    const jetChangeEvent = new CustomEvent('jetchange', {
-      detail: {
-        value: `${jet.manufacturer} ${jet.model}`,
-        jetId: jet.id,
-        seatCapacity: capacity,
-        range,
-        cruise_speed_kts: cruiseSpeed,
-        max_altitude: maxAltitude,
-        cabin_width: cabinWidth,
-        cabin_height: cabinHeight,
-        cabin_length: cabinLength,
-        year,
-        manufacturer: jet.manufacturer,
-        model: jet.model,
-        tail_number: jet.tail_number,
-        owner_id: jet.owner_id,
-        // Always use the safe image URL
-        image_url: imageUrl
-      }
-    });
-    
-    // Use setTimeout to break the update loop
-    setTimeout(() => {
-      window.dispatchEvent(jetChangeEvent);
-      // Reset flag after event is dispatched
-      isUpdatingRef.current = false;
-    }, 0);
+    console.log('[updateSelectedState] isUpdatingRef set to true.');
+
+    try {
+        console.log('[updateSelectedState] Setting selected jet state...');
+        setSelectedJet(jet);
+        console.log('[updateSelectedState] Getting safe image URL...');
+        const imageUrl = getSafeImageUrl(jet);
+
+        console.log('[updateSelectedState] Parsing numeric fields...');
+        const capacity = jet.capacity ? (typeof jet.capacity === 'string' ? parseInt(jet.capacity) : jet.capacity) : 0; // Default to 0 if missing
+        const range = jet.range_nm ? (typeof jet.range_nm === 'string' ? parseInt(jet.range_nm) : jet.range_nm) : null;
+        const cruiseSpeed = jet.cruise_speed_kts ? (typeof jet.cruise_speed_kts === 'string' ? parseInt(jet.cruise_speed_kts) : jet.cruise_speed_kts) : null;
+        const maxAltitude = jet.max_altitude ? (typeof jet.max_altitude === 'string' ? parseInt(jet.max_altitude) : jet.max_altitude) : null;
+        const cabinWidth = jet.cabin_width ? (typeof jet.cabin_width === 'string' ? parseFloat(jet.cabin_width) : jet.cabin_width) : null;
+        const cabinHeight = jet.cabin_height ? (typeof jet.cabin_height === 'string' ? parseFloat(jet.cabin_height) : jet.cabin_height) : null;
+        const cabinLength = jet.cabin_length ? (typeof jet.cabin_length === 'string' ? parseFloat(jet.cabin_length) : jet.cabin_length) : null;
+        const year = jet.year ? (typeof jet.year === 'string' ? parseInt(jet.year) : jet.year) : null;
+        console.log('[updateSelectedState] Numeric fields parsed successfully.');
+
+        const eventDetailPayload = {
+            value: `${jet.manufacturer || 'Unknown'} ${jet.model || 'Model'}`,
+            jetId: jet.id,
+            seatCapacity: capacity,
+            range: range,
+            cruise_speed_kts: cruiseSpeed,
+            max_altitude: maxAltitude,
+            cabin_width: cabinWidth,
+            cabin_height: cabinHeight,
+            cabin_length: cabinLength,
+            year: year,
+            manufacturer: jet.manufacturer,
+            model: jet.model,
+            tail_number: jet.tail_number,
+            owner_id: jet.owner_id,
+            image_url: imageUrl,
+            interior_image_url: jet.interior_image_url,
+            // Include missing amenity fields (defaulting to false/null if not present)
+            berths: jet.berths ?? undefined,
+            lavatory: jet.lavatory ?? undefined,
+            galley: jet.galley ?? undefined,
+            entertainment: jet.entertainment ?? undefined,
+            wifi: jet.wifi ?? undefined
+        };
+        
+        console.log('[updateSelectedState] Event payload created:', JSON.stringify(eventDetailPayload, null, 2));
+
+        const jetChangeEvent = new CustomEvent('jetchange', {
+          detail: eventDetailPayload
+        });
+        
+        console.log('[updateSelectedState] Dispatching event via setTimeout...');
+        setTimeout(() => {
+          console.log('[updateSelectedState setTimeout] Dispatching jetchange event NOW.');
+          window.dispatchEvent(jetChangeEvent);
+          console.log('[updateSelectedState setTimeout] Event dispatched. Resetting isUpdatingRef.');
+          isUpdatingRef.current = false; // Reset *after* dispatch
+        }, 0);
+
+    } catch (error) {
+        console.error('[updateSelectedState] CRITICAL ERROR during processing or dispatch:', error);
+        isUpdatingRef.current = false; // Ensure flag is reset on error
+    }
   };
 
-  // When handling the jet selection, use this function
+  // Modify handleSelect
   const handleSelect = (currentValue: string, jet: Jet) => {
-    // Prevent re-entrancy
-    if (isUpdatingRef.current) return;
-    
-    isUpdatingRef.current = true;
-    
-    // Fetch complete jet details when selected
+    console.log(`[handleSelect] Jet selected: ${currentValue}, ID: ${jet.id}. Fetching details...`);
     fetchJetDetails(jet.id, jet);
     setOpen(false);
     
-    // Use timeout to break potential update loops
-    if (onChange) {
-      setTimeout(() => {
-        onChange(currentValue);
-        // We don't reset isUpdatingRef here because updateSelectedState will do it
-      }, 0);
-    } else {
-      // If no onChange, we need to reset the flag
-      isUpdatingRef.current = false;
-    }
+    // isUpdatingRef will be reset within updateSelectedState's setTimeout
   };
   
   // Add a new function to fetch complete jet details
@@ -561,6 +575,7 @@ function JetSelectorImpl({
         };
         
         // Update the state with the detailed jet information
+        console.log(`[JetSelector fetchJetDetails] Preparing to dispatch jetchange for ID: ${detailedJet.id}`, detailedJet);
         updateSelectedState(detailedJet);
       } else {
         // If we couldn't get detailed data, use what we have
@@ -769,17 +784,12 @@ function JetSelectorImpl({
                         className={cn(
                           "flex justify-between py-3 px-2 cursor-pointer relative overflow-hidden",
                           isSelected 
-                            ? "bg-blue-900/40 border-2 border-primary shadow-md relative" 
+                            ? "bg-gray-800 border-2 border-[#DAFF0D] shadow-lg text-white"
                             : isOwned 
-                              ? "bg-gray-800/80 border border-[#DAFF0D]/30 rounded-md" 
-                              : "hover:bg-gray-700/50",
+                              ? "bg-gray-800/80 border border-[#DAFF0D]/30 rounded-md text-white" 
+                              : "hover:bg-gray-800 hover:text-white",
                         )}
                       >
-                        {/* Selected jet overlay with gradient */}
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-blue-800/40 to-purple-700/40 z-0" />
-                        )}
-                        
                         <div className="flex items-center gap-2 z-10 relative">
                           <div className="relative w-12 h-12 rounded overflow-hidden border border-gray-600 flex-shrink-0">
                             {jet.image_url && !failedImageUrls.has(jet.image_url) ? (
@@ -809,7 +819,10 @@ function JetSelectorImpl({
                               {jetName}
                             </p>
                             {jet.tail_number && (
-                              <p className="text-xs text-gray-400">
+                              <p className={cn(
+                                "text-xs", 
+                                isSelected ? "text-gray-300" : "text-gray-400"
+                              )}>
                                 Tail: {jet.tail_number}
                               </p>
                             )}
@@ -822,13 +835,16 @@ function JetSelectorImpl({
                               variant="outline" 
                               className={cn(
                                 "border-[#DAFF0D]/70 text-[#DAFF0D] bg-gray-900/50 text-xs", 
-                                isSelected && "border-[#DAFF0D] bg-gray-900/80"
+                                isSelected && "border-[#DAFF0D] bg-black/60 text-[#DAFF0D]"
                               )}
                             >
                               My Jet
                             </Badge>
                           )}
-                          <p className={`text-sm ${isSelected ? 'text-white' : 'text-gray-400'}`}>
+                          <p className={cn(
+                            "text-sm", 
+                            isSelected ? 'text-gray-300' : 'text-gray-400'
+                          )}>
                             {formatCapacity(jet.capacity)} Seats
                           </p>
                         </div>
@@ -874,41 +890,13 @@ export default function JetSelector(props: JetSelectorProps) {
   const clientProps: ClientJetSelectorProps = {
     ...props,
     onChange: (value: string, seatCapacity?: number, jetId?: string) => {
-      // Ensure we're only running in a browser environment
-      if (typeof window === 'undefined') return;
-
-      // Handle onChange in the client component
-      // Use setTimeout to break potential update loops
-      const event = new CustomEvent('jetchange', {
-        detail: {
-          value,
-          seatCapacity,
-          jetId
-        }
-      });
-      
-      window.dispatchEvent(event);
-      
-      // If we were given a serializable onChangeValue prop, dispatch that event too
-      if (props.onChangeValue) {
-        const valueEvent = new CustomEvent('jetchange:value', {
-          detail: { value }
-        });
-        window.dispatchEvent(valueEvent);
-      }
-      
-      // If we were given a serializable onChangeSeatCapacity prop, dispatch that event too
-      if (props.onChangeSeatCapacity !== undefined) {
-        const capacityEvent = new CustomEvent('jetchange:capacity', {
-          detail: { capacity: seatCapacity }
-        });
-        window.dispatchEvent(capacityEvent);
-      }
+      // This function satisfies the type but doesn't need to dispatch the primary event
+      // Log for debugging if needed
+      // console.log(`[JetSelector Wrapper onChange Stub] Called with value: ${value}`);
     },
     onCustomChange: props.onCustomChangeValue 
       ? (value: string) => {
           if (typeof window === 'undefined') return;
-          
           const event = new CustomEvent('jetcustomchange', {
             detail: { value }
           });

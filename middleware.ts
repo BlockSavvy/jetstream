@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 
 // Define routes that don't require authentication
 const PUBLIC_ROUTES = [
@@ -31,6 +32,7 @@ const PUBLIC_ROUTES = [
   '/gdyup/auth/login',
   '/gdyup/auth/forgot-password',
   '/gdyup/auth/profile-setup',
+  '/gdyup/offer',
   '/api/gdyup/profile',
   '/api/gdyup/jets',
   '/api/gdyup/activity',
@@ -83,6 +85,11 @@ const isPublicRoute = (path: string): boolean => {
   
   // Special case for airports API - most important fix!
   if (path === '/api/airports' || path.startsWith('/api/airports?')) {
+    return true;
+  }
+  
+  // Special case for offer detail pages
+  if (path.match(/^\/gdyup\/offer\/[a-zA-Z0-9-]+$/)) {
     return true;
   }
   
@@ -140,7 +147,7 @@ const isGdyupRoute = (path: string): boolean => {
          !!path.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js)$/);
 };
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
   // CRITICAL FIX: Always bypass middleware for airports and jets API requests

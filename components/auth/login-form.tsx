@@ -229,16 +229,16 @@ export function LoginForm() {
   return (
     <div className="mx-auto w-full max-w-md space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold dark:text-white">Welcome back</h1>
-        <p className="text-muted-foreground dark:text-gray-300">Enter your credentials to sign in</p>
+        <h1 className="text-2xl font-bold text-white">Sign in to GDYUP</h1>
+        <p className="text-gray-300 text-sm">Access your jet sharing platform</p>
         
         {pendingPaymentOfferId && (
-          <Alert className="mt-4 bg-blue-50 border-blue-200 dark:bg-blue-900/40 dark:border-blue-700">
+          <Alert className="mt-4 bg-gray-800 border-[#DAFF0D]/40">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2" />
-              <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <AlertCircle className="h-5 w-5 text-[#DAFF0D] mr-2" />
+              <AlertDescription className="text-white">
                 <div className="font-medium">Complete Your Booking</div>
-                <p className="text-sm mt-1 dark:text-blue-300">Please sign in to continue with your flight booking. Your selection is being held for you.</p>
+                <p className="text-sm mt-1 text-gray-300">Please sign in to continue with your flight booking. Your selection is being held for you.</p>
               </AlertDescription>
             </div>
           </Alert>
@@ -246,9 +246,9 @@ export function LoginForm() {
       </div>
       
       {errorMessage && (
-        <Alert variant="destructive" className="mt-4 dark:bg-red-900/40 dark:border-red-700">
+        <Alert variant="destructive" className="mt-4 bg-red-900/40 border-red-700">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="dark:text-red-200">{errorMessage}</AlertDescription>
+          <AlertDescription className="text-red-200">{errorMessage}</AlertDescription>
         </Alert>
       )}
       
@@ -259,12 +259,12 @@ export function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="dark:text-gray-200">Email</FormLabel>
+                <FormLabel className="text-gray-200">Email</FormLabel>
                 <FormControl>
                   <Input placeholder="youremail@example.com" type="email" autoComplete="email" {...field} 
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" />
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#DAFF0D] focus:ring-[#DAFF0D]/30" />
                 </FormControl>
-                <FormMessage className="dark:text-red-300" />
+                <FormMessage className="text-red-300" />
               </FormItem>
             )}
           />
@@ -274,23 +274,23 @@ export function LoginForm() {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel className="dark:text-gray-200">Password</FormLabel>
+                  <FormLabel className="text-gray-200">Password</FormLabel>
                   <Link
                     href="/auth/forgot-password"
-                    className="text-sm font-medium text-primary hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                    className="text-sm font-medium text-[#DAFF0D] hover:text-[#B4D500]"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <FormControl>
                   <Input placeholder="••••••••" type="password" autoComplete="current-password" {...field} 
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    className="bg-gray-700 border-gray-600 text-white focus:border-[#DAFF0D] focus:ring-[#DAFF0D]/30" />
                 </FormControl>
-                <FormMessage className="dark:text-red-300" />
+                <FormMessage className="text-red-300" />
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700" disabled={isLoading}>
+          <Button type="submit" className="w-full bg-[#DAFF0D] hover:bg-[#B4D500] text-gray-900 font-medium" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -303,8 +303,8 @@ export function LoginForm() {
         </form>
       </Form>
       <div className="text-center text-sm">
-        <span className="text-muted-foreground dark:text-gray-400">Don't have an account?</span>{' '}
-        <Link href="/auth/register" className="font-medium text-primary hover:underline dark:text-blue-400 dark:hover:text-blue-300">
+        <span className="text-gray-400">Don't have an account?</span>{' '}
+        <Link href="/auth/register" className="font-medium text-[#DAFF0D] hover:text-[#B4D500]">
           Sign up
         </Link>
       </div>

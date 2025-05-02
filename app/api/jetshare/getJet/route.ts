@@ -47,6 +47,10 @@ export async function GET(request: Request) {
       .eq('id', jet_id)
       .single();
 
+    // *** ADD LOGGING ***
+    console.log('[getJet API] Data fetched from jets table for ID:', jet_id, 'Result:', jet);
+    // *** END LOGGING ***
+
     if (error) {
       console.error('Error fetching jet:', error);
       return NextResponse.json({ error: 'Failed to fetch jet' }, { status: 500 });
@@ -87,6 +91,7 @@ export async function GET(request: Request) {
     const completeJetData = {
       ...processedJet,
       ...(processedInteriorData || {}),
+      id: processedJet.id,
       // Ensure these critical fields are present with either DB values or correct defaults
       capacity: processedJet.capacity || (processedInteriorData?.seats || 8),
       tail_number: processedJet.tail_number || 'N/A',

@@ -53,9 +53,9 @@ export default function JetShareListingsPage() {
   }, []);
   
   return (
-    <div className="min-h-screen bg-black">
-      <main className="container mx-auto px-4 py-6 md:py-8">
-        <h1 className="text-3xl font-bold mb-6 text-[#DAFF0D] drop-shadow-[0_0_10px_rgba(218,255,13,0.3)]">
+    <div className="min-h-screen bg-black gdyup-section">
+      <main className="container mx-auto px-3 py-4 md:py-6">
+        <h1 className="text-2xl font-bold mb-4 text-[#DAFF0D] drop-shadow-[0_0_10px_rgba(218,255,13,0.3)]">
           Browse Flight Shares
         </h1>
         
@@ -65,47 +65,47 @@ export default function JetShareListingsPage() {
           </div>
         ) : (
           <div>
-            {/* Info Cards - these appear before the listings and are always visible */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            {/* Info Cards - condensed for mobile */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
               {/* Card 1 */}
               <Card className="bg-black border-gray-800 hover:border-[#DAFF0D] transition-colors">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="bg-black rounded-full w-12 h-12 flex items-center justify-center mb-4 mt-2 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
-                    <Plane className="h-6 w-6 text-[#DAFF0D]" />
+                <CardContent className="p-2 flex flex-col items-center text-center">
+                  <div className="bg-black rounded-full w-8 h-8 flex items-center justify-center mb-1 mt-1 border-2 border-[#DAFF0D] shadow-[0_0_10px_rgba(218,255,13,0.3)]">
+                    <Plane className="h-4 w-4 text-[#DAFF0D]" />
                   </div>
-                  <h3 className="font-bold text-white mb-2">Find Flight Shares</h3>
-                  <p className="text-white text-sm">
-                    Browse available shared flights from private jet owners and book your seat instantly.
+                  <h3 className="font-bold text-white text-xs">Find Flights</h3>
+                  <p className="text-white text-[10px] hidden md:block">
+                    Browse available shared flights
                   </p>
                 </CardContent>
               </Card>
               
               {/* Card 2 */}
               <Card className="bg-black border-gray-800 hover:border-[#DAFF0D] transition-colors">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="bg-black rounded-full w-12 h-12 flex items-center justify-center mb-4 mt-2 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
-                    <svg className="h-6 w-6 text-[#DAFF0D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{filter: 'drop-shadow(0 0 3px rgba(218,255,13,0.6))'}}>
+                <CardContent className="p-2 flex flex-col items-center text-center">
+                  <div className="bg-black rounded-full w-8 h-8 flex items-center justify-center mb-1 mt-1 border-2 border-[#DAFF0D] shadow-[0_0_10px_rgba(218,255,13,0.3)]">
+                    <svg className="h-4 w-4 text-[#DAFF0D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{filter: 'drop-shadow(0 0 3px rgba(218,255,13,0.6))'}}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                   </div>
-                  <h3 className="font-bold text-white mb-2">Secure Booking</h3>
-                  <p className="text-white text-sm">
-                    All flights are operated by licensed operators with full insurance and safety verification.
+                  <h3 className="font-bold text-white text-xs">Secure</h3>
+                  <p className="text-white text-[10px] hidden md:block">
+                    Fully verified flights
                   </p>
                 </CardContent>
               </Card>
               
               {/* Card 3 */}
               <Card className="bg-black border-gray-800 hover:border-[#DAFF0D] transition-colors">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <div className="bg-black rounded-full w-12 h-12 flex items-center justify-center mb-4 mt-2 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
-                    <svg className="h-6 w-6 text-[#DAFF0D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{filter: 'drop-shadow(0 0 3px rgba(218,255,13,0.6))'}}>
+                <CardContent className="p-2 flex flex-col items-center text-center">
+                  <div className="bg-black rounded-full w-8 h-8 flex items-center justify-center mb-1 mt-1 border-2 border-[#DAFF0D] shadow-[0_0_10px_rgba(218,255,13,0.3)]">
+                    <svg className="h-4 w-4 text-[#DAFF0D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{filter: 'drop-shadow(0 0 3px rgba(218,255,13,0.6))'}}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <h3 className="font-bold text-white mb-2">Instant Confirmation</h3>
-                  <p className="text-white text-sm">
-                    Get immediate booking confirmation and detailed flight information upon purchase.
+                  <h3 className="font-bold text-white text-xs">Instant</h3>
+                  <p className="text-white text-[10px] hidden md:block">
+                    Immediate booking
                   </p>
                 </CardContent>
               </Card>
