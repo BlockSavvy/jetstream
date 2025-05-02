@@ -6,8 +6,9 @@ import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import React from 'react';
-import { RefreshCw, GripVertical } from 'lucide-react';
+import { RefreshCw, GripVertical, MousePointerClick, MousePointer, Trash2, CheckCheck, AlertTriangle } from 'lucide-react';
 import debounce from 'lodash/debounce';
+import { Button } from '@/components/ui/button';
 
 // Seat types and layout interfaces
 export interface SeatLayout {
@@ -44,7 +45,7 @@ export interface JetSeatVisualizerProps {
   showSummary?: boolean;
   customLayout?: SeatLayout;
   forceExactLayout?: boolean;
-  onAllocationChange?: (allocation: { yourSeats: number; partnerSeats: number; selectionPercentage: number }) => void;
+  onAllocationChange?: (allocation: { yourSeats: number; partnerSeats: number; selectionPercentage: number; totalSelected: number }) => void;
   initialSelectionPercentage?: number;
 }
 
@@ -155,6 +156,7 @@ interface AllocationData {
   yourSeats: number;
   partnerSeats: number;
   selectionPercentage: number;
+  totalSelected: number;
 }
 
 // Main component implementation
@@ -177,7 +179,12 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
     initialSelectionPercentage
   }, ref) => {
     // Default layout if none provided
-    const [layout, setLayout] = useState<SeatLayout | null>(defaultLayout ? {...defaultLayout} : null);
+    const [layout, setLayout] = useState<SeatLayout>({
+      rows: 4,
+      seatsPerRow: 3,
+      layoutType: 'standard',
+      totalSeats: totalSeats || 12
+    });
     const [selectedSeats, setSelectedSeats] = useState<string[]>(initialSelection?.selectedSeats || []);
     const [skipPositions, setSkipPositions] = useState<string[]>([]);
     const [selectionPercentage, setSelectionPercentage] = useState(50);
@@ -216,7 +223,14 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
     const yourSeatsDisplayRef = useRef<HTMLSpanElement>(null);
     const partnerSeatsDisplayRef = useRef<HTMLSpanElement>(null);
 
-    // Calculate seat configuration
+    // Add debug logging - memoize to prevent dependency changes
+    const debugLog = useCallback((message: string, data?: any) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[JetSeatVisualizer] ${message}`, data || '');
+      }
+    }, []);
+
+    // Seat configuration calculation
     const calculateSeatConfiguration = useCallback((): SeatConfiguration => {
       const actualTotalSeats = layout?.totalSeats || 
         (layout?.rows !== undefined && layout?.seatsPerRow !== undefined ? 
@@ -232,12 +246,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         selectionPercentage
       };
     }, [jet_id, layout, selectedSeats, skipPositions, selectionPercentage]);
-
-    // Function to check if a position should be skipped
-    const isSkippedPosition = useCallback((row: number, col: number): boolean => {
-      return skipPositions.includes(`${row},${col}`);
-    }, [skipPositions]);
-
+    
     // Update parent component with selection changes
     const updateParentComponent = useCallback(() => {
       if (!onChange || isUpdatingRef.current) return;
@@ -245,7 +254,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       // Call the onChange callback with the current configuration
       onChange(calculateSeatConfiguration());
     }, [onChange, calculateSeatConfiguration]);
-
+    
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       openVisualizer: () => setIsVisible(true),
@@ -274,23 +283,307 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       }
     }));
 
-    // Add debug logging - memoize to prevent dependency changes
-    const debugLog = useCallback((message: string, data?: any) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[JetSeatVisualizer] ${message}`, data || '');
+    // Add a helper function to calculate optimal layouts
+    const calculateOptimalLayout = useCallback((seats: number) => {
+      let rows, seatsPerRow;
+      
+      // Determine optimal layout based on industry standards for private jets
+      // Most private jets have 2-3 seats per row
+      if (seats <= 6) {
+        // For smaller jets, 2 seats per row is common
+        seatsPerRow = 2;
+        rows = Math.ceil(seats / seatsPerRow);
+      } else if (seats <= 9) {
+        // Mid-sized jets often have 3 seats per row
+        seatsPerRow = 3;
+        rows = Math.ceil(seats / seatsPerRow);
+      } else if (seats === 10) {
+        // For 10-seat jets, 5×2 layout is standard
+        seatsPerRow = 2;
+        rows = 5;
+      } else if (seats <= 12) {
+        // For 11-12 seats, typically 3 seats per row
+        seatsPerRow = 3;
+        rows = Math.ceil(seats / seatsPerRow);
+      } else if (seats === 14) {
+        // For 14-seat jets, 4×4 layout with 2 empty seats
+        seatsPerRow = 4;
+        rows = 4;
+      } else {
+        // For larger jets, 4 seats per row is common
+        seatsPerRow = 4;
+        rows = Math.ceil(seats / seatsPerRow);
       }
-    }, []);
+      
+      // Create a new layout with the calculated dimensions
+      const newLayout: SeatLayout = {
+        rows,
+        seatsPerRow,
+        layoutType: 'standard',
+        totalSeats: seats
+      };
+      
+      setLayout(newLayout);
+      setSkipPositions([]);
+      
+      // Log the change for debugging
+      debugLog(`Calculated optimal layout for ${seats} seats: ${rows} rows × ${seatsPerRow} columns`);
+      
+      return newLayout;
+    }, [debugLog]);
 
-    // Handle seat click
+    // Helper function to generate all valid seat IDs
+    const generateAllSeatIds = useCallback((): string[] => {
+      if (!layout || layout.rows === undefined || layout.seatsPerRow === undefined) {
+        return [];
+      }
+
+      const allSeatIds: string[] = [];
+      
+      for (let row = 0; row < layout.rows; row++) {
+        for (let col = 0; col < layout.seatsPerRow; col++) {
+          if (!skipPositions.includes(`${row},${col}`)) {
+            allSeatIds.push(generateSeatId(row, col));
+          }
+        }
+      }
+      
+      return allSeatIds;
+    }, [layout, skipPositions]);
+
+    // Use effect to select all seats when layout is loaded
+    useEffect(() => {
+      if (layout && !isLoading && selectedSeats.length === 0) {
+        const allSeats = generateAllSeatIds();
+        setSelectedSeats(allSeats);
+      }
+    }, [layout, isLoading, selectedSeats.length, generateAllSeatIds]);
+
+    // Update the useEffect for handling layout changes based on totalSeats or customLayout
+    useEffect(() => {
+      if (customLayout && forceExactLayout) {
+        console.log(`[JetSeatVisualizer] Using custom layout with ${customLayout.totalSeats} seats (forceExactLayout=${forceExactLayout})`);
+        
+        // Use the exact layout specified in customLayout prop with explicit totalSeats
+        const updatedLayout: SeatLayout = {
+          ...customLayout,
+          // Ensure totalSeats is always defined when using customLayout
+          totalSeats: customLayout.totalSeats || (customLayout.rows * customLayout.seatsPerRow)
+        };
+        
+        setLayout(updatedLayout);
+        debugLog('Using forced custom layout with explicit totalSeats:', updatedLayout);
+        
+        // Apply skip positions if provided
+        if (customLayout.seatMap?.skipPositions) {
+          setSkipPositions(customLayout.seatMap.skipPositions.map(pos => pos.join(',')));
+          debugLog('Applied custom skip positions:', customLayout.seatMap.skipPositions);
+        } else {
+          setSkipPositions([]);
+        }
+        
+        // Calculate grid dimensions based on the custom layout
+        const baseGridWidth = customLayout.seatsPerRow * 60;
+        const baseGridHeight = customLayout.rows * 60;
+        
+        setGridDimensions({
+          width: baseGridWidth,
+          height: baseGridHeight,
+        });
+        
+        setSeatSize(60);
+      } else if (totalSeats && totalSeats > 0 && !isLoading) {
+        // Only apply this if we're not currently loading from the API
+        // The API fetching useEffect will handle this case
+        calculateOptimalLayout(totalSeats);
+      }
+    }, [totalSeats, customLayout, forceExactLayout, calculateOptimalLayout, debugLog, isLoading]);
+
+    // Update the useEffect for fetching layout data
+    useEffect(() => {
+      if (customLayout) {
+        debugLog('Custom layout provided. Skipping API fetch.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (!jet_id) {
+        debugLog('No jet_id provided. Using default layout.');
+        // If totalSeats is provided, calculate optimal layout
+        if (totalSeats && totalSeats > 0) {
+          calculateOptimalLayout(totalSeats);
+        }
+        setIsLoading(false);
+        return;
+      }
+      
+      async function fetchLayoutData() {
+        try {
+          debugLog(`Fetching layout data for jet_id: ${jet_id}`);
+          setIsLoading(true);
+          
+          // Define headers to ensure we get JSON
+          const headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          };
+          
+          // Fetch the seat layout from the API
+          const response = await fetch(`/api/jets/${jet_id}/layout`, { 
+            method: 'GET',
+            headers
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API returned ${response.status} ${response.statusText}`);
+          }
+          
+          // Check content type
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            // First get the text to see what was returned
+            const text = await response.text();
+            
+            // If it looks like HTML, it might be a login page or error
+            if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
+              throw new Error('Received HTML instead of JSON. You may need to authenticate.');
+            }
+            
+            // Try parsing as JSON anyway
+            try {
+              const data = JSON.parse(text);
+              processLayoutData(data);
+            } catch (e) {
+              throw new Error(`Received non-JSON response: ${text.substring(0, 100)}...`);
+            }
+          } else {
+            // Parse JSON response
+            const data = await response.json();
+            processLayoutData(data);
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          debugLog(`Error fetching layout: ${errorMsg}`);
+          console.error('[JetSeatVisualizer] Error fetching layout:', err);
+          
+          // Set fallback layout if needed
+          if (totalSeats && totalSeats > 0) {
+            calculateOptimalLayout(totalSeats);
+          }
+          
+          // Set error message
+          setError(`Failed to load seat layout: ${errorMsg}`);
+          
+          // Notify parent component of error
+          if (onError) {
+            onError(errorMsg);
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+      
+      // Process the fetched layout data
+      function processLayoutData(data: any) {
+        if (!data || !data.layout) {
+          throw new Error('Invalid layout data received from API');
+        }
+        
+        const apiLayout = data.layout;
+        
+        // Extract the layout data
+        const extractedLayout: SeatLayout = {
+          rows: apiLayout.rows || 0,
+          seatsPerRow: apiLayout.seatsPerRow || 0,
+          layoutType: apiLayout.layoutType || 'standard',
+          totalSeats: apiLayout.totalSeats || 
+            (apiLayout.rows * apiLayout.seatsPerRow - (apiLayout.skipPositions?.length || 0))
+        };
+        
+        // Extract skip positions if provided
+        const skipPositionsArray = apiLayout.skipPositions || [];
+        const formattedSkipPositions = skipPositionsArray.map((pos: [number, number]) => 
+          pos.join(',')
+        );
+        
+        debugLog('Layout data fetched successfully', extractedLayout);
+        debugLog('Skip positions:', formattedSkipPositions);
+        
+        // Update state with the extracted data
+        setLayout(extractedLayout);
+        setSkipPositions(formattedSkipPositions);
+        
+        // Calculate appropriate grid dimensions based on the layout
+        const baseGridWidth = extractedLayout.seatsPerRow * 60;
+        const baseGridHeight = extractedLayout.rows * 60;
+        
+        setGridDimensions({
+          width: baseGridWidth,
+          height: baseGridHeight,
+        });
+        
+        setSeatSize(60);
+      }
+      
+      // If there's no valid layout yet, fetch it
+      if (!layout || !layout.rows || !layout.seatsPerRow) {
+        fetchLayoutData();
+      } else {
+        setIsLoading(false);
+      }
+    }, [jet_id, debugLog, onError, totalSeats, calculateOptimalLayout, layout, customLayout]);
+
+    // Function to format image URL 
+    const formatImageUrl = (jet_id: string): string => {
+      // Convert jet_id to a format suitable for image name
+      const normalizedJetId = jet_id.toLowerCase().replace(/\s+/g, '-');
+      
+      // First try with the normalized ID - using gdyup paths
+      const gdyupPath = `/images/gdyup/jets/${normalizedJetId}.jpg`;
+      console.log(`[JetSeatVisualizer] Using image path: ${gdyupPath}`);
+      
+      return gdyupPath;
+    };
+
+    // GDYUP brand colors
+    const GDYUP_COLORS = {
+      primary: '#DAFF0D', // Neon yellow-green
+      secondary: '#DC143C', // Crimson
+      dark: '#121212',
+      light: '#FFFFFF'
+    };
+
+    // Update the useEffect for handling allocation changes - ensure callbacks are triggered on both tap and slider
+    useEffect(() => {
+      if (isUpdatingRef.current || !onAllocationChange) return;
+      
+      // Calculate allocation
+      const yourSeats = Math.ceil((selectionPercentage / 100) * selectedSeats.length);
+      const partnerSeats = selectedSeats.length - yourSeats;
+      
+      // Trigger allocation change callback
+      onAllocationChange({
+        selectionPercentage,
+        yourSeats,
+        partnerSeats,
+        totalSelected: selectedSeats.length
+      });
+      
+    }, [selectionPercentage, selectedSeats.length, onAllocationChange]);
+
+    // Update seat click handler to ensure allocation updates
     const handleSeatClick = useCallback((seatId: string) => {
       if (readOnly || selectionMode !== 'tap') return;
       
       // Use functional state update to prevent stale state issues
       setSelectedSeats(prev => {
         const isSelected = prev.includes(seatId);
-        return isSelected 
+        const newSelectedSeats = isSelected 
           ? prev.filter(id => id !== seatId) // Remove if already selected
           : [...prev, seatId]; // Add if not selected
+          
+        return newSelectedSeats;
       });
     }, [readOnly, selectionMode]);
 
@@ -304,7 +597,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       if (layout?.rows !== undefined && layout?.seatsPerRow !== undefined) {
         for (let row = 0; row < layout.rows; row++) {
           for (let col = 0; col < layout.seatsPerRow; col++) {
-            if (!isSkippedPosition(row, col)) {
+            if (!skipPositions.includes(`${row},${col}`)) {
               allSeatIds.push(generateSeatId(row, col));
             }
           }
@@ -426,208 +719,35 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       };
     }, []);
 
-    // Add a helper function to calculate optimal layouts
-    const calculateOptimalLayout = useCallback((seats: number) => {
-      let rows, seatsPerRow;
-      
-      // Determine optimal layout based on industry standards for private jets
-      // Most private jets have 2-3 seats per row
-      if (seats <= 6) {
-        // For smaller jets, 2 seats per row is common
-        seatsPerRow = 2;
-        rows = Math.ceil(seats / seatsPerRow);
-      } else if (seats <= 9) {
-        // Mid-sized jets often have 3 seats per row
-        seatsPerRow = 3;
-        rows = Math.ceil(seats / seatsPerRow);
-      } else if (seats === 10) {
-        // For 10-seat jets, 5×2 layout is standard
-        seatsPerRow = 2;
-        rows = 5;
-      } else if (seats <= 12) {
-        // For 11-12 seats, typically 3 seats per row
-        seatsPerRow = 3;
-        rows = Math.ceil(seats / seatsPerRow);
-      } else if (seats === 14) {
-        // For 14-seat jets, 4×4 layout with 2 empty seats
-        seatsPerRow = 4;
-        rows = 4;
-      } else {
-        // For larger jets, 4 seats per row is common
-        seatsPerRow = 4;
-        rows = Math.ceil(seats / seatsPerRow);
+    // Helper function to check if an image exists
+    const checkImageExists = useCallback(async (url: string): Promise<boolean> => {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok;
+      } catch (error) {
+        console.error(`Error checking image at ${url}:`, error);
+        return false;
       }
-      
-      // Create a new layout with the calculated dimensions
-      const newLayout: SeatLayout = {
-        rows,
-        seatsPerRow,
-        layoutType: 'standard',
-        totalSeats: seats
-      };
-      
-      setLayout(newLayout);
-      setSkipPositions([]);
-      
-      // Log the change for debugging
-      debugLog(`Calculated optimal layout for ${seats} seats: ${rows} rows × ${seatsPerRow} columns`);
-      
-      return newLayout;
-    }, [debugLog]);
-
-    // Update the useEffect for fetching layout data
-    useEffect(() => {
-      // Skip API calls if jet_id is 'default' to prevent loops
-      if (jet_id === 'default') {
-        setIsLoading(false);
-        
-        // If we have totalSeats, still create an optimized layout
-        if (totalSeats && totalSeats > 0) {
-          calculateOptimalLayout(totalSeats);
-        }
-        return;
-      }
-      
-      // Set loading state
-      setIsLoading(true);
-      
-      // Clear any previous errors
-      setError(null);
-      
-      // Note: isMounted ref is now declared at the component level
-      
-      const fetchLayoutData = async () => {
-        try {
-          // Call API to get jet layout data
-          const response = await fetch(`/api/jets/${jet_id}`);
-          
-          if (!response.ok) {
-            const errorMsg = `Failed to fetch jet layout data: ${response.status} ${response.statusText}`;
-            throw new Error(errorMsg);
-          }
-          
-          const data = await response.json();
-          debugLog('Received jet layout data:', data);
-          
-          // Process the retrieved layout data
-          if (data.seatLayout) {
-            // If totalSeats is provided, we need to calculate the optimal layout
-            if (totalSeats && totalSeats > 0) {
-              // Override with our optimal layout based on totalSeats
-              calculateOptimalLayout(totalSeats);
-            } else {
-              // Use layout from API
-              setLayout(data.seatLayout);
-              debugLog('Applied layout from API:', data.seatLayout);
-              
-              // Save skip positions if available
-              if (data.seatLayout.seatMap?.skipPositions) {
-                const formattedSkipPositions = data.seatLayout.seatMap.skipPositions.map((pos: number[]) => pos.join(','));
-                setSkipPositions(formattedSkipPositions);
-                debugLog('Applied skip positions:', data.seatLayout.seatMap.skipPositions);
-              } else {
-                setSkipPositions([]);
-              }
-            }
-          } else if (totalSeats && totalSeats > 0) {
-            // If no seatLayout in response but we have totalSeats, calculate optimal layout
-            calculateOptimalLayout(totalSeats);
-          }
-        } catch (err) {
-          console.error('Error fetching jet layout:', err);
-          setError('Failed to load jet configuration');
-          
-          // Call onError prop if provided
-          if (onError) {
-            onError(err instanceof Error ? err : String(err));
-          }
-          
-          // If totalSeats is provided, still create an optimized layout
-          if (totalSeats && totalSeats > 0) {
-            calculateOptimalLayout(totalSeats);
-          } else {
-            // Fallback layout
-            const fallbackLayout: SeatLayout = {
-              rows: 4,
-              seatsPerRow: 3,
-              layoutType: 'standard' as const,
-              totalSeats: totalSeats || 12
-            };
-            
-            setLayout(fallbackLayout);
-            debugLog('Using fallback layout:', fallbackLayout);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      fetchLayoutData();
-      
-      return () => {
-        // Cleanup
-        isMounted.current = false;
-      };
-    }, [jet_id, debugLog, onError, totalSeats, calculateOptimalLayout]);
-
-    // Update the useEffect for handling layout changes based on totalSeats or customLayout
-    useEffect(() => {
-      if (customLayout && forceExactLayout) {
-        console.log(`[JetSeatVisualizer] Using custom layout with ${customLayout.totalSeats} seats (forceExactLayout=${forceExactLayout})`);
-        
-        // Use the exact layout specified in customLayout prop with explicit totalSeats
-        const updatedLayout: SeatLayout = {
-          ...customLayout,
-          // Ensure totalSeats is always defined when using customLayout
-          totalSeats: customLayout.totalSeats || (customLayout.rows * customLayout.seatsPerRow)
-        };
-        
-        setLayout(updatedLayout);
-        debugLog('Using forced custom layout with explicit totalSeats:', updatedLayout);
-        
-        // Apply skip positions if provided
-        if (customLayout.seatMap?.skipPositions) {
-          setSkipPositions(customLayout.seatMap.skipPositions.map(pos => pos.join(',')));
-          debugLog('Applied custom skip positions:', customLayout.seatMap.skipPositions);
-        } else {
-          setSkipPositions([]);
-        }
-        
-        // Calculate grid dimensions based on the custom layout
-        const baseGridWidth = customLayout.seatsPerRow * 60;
-        const baseGridHeight = customLayout.rows * 60;
-        
-        setGridDimensions({
-          width: baseGridWidth,
-          height: baseGridHeight,
-        });
-        
-        setSeatSize(60);
-      } else if (totalSeats && totalSeats > 0 && !isLoading) {
-        // Only apply this if we're not currently loading from the API
-        // The API fetching useEffect will handle this case
-        calculateOptimalLayout(totalSeats);
-      }
-    }, [totalSeats, customLayout, forceExactLayout, calculateOptimalLayout, debugLog, isLoading]);
+    }, []);
 
     // Update dimensions when layout changes or component mounts
     useEffect(() => {
       // Add proper null checks for layout properties
       // Set grid dimensions based on the number of rows/columns
-      const baseGridWidth = layout?.seatsPerRow !== undefined ? layout.seatsPerRow * 60 : 0; // 60px per seat for better touch targets
-      const baseGridHeight = layout?.rows !== undefined ? layout.rows * 60 : 0;
+      const baseGridWidth = layout ? layout.seatsPerRow * 60 : 240;
+      const baseGridHeight = layout ? layout.rows * 60 : 180;
       
       // Set grid dimensions
       setGridDimensions({
         width: baseGridWidth,
-        height: baseGridHeight
+        height: baseGridHeight,
       });
       
       // Update seat size
       setSeatSize(40); // Standard size for seats
     }, [layout]);
 
-    // For the slider component, ensure we memoize values to avoid re-renders
+    // For the slider component, memoize values to avoid re-renders
     const sliderValue = React.useMemo(() => [selectionPercentage], [selectionPercentage]);
     const sliderDefaultValue = React.useMemo(() => [50], []);
 
@@ -654,7 +774,8 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           const allocationData: AllocationData = {
             yourSeats,
             partnerSeats,
-            selectionPercentage: percentage
+            selectionPercentage: percentage,
+            totalSelected: selectedSeats.length
           };
           
           // Compare with previous data before calling
@@ -692,20 +813,10 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       [layout, selectedSeats, selectionPercentage, onAllocationChange]
     );
 
-    // Update the handleSliderChange function
-    const handleSliderChange = useCallback((value: number[]) => {
-      // Don't update if we're already updating
-      if (isUpdatingRef.current === true) return;
-      
-      // Set the flag to indicate we're updating
-      isUpdatingRef.current = true;
-      
-      // Update the selection percentage state
-      setSelectionPercentage(value[0]);
-      
-      // Call the debounced update function
-      updateAllocation(value[0]);
-    }, [updateAllocation]);
+    // Handle slider changes
+    const handleSliderChange = useCallback((values: number[]) => {
+      setSelectionPercentage(values[0]);
+    }, []);
 
     // Change the useEffect that monitors selectedSeats
     useEffect(() => {
@@ -748,7 +859,7 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           {Array.from({ length: layout.rows }).flatMap((_, row) =>
             Array.from({ length: layout.seatsPerRow }).map((_, col) => {
               // Skip if this position should be empty
-              if (isSkippedPosition(row, col)) {
+              if (skipPositions.includes(`${row},${col}`)) {
                 return null;
               }
               
@@ -770,18 +881,32 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
                     if (el) seatsRef.current[row * layout.seatsPerRow + col] = el;
                   }}
                   data-seat-id={seatId}
+                  data-seat-number={renderedSeatsCount}
                   className={cn(
-                    "rounded-md flex items-center justify-center cursor-pointer transition-all select-none",
-                    isSelected ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-gray-800 hover:bg-gray-700 text-gray-400",
-                    "border",
-                    isSelected ? "border-blue-400" : "border-gray-700",
-                    "transform transition duration-150",
-                    isSelected ? "scale-100" : "scale-95",
-                    readOnly && "pointer-events-none"
+                    // Base styling
+                    "flex items-center justify-center rounded-md cursor-pointer touch-manipulation transition-all transform hover:scale-105",
+                    "focus:outline-none focus:ring-2 focus:ring-blue-500",
+                    // Dynamic classes based on state
+                    isSelected
+                      ? "bg-[#DAFF0D] border-2 border-[#DAFF0D] text-black shadow-md hover:bg-[#DAFF0D]/90"
+                      : readOnly
+                      ? "bg-gray-800 border border-gray-700 opacity-50 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-700 border border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500 hover:text-white shadow-sm",
+                    readOnly ? "pointer-events-none" : ""
                   )}
                   onClick={() => handleSeatClick(seatId)}
+                  style={{
+                    width: `${seatSize * 0.8}px`,
+                    height: `${seatSize * 0.8}px`,
+                    margin: `${seatSize * 0.1}px`,
+                    fontSize: `${seatSize * 0.4}px`,
+                    fontWeight: "bold",
+                  }}
+                  role="checkbox"
+                  aria-checked={isSelected}
+                  aria-label={`Seat ${seatId} ${isSelected ? 'Selected' : (readOnly ? 'Unavailable' : 'Available')}`}
                 >
-                  <span className="text-xs font-medium">{seatId}</span>
+                  <span className="font-medium">{seatId}</span>
                 </div>
               );
             })
@@ -790,157 +915,350 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
       );
     };
 
-    // Render the seat grid or loading state
-    const renderContent = () => {
-      if (isLoading) return <div className="flex justify-center items-center h-48"><RefreshCw className="h-10 w-10 animate-spin" /></div>;
+    // Add back the fetchSeatLayout function
+    const fetchSeatLayout = useCallback(async () => {
+      if (!jet_id) {
+        console.error('No jet ID provided');
+        return;
+      }
       
-      if (!layout || !layout.rows || !layout.seatsPerRow) return (
-        <div className="text-center py-10">
-          <p className="text-red-500">No seat layout found. Please try again or contact support.</p>
-        </div>
-      );
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // If we have customLayout and forceExactLayout, use that directly and skip the API call
+        if (customLayout && forceExactLayout) {
+          const updatedLayout: SeatLayout = {
+            ...customLayout,
+            totalSeats: customLayout.totalSeats || (customLayout.rows * customLayout.seatsPerRow)
+          };
+          
+          setLayout(updatedLayout);
+          setIsLoading(false);
+          setIsVisible(true);
+          
+          if (initialSelection && initialSelection.selectedSeats) {
+            setSelectedSeats(initialSelection.selectedSeats);
+          }
+          
+          debugLog('Using custom layout with forced exact settings, skipping API call', updatedLayout);
+          return;
+        }
+        
+        // GDYUP API path should use gdyup prefix instead of jetshare
+        const apiUrl = `/api/gdyup/jets/${jet_id}/layout`;
+        console.log(`[JetSeatVisualizer] Fetching layout from: ${apiUrl}`);
+        
+        // Otherwise proceed with API call for layout
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // If totalSeats is explicitly provided, use that to override the API response
+        if (totalSeats && totalSeats > 0) {
+          // Calculate optimal dimensions
+          let rows, seatsPerRow;
+          
+          // Optimize for common jet layouts with special case for 10 seats
+          if (totalSeats === 10) {
+            // Special case for Gulfstream G280
+            rows = 5;
+            seatsPerRow = 2;
+            console.log('[JetSeatVisualizer] Using special 5x2 layout for 10 seats');
+          } else if (totalSeats <= 4) {
+            rows = 2; 
+            seatsPerRow = 2;
+          } else if (totalSeats <= 6) {
+            rows = 2;
+            seatsPerRow = 3;
+          } else if (totalSeats <= 9) {
+            rows = 3;
+            seatsPerRow = 3;
+          } else if (totalSeats <= 12) {
+            rows = 3;
+            seatsPerRow = 4;
+          } else if (totalSeats <= 16) {
+            rows = 4;
+            seatsPerRow = 4;
+          } else {
+            // For larger configurations
+            rows = Math.ceil(totalSeats / 4);
+            seatsPerRow = 4;
+          }
+          
+          // Update the layout with optimal dimensions
+          const updatedLayout = {
+            rows,
+            seatsPerRow,
+            layoutType: 'custom' as const,
+            totalSeats
+          };
+          
+          setLayout(updatedLayout);
+          debugLog('Applied optimized layout for totalSeats:', updatedLayout);
+        } else if (data.seatLayout) {
+          // Use the API-provided layout if no totalSeats specified
+          setLayout(data.seatLayout);
+          debugLog('Applied layout from API:', data.seatLayout);
+        }
+        
+        // Save skip positions if available
+        if (data.seatLayout?.seatMap?.skipPositions) {
+          setSkipPositions(data.seatLayout.seatMap.skipPositions);
+          debugLog('Applied skip positions from API:', data.seatLayout.seatMap.skipPositions);
+        } else {
+          setSkipPositions([]);
+        }
+        
+        // Calculate grid dimensions based on layout
+        const baseGridWidth = layout ? layout.seatsPerRow * 60 : 240;
+        const baseGridHeight = layout ? layout.rows * 60 : 180;
+        
+        setGridDimensions({
+          width: baseGridWidth,
+          height: baseGridHeight,
+        });
+        
+        // Calculate seat size
+        setSeatSize(60);
+        
+        // If initial selection is provided, set it
+        if (initialSelection && initialSelection.selectedSeats) {
+          setSelectedSeats(initialSelection.selectedSeats);
+        }
+        
+        // Auto-open the visualizer if it should be open by default
+        setIsVisible(true);
+        
+        // Success!
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching seat layout:', err);
+        setError(err instanceof Error ? err.message : String(err));
+        
+        // Even on error, we need to show something - use totalSeats if provided
+        if (totalSeats && totalSeats > 0) {
+          // Create a default layout
+          let rows, seatsPerRow;
+          
+          // Similar logic to the success case
+          if (totalSeats === 10) {
+            rows = 5;
+            seatsPerRow = 2;
+          } else if (totalSeats <= 4) {
+            rows = 2; 
+            seatsPerRow = 2;
+          } else if (totalSeats <= 6) {
+            rows = 2;
+            seatsPerRow = 3;
+          } else if (totalSeats <= 9) {
+            rows = 3;
+            seatsPerRow = 3;
+          } else if (totalSeats <= 12) {
+            rows = 3;
+            seatsPerRow = 4;
+          } else {
+            rows = Math.ceil(totalSeats / 4);
+            seatsPerRow = 4;
+          }
+          
+          // Create fallback layout
+          const fallbackLayout: SeatLayout = {
+            rows,
+            seatsPerRow,
+            layoutType: 'standard',
+            totalSeats
+          };
+          
+          setLayout(fallbackLayout);
+          setSkipPositions([]);
+          
+          console.log(`[JetSeatVisualizer] Using fallback layout for ${totalSeats} seats:`, fallbackLayout);
+          
+          // Calculate grid dimensions
+          setGridDimensions({
+            width: fallbackLayout.seatsPerRow * 60,
+            height: fallbackLayout.rows * 60,
+          });
+          
+          setSeatSize(60);
+        }
+        
+        if (onError) {
+          onError(err instanceof Error ? err : String(err));
+        }
+        
+        setIsLoading(false);
+      }
+    }, [jet_id, customLayout, forceExactLayout, initialSelection, layout.rows, layout.seatsPerRow, onError, totalSeats, debugLog]);
 
-      return (
-        <div className={cn("bg-gray-900/40 backdrop-blur-md rounded-lg p-4 transition-all seat-visualizer-container", className, readOnly && "pointer-events-none opacity-80")}>
-          <h3 className="text-lg font-medium text-white mb-3 seat-visualizer-header">Seat Configuration</h3>
-          
-          {/* Show the status message while loading or on error */}
-          <StatusMessage isLoading={isLoading} error={error} onRetry={() => window.location.reload()} />
-          
-          {/* Show the summary if enabled */}
-          {showSummary && !isLoading && !error && (
-            <SeatSelectionSummary 
-              selectedSeats={selectedSeats} 
-              totalSeats={layout?.totalSeats || 
-                (layout?.rows !== undefined && layout?.seatsPerRow !== undefined ? 
-                  (layout.rows * layout.seatsPerRow - skipPositions.length) : 0)} 
-            />
-          )}
-          
-          {/* Controls for seat selection */}
-          {showControls && !isLoading && !error && (
-            <div className="mb-4">
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-100">Your Seats vs Partner Seats</div>
-                  <div className="text-sm font-medium text-white">
-                    <span 
-                      ref={yourSeatsDisplayRef} 
-                      className="inline-block px-2 py-1 bg-blue-900/30 text-blue-200 rounded-md"
-                    >
-                      {Math.ceil((selectionPercentage / 100) * selectedSeats.length) || 0}
-                    </span>
-                    <span className="mx-1">:</span>
-                    <span 
-                      ref={partnerSeatsDisplayRef} 
-                      className="inline-block px-2 py-1 bg-amber-900/30 text-amber-200 rounded-md"
-                    >
-                      {selectedSeats.length - Math.ceil((selectionPercentage / 100) * selectedSeats.length) || 0}
-                    </span>
-                  </div>
-                </div>
-                
-                {/* Selection slider - prevent touchmove propagation to avoid page swipe */}
-                <div 
-                  ref={sliderRef}
-                  className="px-2 touch-none slider-container" 
-                  style={{ touchAction: 'none' }}
-                >
-                  <Slider
-                    defaultValue={sliderDefaultValue}
-                    max={100}
-                    step={1}
-                    value={sliderValue}
-                    onValueChange={handleSliderChange}
-                    className="bg-gray-800 cursor-grab active:cursor-grabbing"
-                  />
-                </div>
-                
-                <div className="flex justify-between text-xs text-gray-400">
-                  <span>All to You</span>
-                  <span>Split 50/50</span>
-                  <span>All to Partner</span>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2 mt-4">
-                <button
-                  onClick={handleClearSelection}
-                  className="px-3 py-1.5 seat-control-button"
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={handleSelectAll}
-                  className="px-3 py-1.5 seat-control-button"
-                >
-                  Select All
-                </button>
-                <button
-                  onClick={toggleSelectionMode}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-sm ml-auto seat-control-button",
-                    selectionMode === 'tap'
-                      ? "active"
-                      : ""
-                  )}
-                >
-                  {selectionMode === 'tap' ? 'Tap Mode' : 'Drag Mode'}
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Seat grid visualization */}
-          {!isLoading && !error && (
-            <div 
-              ref={containerRef}
-              className="relative border border-gray-800 rounded-lg overflow-hidden bg-gray-900/50"
-              style={{
-                width: '100%',
-                height: 'auto',
-                aspectRatio: `${layout?.seatsPerRow !== undefined ? layout.seatsPerRow : 1} / ${layout?.rows !== undefined ? layout.rows : 1}`
-              }}
+    // Calculate allocation for display in the component UI
+    const calculatedYourSeats = Math.ceil((selectionPercentage / 100) * selectedSeats.length);
+    const calculatedPartnerSeats = selectedSeats.length - calculatedYourSeats;
+
+    // Main render content with debugging info
+    const renderContent = () => {
+      // Show loading spinner while loading
+      if (isLoading) {
+        return (
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-spin h-10 w-10 rounded-full border-4 border-[#DAFF0D] border-t-transparent"></div>
+          </div>
+        );
+      }
+      
+      // Show error message if there's an error
+      if (error) {
+        return (
+          <div className="flex flex-col items-center justify-center h-48 gap-2">
+            <AlertTriangle className="h-8 w-8 text-[#DC143C]" />
+            <p className="text-sm text-[#DC143C]">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              size="sm" 
+              variant="outline" 
+              className="mt-2 text-xs border-[#DAFF0D] text-[#DAFF0D] hover:bg-[#DAFF0D]/10"
             >
-              {/* Optional: Add plane outline or visual elements */}
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Could add aircraft shape outlines here */}
-              </div>
-              
-              {/* The seat grid */}
-              {renderSeatGrid()}
-              
-              {/* Selecto for drag selection */}
-              {selectionMode === 'drag' && !readOnly && (
-                <Selecto
-                  ref={selectoRef}
-                  dragContainer={containerRef.current}
-                  selectableTargets={seatsRef.current.filter(Boolean)}
-                  onSelect={handleSelectoSelect}
-                  selectByClick={true}
-                  selectFromInside={true}
-                  continueSelect={true}
-                  toggleContinueSelect={'shift'}
-                  keyContainer={window}
-                  hitRate={0}
-                  preventDragFromInside={true}
-                  preventDefault={true}
-                  className="seat-selecto"
-                />
-              )}
+              Try Again
+            </Button>
+          </div>
+        );
+      }
+      
+      const actualTotalSeats = totalSeats || layout.totalSeats || (layout.rows * layout.seatsPerRow - skipPositions.length);
+      
+      return (
+        <div className="p-2 relative">
+          {/* Add debug info in development mode */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="absolute top-2 left-2 bg-gray-900/90 backdrop-blur-sm px-2 py-1 rounded-md z-20 border border-amber-700/50 text-[8px] text-amber-300">
+              {`seats: ${actualTotalSeats}, grid: ${layout.rows}×${layout.seatsPerRow}, selected: ${selectedSeats.length}, allocation: ${selectionPercentage}%`}
             </div>
           )}
           
-          {/* Legend for seats */}
-          {showLegend && !isLoading && !error && (
-            <div className="mt-4 flex gap-4 justify-center text-sm seat-legend">
-              <div className="flex items-center seat-legend-item">
-                <div className="w-4 h-4 rounded-sm bg-blue-600 border border-blue-400 mr-2 seat-legend-color" style={{ backgroundColor: "#DAFF0D", borderColor: "#DAFF0D" }}></div>
-                <span className="text-white">Your Seats</span>
+          {/* Selection summary with GDYUP colors */}
+          {showSummary !== false && (
+            <div className="absolute top-2 right-2 bg-gray-900/90 backdrop-blur-sm px-3 py-1.5 rounded-full z-10 border border-gray-700 shadow-lg">
+              <div className="flex items-center text-xs">
+                <div className="w-2 h-2 rounded-full bg-[#DAFF0D] mr-1.5"></div>
+                <span className="text-[#DAFF0D] font-medium">{selectedSeats.length}</span>
+                <span className="text-gray-300 mx-1">of</span>
+                <span className="text-white font-medium">{actualTotalSeats}</span>
+                <span className="text-gray-300 ml-1">seats selected</span>
+                {selectedSeats.length > 0 && (
+                  <>
+                    <span className="mx-1 text-gray-500">|</span>
+                    <span className="text-[#DAFF0D] font-medium">{calculatedYourSeats}</span>
+                    <span className="text-gray-300 mx-1">:</span>
+                    <span className="text-[#DC143C] font-medium">{calculatedPartnerSeats}</span>
+                  </>
+                )}
               </div>
-              <div className="flex items-center seat-legend-item">
-                <div className="w-4 h-4 rounded-sm bg-gray-800 border border-gray-700 mr-2 seat-legend-color"></div>
-                <span className="text-white">Partner's Seats</span>
+            </div>
+          )}
+          
+          {/* Legend with GDYUP colors */}
+          {showLegend !== false && (
+            <div className="absolute bottom-2 right-2 left-2 bg-gray-900/90 backdrop-blur-sm px-3 py-1.5 rounded-lg z-10 border border-gray-700 shadow-lg">
+              <div className="flex items-center justify-around text-xs">
+                <div className="flex items-center mr-2">
+                  <div className="w-4 h-4 rounded-sm bg-[#DAFF0D] border border-[#DAFF0D] mr-1.5 opacity-80"></div>
+                  <span className="text-[#DAFF0D] font-medium">Selected</span>
+                </div>
+                <div className="flex items-center mr-2">
+                  <div className="w-4 h-4 rounded-sm bg-gray-700 border border-gray-600 mr-1.5 opacity-80"></div>
+                  <span className="text-gray-300 font-medium">Available</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 rounded-sm bg-gray-800 border border-gray-700 mr-1.5 opacity-50"></div>
+                  <span className="text-gray-400 font-medium">Unavailable</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Seat map container with layout info */}
+          <div 
+            ref={containerRef}
+            className="relative mx-auto bg-gradient-to-b from-gray-800 to-gray-950 rounded-lg overflow-hidden touch-manipulation border border-gray-700 shadow-inner"
+            style={{ 
+              width: `${gridDimensions.width}px`, 
+              height: `${gridDimensions.height + 24}px`,
+              maxWidth: '100%',
+              maxHeight: '70vh'
+            }}
+            aria-label="Jet Seat Map"
+          >
+            {/* Simplified layout info bar at the top */}
+            <div className="absolute top-0 left-0 right-0 h-6 bg-gray-800/80 backdrop-blur-sm border-b border-gray-700 flex justify-between items-center px-3 z-10 text-xs">
+              <div className="text-gray-300 font-medium">{layout.rows} × {layout.seatsPerRow}</div>
+              <div className="text-[#DAFF0D]">
+                {selectedSeats.length} of {actualTotalSeats} selected
+              </div>
+            </div>
+            
+            {/* Render the seat grid */}
+            {renderSeatGrid()}
+            
+            {/* Selecto component for drag selection */}
+            {!readOnly && selectionMode === 'drag' && containerRef.current && (
+              <Selecto
+                ref={selectoRef}
+                container={containerRef.current}
+                selectableTargets={['[data-seat-id]']}
+                selectByClick={false}
+                selectFromInside={false}
+                toggleContinueSelect={['shift']}
+                hitRate={0}
+                onSelect={handleSelectoSelect}
+                ratio={0}
+              />
+            )}
+          </div>
+          
+          {/* Add allocation controls with GDYUP colors */}
+          {showControls && !readOnly && selectedSeats.length > 0 && (
+            <div className="mt-3 px-3 py-2 bg-gray-800/70 rounded-lg border border-gray-700">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-[#DAFF0D]">Your Seats: {calculatedYourSeats}</span>
+                <span className="text-white">{selectionPercentage}%</span>
+                <span className="text-[#DC143C]">Partner Seats: {calculatedPartnerSeats}</span>
+              </div>
+              
+              <Slider
+                value={[selectionPercentage]}
+                onValueChange={(values) => setSelectionPercentage(values[0])}
+                min={0}
+                max={100}
+                step={1}
+                className="my-2"
+              />
+              
+              <div className="flex justify-between mt-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={toggleSelectionMode}
+                  className="h-7 text-xs border-[#DAFF0D]/50 text-[#DAFF0D] hover:bg-[#DAFF0D]/10"
+                >
+                  {selectionMode === 'tap' ? 
+                    <><MousePointerClick className="h-3 w-3 mr-1" /> Tap</> : 
+                    <><MousePointer className="h-3 w-3 mr-1" /> Drag</>
+                  }
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={handleSelectAll}
+                  className="h-7 text-xs bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/90"
+                >
+                  <CheckCheck className="h-3 w-3 mr-1" /> Select All
+                </Button>
               </div>
             </div>
           )}

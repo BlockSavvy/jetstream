@@ -1,0 +1,858 @@
+/* GDYUP Forms Specific CSS - Ensuring brand consistency */
+
+/* Enforce GDYUP colors in offer creation form */
+.gdyup-form {
+  --bg-dark: #000000;
+  --bg-card: #121212;
+  --bg-card-hover: #1A1A1A;
+  --bg-input: #1A1A1A;
+  --border-default: #2a2a2a;
+  --border-highlight: var(--gdyup-primary);
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
+  --text-muted: #D0D0D0;
+
+  color-scheme: dark;
+}
+
+/* Enhanced icon styling */
+.gdyup-icon {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+}
+
+.gdyup-button-primary .gdyup-icon {
+  color: black !important;
+  filter: none !important;
+}
+
+/* Dialog styling */
+.gdyup-dialog [data-radix-popper-content-wrapper] {
+  background-color: var(--bg-dark) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Fix dialog close button - more specific selectors and enhanced visibility */
+.gdyup-dialog button[data-dialog-close],
+.gdyup-dialog [data-dialog-close] svg,
+.gdyup-dialog [aria-label="Close"],
+.gdyup-dialog [data-state="open"] > button {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #333333 !important;
+  border-radius: 50% !important;
+  width: 25px !important;
+  height: 25px !important;
+  padding: 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  top: 10px !important;
+  right: 10px !important;
+  position: absolute !important;
+  z-index: 50 !important;
+}
+
+.gdyup-dialog button[data-dialog-close]:hover,
+.gdyup-dialog [aria-label="Close"]:hover {
+  background-color: #333333 !important;
+  border-color: var(--gdyup-primary) !important;
+}
+
+.gdyup-dialog button[data-dialog-close] svg,
+.gdyup-dialog [aria-label="Close"] svg {
+  color: #ffffff !important;
+  width: 14px !important;
+  height: 14px !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Enhanced icon styling for buttons to ensure better visibility */
+.gdyup-icon, 
+[class*="button"] svg,
+button svg {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+}
+
+/* Different icon color for primary buttons */
+.gdyup-button-primary svg,
+.button-primary svg,
+[class*="primary"] svg {
+  color: black !important;
+  filter: none !important;
+}
+
+/* Ensure filter icon is visible in filters button */
+button:has(.lucide-filter) svg {
+  color: var(--gdyup-primary) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5)) !important;
+}
+
+/* Additional component-specific styles */
+.gdyup-form .gdyup-swiper {
+  height: calc(100vh - 180px);
+  overflow: hidden;
+}
+
+.gdyup-form .gdyup-section {
+  padding: 1rem;
+  margin: 0;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.gdyup-form .gdyup-icon {
+  color: var(--gdyup-primary);
+}
+
+/* Enhanced styling for components to reduce nesting */
+.gdyup-form .jet-details {
+  background-color: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.gdyup-form .jet-info-tabs {
+  width: 100%;
+}
+
+.gdyup-form .jet-tabs-list {
+  display: flex;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.gdyup-form .seat-configuration {
+  padding: 0.5rem 0;
+}
+
+.gdyup-form .visualizer-container {
+  background-color: rgba(17, 24, 39, 0.4);
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  padding: 1rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .seat-visualizer {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  padding: 1rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .enhanced-map {
+  height: auto;
+  min-height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Form sections */
+.gdyup-form .form-section {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.gdyup-form .form-section-header svg {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 6px rgba(218, 255, 13, 0.3));
+}
+
+.gdyup-form .form-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gdyup-primary);
+}
+
+/* Mobile-specific style improvements */
+@media (max-width: 768px) {
+  /* Flatten nested containers on mobile */
+  .gdyup-form .form-section {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  /* Reduce nesting depth by flattening inner containers */
+  .gdyup-form .form-section > div:not(.form-section-header):not(.tabs-list) {
+    border: none;
+    box-shadow: none;
+    padding: 0.5rem 0;
+    background: transparent;
+  }
+  
+  /* Optimize the swiper component on mobile */
+  .gdyup-form .gdyup-swiper {
+    height: calc(100vh - 160px);
+  }
+  
+  /* Make section headings more compact on mobile */
+  .gdyup-form .form-section-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .gdyup-form .form-section-title {
+    font-size: 1.125rem;
+  }
+  
+  /* Make cards less nested */
+  .gdyup-form .card, 
+  .gdyup-form .bg-gray-800\/50,
+  .gdyup-form .bg-gray-900\/60,
+  .gdyup-form .bg-gray-900\/90 {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid var(--border-default);
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Enhanced tab styling */
+  .gdyup-form [role="tablist"] {
+    background-color: rgba(35, 37, 41, 0.5);
+    border-radius: 8px;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .gdyup-form [role="tab"] {
+    flex: 1;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    font-weight: 500;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .gdyup-form [role="tab"][data-state="active"] {
+    background-color: var(--gdyup-primary);
+    color: black;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Adjust specifics for our new component classes */
+  .gdyup-form .jet-details {
+    margin-top: 0.5rem;
+  }
+  
+  .gdyup-form .visualizer-container {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    background-color: rgba(17, 24, 39, 0.6);
+  }
+  
+  .gdyup-form .seat-visualizer {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .gdyup-form .enhanced-map {
+    min-height: 100px;
+  }
+  
+  /* Make form fields take less vertical space */
+  .gdyup-form label {
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .gdyup-form input, 
+  .gdyup-form select, 
+  .gdyup-form textarea {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Make route map more pronounced */
+  .gdyup-form .route-map {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    margin: 0.75rem 0;
+  }
+  
+  .gdyup-form .enhanced-map-container {
+    margin: 0.5rem 0;
+  }
+  
+  .gdyup-form .route-map-mini {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+  }
+}
+
+/* Primary buttons */
+.gdyup-form button[type="submit"],
+.gdyup-form .button-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
+  transition: all 0.2s ease-in-out !important;
+  border: none !important;
+}
+
+.gdyup-form button[type="submit"]:hover,
+.gdyup-form .button-primary:hover {
+  background-color: #E8FF4D !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.5) !important;
+}
+
+/* Secondary/outline buttons */
+.gdyup-form .button-secondary,
+.gdyup-form .button-outline {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--border-default) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.gdyup-form .button-secondary:hover,
+.gdyup-form .button-outline:hover {
+  background-color: rgba(218, 255, 13, 0.1) !important;
+  border-color: rgba(218, 255, 13, 0.4) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* Form inputs */
+.gdyup-form input[type="text"],
+.gdyup-form input[type="number"],
+.gdyup-form input[type="email"],
+.gdyup-form input[type="password"],
+.gdyup-form input[type="search"],
+.gdyup-form textarea,
+.gdyup-form select {
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border-default) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.gdyup-form input:focus,
+.gdyup-form textarea:focus,
+.gdyup-form select:focus {
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 0 3px rgba(218, 255, 13, 0.2) !important;
+  outline: none !important;
+}
+
+/* Form labels */
+.gdyup-form label {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+}
+
+/* Sliders */
+.gdyup-form [role="slider"] {
+  background-color: var(--gdyup-primary) !important;
+  border: 2px solid black !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
+}
+
+.gdyup-form [data-orientation="horizontal"] > span {
+  background-color: #333333 !important;
+}
+
+.gdyup-form [data-orientation="horizontal"] > span > span {
+  background-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4) !important;
+}
+
+/* Selected items, checkboxes, radio buttons */
+.gdyup-form [data-state="checked"],
+.gdyup-form input[type="checkbox"]:checked,
+.gdyup-form input[type="radio"]:checked {
+  background-color: var(--gdyup-primary) !important;
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Tabs */
+.gdyup-form [role="tablist"] {
+  background-color: #151515 !important;
+  border-color: #333333 !important;
+}
+
+.gdyup-form [role="tab"][data-state="active"] {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* Multi-step form navigation */
+.gdyup-form .step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.gdyup-form .step-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--border-default);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .step-dot.active {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.5);
+  transform: scale(1.2);
+}
+
+/* Card styles inside forms */
+.gdyup-form .card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.gdyup-form .card-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-default);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .card-content {
+  padding: 1rem;
+}
+
+/* Fix autocomplete styles */
+.gdyup-form [role="combobox"],
+.gdyup-form [cmdk-input] {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+}
+
+.gdyup-form [cmdk-item][data-selected="true"] {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+.gdyup-form [cmdk-item]:hover:not([data-selected="true"]) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Make dropdown popover match theme */
+.gdyup-form [role="dialog"],
+.gdyup-form [data-state="open"] {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+  padding: 0.5rem !important;
+}
+
+/* Split configuration visualizations */
+.gdyup-form .split-section {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.gdyup-form .split-ratio {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gdyup-form .split-ratio-bar {
+  flex-grow: 1;
+  height: 0.5rem;
+  background-color: #333333;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.gdyup-form .split-ratio-progress {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+  border-radius: 0.25rem;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.3);
+}
+
+.gdyup-form .split-ratio-label {
+  min-width: 4rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.gdyup-form .split-ratio-label.primary {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .split-ratio-label.secondary {
+  color: var(--gdyup-secondary);
+}
+
+/* JetSelector specific styles */
+.gdyup-form .jet-selector {
+  background-color: var(--bg-card);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .jet-selector:hover {
+  border-color: rgba(218, 255, 13, 0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-form .jet-selected {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.3);
+}
+
+.gdyup-form .jet-image-container {
+  position: relative;
+  height: 12rem;
+  overflow: hidden;
+}
+
+.gdyup-form .jet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gdyup-form .jet-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.gdyup-form .jet-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.gdyup-form .jet-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  background-color: rgba(218, 255, 13, 0.15);
+  color: var(--gdyup-primary);
+  border: 1px solid rgba(218, 255, 13, 0.3);
+}
+
+/* Calendar/DatePicker styles */
+.gdyup-form .calendar-wrapper {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.gdyup-form .calendar-header {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  padding: 0.75rem !important;
+  border-bottom: 1px solid var(--border-default) !important;
+}
+
+.gdyup-form .calendar-day {
+  color: var(--text-primary) !important;
+}
+
+.gdyup-form .calendar-day.selected {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+}
+
+.gdyup-form .calendar-day:hover:not(.selected) {
+  background-color: rgba(218, 255, 13, 0.1) !important;
+}
+
+/* JetSeatVisualizer specific styling */
+.gdyup-form .seat {
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  background-color: #333333;
+  color: var(--text-secondary);
+}
+
+.gdyup-form .seat.selected {
+  background-color: var(--gdyup-primary);
+  color: black;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.4);
+  transform: scale(1.05);
+}
+
+.gdyup-form .seat:hover:not(.selected):not(.disabled) {
+  background-color: rgba(218, 255, 13, 0.15);
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .seat.disabled {
+  background-color: #222222;
+  color: #555555;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* For the progress bar in multi-step forms */
+.gdyup-form .progress-wrapper {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #333333;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.gdyup-form .progress-bar {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+  border-radius: 0.25rem;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Summary section styling */
+.gdyup-form .summary-section {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.gdyup-form .summary-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gdyup-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.gdyup-form .summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gdyup-form .summary-label {
+  color: var(--text-secondary);
+}
+
+.gdyup-form .summary-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.gdyup-form .summary-value.highlight {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .enhanced-map-container {
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.gdyup-form .route-map-mini {
+  background-color: rgba(31, 41, 55, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .route-map-mini .route-line {
+  height: 2px;
+  background: linear-gradient(to right, #3b82f6, #DAFF0D, #f59e0b);
+  border-radius: 999px;
+  box-shadow: 0 0 4px rgba(218, 255, 13, 0.3);
+}
+
+.gdyup-form .route-map-mini .plane-icon {
+  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5));
+}
+
+/* Text styling */
+.gdyup-text-primary {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 5px rgba(218, 255, 13, 0.3)) !important;
+}
+
+/* Badge styling */
+.gdyup-badge {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.5) !important;
+  border-radius: 9999px !important;
+  padding: 0.15rem 0.5rem !important;
+}
+
+.gdyup-badge:hover {
+  background-color: #E8FF4D !important;
+}
+
+/* ====== GLOBAL GDYUP STYLES - Ensure consistent styling across all components ====== */
+:root {
+  --gdyup-primary: #DAFF0D;
+  --gdyup-primary-hover: #E8FF4D;
+  --gdyup-dark: #000000;
+  --gdyup-dark-accent: #121212;
+  --gdyup-gray: #333333;
+  --gdyup-light-gray: #555555;
+  --gdyup-border: #2a2a2a;
+}
+
+/* Apply to all GDYUP components */
+.gdyup-section,
+[class*="gdyup-"],
+[class*="gdyup"] {
+  --bg-dark: #000000;
+  --bg-card: #121212;
+  --bg-card-hover: #1A1A1A;
+  --bg-input: #1A1A1A; 
+  --border-default: #2a2a2a;
+  --border-highlight: var(--gdyup-primary);
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
+  --text-muted: #D0D0D0;
+}
+
+/* ====== ICON VISIBILITY RULES - Comprehensive styling for all icons ====== */
+
+/* Default icon styling - lime green with shadow for visibility */
+.gdyup-icon, 
+[class*="gdyup"] svg,
+.gdyup-button-secondary svg,
+.gdyup-form button:not([class*="primary"]) svg {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+  stroke-width: 2px !important;
+}
+
+/* Icons on PRIMARY buttons and elements (lime bg) - BLACK for contrast */
+.gdyup-button-primary svg,
+.button-primary svg,
+[class*="primary"] svg,
+[style*="background-color: #DAFF0D"] svg,
+[style*="background-color:#DAFF0D"] svg,
+[style*="background: #DAFF0D"] svg,
+[style*="background:#DAFF0D"] svg,
+[class*="bg-[#DAFF0D]"] svg,
+button.bg-[#DAFF0D] svg,
+[data-state="active"] svg,
+[class*="gdyup-primary"] svg {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  filter: none !important;
+  stroke-width: 2px !important;
+}
+
+/* Active menu items - ensure black text on lime background */
+.bg-gray-800.text-\[\#DAFF0D\],
+[class*="active"].bg-[#DAFF0D],
+[data-state="active"],
+button[data-state="active"],
+.text-\[\#DAFF0D\].bg-gray-800,
+nav button.bg-\[\#DAFF0D\],
+nav a.bg-\[\#DAFF0D\],
+.gdyup-button {
+  color: black !important;
+}
+
+/* Active menu item text specifically */
+.bg-gray-800.text-\[\#DAFF0D\] span,
+[class*="active"].bg-[#DAFF0D] span,
+button[data-state="active"] span,
+.text-\[\#DAFF0D\].bg-gray-800 span {
+  color: black !important;
+}
+
+/* Menu icon specific styling with higher specificity */
+button svg.lucide-menu,
+.gdyup-header-menu svg.lucide-menu,
+header button svg.lucide-menu {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 5px rgba(218, 255, 13, 0.7)) !important;
+}
+
+/* Special case for filter icon with higher specificity */
+button svg.lucide-filter,
+[role="button"] svg.lucide-filter {
+  color: black !important;
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+}
+
+/* Filter button styling */
+button:has(.lucide-filter),
+[role="button"]:has(.lucide-filter) {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+}
+
+/* Ensure GDYUP menu items have consistent styling */
+.gdyup-header-menu button svg,
+header [role="menuitem"] svg,
+nav [role="menuitem"] svg {
+  color: var(--gdyup-primary) !important;
+  stroke-width: 2.5px !important;
+  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5)) !important;
+}
+
+/* When on black background */
+.bg-black svg,
+.bg-gray-900 svg,
+[style*="background-color: black"] svg,
+[style*="background-color: #000"] svg,
+[style*="background-color:#000"] svg {
+  color: var(--gdyup-primary) !important;
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
+}
+
+/* ====== Existing Dialog styling - Enhanced ====== */ 
