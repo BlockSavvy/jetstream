@@ -126,8 +126,8 @@ interface JetShareListingsContentProps {
 // Placeholder component for empty state
 const EmptyState = () => (
   <div className="flex flex-col items-center justify-center py-12 text-center">
-    <div className="bg-black rounded-full w-20 h-20 flex items-center justify-center mb-6 border-2 border-[#DAFF0D] shadow-[0_0_20px_rgba(218,255,13,0.3)]">
-      <Plane className="h-10 w-10 text-[#DAFF0D]" />
+    <div className="bg-black rounded-full w-20 h-20 flex items-center justify-center mb-6 border-2 border-gdyup-primary shadow-[0_0_20px_rgba(218,255,13,0.3)]">
+      <Plane className="h-10 w-10 gdyup-primary" />
     </div>
     <h3 className="text-xl font-bold mb-3 text-white">No Flight Shares Available</h3>
     <p className="text-white max-w-md mb-6">
@@ -135,7 +135,7 @@ const EmptyState = () => (
     </p>
     <Button 
       onClick={() => window.location.reload()} 
-      className="bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] border-0 font-medium shadow-md"
+      className="bg-gdyup-primary text-black hover:bg-gdyup-primary/90 border-0 font-medium shadow-md"
     >
       <RefreshCw className="h-4 w-4 mr-2" />
       Refresh Listings
@@ -1012,7 +1012,7 @@ export default function JetShareListingsContent() {
           {/* Own offer badge */}
           {offer.isOwnOffer && (
             <div className="absolute top-2 right-2 z-20">
-              <Badge className="bg-[#DAFF0D] text-black border-transparent text-xs">Your Offer</Badge>
+              <Badge className="bg-gdyup-primary text-black border-transparent text-xs">Your Offer</Badge>
             </div>
           )}
         </div>
@@ -1032,7 +1032,7 @@ export default function JetShareListingsContent() {
               </CardDescription>
             </div>
             <div className="text-right">
-              <p className="text-[#DAFF0D] font-medium">${offer.requested_share_amount.toLocaleString()}</p>
+              <p className="gdyup-primary font-medium">${offer.requested_share_amount.toLocaleString()}</p>
               <p className="text-xs text-gray-400">
                 {offer.available_seats && offer.available_seats > 1
                   ? `${offer.available_seats} seats left`
@@ -1306,7 +1306,7 @@ export default function JetShareListingsContent() {
           <h2 className="text-lg font-semibold gdyup-text-primary flex items-center">
             Available Flights
             {!isLoading && filteredOffers.length > 0 && (
-              <Badge className="ml-2 text-xs bg-[#DAFF0D] text-black gdyup-badge">
+              <Badge className="ml-2 text-xs bg-gdyup-primary text-black gdyup-badge">
                 {filteredOffers.length}
               </Badge>
             )}
@@ -1383,7 +1383,7 @@ export default function JetShareListingsContent() {
                       <span className="text-sm text-gray-400">From</span>
                       <p className="font-medium text-white">{selectedOffer.departure_location}</p>
                     </div>
-                    <Plane className="h-5 w-5 mx-4 transform rotate-90 text-[#DAFF0D]" />
+                    <Plane className="h-5 w-5 mx-4 transform rotate-90 gdyup-primary" />
                     <div className="text-right">
                       <span className="text-sm text-gray-400">To</span>
                       <p className="font-medium text-white">{selectedOffer.arrival_location}</p>
@@ -1393,7 +1393,7 @@ export default function JetShareListingsContent() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-[#DAFF0D]" />
+                        <Calendar className="h-4 w-4 mr-2 gdyup-primary" />
                         <span className="text-sm text-gray-400">Flight Date</span>
                       </div>
                       <p className="font-medium text-white">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
@@ -1401,10 +1401,10 @@ export default function JetShareListingsContent() {
                     
                     <div>
                       <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-2 text-[#DAFF0D]" />
+                        <DollarSign className="h-4 w-4 mr-2 gdyup-primary" />
                         <span className="text-sm text-gray-400">Your Share Cost</span>
                       </div>
-                      <p className="font-medium text-white">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                      <p className="font-medium gdyup-primary">${selectedOffer.requested_share_amount.toLocaleString()}</p>
                     </div>
                   </div>
                 </div>
@@ -1473,12 +1473,12 @@ export default function JetShareListingsContent() {
               <div className="space-y-4 py-3">
                 <div className="flex justify-between items-center border-b border-gray-700 pb-3">
                   <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 text-[#DAFF0D]" />
+                    <Plane className="h-4 w-4 gdyup-primary" />
                     <span className="font-medium text-white">{selectedOffer.departure_location}</span>
                   </div>
                   <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
                   <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 text-[#DAFF0D] rotate-90" />
+                    <Plane className="h-4 w-4 gdyup-primary rotate-90" />
                     <span className="font-medium text-white">{selectedOffer.arrival_location}</span>
                   </div>
                 </div>
@@ -1490,7 +1490,7 @@ export default function JetShareListingsContent() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-400">Requested Share</p>
-                    <p className="font-medium text-[#DAFF0D]">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                    <p className="font-medium gdyup-primary">${selectedOffer.requested_share_amount.toLocaleString()}</p>
                   </div>
                 </div>
                 
@@ -1528,7 +1528,7 @@ export default function JetShareListingsContent() {
                           `${selectedOffer.user.first_name} ${selectedOffer.user.last_name || ''}` : 
                           'Jet Owner'}
                         {(selectedOffer.user as UserWithVerification)?.verification_status === 'verified' && (
-                          <CheckCircle className="h-3.5 w-3.5 text-[#DAFF0D] inline ml-1" />
+                          <CheckCircle className="h-3.5 w-3.5 gdyup-primary inline ml-1" />
                         )}
                       </p>
                       <p className="text-xs text-gray-400">

@@ -316,7 +316,7 @@ const FlightCard = ({ flight }: { flight: FlightData }) => {
 export default function AIConcierge({
   showButton = true,
   buttonImage,
-  buttonColor = '#DAFF0D',
+  buttonColor = 'var(--gdyup-concierge-bg)',
   buttonPosition = { bottom: '1rem', right: '1rem' },
   initiallyOpen = false
 }: {
@@ -1490,7 +1490,7 @@ export default function AIConcierge({
       {showButton && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed z-50 rounded-full shadow-lg hover:brightness-110 transition-all duration-300 hover:scale-105"
+          className="fixed z-50 rounded-full shadow-lg hover:brightness-110 transition-all duration-300 hover:scale-105 ai-concierge-button"
           style={{
             bottom: buttonPosition.bottom || 'auto',
             right: buttonPosition.right || 'auto',
@@ -1498,9 +1498,11 @@ export default function AIConcierge({
             left: buttonPosition.left || 'auto',
             width: '3.5rem',
             height: '3.5rem',
-            background: buttonColor || '#DAFF0D'
+            background: buttonColor || 'var(--gdyup-concierge-bg)'
           }}
           aria-label="Open AI Concierge"
+          data-testid="ai-concierge-button"
+          data-ai-concierge="true"
         >
           {buttonImage ? (
             <img 
@@ -1517,7 +1519,7 @@ export default function AIConcierge({
               height="24"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="var(--gdyup-concierge-text, currentColor)"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"

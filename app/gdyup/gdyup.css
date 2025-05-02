@@ -1,16 +1,262 @@
-/* GDY UP Branding Colors */
+/* Theme definitions - completely rewritten for reliability */
 :root {
-  --gdyup-primary: #DAFF0D; /* Enhanced brightness for better contrast */
-  --gdyup-secondary: #FF4B47;
-  --gdyup-background: #000000;
-  --gdyup-text: #FFFFFF;
-  --gdyup-text-medium: #E0E0E0;
-  --gdyup-text-subtle: #D0D0D0; /* Brightened from #A0A0A0 for better contrast */
-  --gdyup-accent: #1A1A1A;
-  --gdyup-hover-bg: rgba(255, 255, 255, 0.15); /* Increased opacity */
-  --gdyup-active-bg: rgba(218, 255, 13, 0.2); /* Increased opacity */
-  --gdyup-card-bg: #121212;
-  --gdyup-card-border: #2a2a2a;
+  /* Default theme values to prevent flash of unstyled content */
+  --gdyup-primary: #DAFF0D !important; 
+  --gdyup-primary-rgb: 218, 255, 13 !important;
+  --gdyup-secondary: #FF4B47 !important;
+  --gdyup-secondary-rgb: 255, 75, 71 !important;
+  --gdyup-background: #000000 !important;
+  --gdyup-card-bg: #121212 !important;
+  --gdyup-hover-bg: #181818 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E0E0E0 !important;
+  --gdyup-text-subtle: #D0D0D0 !important; 
+  --gdyup-border: #2a2a2a !important;
+  --gdyup-button-bg: #DAFF0D !important;
+  --gdyup-button-hover-bg: #E8FF4D !important;
+  --gdyup-button-active-bg: #C8EA00 !important;
+  --gdyup-button-text: #000000 !important;
+  --gdyup-icon-shadow: rgba(218, 255, 13, 0.4) !important;
+  --gdyup-concierge-bg: #DAFF0D !important;
+  --gdyup-concierge-text: #000000 !important;
+  --gdyup-nav-active-bg: #DAFF0D !important;
+  --gdyup-nav-active-text: #000000 !important;
+  --gdyup-nav-hover-border: rgba(218, 255, 13, 0.6) !important;
+}
+
+/* Lime Green Theme (Default) */
+.gdyup-theme-default {
+  --gdyup-primary: #DAFF0D !important; 
+  --gdyup-primary-rgb: 218, 255, 13 !important;
+  --gdyup-secondary: #FF4B47 !important;
+  --gdyup-secondary-rgb: 255, 75, 71 !important;
+  --gdyup-background: #000000 !important;
+  --gdyup-card-bg: #121212 !important;
+  --gdyup-hover-bg: #181818 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E0E0E0 !important;
+  --gdyup-text-subtle: #D0D0D0 !important; 
+  --gdyup-border: #2a2a2a !important;
+  --gdyup-button-bg: #DAFF0D !important;
+  --gdyup-button-hover-bg: #E8FF4D !important;
+  --gdyup-button-active-bg: #C8EA00 !important;
+  --gdyup-button-text: #000000 !important;
+  --gdyup-icon-shadow: rgba(218, 255, 13, 0.4) !important;
+  --gdyup-concierge-bg: #DAFF0D !important;
+  --gdyup-concierge-text: #000000 !important;
+  --gdyup-nav-active-bg: #DAFF0D !important;
+  --gdyup-nav-active-text: #000000 !important;
+  --gdyup-nav-hover-border: rgba(218, 255, 13, 0.6) !important;
+}
+
+/* Luxury Black Theme (Orange) */
+.gdyup-theme-blue {
+  --gdyup-primary: #F25C05 !important;
+  --gdyup-primary-rgb: 242, 92, 5 !important;
+  --gdyup-secondary: #F77A2E !important;
+  --gdyup-secondary-rgb: 247, 122, 46 !important;
+  --gdyup-background: #000000 !important;
+  --gdyup-card-bg: #1A1F20 !important;
+  --gdyup-hover-bg: #222B30 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #A0A0A0 !important;
+  --gdyup-text-subtle: #808080 !important;
+  --gdyup-border: #333333 !important;
+  --gdyup-button-bg: #F25C05 !important;
+  --gdyup-button-hover-bg: #F77A2E !important;
+  --gdyup-button-active-bg: #D04A04 !important;
+  --gdyup-button-text: #FFFFFF !important;
+  --gdyup-icon-shadow: rgba(242, 92, 5, 0.4) !important;
+  --gdyup-concierge-bg: #F25C05 !important;
+  --gdyup-concierge-text: #FFFFFF !important;
+  --gdyup-nav-active-bg: #F25C05 !important;
+  --gdyup-nav-active-text: #FFFFFF !important;
+  --gdyup-nav-hover-border: rgba(242, 92, 5, 0.6) !important;
+}
+
+/* Bitcoin Orange Theme */
+.gdyup-theme-pink {
+  --gdyup-primary: #F7931A !important;
+  --gdyup-primary-rgb: 247, 147, 26 !important;
+  --gdyup-secondary: #FFB75E !important;
+  --gdyup-secondary-rgb: 255, 183, 94 !important;
+  --gdyup-background: #1A1A1A !important;
+  --gdyup-card-bg: #2A2A2A !important;
+  --gdyup-hover-bg: #333333 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E5E5E5 !important;
+  --gdyup-text-subtle: #C0C0C0 !important;
+  --gdyup-border: #3A3A3A !important;
+  --gdyup-button-bg: #F7931A !important;
+  --gdyup-button-hover-bg: #FFB75E !important;
+  --gdyup-button-active-bg: #D67908 !important;
+  --gdyup-button-text: #000000 !important;
+  --gdyup-icon-shadow: rgba(247, 147, 26, 0.4) !important;
+  --gdyup-concierge-bg: #F7931A !important;
+  --gdyup-concierge-text: #000000 !important;
+  --gdyup-nav-active-bg: #F7931A !important;
+  --gdyup-nav-active-text: #000000 !important;
+  --gdyup-nav-hover-border: rgba(247, 147, 26, 0.6) !important;
+}
+
+/* Special styling for header navigation - ensuring white colors for non-active items */
+header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]),
+header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]),
+.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]),
+.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) {
+  color: white !important;
+  background-color: transparent;
+  font-weight: 500;
+}
+
+/* Ensure icons are white in non-active menu items */
+header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Ensure text is white in non-active menu items */
+header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span,
+header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span,
+.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span,
+.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span {
+  color: white !important;
+}
+
+/* GDY UP Branding Colors - Using CSS Variables for Themability */
+:root {
+  /* These variables are set by the theme classes in gdyup-forms.css */
+  --gdyup-primary: #DAFF0D !important; 
+  --gdyup-primary-rgb: 218, 255, 13 !important;
+  --gdyup-secondary: #FF4B47 !important;
+  --gdyup-secondary-rgb: 255, 75, 71 !important;
+  --gdyup-background: #000000 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E0E0E0 !important;
+  --gdyup-text-subtle: #D0D0D0 !important; 
+  --gdyup-accent: #1A1A1A !important;
+  --gdyup-active-bg: rgba(218, 255, 13, 0.2) !important;
+  --gdyup-card-border: #2a2a2a !important;
+  --gdyup-button-bg: #DAFF0D !important;
+  --gdyup-button-hover-bg: #E8FF4D !important;
+  --gdyup-button-active-bg: #C8EA00 !important;
+  --gdyup-button-text: #000000 !important;
+}
+
+/* Add new rule near the top to force button styling with the primary color */
+/* Fix button styling across the app */
+button, a {
+  --button-text-color: var(--gdyup-button-text, #000000);
+  transition: all 0.2s ease !important;
+}
+
+button.bg-\[var\(--gdyup-primary\)\], 
+a.bg-\[var\(--gdyup-primary\)\] {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.3) !important;
+}
+
+button.bg-\[var\(--gdyup-primary\)\] svg, 
+a.bg-\[var\(--gdyup-primary\)\] svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+}
+
+button.bg-\[var\(--gdyup-primary\)\] span, 
+a.bg-\[var\(--gdyup-primary\)\] span {
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Fix hover effects */
+button.bg-\[var\(--gdyup-primary\)\]:hover, 
+a.bg-\[var\(--gdyup-primary\)\]:hover {
+  filter: brightness(110%) !important;
+  transform: translateY(-2px) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Critical Theme Override Rules - Force hardcoded colors to use theme variables */
+.bg-\[\#DAFF0D\],
+button.bg-\[\#DAFF0D\],
+a.bg-\[\#DAFF0D\],
+nav button.bg-\[\#DAFF0D\],
+nav a.bg-\[\#DAFF0D\],
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+/* Ensure SVG icons in buttons have the correct color based on theme */
+.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] svg,
+nav button.bg-\[\#DAFF0D\] svg,
+nav a.bg-\[\#DAFF0D\] svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+}
+
+/* Ensure text in buttons also has the correct color */
+.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] span,
+nav button.bg-\[\#DAFF0D\] span,
+nav a.bg-\[\#DAFF0D\] span {
+  color: var(--gdyup-button-text) !important;
+}
+
+.text-\[\#DAFF0D\] {
+  color: var(--gdyup-primary) !important;
+}
+
+.border-\[\#DAFF0D\] {
+  border-color: var(--gdyup-primary) !important;
+}
+
+.hover\:bg-\[\#E8FF4D\]:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+}
+
+.hover\:bg-\[\#C8EA00\]:hover {
+  background-color: var(--gdyup-button-active-bg) !important;
+}
+
+/* Default button styles */
+.gdyup-button {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Fix logo styling to prevent unwanted glow effects */
+header a img[src*="gdyup-logo"] {
+  border: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  background: none !important;
+}
+
+/* Additional theming overrides for GdyupHeader component */
+header button.bg-\[\#DAFF0D\],
+header a.bg-\[\#DAFF0D\],
+nav button.bg-\[\#DAFF0D\],
+nav a.bg-\[\#DAFF0D\],
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Text Colors */
@@ -25,8 +271,8 @@
 /* Background Colors */
 .gdyup-bg-primary {
   background-color: var(--gdyup-primary);
-  color: #000000; /* Ensure black text on bright background */
-  font-weight: bold; /* Added for better visibility */
+  color: #000000; /* Always black text on bright background */
+  font-weight: bold;
 }
 
 .gdyup-bg-secondary {
@@ -37,8 +283,8 @@
 /* Gradient Effects */
 .gdyup-gradient {
   background: linear-gradient(90deg, var(--gdyup-primary), var(--gdyup-secondary));
-  color: #000000; /* Ensure black text on bright background */
-  font-weight: bold; /* Added for better visibility */
+  color: #000000; /* Always black text on bright background */
+  font-weight: bold;
 }
 
 /* Border Utilities */
@@ -70,6 +316,7 @@ button[type="submit"],
   justify-content: center !important;
   font-size: 1rem !important;
   line-height: 1.5 !important;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5) !important; /* Added for better text contrast */
 }
 
 .gdyup-button:hover,
@@ -77,7 +324,7 @@ button.btn-primary:hover,
 .btn-primary:hover,
 button[type="submit"]:hover,
 .gdyup-app button.bg-primary:hover {
-  background-color: #E8FF4D !important; /* Slightly brighter for hover */
+  filter: brightness(110%) !important; /* Use filter instead of fixed color for theming */
   transform: translateY(-2px) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
@@ -149,7 +396,7 @@ button.btn-outline:hover,
   border: 2px solid var(--gdyup-primary);
   border-radius: 50%;
   padding: 0.75rem;
-  box-shadow: 0 0 20px rgba(218, 255, 13, 0.4); /* Increased glow */
+  box-shadow: 0 0 20px rgba(218, 255, 13, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -160,7 +407,7 @@ button.btn-outline:hover,
   color: var(--gdyup-primary);
   font-weight: bold;
   letter-spacing: -0.02em;
-  text-shadow: 0 0 10px rgba(218, 255, 13, 0.3); /* Added glow for better visibility */
+  text-shadow: 0 0 10px rgba(218, 255, 13, 0.3);
 }
 
 .gdyup-subtitle {
@@ -324,8 +571,13 @@ h4.text-\[\#DAFF0D\], h5.text-\[\#DAFF0D\], h6.text-\[\#DAFF0D\] {
 
 /* Icon visibility enhancements */
 svg, .lucide, .lucide-icon {
-  color: #FFFFFF; /* Default white color for all icons */
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.5)); /* Add subtle glow to all icons */
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 3px var(--gdyup-icon-shadow)) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* Enhance primary icons */
@@ -344,14 +596,14 @@ svg.text-\[\#DAFF0D\],
 
 /* Enhance button background contrast */
 .bg-\[\#DAFF0D\] {
-  background-color: #DAFF0D !important; /* Ensure the lime green is bright */
-  box-shadow: 0 0 15px rgba(218, 255, 13, 0.3); /* Add glow effect to buttons */
+  background-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.3); /* Add glow effect to buttons */
 }
 
 /* Improve border visibility */
 .border-\[\#DAFF0D\] {
-  border-color: #DAFF0D !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.4); /* Add glow to borders */
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.4); /* Add glow to borders */
 }
 
 /* Special treatment for icon containers */
@@ -542,12 +794,12 @@ div[class*="rounded"] .lucide {
 
 .gdyup-app .form-next-button {
   background-color: var(--gdyup-primary) !important;
-  color: #000000 !important;
-  font-weight: bold !important;
-  padding: 8px 20px !important;
-  border-radius: 6px !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.3) !important;
+  color: black !important;
+  font-weight: 700 !important; /* Bolder for better contrast */
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.4) !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important; /* Added for better text contrast */
+  letter-spacing: 0.01em !important; /* Slightly increased letter spacing */
+  padding: 0.6rem 1.2rem !important; /* Slightly larger button */
 }
 
 .gdyup-app .form-next-button:hover {
@@ -594,11 +846,12 @@ div[class*="rounded"] .lucide {
 }
 
 /* GDY UP SVG Logo Enhancement */
-.gdyup-logo {
-  filter: drop-shadow(0 0 8px rgba(218, 255, 13, 0.3));
-  transition: all 0.3s ease;
-  max-height: 40px;
-  width: auto !important;
+.gdyup-logo,
+header a img[src*="gdyup-logo"],
+header a img[src*="GDYUP"] {
+  border: none !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 0 10px rgba(218, 255, 13, 0.3)) !important;
 }
 
 .gdyup-logo:hover {
@@ -960,4 +1213,1189 @@ button[class*="TabsTrigger"][data-state="active"] {
   box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
   width: 18px !important;
   height: 18px !important;
+}
+
+/* Enhanced styling for the Next button and navigation buttons */
+.gdyup-button-primary,
+.gdyup-app .form-next-button,
+.gdyup-app button[type="submit"],
+.gdyup-form button[type="submit"] {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: 700 !important; /* Bolder for better contrast */
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.4) !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important; /* Added for better text contrast */
+  letter-spacing: 0.01em !important; /* Slightly increased letter spacing */
+  padding: 0.6rem 1.2rem !important; /* Slightly larger button */
+}
+
+/* Enhance Next button icon visibility */
+.gdyup-button-primary svg,
+.gdyup-app .form-next-button svg,
+button[type="submit"] svg,
+.gdyup-app button.bg-\[\#DAFF0D\] svg {
+  color: black !important;
+  fill: black !important;
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Split information displays with better contrast */
+.gdyup-app .share-ratio-info,
+.gdyup-app .seat-info,
+.gdyup-app [class*="split-ratio"] {
+  font-weight: 600 !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7) !important;
+  letter-spacing: 0.02em !important;
+}
+
+.gdyup-app .gdyup-primary,
+.gdyup-primary {
+  color: var(--gdyup-primary) !important;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8) !important;
+  font-weight: 600 !important;
+}
+
+/* Enhance reset buttons */
+.gdyup-app button[class*="reset"],
+.gdyup-app button:has(span:contains("Reset")) {
+  border: 1px solid var(--gdyup-primary) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: var(--gdyup-primary) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.2) !important;
+}
+
+.gdyup-app button[class*="reset"]:hover,
+.gdyup-app button:has(span:contains("Reset")):hover {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  box-shadow: 0 0 12px rgba(218, 255, 13, 0.3) !important;
+}
+
+/* Fix the Next button icon opacity issues */
+.gdyup-button-primary svg.lucide-chevron-right,
+button[type="submit"] svg.lucide-chevron-right,
+button svg.lucide-chevron-right {
+  color: black !important;
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin-left: 4px !important;
+}
+
+/* Add direct selector for all lucide icons in primary buttons */
+.lucide-chevron-right,
+.lucide-chevron-left,
+.lucide-loader2 {
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure that fixed navigation footer buttons have visible icons */
+.fixed.bottom-0.left-0.right-0 button svg,
+.fixed.bottom-0.left-0.right-0 a svg {
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Fix SVG icons inside buttons with theme background color */
+.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+}
+
+/* Fix text inside buttons with theme background color */
+.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] span {
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Fix logo styling in Header */
+header a img[src*="gdyup-logo-v2.svg"],
+header a img[src*="gdyup-logo"],
+header a img[alt*="GDYUP"],
+header a img[alt="GDYUP Logo"] {
+  filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  background: none !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* Add styles for our custom theme-responsive button class */
+.gdyup-primary-button {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.3) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.gdyup-primary-button:hover {
+  filter: brightness(110%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(var(--gdyup-primary-rgb), 0.4) !important;
+}
+
+.gdyup-primary-button svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+}
+
+.gdyup-primary-button span {
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Button hover effects for the different themes */
+.gdyup-theme-default .bg-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-default .bg-\[\#DAFF0D\]:hover,
+.gdyup-theme-default .gdyup-primary-button:hover {
+  filter: brightness(110%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(218, 255, 13, 0.4) !important;
+}
+
+.gdyup-theme-blue .bg-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-blue .bg-\[\#DAFF0D\]:hover,
+.gdyup-theme-blue .gdyup-primary-button:hover {
+  filter: brightness(110%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(242, 92, 5, 0.4) !important;
+}
+
+.gdyup-theme-pink .bg-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-pink .bg-\[\#DAFF0D\]:hover,
+.gdyup-theme-pink .gdyup-primary-button:hover {
+  filter: brightness(110%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.4) !important;
+}
+
+/* Comprehensive theme overrides - ensure everything changes with theme */
+
+/* Fix any possible hover effects on the logo */
+a:hover img[src*="gdyup-logo"],
+a:hover img[src*="gdyup-logo-v2.svg"] {
+  filter: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  background: none !important;
+  opacity: 1 !important;
+}
+
+/* Text elements - ensure all text with class .text-[#DAFF0D] changes with theme */
+.gdyup-theme-default .text-\[\#DAFF0D\],
+.gdyup-theme-default .text-\[var\(--gdyup-primary\)\] {
+  color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue .text-\[\#DAFF0D\],
+.gdyup-theme-blue .text-\[var\(--gdyup-primary\)\] {
+  color: #F25C05 !important;
+}
+
+.gdyup-theme-pink .text-\[\#DAFF0D\],
+.gdyup-theme-pink .text-\[var\(--gdyup-primary\)\] {
+  color: #F7931A !important;
+}
+
+/* Primary color element overrides */
+.gdyup-theme-default .text-\[var\(--gdyup-primary\)\],
+.gdyup-theme-default .gdyup-primary {
+  color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue .text-\[var\(--gdyup-primary\)\],
+.gdyup-theme-blue .gdyup-primary {
+  color: #F25C05 !important;
+}
+
+.gdyup-theme-pink .text-\[var\(--gdyup-primary\)\],
+.gdyup-theme-pink .gdyup-primary {
+  color: #F7931A !important;
+}
+
+/* Background elements for page sections */
+.gdyup-theme-default .bg-\[var\(--gdyup-primary\)\],
+.gdyup-theme-default .gdyup-bg-primary,
+.gdyup-theme-default .bg-gdyup-primary {
+  background-color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue .bg-\[var\(--gdyup-primary\)\],
+.gdyup-theme-blue .gdyup-bg-primary,
+.gdyup-theme-blue .bg-gdyup-primary {
+  background-color: #F25C05 !important;
+}
+
+.gdyup-theme-pink .bg-\[var\(--gdyup-primary\)\],
+.gdyup-theme-pink .gdyup-bg-primary,
+.gdyup-theme-pink .bg-gdyup-primary {
+  background-color: #F7931A !important;
+}
+
+/* Border colors */
+.gdyup-theme-default .border-\[var\(--gdyup-primary\)\],
+.gdyup-theme-default .border-\[\#DAFF0D\],
+.gdyup-theme-default .border-l-\[\#DAFF0D\],
+.gdyup-theme-default .border-r-\[\#DAFF0D\],
+.gdyup-theme-default .border-t-\[\#DAFF0D\],
+.gdyup-theme-default .border-b-\[\#DAFF0D\] {
+  border-color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue .border-\[var\(--gdyup-primary\)\],
+.gdyup-theme-blue .border-\[\#DAFF0D\],
+.gdyup-theme-blue .border-l-\[\#DAFF0D\],
+.gdyup-theme-blue .border-r-\[\#DAFF0D\],
+.gdyup-theme-blue .border-t-\[\#DAFF0D\],
+.gdyup-theme-blue .border-b-\[\#DAFF0D\] {
+  border-color: #F25C05 !important;
+}
+
+.gdyup-theme-pink .border-\[var\(--gdyup-primary\)\],
+.gdyup-theme-pink .border-\[\#DAFF0D\],
+.gdyup-theme-pink .border-l-\[\#DAFF0D\],
+.gdyup-theme-pink .border-r-\[\#DAFF0D\],
+.gdyup-theme-pink .border-t-\[\#DAFF0D\],
+.gdyup-theme-pink .border-b-\[\#DAFF0D\] {
+  border-color: #F7931A !important;
+}
+
+/* Shadow effects */
+.gdyup-theme-default .shadow-\[0_0_10px_rgba\(218\,255\,13\,0\.3\)\],
+.gdyup-theme-default .shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.4\)\],
+.gdyup-theme-default .shadow-\[0_0_20px_rgba\(218\,255\,13\,0\.5\)\] {
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.4) !important;
+}
+
+.gdyup-theme-blue .shadow-\[0_0_10px_rgba\(218\,255\,13\,0\.3\)\],
+.gdyup-theme-blue .shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.4\)\],
+.gdyup-theme-blue .shadow-\[0_0_20px_rgba\(218\,255\,13\,0\.5\)\] {
+  box-shadow: 0 0 15px rgba(242, 92, 5, 0.4) !important;
+}
+
+.gdyup-theme-pink .shadow-\[0_0_10px_rgba\(218\,255\,13\,0\.3\)\],
+.gdyup-theme-pink .shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.4\)\],
+.gdyup-theme-pink .shadow-\[0_0_20px_rgba\(218\,255\,13\,0\.5\)\] {
+  box-shadow: 0 0 15px rgba(247, 147, 26, 0.4) !important;
+}
+
+/* Text shadow and drop shadow for headings and text */
+.gdyup-theme-default .drop-shadow-\[0_0_10px_rgba\(var\(--gdyup-primary-rgb\,218\,255\,13\)\,0\.3\)\],
+.gdyup-theme-default .drop-shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.3\)\] {
+  filter: drop-shadow(0 0 10px rgba(218, 255, 13, 0.3)) !important;
+}
+
+.gdyup-theme-blue .drop-shadow-\[0_0_10px_rgba\(var\(--gdyup-primary-rgb\,218\,255\,13\)\,0\.3\)\],
+.gdyup-theme-blue .drop-shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.3\)\] {
+  filter: drop-shadow(0 0 10px rgba(242, 92, 5, 0.3)) !important;
+}
+
+.gdyup-theme-pink .drop-shadow-\[0_0_10px_rgba\(var\(--gdyup-primary-rgb\,218\,255\,13\)\,0\.3\)\],
+.gdyup-theme-pink .drop-shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.3\)\] {
+  filter: drop-shadow(0 0 10px rgba(247, 147, 26, 0.3)) !important;
+}
+
+/* Icon coloring throughout the app */
+.gdyup-theme-default svg.text-\[var\(--gdyup-primary\)\],
+.gdyup-theme-default svg.text-\[\#DAFF0D\] {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+}
+
+.gdyup-theme-blue svg.text-\[var\(--gdyup-primary\)\],
+.gdyup-theme-blue svg.text-\[\#DAFF0D\] {
+  color: #F25C05 !important;
+  stroke: #F25C05 !important;
+}
+
+.gdyup-theme-pink svg.text-\[var\(--gdyup-primary\)\],
+.gdyup-theme-pink svg.text-\[\#DAFF0D\] {
+  color: #F7931A !important;
+  stroke: #F7931A !important;
+}
+
+/* Hover states for text */
+.gdyup-theme-default .hover\:text-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-default .hover\:text-\[\#DAFF0D\]:hover {
+  color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue .hover\:text-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-blue .hover\:text-\[\#DAFF0D\]:hover {
+  color: #F25C05 !important;
+}
+
+.gdyup-theme-pink .hover\:text-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-pink .hover\:text-\[\#DAFF0D\]:hover {
+  color: #F7931A !important;
+}
+
+/* Special styling for theme palette button */
+button:has(.lucide-palette),
+.theme-menu-button,
+button[title="Change theme"] {
+  background-color: transparent !important;
+  border: 1px solid var(--gdyup-nav-hover-border) !important;
+}
+
+button:has(.lucide-palette) svg,
+.theme-menu-button svg,
+button[title="Change theme"] svg {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+  filter: drop-shadow(0 0 3px var(--gdyup-icon-shadow)) !important;
+}
+
+button:has(.lucide-palette):hover,
+.theme-menu-button:hover,
+button[title="Change theme"]:hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.1) !important;
 } 
+
+/* AI Concierge Theming - fix all concierge button variants */
+.ai-concierge-button,
+.concierge-button,
+div[class*="concierge-button"],
+button[class*="concierge-button"],
+[data-ai-concierge="true"],
+[data-testid="ai-concierge-button"] {
+  background-color: var(--gdyup-concierge-bg) !important;
+  color: var(--gdyup-concierge-text) !important;
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.5) !important;
+  border: none !important;
+  border-radius: 999px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.ai-concierge-button svg,
+.concierge-button svg,
+div[class*="concierge-button"] svg,
+button[class*="concierge-button"] svg,
+[data-ai-concierge="true"] svg,
+[data-testid="ai-concierge-button"] svg {
+  color: var(--gdyup-concierge-text) !important;
+  stroke: var(--gdyup-concierge-text) !important;
+  fill: none !important;
+  filter: none !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Hover effect for concierge button */
+.ai-concierge-button:hover,
+.concierge-button:hover,
+div[class*="concierge-button"]:hover,
+button[class*="concierge-button"]:hover,
+[data-ai-concierge="true"]:hover,
+[data-testid="ai-concierge-button"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.7) !important;
+  filter: brightness(110%) !important;
+}
+
+/* Enhanced logo styling for theme support */
+.gdyup-logo {
+  transition: filter 0.3s ease-in-out;
+}
+
+/* Base white logo for all themes */
+header a img.gdyup-logo,
+img.gdyup-logo {
+  border: none !important;
+  box-shadow: none !important;
+  filter: brightness(1) contrast(1) drop-shadow(0 0 8px rgba(0, 0, 0, 0.5)) !important;
+  background: none !important;
+}
+
+/* Theme-specific logo treatments */
+.gdyup-theme-default header a img.gdyup-logo,
+.gdyup-theme-default img.gdyup-logo {
+  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 8px rgba(218, 255, 13, 0.3)) !important;
+}
+
+.gdyup-theme-blue header a img.gdyup-logo,
+.gdyup-theme-blue img.gdyup-logo {
+  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 8px rgba(242, 92, 5, 0.3)) !important;
+}
+
+.gdyup-theme-pink header a img.gdyup-logo,
+.gdyup-theme-pink img.gdyup-logo {
+  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 8px rgba(247, 147, 26, 0.3)) !important;
+}
+
+/* Fix mobile menu styling with theme variables */
+.mobile-menu {
+  background-color: var(--gdyup-background) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Ensure mobile menu button specific styles */
+.mobile-menu button,
+.mobile-menu a {
+  background-color: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin: 0.35rem 0 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Active state for mobile menu buttons */
+.mobile-menu button.bg-\[var\(--gdyup-primary\)\],
+.mobile-menu a.bg-\[var\(--gdyup-primary\)\],
+.mobile-menu button.bg-\[\#DAFF0D\],
+.mobile-menu a.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-nav-active-bg) !important;
+  color: var(--gdyup-nav-active-text) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Icon colors for active mobile menu buttons */
+.mobile-menu button.bg-\[var\(--gdyup-primary\)\] svg,
+.mobile-menu a.bg-\[var\(--gdyup-primary\)\] svg,
+.mobile-menu button.bg-\[\#DAFF0D\] svg,
+.mobile-menu a.bg-\[\#DAFF0D\] svg {
+  color: var(--gdyup-nav-active-text) !important;
+  stroke: var(--gdyup-nav-active-text) !important;
+  filter: none !important;
+}
+
+/* Text colors for active mobile menu buttons */
+.mobile-menu button.bg-\[var\(--gdyup-primary\)\] span,
+.mobile-menu a.bg-\[var\(--gdyup-primary\)\] span,
+.mobile-menu button.bg-\[\#DAFF0D\] span,
+.mobile-menu a.bg-\[\#DAFF0D\] span {
+  color: var(--gdyup-nav-active-text) !important;
+}
+
+/* Fix for Sign Out button */
+.mobile-menu button.text-\[\#FF4B47\],
+.mobile-menu a.text-\[\#FF4B47\] {
+  background-color: rgba(255, 75, 71, 0.1) !important;
+  border-color: rgba(255, 75, 71, 0.3) !important;
+}
+
+.mobile-menu button.text-\[\#FF4B47\]:hover,
+.mobile-menu a.text-\[\#FF4B47\]:hover {
+  background-color: rgba(255, 75, 71, 0.2) !important;
+}
+
+/* =========================== */
+/* Theme-specific button hover effects */
+/* =========================== */
+
+/* Default (Lime Green) Theme */
+.gdyup-theme-default button:hover, 
+.gdyup-theme-default a.button:hover,
+.gdyup-theme-default .gdyup-button:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(218, 255, 13, 0.4) !important;
+}
+
+.gdyup-theme-default header button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-default header a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-default .mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-default .mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover {
+  background-color: rgba(218, 255, 13, 0.1) !important;
+  border-color: rgba(218, 255, 13, 0.6) !important;
+}
+
+/* Luxury Black (Orange) Theme */
+.gdyup-theme-blue button:hover, 
+.gdyup-theme-blue a.button:hover,
+.gdyup-theme-blue .gdyup-button:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(242, 92, 5, 0.4) !important;
+}
+
+.gdyup-theme-blue header button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-blue header a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-blue .mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-blue .mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover {
+  background-color: rgba(242, 92, 5, 0.1) !important;
+  border-color: rgba(242, 92, 5, 0.6) !important;
+}
+
+/* Bitcoin Orange Theme */
+.gdyup-theme-pink button:hover, 
+.gdyup-theme-pink a.button:hover,
+.gdyup-theme-pink .gdyup-button:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.4) !important;
+}
+
+.gdyup-theme-pink header button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-pink header a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-pink .mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
+.gdyup-theme-pink .mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover {
+  background-color: rgba(247, 147, 26, 0.1) !important;
+  border-color: rgba(247, 147, 26, 0.6) !important;
+}
+
+/* =========================== */
+/* UNIVERSAL ICON STYLING - CRITICAL FIX */
+/* =========================== */
+
+/* Global override for all SVG icons to ensure theme consistency */
+svg,
+.lucide,
+.lucide-icon,
+[stroke="currentColor"],
+[data-lucide],
+[class*="lucide-"] {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  filter: drop-shadow(0 0 3px var(--gdyup-icon-shadow)) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Force white icons in navigation when not active */
+header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
+nav [role="menuitem"] svg,
+.mobile-menu [role="menuitem"] svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+/* Icon colors in theme-colored buttons */
+header button.bg-\[var\(--gdyup-primary\)\] svg,
+header a.bg-\[var\(--gdyup-primary\)\] svg,
+nav button.bg-\[var\(--gdyup-primary\)\] svg,
+nav a.bg-\[var\(--gdyup-primary\)\] svg,
+.mobile-menu button.bg-\[var\(--gdyup-primary\)\] svg,
+.mobile-menu a.bg-\[var\(--gdyup-primary\)\] svg,
+.bg-\[var\(--gdyup-primary\)\] svg,
+button.bg-\[var\(--gdyup-primary\)\] svg,
+a.bg-\[var\(--gdyup-primary\)\] svg,
+button.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] svg,
+.gdyup-button svg,
+.gdyup-button-primary svg,
+[class*="primary-button"] svg,
+.ai-concierge-button svg,
+[class*="concierge-button"] svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+/* Fix for mobile menu button icon */
+button:has(.lucide-menu),
+[aria-label*="menu"] svg,
+[aria-label*="Menu"] svg,
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+/* Loading spinner and animated elements */
+svg.animate-spin,
+.lucide-loader2,
+svg.lucide-loader2,
+.loading-icon,
+.animate-spin {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+}
+
+/* AI Concierge button icons */
+.ai-concierge-button svg,
+[class*="concierge-button"] svg,
+[data-ai-concierge="true"] svg,
+[data-testid="ai-concierge-button"] svg {
+  color: var(--gdyup-concierge-text) !important;
+  stroke: var(--gdyup-concierge-text) !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+/* Fix sign out icon */
+.text-\[\#FF4B47\] svg,
+[class*="text-[#FF4B47]"] svg,
+svg.text-red-500,
+svg[class*="text-red"] {
+  color: #FF4B47 !important;
+  stroke: #FF4B47 !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+/* =========================== */
+/* MOBILE-SPECIFIC ICON FIXES */
+/* =========================== */
+
+/* Mobile menu icon fixes - enforce white color on toggle button */
+button .lucide-menu,
+button .lucide-x,
+.mobile-menu-button .lucide-menu,
+.mobile-menu-button .lucide-x,
+header .gdyup-header-menu svg,
+button[type="button"] .lucide-menu,
+button[type="button"] .lucide-x {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  filter: none !important;
+  stroke-width: 2.5px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Concierge button styling for mobile */
+[data-testid="ai-concierge-button"],
+.ai-concierge-button,
+[class*="concierge-button"] {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 50 !important;
+  background-color: var(--gdyup-concierge-bg) !important;
+  color: var(--gdyup-concierge-text) !important;
+  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.5) !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Styling for the concierge icon */
+[data-testid="ai-concierge-button"] svg,
+.ai-concierge-button svg,
+[class*="concierge-button"] svg {
+  width: 24px !important;
+  height: 24px !important;
+  color: var(--gdyup-concierge-text) !important;
+  stroke: var(--gdyup-concierge-text) !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+}
+
+/* Mobile-specific loading animation */
+.loading-indicator svg,
+.spinner svg,
+.loading-indicator .animate-spin,
+.spinner .animate-spin {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  animation-duration: 1.5s !important;
+}
+
+/* =========================== */
+/* HEADER NAV ICON CLASSES */
+/* =========================== */
+
+/* Navigation icon - inactive state */
+.nav-icon {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  filter: none !important;
+  stroke-width: 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Navigation icon - active state */
+.nav-active-icon {
+  color: var(--gdyup-nav-active-text) !important;
+  stroke: var(--gdyup-nav-active-text) !important;
+  fill: none !important;
+  filter: none !important;
+  stroke-width: 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Navigation icons in hover state */
+button:hover .nav-icon,
+a:hover .nav-icon {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+}
+
+/* =========================== */
+/* AI CONCIERGE BUTTON - CRITICAL FIX */
+/* =========================== */
+
+/* Critical override for AI concierge button - highest priority */
+div[data-testid="ai-concierge-button"],
+button[data-testid="ai-concierge-button"],
+.ai-concierge-button,
+.ai-agent-button,
+div[class*="concierge-button"],
+button[class*="concierge-button"],
+#aiConciergeButton,
+div[data-ai-concierge],
+button[data-ai-concierge],
+[class*="ai-chat-toggle"],
+.ai-chat-trigger,
+html body div[class*="concierge"],
+html body button[class*="concierge"] {
+  background-color: var(--gdyup-concierge-bg) !important;
+  color: var(--gdyup-concierge-text) !important;
+  box-shadow: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.5) !important;
+  border-radius: 999px !important;
+  border: none !important;
+  z-index: 9999 !important;
+  position: fixed !important;
+  right: 20px !important;
+  bottom: 20px !important;
+  width: 56px !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Icon styling in concierge button */
+div[data-testid="ai-concierge-button"] svg,
+button[data-testid="ai-concierge-button"] svg,
+.ai-concierge-button svg,
+.ai-agent-button svg,
+div[class*="concierge-button"] svg,
+button[class*="concierge-button"] svg,
+#aiConciergeButton svg,
+div[data-ai-concierge] svg,
+button[data-ai-concierge] svg,
+[class*="ai-chat-toggle"] svg,
+.ai-chat-trigger svg,
+html body div[class*="concierge"] svg,
+html body button[class*="concierge"] svg {
+  color: var(--gdyup-concierge-text) !important;
+  stroke: var(--gdyup-concierge-text) !important;
+  stroke-width: 2.5px !important;
+  fill: none !important;
+  filter: none !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* Ensure hover effects for concierge button */
+div[data-testid="ai-concierge-button"]:hover,
+button[data-testid="ai-concierge-button"]:hover,
+.ai-concierge-button:hover,
+.ai-agent-button:hover,
+div[class*="concierge-button"]:hover,
+button[class*="concierge-button"]:hover,
+#aiConciergeButton:hover,
+div[data-ai-concierge]:hover,
+button[data-ai-concierge]:hover,
+[class*="ai-chat-toggle"]:hover,
+.ai-chat-trigger:hover,
+html body div[class*="concierge"]:hover,
+html body button[class*="concierge"]:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 0 0 25px rgba(var(--gdyup-primary-rgb), 0.6) !important;
+}
+
+/* =========================== */
+/* CRITICAL SVG FIXES - HIGHEST PRIORITY */
+/* =========================== */
+
+/* Direct attribute selector for SVG with currentColor - highest specificity possible */
+svg[stroke="currentColor"],
+svg[stroke="currentColor"] *,
+[stroke="currentColor"],
+.lucide[stroke="currentColor"],
+.lucide-icon[stroke="currentColor"],
+header .lucide,
+.mobile-menu .lucide,
+.gdyup-header-menu .lucide,
+.nav-icon,
+header svg.nav-icon {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Direct override for active nav state */
+header button.bg-\[\#DAFF0D\] .lucide,
+header a.bg-\[\#DAFF0D\] .lucide,
+.mobile-menu button.bg-\[\#DAFF0D\] .lucide,
+.mobile-menu a.bg-\[\#DAFF0D\] .lucide,
+button.bg-\[\#DAFF0D\] .lucide,
+a.bg-\[\#DAFF0D\] .lucide,
+.bg-\[\#DAFF0D\] .lucide,
+.nav-active-icon,
+.bg-\[\#DAFF0D\] svg {
+  color: var(--gdyup-nav-active-text) !important;
+  stroke: var(--gdyup-nav-active-text) !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Direct override for active buttons with theme variables */
+.gdyup-theme-default button.bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-default a.bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-default .bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-default .nav-active-icon {
+  color: black !important;
+  stroke: black !important;
+}
+
+.gdyup-theme-blue button.bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-blue a.bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-blue .bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-blue .nav-active-icon {
+  color: white !important;
+  stroke: white !important;
+}
+
+.gdyup-theme-pink button.bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-pink a.bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-pink .bg-\[\#DAFF0D\] .lucide,
+.gdyup-theme-pink .nav-active-icon {
+  color: black !important;
+  stroke: black !important;
+}
+
+/* Ultra-specific selector for concierge button */
+.gdyup-app div[data-testid="ai-concierge-button"],
+.gdyup-app button[data-testid="ai-concierge-button"],
+.gdyup-app .ai-concierge-button,
+.gdyup-app div[class*="concierge-button"],
+.gdyup-app button[class*="concierge-button"],
+.gdyup-app [data-ai-concierge="true"] {
+  background-color: var(--gdyup-concierge-bg) !important;
+}
+
+.gdyup-theme-default [data-testid="ai-concierge-button"],
+.gdyup-theme-default .ai-concierge-button,
+.gdyup-theme-default [class*="concierge-button"],
+.gdyup-theme-default [data-ai-concierge="true"] {
+  background-color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue [data-testid="ai-concierge-button"],
+.gdyup-theme-blue .ai-concierge-button,
+.gdyup-theme-blue [class*="concierge-button"],
+.gdyup-theme-blue [data-ai-concierge="true"] {
+  background-color: #F25C05 !important;
+}
+
+.gdyup-theme-pink [data-testid="ai-concierge-button"],
+.gdyup-theme-pink .ai-concierge-button,
+.gdyup-theme-pink [class*="concierge-button"],
+.gdyup-theme-pink [data-ai-concierge="true"] {
+  background-color: #F7931A !important;
+}
+
+/* Fix for concierge icon image */
+.gdyup-app img[src*="conciergebutton.png"],
+.gdyup-app img[alt="Concierge"] {
+  background-color: var(--gdyup-concierge-bg) !important;
+  border-radius: 9999px !important;
+}
+
+/* Extremely high specificity palette icon fix */
+html body header button:has(.lucide-palette) svg,
+html body header .theme-menu-button svg,
+html body .gdyup-app button[title="Change theme"] svg,
+html body .gdyup-app [title="Choose Theme"] + div svg.lucide-palette {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+  filter: none !important;
+}
+
+/* =========================== */
+/* SPECIFIC INLINE SVG FIXES */
+/* =========================== */
+
+/* Direct fix for the plane-takeoff icon */
+svg.lucide-plane-takeoff,
+.lucide-plane-takeoff,
+[class*="lucide-plane-takeoff"],
+[class*="plane-takeoff"],
+svg[class*="plane-takeoff"] {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Fix for all navigation SVG elements by tag type */
+header nav button svg,
+header nav a svg,
+.mobile-menu button svg,
+.mobile-menu a svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
+/* Fix for specific navigation items */
+header nav button svg path,
+header nav a svg path,
+.mobile-menu button svg path,
+.mobile-menu a svg path,
+svg.lucide-plane-takeoff path,
+.lucide-plane-takeoff path,
+.lucide-search path,
+.lucide-plane path,
+.lucide-user path,
+.lucide-users path,
+.lucide-logout path {
+  stroke: white !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Fix active state for specific paths */
+header button.bg-\[\#DAFF0D\] svg path,
+header a.bg-\[\#DAFF0D\] svg path,
+.mobile-menu button.bg-\[\#DAFF0D\] svg path,
+.mobile-menu a.bg-\[\#DAFF0D\] svg path,
+button.bg-\[\#DAFF0D\] svg path,
+a.bg-\[\#DAFF0D\] svg path,
+.bg-\[\#DAFF0D\] svg path,
+.nav-active-icon path {
+  stroke: var(--gdyup-nav-active-text) !important;
+}
+
+/* Fix for palette icon */
+.lucide-palette path,
+svg.lucide-palette path {
+  stroke: var(--gdyup-primary) !important;
+}
+
+/* =========================== */
+/* CONCIERGE BUTTON IMAGE FIX */
+/* =========================== */
+
+/* Direct styling for concierge button img */
+img[src*="conciergebutton.png"],
+img[alt="Concierge"],
+.ai-concierge-icon,
+a[href*="concierge"] img,
+button[data-testid*="concierge"] img {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Container styling for concierge button */
+.ai-concierge-button-container,
+.ai-concierge-button-wrapper,
+div[data-testid="ai-concierge-button"],
+div[class*="concierge-button"],
+.concierge-wrapper {
+  overflow: hidden !important;
+  border-radius: 28px !important;
+  background-color: var(--gdyup-concierge-bg) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 56px !important;
+  height: 56px !important;
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999 !important;
+  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.5) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Set direct colors for each theme */
+.gdyup-theme-default .ai-concierge-button-container,
+.gdyup-theme-default .ai-concierge-button-wrapper,
+.gdyup-theme-default div[data-testid="ai-concierge-button"],
+.gdyup-theme-default div[class*="concierge-button"],
+.gdyup-theme-default .concierge-wrapper {
+  background-color: #DAFF0D !important;
+}
+
+.gdyup-theme-blue .ai-concierge-button-container,
+.gdyup-theme-blue .ai-concierge-button-wrapper,
+.gdyup-theme-blue div[data-testid="ai-concierge-button"],
+.gdyup-theme-blue div[class*="concierge-button"],
+.gdyup-theme-blue .concierge-wrapper {
+  background-color: #F25C05 !important;
+}
+
+.gdyup-theme-pink .ai-concierge-button-container,
+.gdyup-theme-pink .ai-concierge-button-wrapper,
+.gdyup-theme-pink div[data-testid="ai-concierge-button"],
+.gdyup-theme-pink div[class*="concierge-button"],
+.gdyup-theme-pink .concierge-wrapper {
+  background-color: #F7931A !important;
+}
+
+/* Ultra-specific override to fix any style attribute inconsistencies */
+.gdyup-theme-default [style*="background"] button[data-ai-concierge="true"],
+.gdyup-theme-default button.ai-concierge-button,
+.gdyup-theme-default [style*="background"].ai-concierge-button,
+.gdyup-theme-default button[data-testid="ai-concierge-button"] {
+  background: #DAFF0D !important;
+}
+
+.gdyup-theme-blue [style*="background"] button[data-ai-concierge="true"],
+.gdyup-theme-blue button.ai-concierge-button,
+.gdyup-theme-blue [style*="background"].ai-concierge-button,
+.gdyup-theme-blue button[data-testid="ai-concierge-button"] {
+  background: #F25C05 !important;
+}
+
+.gdyup-theme-pink [style*="background"] button[data-ai-concierge="true"],
+.gdyup-theme-pink button.ai-concierge-button,
+.gdyup-theme-pink [style*="background"].ai-concierge-button,
+.gdyup-theme-pink button[data-testid="ai-concierge-button"] {
+  background: #F7931A !important;
+}
+
+/* =========================== */
+/* DIRECT SVG PATH FIXES */
+/* =========================== */
+
+/* 
+   This is the most radical approach, directly targeting SVG paths
+   which should override everything else. This is a last resort fix.
+*/
+
+/* Default styling for navigation SVG paths */
+header svg path,
+.mobile-menu svg path,
+.nav-icon path,
+.lucide path {
+  stroke: white !important;
+  stroke-width: 2.5px !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Active state paths in navigation */
+header .bg-\[\#DAFF0D\] svg path,
+.mobile-menu .bg-\[\#DAFF0D\] svg path,
+.bg-\[\#DAFF0D\] .lucide path,
+.nav-active-icon path {
+  stroke: var(--gdyup-nav-active-text) !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Theme specific path colors for active state */
+.gdyup-theme-default .bg-\[\#DAFF0D\] svg path,
+.gdyup-theme-default .nav-active-icon path {
+  stroke: black !important;
+}
+
+.gdyup-theme-blue .bg-\[\#DAFF0D\] svg path,
+.gdyup-theme-blue .nav-active-icon path {
+  stroke: white !important;
+}
+
+.gdyup-theme-pink .bg-\[\#DAFF0D\] svg path,
+.gdyup-theme-pink .nav-active-icon path {
+  stroke: black !important;
+}
+
+/* Specific icon classes */
+.lucide-plane-takeoff path,
+.lucide-search path,
+.lucide-plane path,
+.lucide-user path,
+.lucide-chart path,
+svg[class*="lucide-"] path {
+  stroke: currentColor !important;
+}
+
+/* Fix for palette icon paths */
+.palette-icon path,
+.lucide-palette path,
+svg.lucide-palette path,
+button:has(.lucide-palette) svg path {
+  stroke: var(--gdyup-primary) !important;
+}
+
+/* Fix for sign out icon colors */
+.text-\[\#FF4B47\] svg path,
+[class*="text-[#FF4B47]"] svg path,
+.lucide-log-out path {
+  stroke: #FF4B47 !important;
+}
+
+/* Add the most specific selector possible to override inline styles */
+button[data-testid="ai-concierge-button"][style*="background"],
+button[data-ai-concierge="true"][style*="background"],
+.ai-concierge-button[style*="background"] {
+  background: var(--gdyup-concierge-bg) !important;
+}
+
+/* For each theme, add a direct override with !important */
+.gdyup-theme-default button[data-testid="ai-concierge-button"][style*="background"],
+.gdyup-theme-default button[data-ai-concierge="true"][style*="background"],
+.gdyup-theme-default .ai-concierge-button[style*="background"] {
+  background: #DAFF0D !important;
+}
+
+.gdyup-theme-blue button[data-testid="ai-concierge-button"][style*="background"],
+.gdyup-theme-blue button[data-ai-concierge="true"][style*="background"],
+.gdyup-theme-blue .ai-concierge-button[style*="background"] {
+  background: #F25C05 !important;
+}
+
+.gdyup-theme-pink button[data-testid="ai-concierge-button"][style*="background"],
+.gdyup-theme-pink button[data-ai-concierge="true"][style*="background"],
+.gdyup-theme-pink .ai-concierge-button[style*="background"] {
+  background: #F7931A !important;
+}

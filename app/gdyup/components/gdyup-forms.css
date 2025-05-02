@@ -7,12 +7,294 @@
   --bg-card-hover: #1A1A1A;
   --bg-input: #1A1A1A;
   --border-default: #2a2a2a;
-  --border-highlight: var(--gdyup-primary);
+  --border-highlight: var(--gdyup-primary, #DAFF0D);
   --text-primary: #FFFFFF;
   --text-secondary: #E0E0E0;
   --text-muted: #D0D0D0;
 
   color-scheme: dark;
+}
+
+/* Theme definitions */
+:root {
+  /* Default values to prevent FOUC (Flash of Unstyled Content) */
+  --gdyup-primary: #DAFF0D !important;
+  --gdyup-primary-rgb: 218, 255, 13 !important;
+  --gdyup-secondary: #FF4B47 !important;
+  --gdyup-secondary-rgb: 255, 75, 71 !important;
+  --gdyup-background: #000000 !important;
+  --gdyup-card-bg: #121212 !important;
+  --gdyup-hover-bg: #181818 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E0E0E0 !important;
+  --gdyup-text-subtle: #D0D0D0 !important;
+  --gdyup-border: #2a2a2a !important;
+  --gdyup-button-bg: #DAFF0D !important;
+  --gdyup-button-hover-bg: #E8FF4D !important;
+  --gdyup-button-active-bg: #C8EA00 !important;
+  --gdyup-button-text: #000000 !important;
+
+  /* Default theme: Lime Green */
+  --theme-default-primary: #DAFF0D !important;
+  --theme-default-secondary: #FF4B47 !important;
+  --theme-default-accent: #1A1A1A !important;
+  --theme-default-border: #2a2a2a !important;
+  
+  /* Theme 2: Luxury Black */
+  --theme-luxury-primary: #F25C05 !important;
+  --theme-luxury-secondary: #F77A2E !important;
+  --theme-luxury-accent: #1A1F20 !important;
+  --theme-luxury-border: #333333 !important;
+  
+  /* Theme 3: Bitcoin Orange */
+  --theme-bitcoin-primary: #F7931A !important;
+  --theme-bitcoin-secondary: #FFB75E !important;
+  --theme-bitcoin-accent: #2A2A2A !important;
+  --theme-bitcoin-border: #3A3A3A !important;
+}
+
+/* Default theme (lime green) */
+.gdyup-theme-default {
+  --gdyup-primary: var(--theme-default-primary) !important;
+  --gdyup-primary-rgb: 218, 255, 13 !important; /* RGB version for rgba() usage */
+  --gdyup-secondary: var(--theme-default-secondary) !important;
+  --gdyup-secondary-rgb: 255, 75, 71 !important; /* RGB version for rgba() usage */
+  --gdyup-background: #000000 !important;
+  --gdyup-card-bg: #121212 !important;
+  --gdyup-hover-bg: #181818 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E0E0E0 !important;
+  --gdyup-text-subtle: #D0D0D0 !important;
+  --gdyup-border: var(--theme-default-border) !important;
+  --gdyup-button-bg: var(--theme-default-primary) !important;
+  --gdyup-button-hover-bg: #E8FF4D !important;
+  --gdyup-button-active-bg: #C8EA00 !important;
+  --gdyup-button-text: #000000 !important;
+}
+
+/* Luxury Black theme (blue selector) */
+.gdyup-theme-blue {
+  --gdyup-primary: #F25C05 !important;
+  --gdyup-primary-rgb: 242, 92, 5 !important; /* RGB version for rgba() usage */
+  --gdyup-secondary: #F77A2E !important;
+  --gdyup-secondary-rgb: 247, 122, 46 !important; /* RGB version for rgba() usage */
+  --gdyup-background: #000000 !important;
+  --gdyup-card-bg: #1A1F20 !important;
+  --gdyup-hover-bg: #222B30 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #A0A0A0 !important;
+  --gdyup-text-subtle: #808080 !important;
+  --gdyup-border: var(--theme-luxury-border) !important;
+  --gdyup-button-bg: #F25C05 !important;
+  --gdyup-button-hover-bg: #F77A2E !important;
+  --gdyup-button-active-bg: #D04A04 !important;
+  --gdyup-button-text: #FFFFFF !important;
+  
+  /* Luxury-specific properties */
+  --luxury-black-primary-bg: #000000 !important;
+  --luxury-black-accent-color: #F25C05 !important;
+  --luxury-black-text-primary: #FFFFFF !important;
+  --luxury-black-text-secondary: #A0A0A0 !important;
+  --luxury-black-card-bg: #1A1F20 !important;
+  --luxury-black-button-bg: #F25C05 !important;
+  --luxury-black-button-hover-bg: #F77A2E !important;
+  --luxury-black-footer-bg: #F25C05 !important;
+  --luxury-black-font-family: 'Montserrat', sans-serif !important;
+  --luxury-black-heading-font-size: 48px !important;
+  --luxury-black-subheading-font-size: 36px !important;
+  --luxury-black-body-font-size: 16px !important;
+  --luxury-black-font-weight-bold: 700 !important;
+  --luxury-black-font-weight-regular: 400 !important;
+  --luxury-black-letter-spacing-heading: 1.5px !important;
+  --luxury-black-line-height-body: 1.6 !important;
+  --luxury-black-line-height-heading: 1.2 !important;
+  --luxury-black-padding-section: 40px !important;
+  --luxury-black-margin-section: 80px !important;
+  --luxury-black-border-radius: 8px !important;
+}
+
+/* Bitcoin Orange theme (pink selector) */
+.gdyup-theme-pink {
+  --gdyup-primary: #F7931A !important;
+  --gdyup-primary-rgb: 247, 147, 26 !important; /* RGB version for rgba() usage */
+  --gdyup-secondary: #FFB75E !important;
+  --gdyup-secondary-rgb: 255, 183, 94 !important; /* RGB version for rgba() usage */
+  --gdyup-background: #1A1A1A !important;
+  --gdyup-card-bg: #2A2A2A !important;
+  --gdyup-hover-bg: #333333 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-medium: #E5E5E5 !important;
+  --gdyup-text-subtle: #C0C0C0 !important;
+  --gdyup-border: var(--theme-bitcoin-border) !important;
+  --gdyup-button-bg: #F7931A !important;
+  --gdyup-button-hover-bg: #FFB75E !important;
+  --gdyup-button-active-bg: #D67908 !important;
+  --gdyup-button-text: #000000 !important;
+}
+
+/* Theme-responsive logo colors */
+.gdyup-logo {
+  filter: brightness(1.1) contrast(1.1);
+}
+
+.gdyup-theme-blue .gdyup-logo {
+  filter: brightness(1.05) contrast(1.05) saturate(0.85);
+}
+
+.gdyup-theme-pink .gdyup-logo {
+  filter: brightness(1.1) contrast(1.1) saturate(0.9);
+}
+
+/* Global styles for buttons - these override TailwindCSS styles */
+.bg-\[\#DAFF0D\], 
+button.bg-\[\#DAFF0D\], 
+a.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+.hover\:bg-\[\#E8FF4D\]:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+}
+
+.text-\[\#DAFF0D\] {
+  color: var(--gdyup-primary) !important;
+}
+
+/* Ensure TailwindCSS doesn't override themed colors */
+.bg-\[var\(--gdyup-primary\)\] {
+  background-color: var(--gdyup-primary) !important;
+}
+
+.bg-\[var\(--gdyup-background\)\] {
+  background-color: var(--gdyup-background) !important;
+}
+
+.bg-\[var\(--gdyup-card-bg\)\] {
+  background-color: var(--gdyup-card-bg) !important;
+}
+
+.text-\[var\(--gdyup-primary\)\] {
+  color: var(--gdyup-primary) !important;
+}
+
+.text-\[var\(--gdyup-text\)\] {
+  color: var(--gdyup-text) !important;
+}
+
+.text-\[var\(--gdyup-text-medium\)\] {
+  color: var(--gdyup-text-medium) !important;
+}
+
+.border-\[var\(--gdyup-primary\)\] {
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Global styles for buttons */
+.gdyup-button {
+  background-color: var(--gdyup-button-bg) !important;
+  color: var(--gdyup-button-text, #000000) !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.gdyup-button:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+}
+
+.gdyup-button:active {
+  background-color: var(--gdyup-button-active-bg) !important;
+}
+
+/* Special button styles */
+.gdyup-button-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+.gdyup-button-secondary {
+  background-color: var(--gdyup-secondary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Helper classes for dynamic coloring based on theme */
+.gdyup-primary {
+  color: var(--gdyup-primary) !important;
+}
+
+.gdyup-secondary {
+  color: var(--gdyup-secondary) !important;
+}
+
+.gdyup-bg-primary {
+  background-color: var(--gdyup-primary) !important;
+}
+
+.gdyup-bg-secondary {
+  background-color: var(--gdyup-secondary) !important;
+}
+
+.gdyup-border-primary {
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Theme switching functionality */
+.gdyup-app {
+  --gdyup-theme: 'default'; /* Current theme identifier */
+}
+
+/* Theme switcher container */
+.gdyup-theme-switcher {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--gdyup-border);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-theme-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.gdyup-theme-button:hover {
+  transform: scale(1.1);
+  border-color: white;
+}
+
+.gdyup-theme-button.active {
+  border-color: white;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px currentColor;
+}
+
+.gdyup-theme-default-button {
+  background: linear-gradient(45deg, #DAFF0D, #DAFF0D);
+}
+
+.gdyup-theme-blue-button {
+  background: linear-gradient(45deg, #00EAFF, #00EAFF);
+}
+
+.gdyup-theme-pink-button {
+  background: linear-gradient(45deg, #FF00E4, #FF00E4);
 }
 
 /* Enhanced icon styling */
@@ -316,22 +598,43 @@ button:has(.lucide-filter) svg {
   }
 }
 
-/* Primary buttons */
+/* Primary buttons - improved text visibility */
 .gdyup-form button[type="submit"],
-.gdyup-form .button-primary {
+.gdyup-form .button-primary,
+.gdyup-form .gdyup-button-primary {
   background-color: var(--gdyup-primary) !important;
   color: black !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important; /* Bolder for better contrast */
   box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
   transition: all 0.2s ease-in-out !important;
   border: none !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important; /* Text shadow for better visibility */
+  letter-spacing: 0.01em !important; /* Slightly increased letter spacing */
 }
 
 .gdyup-form button[type="submit"]:hover,
-.gdyup-form .button-primary:hover {
+.gdyup-form .button-primary:hover,
+.gdyup-form .gdyup-button-primary:hover {
   background-color: #E8FF4D !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 0 15px rgba(218, 255, 13, 0.5) !important;
+}
+
+/* Reset buttons with improved styling */
+.gdyup-form button[class*="reset"],
+.gdyup-form button:has(span:contains("Reset")) {
+  border: 1px solid var(--gdyup-primary) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  color: var(--gdyup-primary) !important;
+  font-weight: 600 !important;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.2) !important;
+}
+
+.gdyup-form button[class*="reset"]:hover,
+.gdyup-form button:has(span:contains("Reset")):hover {
+  background-color: rgba(218, 255, 13, 0.15) !important;
+  box-shadow: 0 0 12px rgba(218, 255, 13, 0.3) !important;
 }
 
 /* Secondary/outline buttons */
@@ -484,13 +787,14 @@ button:has(.lucide-filter) svg {
   padding: 0.5rem !important;
 }
 
-/* Split configuration visualizations */
+/* Split configuration visualizations with improved contrast */
 .gdyup-form .split-section {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.4); /* Darker background for better contrast */
   border-radius: 10px;
   border: 1px solid var(--border-default);
   padding: 1rem;
   margin-top: 1rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
 }
 
 .gdyup-form .split-ratio {
@@ -502,32 +806,38 @@ button:has(.lucide-filter) svg {
 
 .gdyup-form .split-ratio-bar {
   flex-grow: 1;
-  height: 0.5rem;
-  background-color: #333333;
-  border-radius: 0.25rem;
+  height: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
   overflow: hidden;
-  position: relative;
+  border: 1px solid var(--border-default);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .gdyup-form .split-ratio-progress {
   height: 100%;
   background-color: var(--gdyup-primary);
-  border-radius: 0.25rem;
+  border-radius: 1rem;
+  transition: width 0.3s ease;
   box-shadow: 0 0 8px rgba(218, 255, 13, 0.3);
 }
 
 .gdyup-form .split-ratio-label {
-  min-width: 4rem;
-  text-align: center;
+  min-width: 60px;
   font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
 .gdyup-form .split-ratio-label.primary {
   color: var(--gdyup-primary);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
 }
 
 .gdyup-form .split-ratio-label.secondary {
-  color: var(--gdyup-secondary);
+  text-align: right;
+  color: var(--text-primary);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
 /* JetSelector specific styles */
@@ -1207,10 +1517,13 @@ nav a:not(.bg-\[\#DAFF0D\]):hover svg,
 .bg-\[\#DAFF0D\],
 button.bg-\[\#DAFF0D\],
 a.bg-\[\#DAFF0D\],
+header .bg-\[\#DAFF0D\],
 header button.bg-\[\#DAFF0D\],
 header a.bg-\[\#DAFF0D\],
+nav .bg-\[\#DAFF0D\],
 nav button.bg-\[\#DAFF0D\],
 nav a.bg-\[\#DAFF0D\],
+.mobile-menu .bg-\[\#DAFF0D\],
 .mobile-menu button.bg-\[\#DAFF0D\],
 .mobile-menu a.bg-\[\#DAFF0D\] {
   background-color: #DAFF0D !important;
@@ -1558,4 +1871,141 @@ button[aria-label="Close"] {
 button[aria-label="Close"] svg {
   color: orange !important;
   stroke: orange !important;
-} 
+}
+
+/* Theme-responsive logo colors */
+.gdyup-logo {
+  filter: brightness(1.1) contrast(1.1);
+}
+
+.gdyup-theme-blue .gdyup-logo {
+  filter: brightness(1.05) contrast(1.05) saturate(0.85);
+}
+
+.gdyup-theme-pink .gdyup-logo {
+  filter: brightness(1.1) contrast(1.1) saturate(0.9);
+}
+
+/* Global styles for buttons */
+.gdyup-button {
+  background-color: var(--gdyup-button-bg);
+  color: var(--gdyup-button-text, #000000);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-button:hover {
+  background-color: var(--gdyup-button-hover-bg);
+}
+
+.gdyup-button:active {
+  background-color: var(--gdyup-button-active-bg);
+}
+
+/* Special button styles */
+.gdyup-button-primary {
+  background-color: var(--gdyup-primary);
+  color: #000000;
+}
+
+.gdyup-button-secondary {
+  background-color: var(--gdyup-secondary);
+  color: #000000;
+}
+
+/* Helper classes for dynamic coloring based on theme */
+.gdyup-primary {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-secondary {
+  color: var(--gdyup-secondary);
+}
+
+.gdyup-bg-primary {
+  background-color: var(--gdyup-primary);
+}
+
+.gdyup-bg-secondary {
+  background-color: var(--gdyup-secondary);
+}
+
+.gdyup-border-primary {
+  border-color: var(--gdyup-primary);
+}
+
+/* Set up Tailwind class overrides - CRITICAL FOR THEME SUPPORT */
+
+/* Fix for important Tailwind color classes */
+.gdyup-theme-default .bg-\[\#DAFF0D\] {
+  background-color: #DAFF0D !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.gdyup-theme-blue .bg-\[\#DAFF0D\] {
+  background-color: #F25C05 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.gdyup-theme-pink .bg-\[\#DAFF0D\] {
+  background-color: #F7931A !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Text color overrides for buttons with the background color class */
+.gdyup-theme-default .bg-\[\#DAFF0D\] *,
+.gdyup-theme-default button.bg-\[\#DAFF0D\] *,
+.gdyup-theme-default a.bg-\[\#DAFF0D\] * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+.gdyup-theme-blue .bg-\[\#DAFF0D\] *,
+.gdyup-theme-blue button.bg-\[\#DAFF0D\] *,
+.gdyup-theme-blue a.bg-\[\#DAFF0D\] * {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.gdyup-theme-pink .bg-\[\#DAFF0D\] *,
+.gdyup-theme-pink button.bg-\[\#DAFF0D\] *,
+.gdyup-theme-pink a.bg-\[\#DAFF0D\] * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Primary button class overrides for theme support */
+.gdyup-theme-default .gdyup-primary-button {
+  background-color: #DAFF0D !important;
+  color: #000000 !important;
+}
+
+.gdyup-theme-blue .gdyup-primary-button {
+  background-color: #F25C05 !important;
+  color: #FFFFFF !important;
+}
+
+.gdyup-theme-pink .gdyup-primary-button {
+  background-color: #F7931A !important;
+  color: #000000 !important;
+}
+
+/* Ensure SVG icons in primary buttons have the right colors */
+.gdyup-theme-default .gdyup-primary-button svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+.gdyup-theme-blue .gdyup-primary-button svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+}
+
+.gdyup-theme-pink .gdyup-primary-button svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}

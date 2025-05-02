@@ -10,6 +10,7 @@ import './pwa-fixes.css';
 export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
+  const [theme, setTheme] = useState<string>('default');
   
   // Console log the auth state for debugging
   useEffect(() => {
@@ -20,6 +21,82 @@ export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
       });
     }
   }, [user, authLoading]);
+
+  // Initialize default theme on first load and watch for changes
+  useEffect(() => {
+    // Function to apply theme
+    const applyTheme = (themeName: string) => {
+      // Remove all existing theme classes
+      document.documentElement.classList.remove(
+        'gdyup-theme-default',
+        'gdyup-theme-blue',
+        'gdyup-theme-pink'
+      );
+      
+      // Add the selected theme class
+      document.documentElement.classList.add(`gdyup-theme-${themeName}`);
+      setTheme(themeName);
+      
+      console.log(`Theme applied by client wrapper: ${themeName}`);
+    };
+    
+    try {
+      // Get stored theme or default to the lime green theme
+      const storedTheme = localStorage.getItem('gdyup-theme') || 'default';
+      
+      // Apply initial theme
+      applyTheme(storedTheme);
+      
+      // Listen for theme changes from other components
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'gdyup-theme') {
+          const newTheme = e.newValue || 'default';
+          applyTheme(newTheme);
+        }
+      };
+      
+      // Also listen for direct changes to localStorage from same window
+      window.addEventListener('storage', handleStorageChange);
+      
+      // Create a MutationObserver to watch for theme class changes
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (
+            mutation.type === 'attributes' && 
+            mutation.attributeName === 'class'
+          ) {
+            const htmlElement = document.documentElement;
+            const classList = Array.from(htmlElement.classList);
+            
+            // Check if theme class is missing
+            const hasThemeClass = classList.some(cls => cls.startsWith('gdyup-theme-'));
+            
+            if (!hasThemeClass) {
+              // Re-apply theme if class was removed
+              applyTheme(storedTheme);
+              console.log('Theme class was lost, reapplied');
+            }
+          }
+        });
+      });
+      
+      // Start observing document element
+      observer.observe(document.documentElement, { 
+        attributes: true,
+        attributeFilter: ['class']
+      });
+      
+      // Clean up
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        observer.disconnect();
+      };
+    } catch (error) {
+      console.error('Theme initialization error:', error);
+      // Fallback to default theme on error
+      document.documentElement.classList.add('gdyup-theme-default');
+    }
+  }, []);
 
   // Add mobile detection
   useEffect(() => {
@@ -65,8 +142,7 @@ export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
   return (
     <>
       <CustomHead />
-      <main className="min-h-screen bg-background dark gdyup-app" 
-            style={{ "--primary-color": "#DAFF0D", "--secondary-color": "#FF4B47" } as React.CSSProperties}>
+      <main className={`min-h-screen bg-background dark gdyup-app gdyup-theme-${theme}`}>
         <OnboardingMiddleware>
           <GdyupHeader />
           <div className={`gdyup-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>

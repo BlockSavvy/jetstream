@@ -15,12 +15,12 @@ interface ConciergeButtonProps {
 export const ConciergeButton: React.FC<ConciergeButtonProps> = ({ 
   imageUrl = '/icons/conciergebutton.png'
 }) => {
-  // We inject custom styles when the component mounts through the AIConcierge props
+  // Use CSS variable for color instead of hardcoded value
   return (
     <AIConcierge 
       showButton={true}
       buttonImage={imageUrl} 
-      buttonColor="#DAFF0D"
+      buttonColor="var(--gdyup-concierge-bg)"
       buttonPosition={{ bottom: '5.5rem', right: '1.5rem' }}
       initiallyOpen={false}
     />
