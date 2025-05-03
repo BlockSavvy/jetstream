@@ -31,11 +31,22 @@ export async function GET(request: NextRequest) {
     const isGdyup = appMode === 'gdyup';
     console.log('🔧 App mode:', appMode, 'Is GDYUP:', isGdyup);
     
+    // Also check for GDYUP in the URL or referrer to handle cross-domain redirects
+    const referrer = request.headers.get('referer') || '';
+    const isFromGdyup = referrer.includes('gdyup') || requestUrl.searchParams.get('app') === 'gdyup';
+    const finalIsGdyup = isGdyup || isFromGdyup;
+    
+    console.log('📱 Request context:', {
+      referrer: referrer.substring(0, 50) + (referrer.length > 50 ? '...' : ''),
+      isFromGdyup,
+      finalIsGdyup
+    });
+    
     // Check for error in the URL - commonly happens when the link is expired
     if (error) {
       console.error(`❌ Auth callback error: ${error}, description: ${errorDescription}`)
       // Redirect to login with error message
-      const loginUrl = new URL('/auth/login', requestUrl.origin)
+      const loginUrl = new URL(finalIsGdyup ? '/gdyup/auth/login' : '/auth/login', requestUrl.origin)
       loginUrl.searchParams.set('error', errorDescription || 'Authentication error')
       return NextResponse.redirect(loginUrl)
     }
@@ -53,7 +64,7 @@ export async function GET(request: NextRequest) {
         if (error) {
           console.error('❌ Error exchanging code for session:', error.message)
           // Redirect to login with error message
-          const loginUrl = new URL('/auth/login', requestUrl.origin)
+          const loginUrl = new URL(finalIsGdyup ? '/gdyup/auth/login' : '/auth/login', requestUrl.origin)
           loginUrl.searchParams.set('error', error.message)
           return NextResponse.redirect(loginUrl)
         } 
@@ -72,25 +83,31 @@ export async function GET(request: NextRequest) {
           console.log('⏱️ Allowing additional time for cookies to be properly set');
           await new Promise(resolve => setTimeout(resolve, 500))
           
-          // Get the returnUrl and referrer for redirection logic
-          const referrer = request.headers.get('referer') || ''
-          const returnUrl = requestUrl.searchParams.get('returnUrl') || '/'
+          // Get user metadata to check if this was a GDYUP signup
+          const userData = data.session.user.user_metadata || {};
+          const userAppMode = userData.app_mode as string || '';
+          const isUserFromGdyup = userAppMode === 'gdyup';
           
-          // For GDYUP deployments, prioritize redirecting to the GDYUP app
-          if (isGdyup) {
-            console.log('🚀 GDYUP Mode: Redirecting to GDYUP app after authentication')
+          console.log('👤 User metadata:', { userAppMode, isUserFromGdyup });
+          
+          // Determine if we should redirect to GDYUP
+          const shouldRedirectToGdyup = finalIsGdyup || isUserFromGdyup;
+          
+          // For GDYUP users, prioritize redirecting to the GDYUP app
+          if (shouldRedirectToGdyup) {
+            console.log('🚀 GDYUP User: Redirecting to GDYUP app after authentication')
             return NextResponse.redirect(new URL('/gdyup', requestUrl.origin))
           }
           
           // If the referrer or returnUrl is from JetShare, redirect there
-          if (referrer.includes('/jetshare') || returnUrl.includes('/jetshare')) {
+          if (referrer.includes('/jetshare') || requestUrl.searchParams.get('returnUrl')?.includes('/jetshare')) {
             console.log('🚀 Redirecting to JetShare after authentication')
             return NextResponse.redirect(new URL('/jetshare', requestUrl.origin))
           }
           
           // If this is a mobile app and the type is signup or recovery
           if (isMobile && (type === 'signup' || type === 'recovery')) {
-            if (isGdyup) {
+            if (shouldRedirectToGdyup) {
               console.log('📱 Mobile signup/recovery detected for GDYUP, redirecting to GDYUP app')
               return NextResponse.redirect(new URL('/gdyup', requestUrl.origin))
             } else {
@@ -101,12 +118,22 @@ export async function GET(request: NextRequest) {
           
           // If this is after signup/verification or password recovery (non-mobile)
           if (type === 'signup' || type === 'recovery') {
-            console.log('🚀 Redirecting to dashboard after signup/recovery')
-            return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+            if (shouldRedirectToGdyup) {
+              console.log('🚀 Redirecting to GDYUP after signup/recovery')
+              return NextResponse.redirect(new URL('/gdyup', requestUrl.origin))
+            } else {
+              console.log('🚀 Redirecting to dashboard after signup/recovery')
+              return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+            }
           }
           
           // For other auth flows, redirect to the requested return URL or home
-          const redirectUrl = returnUrl ? new URL(returnUrl, requestUrl.origin) : new URL('/', requestUrl.origin)
+          const returnUrl = requestUrl.searchParams.get('returnUrl');
+          const defaultRedirect = shouldRedirectToGdyup ? '/gdyup' : '/';
+          const redirectUrl = returnUrl 
+            ? new URL(returnUrl, requestUrl.origin) 
+            : new URL(defaultRedirect, requestUrl.origin);
+            
           console.log(`🚀 Redirecting to: ${redirectUrl.pathname}`)
           return NextResponse.redirect(redirectUrl)
         } else {
@@ -115,7 +142,7 @@ export async function GET(request: NextRequest) {
       } catch (exchangeError) {
         console.error('❌ Exception during code exchange:', exchangeError)
         // Redirect to login with generic error message
-        const loginUrl = new URL('/auth/login', requestUrl.origin)
+        const loginUrl = new URL(finalIsGdyup ? '/gdyup/auth/login' : '/auth/login', requestUrl.origin)
         loginUrl.searchParams.set('error', 'Failed to process authentication')
         return NextResponse.redirect(loginUrl)
       }
@@ -123,7 +150,7 @@ export async function GET(request: NextRequest) {
     
     // If we get here without a code or after processing the code, redirect to appropriate home
     console.log('ℹ️ No code provided or processing complete, redirecting to home');
-    const homePath = isGdyup ? '/gdyup' : '/';
+    const homePath = finalIsGdyup ? '/gdyup' : '/';
     return NextResponse.redirect(new URL(homePath, requestUrl.origin))
   } catch (error) {
     console.error('❌ Error in auth callback:', error)

@@ -350,7 +350,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const isGdyup = appMode === 'gdyup';
       const callbackUrl = `${appUrl}/auth/callback`;
       
-      console.log(`📧 Email signup using redirect URL: ${callbackUrl}`);
+      // Add app parameter for cross-domain recognition
+      const callbackUrlWithParams = new URL(callbackUrl);
+      if (isGdyup) {
+        callbackUrlWithParams.searchParams.set('app', 'gdyup');
+      }
+      
+      console.log(`📧 Email signup using redirect URL: ${callbackUrlWithParams.toString()}`);
       
       // Mobile detection
       const isMobile = typeof window !== 'undefined' && 
@@ -361,11 +367,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: callbackUrl,
+          emailRedirectTo: callbackUrlWithParams.toString(),
           data: {
             email, // Include email in user metadata
-            is_mobile: isMobile, // Track mobile sign-ups
-            app_mode: isGdyup ? 'gdyup' : 'jetstream' // Track app mode
+            app_mode: isGdyup ? 'gdyup' : 'jetstream', // Include app mode in user metadata
+            is_mobile: isMobile
           }
         },
       });
@@ -490,8 +496,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('Error clearing localStorage on signout:', e);
       }
       
-      // Redirect based on current path
-      if (pathname?.startsWith('/jetshare')) {
+      // Get app mode for redirection
+      const appMode = process.env.NEXT_PUBLIC_APP_MODE || '';
+      const isGdyup = appMode === 'gdyup';
+      
+      // Redirect based on current path and app mode
+      if (isGdyup) {
+        router.push('/gdyup');
+      } else if (pathname?.startsWith('/jetshare')) {
         router.push('/jetshare');
       } else {
         router.push('/');
@@ -503,20 +515,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   /**
-   * Send password reset email
+   * Reset password
    */
   const resetPassword = async (email: string) => {
     try {
       setSessionError(null);
-      
-      // Use a fully qualified URL with HTTPS protocol
+
+      // Get the app URL for redirect
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz';
-      const callbackUrl = `${appUrl}/auth/callback?type=recovery`;
+      const appMode = process.env.NEXT_PUBLIC_APP_MODE || '';
+      const isGdyup = appMode === 'gdyup';
+      const callbackUrl = `${appUrl}/auth/callback`;
       
-      console.log(`🔑 Password reset using redirect URL: ${callbackUrl}`);
+      // Add app parameter for cross-domain recognition
+      const callbackUrlWithParams = new URL(callbackUrl);
+      if (isGdyup) {
+        callbackUrlWithParams.searchParams.set('app', 'gdyup');
+        callbackUrlWithParams.searchParams.set('type', 'recovery');
+      }
       
+      console.log(`📧 Password reset using redirect URL: ${callbackUrlWithParams.toString()}`);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: callbackUrl,
+        redirectTo: callbackUrlWithParams.toString(),
       });
       
       if (error) {
