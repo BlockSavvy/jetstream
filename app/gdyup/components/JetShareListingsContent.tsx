@@ -1312,7 +1312,7 @@ export default function JetShareListingsContent() {
             )}
           </h2>
           <div className="flex gap-2">
-            <Button onClick={() => router.push('/gdyup/offer/create')} className="gdyup-button-primary">
+            <Button onClick={() => router.push('/gdyup/offer')} className="gdyup-button-primary">
               Create Offer
             </Button>
           </div>
