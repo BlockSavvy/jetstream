@@ -55,3 +55,4 @@ logs/
 .vscode/
 .env.gdyup
 storybook-static/
+yarn.lock
