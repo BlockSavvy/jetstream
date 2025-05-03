@@ -60,9 +60,11 @@ export function OnboardingMiddleware({ children }: OnboardingMiddlewareProps) {
         
         // User is logged in, check if they've completed onboarding
         const supabase = getSupabaseClient()
+        
+        // First attempt to get a complete profile with all fields
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('onboarding_completed, onboarding_step, first_name, last_name, email')
+          .select('*')
           .eq('id', user.id)
           .single()
         
@@ -70,17 +72,56 @@ export function OnboardingMiddleware({ children }: OnboardingMiddlewareProps) {
         if (error && error.code === 'PGRST116') { // No rows returned
           console.log('No profile found for user, creating one...');
           
-          // Create a default profile for the user
+          // Extract name from email if available
+          let firstName = 'User';  // Default value
+          let lastName = '';
+          
+          if (user.email) {
+            const emailName = user.email.split('@')[0];
+            // Try to split on common separators
+            const nameParts = emailName.split(/[._-]/);
+            if (nameParts.length > 1) {
+              firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+              lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
+            } else {
+              // Just use the email name as first name
+              firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            }
+          }
+          
+          // Ensure first_name is never null
+          if (!firstName || firstName.trim() === '') {
+            firstName = 'User';
+          }
+          
+          // Ensure last_name is never null
+          if (!lastName || lastName.trim() === '') {
+            lastName = user.email ? user.email.split('@')[0] : 'Profile';
+          }
+          
+          // Create a default profile for the user with all required fields
           const newProfile: Profile = {
             id: user.id,
             onboarding_completed: false,
             onboarding_step: 'profile',
+            first_name: firstName,
+            last_name: lastName,
             email: user.email
           };
           
+          console.log('Creating new profile with data:', newProfile);
+          
           const { error: insertError } = await supabase
             .from('profiles')
-            .insert(newProfile);
+            .insert({
+              ...newProfile,
+              user_type: 'traveler', 
+              verification_status: 'pending',
+              profile_visibility: 'public',
+              has_jet: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
             
           if (insertError) {
             console.error('Error creating profile:', insertError);
@@ -98,6 +139,24 @@ export function OnboardingMiddleware({ children }: OnboardingMiddlewareProps) {
           // Handle other database errors
           console.error('Error checking onboarding status:', error);
           toast.error('There was an error accessing your profile. Please try again later.');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Profile found:', profile);
+        
+        // Check if the profile has first_name and last_name set (not null or empty)
+        const isProfileComplete = 
+          profile.first_name && 
+          profile.first_name.trim() !== '' && 
+          profile.last_name && 
+          profile.last_name.trim() !== '';
+          
+        // If profile exists but is incomplete, redirect to profile setup
+        if (!isProfileComplete && !pathname?.startsWith('/gdyup/auth/profile-setup')) {
+          console.log('Profile exists but is incomplete, redirecting to profile setup');
+          toast.info('Please complete your profile to continue');
+          router.push('/gdyup/auth/profile-setup');
           setLoading(false);
           return;
         }
