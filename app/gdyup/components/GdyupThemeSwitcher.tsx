@@ -2,84 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
-
-type Theme = 'default' | 'blue' | 'pink';
+import { applyTheme, getCurrentTheme, themeInfo, GdyupTheme } from '../utils/theme-utils';
 
 export default function GdyupThemeSwitcher() {
-  const [activeTheme, setActiveTheme] = useState<Theme>('default');
+  const [activeTheme, setActiveTheme] = useState<GdyupTheme>('default');
   
   // On mount, check localStorage for theme
   useEffect(() => {
-    const storedTheme = localStorage.getItem('gdyup-theme') as Theme | null;
-    
-    if (storedTheme && ['default', 'blue', 'pink'].includes(storedTheme)) {
-      setActiveTheme(storedTheme);
-    }
+    setActiveTheme(getCurrentTheme());
   }, []);
 
   // Handle theme button click
-  const handleThemeClick = (theme: Theme) => {
+  const handleThemeClick = (theme: GdyupTheme) => {
     // If already active, no change needed
     if (theme === activeTheme) return;
     
     // Update state
     setActiveTheme(theme);
     
-    // Store in localStorage (this will trigger storage event for other components)
-    localStorage.setItem('gdyup-theme', theme);
-    
-    // Remove all theme classes
-    document.documentElement.classList.remove(
-      'gdyup-theme-default',
-      'gdyup-theme-blue',
-      'gdyup-theme-pink'
-    );
-    
-    // Add the selected theme class
-    document.documentElement.classList.add(`gdyup-theme-${theme}`);
+    // Apply the theme using the utility function
+    applyTheme(theme);
     
     console.log(`Theme switched to: ${theme}`);
   };
 
-  // Theme data for better visualization
-  const themes = [
-    {
-      id: 'default',
-      name: 'Lime Green',
-      gradient: 'linear-gradient(145deg, #DAFF0D, #C8EA00)',
-      glowColor: 'rgba(218, 255, 13, 0.6)',
-      textColor: 'black'
-    },
-    {
-      id: 'blue',
-      name: 'Luxury Black',
-      gradient: 'linear-gradient(145deg, #F25C05, #D04A04)',
-      glowColor: 'rgba(242, 92, 5, 0.6)',
-      textColor: 'white'
-    },
-    {
-      id: 'pink',
-      name: 'Bitcoin Orange',
-      gradient: 'linear-gradient(145deg, #F7931A, #D67908)',
-      glowColor: 'rgba(247, 147, 26, 0.6)',
-      textColor: 'black'
-    }
-  ];
-
   return (
     <div className="flex flex-col w-full">
       <div className="flex justify-center gap-5 px-2 py-4">
-        {themes.map(theme => (
+        {Object.entries(themeInfo).map(([id, theme]) => (
           <button
-            key={theme.id}
-            onClick={() => handleThemeClick(theme.id as Theme)}
+            key={id}
+            onClick={() => handleThemeClick(id as GdyupTheme)}
             className="relative group"
             aria-label={`${theme.name} theme`}
           >
             <div className={`
               w-16 h-16 rounded-full flex items-center justify-center
               transition-all duration-300 border-2
-              ${activeTheme === theme.id 
+              ${activeTheme === id 
                 ? `border-white shadow-[0_0_15px_${theme.glowColor}]` 
                 : 'border-gray-700 group-hover:border-gray-400'
               }
@@ -93,7 +53,7 @@ export default function GdyupThemeSwitcher() {
                 }}
               >
                 {/* Carbon fiber overlay effect for luxury black theme */}
-                {theme.id === 'blue' && (
+                {id === 'blue' && (
                   <div 
                     className="absolute inset-0 rounded-full opacity-30"
                     style={{
@@ -105,7 +65,7 @@ export default function GdyupThemeSwitcher() {
               </div>
 
               {/* Checkmark indicator */}
-              {activeTheme === theme.id && (
+              {activeTheme === id && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <CheckCircle className={`w-6 h-6 text-${theme.textColor} drop-shadow-md`} />
                 </div>
@@ -113,7 +73,7 @@ export default function GdyupThemeSwitcher() {
             </div>
             <span className={`
               block text-center mt-2 text-xs font-medium
-              ${activeTheme === theme.id ? 'text-white' : 'text-gray-400 group-hover:text-white'}
+              ${activeTheme === id ? 'text-white' : 'text-gray-400 group-hover:text-white'}
             `}>
               {theme.name}
             </span>

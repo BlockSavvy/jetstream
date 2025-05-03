@@ -327,6 +327,65 @@ export function getDefaultRelays(): string[] {
 }
 
 /**
+ * Get a connected relay with fallback
+ * Attempts to connect to relays in sequence until successful
+ */
+export async function getConnectedRelayWithFallback(
+  customRelays?: string[]
+): Promise<WebSocket | null> {
+  // Use provided relays or defaults
+  const relaysToTry = customRelays || getDefaultRelays();
+  
+  // Try each relay in sequence
+  for (const relayUrl of relaysToTry) {
+    try {
+      const socket = connectToRelay(relayUrl);
+      
+      // Return a promise that resolves when connected or rejects on error
+      const result = await new Promise<WebSocket | null>((resolve, reject) => {
+        // Set timeout to avoid waiting too long (3 seconds)
+        const timeout = setTimeout(() => {
+          socket.removeEventListener('open', handleOpen);
+          socket.removeEventListener('error', handleError);
+          socket.close();
+          resolve(null); // Resolve with null on timeout
+        }, 3000);
+        
+        // Success handler
+        const handleOpen = () => {
+          clearTimeout(timeout);
+          socket.removeEventListener('error', handleError);
+          resolve(socket);
+        };
+        
+        // Error handler
+        const handleError = (err: Event) => {
+          clearTimeout(timeout);
+          socket.removeEventListener('open', handleOpen);
+          reject(err);
+        };
+        
+        // Add event listeners
+        socket.addEventListener('open', handleOpen, { once: true });
+        socket.addEventListener('error', handleError, { once: true });
+      });
+      
+      // If we got a valid connection, return it
+      if (result) {
+        console.log(`Successfully connected to relay: ${relayUrl}`);
+        return result;
+      }
+    } catch (error) {
+      console.warn(`Failed to connect to relay ${relayUrl}, trying next...`);
+    }
+  }
+  
+  // If all relays failed, return null
+  console.error('All relays failed to connect');
+  return null;
+}
+
+/**
  * Create a NIP-57 zap request
  */
 export function createZapRequest(

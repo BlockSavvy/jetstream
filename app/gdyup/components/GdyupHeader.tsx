@@ -195,54 +195,19 @@ export default function GdyupHeader() {
         <div className="flex justify-between items-center">
           {/* Logo - completely redesigned to prevent hover effects */}
           <div className="relative">
-            <style jsx global>{`
-              /* Comprehensive logo hover prevention styles */
-              header a img[src*="gdyup-logo"],
-              header a img[alt*="GDYUP"],
-              header .logo-container a,
-              header .logo-container a:hover,
-              header .logo-container a:focus,
-              header .logo-container a:active {
-                box-shadow: none !important;
-                border: none !important;
-                outline: none !important;
-                background: none !important;
-                filter: none !important;
-                text-shadow: none !important;
-                text-decoration: none !important;
-                opacity: 1 !important;
-                transform: none !important;
-              }
-            `}</style>
-            <div className="logo-container">
+            <div className="gdyup-logo-container">
               <a 
                 href="/gdyup" 
                 onClick={(e) => handleLinkClick(e, '/gdyup')}
-                style={{
-                  display: 'block',
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  boxShadow: 'none',
-                  padding: 0,
-                  margin: 0
-                }}
               >
                 <Image 
                   src="/assets/gdyup-logo.svg"
                   alt="GDYUP Logo"
                   width={150}
                   height={40}
-                  className="h-10 w-auto gdyup-logo"
+                  className="h-10 w-auto gdyup-logo gdyup-logo-image"
                   unoptimized={true}
                   priority={true}
-                  style={{ 
-                    background: 'transparent', 
-                    border: 'none', 
-                    boxShadow: 'none',
-                    filter: 'none',
-                    outline: 'none'
-                  }}
                 />
               </a>
             </div>
@@ -286,13 +251,7 @@ export default function GdyupHeader() {
                 onClick={() => setThemeMenuOpen(!themeMenuOpen)}
               >
                 <Palette 
-                  className="h-5 w-5 palette-icon" 
-                  style={{ 
-                    color: 'var(--gdyup-primary)', 
-                    stroke: 'var(--gdyup-primary)',
-                    fill: 'none',
-                    strokeWidth: 2.5
-                  }} 
+                  className="h-5 w-5 text-[var(--gdyup-primary)] mr-2 gdyup-icon-primary" 
                 />
               </button>
               
@@ -304,13 +263,7 @@ export default function GdyupHeader() {
                   <div className="p-4">
                     <div className="flex items-center mb-2">
                       <Palette 
-                        className="h-5 w-5 text-[var(--gdyup-primary)] mr-2" 
-                        style={{ 
-                          color: 'var(--gdyup-primary)', 
-                          stroke: 'var(--gdyup-primary)',
-                          fill: 'none',
-                          strokeWidth: 2.5
-                        }} 
+                        className="h-5 w-5 text-[var(--gdyup-primary)] mr-2 gdyup-icon-primary" 
                       />
                       <span className="font-medium text-white">Choose Theme</span>
                     </div>
@@ -340,13 +293,7 @@ export default function GdyupHeader() {
                   )}
                 >
                   <User 
-                    className={isActive('/gdyup/profile') ? "h-5 w-5 text-black" : "h-5 w-5 text-white"} 
-                    style={{
-                      color: isActive('/gdyup/profile') ? 'var(--gdyup-primary)' : 'white',
-                      stroke: isActive('/gdyup/profile') ? 'var(--gdyup-primary)' : 'white',
-                      fill: 'none',
-                      strokeWidth: 2.5
-                    }}
+                    className={isActive('/gdyup/profile') ? "h-5 w-5 text-black gdyup-icon-active" : "h-5 w-5 text-white gdyup-icon-white"} 
                   />
                   <span>{user?.email?.split('@')[0] || 'Profile'}</span>
                 </button>
@@ -367,13 +314,7 @@ export default function GdyupHeader() {
                         }}
                       >
                         <User 
-                          className="h-5 w-5 mr-2 text-white" 
-                          style={{
-                            color: 'white',
-                            stroke: 'white',
-                            fill: 'none',
-                            strokeWidth: 2.5
-                          }}
+                          className="h-5 w-5 mr-2 text-white gdyup-icon-white" 
                         />
                         <span>Edit Profile</span>
                       </a>
@@ -388,13 +329,7 @@ export default function GdyupHeader() {
                         }}
                       >
                         <BarChart4 
-                          className="h-5 w-5 mr-2 text-white" 
-                          style={{
-                            color: 'white',
-                            stroke: 'white',
-                            fill: 'none',
-                            strokeWidth: 2.5
-                          }}
+                          className="h-5 w-5 mr-2 text-white gdyup-icon-white" 
                         />
                         <span>Dashboard</span>
                       </a>
@@ -408,13 +343,7 @@ export default function GdyupHeader() {
                         className="flex w-full px-4 py-2 text-sm text-[var(--gdyup-secondary)] hover:bg-red-900/30 hover:text-red-400"
                       >
                         <LogOut 
-                          className="h-5 w-5 mr-2 text-[var(--gdyup-secondary)]" 
-                          style={{
-                            color: '#FF4B47',
-                            stroke: '#FF4B47',
-                            fill: 'none',
-                            strokeWidth: 2.5
-                          }}
+                          className="h-5 w-5 mr-2 text-[var(--gdyup-secondary)] gdyup-icon-secondary" 
                         />
                         <span>Sign Out</span>
                       </button>
@@ -469,9 +398,9 @@ export default function GdyupHeader() {
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {mobileMenuOpen ? (
-                <X className="h-6 w-6 text-white" style={{ color: 'white !important', stroke: 'white !important', fill: 'none', strokeWidth: 2.5 }} />
+                <X className="h-6 w-6 text-white gdyup-icon-white" />
               ) : (
-                <Menu className="h-6 w-6 text-white" style={{ color: 'white !important', stroke: 'white !important', fill: 'none', strokeWidth: 2.5 }} />
+                <Menu className="h-6 w-6 text-white gdyup-icon-white" />
               )}
             </button>
           </div>
@@ -530,22 +459,10 @@ export default function GdyupHeader() {
                 >
                   {isActive('/gdyup/profile') ? 
                     <User 
-                      className="h-5 w-5 text-black" 
-                      style={{
-                        color: 'var(--gdyup-nav-active-text)',
-                        stroke: 'var(--gdyup-nav-active-text)',
-                        fill: 'none',
-                        strokeWidth: 2.5
-                      }}
+                      className="h-5 w-5 text-black gdyup-icon-active" 
                     /> : 
                     <User 
-                      className="h-5 w-5 text-white" 
-                      style={{
-                        color: 'white',
-                        stroke: 'white',
-                        fill: 'none',
-                        strokeWidth: 2.5
-                      }}
+                      className="h-5 w-5 text-white gdyup-icon-white" 
                     />
                   }
                   <span>Profile</span>
@@ -567,22 +484,10 @@ export default function GdyupHeader() {
                 >
                   {isActive('/gdyup/dashboard') ? 
                     <BarChart4 
-                      className="h-5 w-5 text-black" 
-                      style={{
-                        color: 'var(--gdyup-nav-active-text)',
-                        stroke: 'var(--gdyup-nav-active-text)',
-                        fill: 'none',
-                        strokeWidth: 2.5
-                      }}
+                      className="h-5 w-5 text-black gdyup-icon-active" 
                     /> : 
                     <BarChart4 
-                      className="h-5 w-5 text-white" 
-                      style={{
-                        color: 'white',
-                        stroke: 'white',
-                        fill: 'none',
-                        strokeWidth: 2.5
-                      }}
+                      className="h-5 w-5 text-white gdyup-icon-white" 
                     />
                   }
                   <span>Dashboard</span>
@@ -592,13 +497,7 @@ export default function GdyupHeader() {
                 <div className="px-3 py-3 text-sm border border-[var(--gdyup-border)] rounded-md bg-[var(--gdyup-card-bg)]/50 mx-1 mt-3 mb-2">
                   <div className="flex items-center mb-3">
                     <Palette 
-                      className="h-5 w-5 mr-2" 
-                      style={{ 
-                        color: 'var(--gdyup-primary)', 
-                        stroke: 'var(--gdyup-primary)',
-                        fill: 'none',
-                        strokeWidth: 2.5
-                      }} 
+                      className="h-5 w-5 mr-2 gdyup-icon-primary" 
                     />
                     <span className="font-medium text-[var(--gdyup-text)]">Choose Theme</span>
                   </div>
@@ -616,13 +515,7 @@ export default function GdyupHeader() {
                   className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-[var(--gdyup-secondary)]"
                 >
                   <LogOut 
-                    className="h-5 w-5 text-[var(--gdyup-secondary)]" 
-                    style={{
-                      color: '#FF4B47',
-                      stroke: '#FF4B47',
-                      fill: 'none',
-                      strokeWidth: 2.5
-                    }}
+                    className="h-5 w-5 text-[var(--gdyup-secondary)] gdyup-icon-secondary" 
                   />
                   <span>Sign Out</span>
                 </button>

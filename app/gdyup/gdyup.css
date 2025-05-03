@@ -2709,3 +2709,126 @@ html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primar
 .gdyup-theme-blue .gdyup-icon {
   filter: drop-shadow(0 0 3px rgba(242, 92, 5, 0.6)) !important;
 }
+
+/* Special utility classes for icons to remove inline styles */
+.gdyup-icon-primary {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+}
+
+.gdyup-icon-white {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+}
+
+.gdyup-icon-black {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+}
+
+.gdyup-icon-secondary {
+  color: var(--gdyup-secondary) !important;
+  stroke: var(--gdyup-secondary) !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+}
+
+.gdyup-icon-active {
+  color: var(--gdyup-nav-active-text) !important;
+  stroke: var(--gdyup-nav-active-text) !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+}
+
+/* Logo container styling to prevent unwanted hover effects */
+.gdyup-logo-container a,
+.gdyup-logo-container a:hover,
+.gdyup-logo-container a:focus,
+.gdyup-logo-container a:active {
+  display: block !important;
+  background: none !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.gdyup-logo-image {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  outline: none !important;
+}
+
+/* Special utility classes for the visualizer split ratio display */
+.gdyup-split-ratio-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--gdyup-accent, #1A1A1A);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.gdyup-split-ratio-primary {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+}
+
+.gdyup-split-ratio-secondary {
+  height: 100%;
+  background-color: var(--gdyup-accent, #1A1A1A);
+}
+
+/* Map container styles */
+.gdyup-map-container {
+  min-height: 100px;
+  height: 100%;
+}
+
+.gdyup-map-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(17, 24, 39, 0.3);
+  min-height: 100px;
+  height: 100%;
+}
+
+.gdyup-map-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-map-image {
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+/* Fix for animations on theme switching - ensure they complete */
+.gdyup-theme-transition * {
+  transition-duration: 0.3s !important;
+  transition-property: background-color, color, border-color, text-shadow, box-shadow, transform, filter !important;
+}
+
+/* Add a global CSS refresh trigger class to help with theme refresh issues */
+.gdyup-theme-refresh {
+  animation: gdyup-theme-refresh 0.01s;
+}
+
+@keyframes gdyup-theme-refresh {
+  0% { opacity: 0.99; }
+  100% { opacity: 1; }
+}

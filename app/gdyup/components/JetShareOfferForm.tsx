@@ -1846,9 +1846,9 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-white opacity-60 text-sm">Share Ratio:</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 rounded-full bg-gdyup-accent overflow-hidden flex">
-                            <div className="bg-gdyup-primary h-full" style={{ width: `${shareRatio}%` }}></div>
-                            <div className="bg-gdyup-accent/70 h-full" style={{ width: `${100 - shareRatio}%` }}></div>
+                          <div className="gdyup-split-ratio-bar">
+                            <div className="gdyup-split-ratio-primary" style={{ width: `${shareRatio}%` }}></div>
+                            <div className="gdyup-split-ratio-secondary" style={{ width: `${100 - shareRatio}%` }}></div>
                           </div>
                           <span className="font-medium text-white text-sm">{shareRatio}% / {100 - shareRatio}%</span>
                         </div>

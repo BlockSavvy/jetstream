@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Map, Plane, Loader2 } from 'lucide-react';
+import { Map, Plane, Loader2, MapPin } from 'lucide-react';
 import { extractAirportCode, getAirportImage } from '@/lib/utils/airport-images';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -196,247 +196,76 @@ export default function EnhancedAirportMap({
   }, [departureCode, arrivalCode, departureImage, arrivalImage, showBothAirports]);
 
   return (
-    <div 
-      className={cn(
-        "relative overflow-hidden rounded-lg border border-gray-700/50 bg-gray-900/30 route-map",
-        "transition-all duration-300 w-full",
-        showBothAirports 
-          ? "flex flex-col md:flex-row md:items-stretch" 
-          : "flex items-center justify-center",
-        className
-      )}
-      style={{ minHeight: compact ? '100px' : '140px' }}
-    >
-      {/* Loading State */}
-      {(isLoading || isFetching) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/60 z-20">
-          <div className="flex flex-col items-center space-y-2">
-            <Loader2 className="w-6 h-6 text-[#DAFF0D] animate-spin" />
-            <span className="text-xs text-gray-300">Loading...</span>
-          </div>
-        </div>
-      )}
-
-      {/* When we have both airports and are showing them both */}
-      {showBothAirports && (
+    <div className={cn("w-full relative overflow-hidden rounded-lg", className)} style={{ minHeight: compact ? '100px' : '140px' }}>
+      {departureCode && arrivalCode ? (
         <>
-          {/* Departure Airport */}
-          <div className="relative flex-1 min-h-[100px] w-full md:w-1/2 overflow-hidden">
-            {departureCode && (
-              <>
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30" style={{ minHeight: '100px', height: '100%' }}>
-                  <div className="relative w-full h-full shadow-inner" style={{ 
-                    minHeight: '100px',
-                    backgroundColor: hideBackground ? 'transparent' : 'rgba(17, 24, 39, 0.7)'
-                  }}>
-                    {!hideBackground && (
-                      <img 
-                        src={imageError[departureCode] 
-                          ? '/images/airports/placeholder_airport_map.png' 
-                          : departureImage
-                        }
-                        alt={`${departureAirport?.city || departureCode} Airport`}
-                        className="absolute inset-0 object-cover w-full h-full"
-                        style={{ objectPosition: '50% 50%' }}
-                        onError={() => handleImageError(departureCode)}
-                        width={500}
-                        height={300}
-                        loading="eager"
-                      />
-                    )}
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-                <div className="absolute bottom-1 left-1 px-1 py-0.5 bg-blue-900/90 text-white text-xs rounded-md border border-blue-700/50 font-medium shadow-lg">
-                  {departureAirport?.city || 'Departure'} ({departureCode})
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Route Visualization in the Middle */}
-          <div className="hidden md:flex h-full items-center justify-center bg-black/40 px-3 z-10">
-            <div className="h-16 flex flex-col items-center justify-center">
-              <div className="w-0.5 h-12 bg-gradient-to-b from-blue-500 via-[#DAFF0D] to-amber-500 route-line"></div>
-              <Plane className="h-6 w-6 text-[#DAFF0D] rotate-90 -mt-1 animate-pulse plane-icon" />
+          {/* Route map visualization */}
+          <div className="gdyup-map-overlay">
+            <div className="gdyup-map-inner">
+              {/* World map backdrop */}
+              <Image
+                src="/images/airports/world_map_dark.jpg"
+                alt="World Map"
+                fill
+                className="gdyup-map-image"
+                unoptimized={true}
+              />
             </div>
-          </div>
-          
-          {/* Mobile Route Visualization - IMPROVED */}
-          <div className="flex md:hidden w-full h-12 bg-black/70 items-center justify-center">
-            <div className="w-full flex items-center justify-center relative">
-              <div className="h-2 w-4/5 bg-gradient-to-r from-blue-500 via-[#DAFF0D] to-amber-500 route-line rounded-full shadow-[0_0_5px_rgba(218,255,13,0.7)]"></div>
-              <motion.div
-                className="absolute z-10"
-                initial={{ left: '10%' }}
-                animate={{ left: '90%' }}
-                transition={{ 
-                  duration: animationDuration,
-                  repeat: Infinity,
-                  ease: 'linear'
-                }}
-              >
-                <Plane className="h-8 w-8 text-[#DAFF0D] rotate-45 plane-icon" />
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Arrival Airport */}
-          <div className="relative flex-1 min-h-[100px] w-full md:w-1/2 overflow-hidden">
-            {arrivalCode && (
-              <>
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30" style={{ minHeight: '100px', height: '100%' }}>
-                  <div className="relative w-full h-full shadow-inner" style={{ 
-                    minHeight: '100px',
-                    backgroundColor: hideBackground ? 'transparent' : 'rgba(17, 24, 39, 0.7)'
-                  }}>
-                    {!hideBackground && (
-                      <img 
-                        src={imageError[arrivalCode] 
-                          ? '/images/airports/placeholder_airport_map.png' 
-                          : arrivalImage
-                        }
-                        alt={`${arrivalAirport?.city || arrivalCode} Airport`}
-                        className="absolute inset-0 object-cover w-full h-full"
-                        style={{ objectPosition: '50% 50%' }}
-                        onError={() => handleImageError(arrivalCode)}
-                        width={500}
-                        height={300}
-                        loading="eager"
-                      />
-                    )}
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
-                <div className="absolute bottom-1 right-1 px-1 py-0.5 bg-amber-900/90 text-white text-xs rounded-md border border-amber-700/50 font-medium shadow-lg">
-                  {arrivalAirport?.city || 'Arrival'} ({arrivalCode})
-                </div>
-              </>
-            )}
           </div>
         </>
-      )}
-
-      {/* When showing just one airport or in compact mode */}
-      {!showBothAirports && (
-        <div className="relative w-full h-full overflow-hidden" 
-          style={{ 
-            minHeight: compact ? '100px' : '140px',
-            background: hideBackground ? 'linear-gradient(to right, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 0.7))' : 'transparent' 
-          }}>
-          {(hasDeparture || hasArrival) && (
-            <>
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900/30" style={{ minHeight: '100px', height: '100%' }}>
-                <div className="relative w-full h-full shadow-inner" style={{ 
-                  minHeight: '100px',
-                  backgroundColor: hideBackground ? 'transparent' : 'rgba(17, 24, 39, 0.8)'
-                }}>
-                  {!hideBackground && (
-                    <>
-                      {hasDeparture && (
-                        <img 
-                          src={hasDeparture 
-                            ? (imageError[departureCode!] ? '/images/airports/placeholder_airport_map.png' : departureImage)
-                            : (imageError[arrivalCode!] ? '/images/airports/placeholder_airport_map.png' : arrivalImage)
-                          }
-                          alt={`${
-                            hasDeparture 
-                              ? (departureAirport?.city || departureCode) 
-                              : (arrivalAirport?.city || arrivalCode)
-                          } Airport`}
-                          className="absolute inset-0 object-cover w-full h-full"
-                          style={{ objectPosition: '50% 50%' }}
-                          onError={() => hasDeparture
-                            ? handleImageError(departureCode!)
-                            : handleImageError(arrivalCode!)
-                          }
-                          width={500}
-                          height={300}
-                          loading="eager"
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-              
-              {/* Airport labels */}
-              {hasBoth && (
-                <div className="absolute inset-0 pointer-events-none">
-                  {/* Route line - IMPROVED */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-4/5 h-2 bg-gradient-to-r from-blue-500 via-[#DAFF0D] to-amber-500 relative z-10 route-line rounded-full"
-                      style={{
-                        boxShadow: '0 0 10px rgba(218, 255, 13, 0.7)'
-                      }}>
-                      {/* Animated plane along the route */}
-                      <motion.div 
-                        className="absolute -top-3 z-20"
-                        initial={{ left: '0%' }}
-                        animate={{ left: '100%' }}
-                        transition={{ 
-                          duration: animationDuration,
-                          repeat: Infinity,
-                          ease: 'linear'
-                        }}
-                      >
-                        <Plane className="h-8 w-8 text-[#DAFF0D] transform rotate-45 plane-icon" />
-                      </motion.div>
-                      
-                      {/* Origin/Destination markers - enlarged */}
-                      <div className="absolute -top-2 -left-2 w-5 h-5 rounded-full bg-blue-600 shadow-lg z-10" />
-                      <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-amber-500 shadow-lg z-10" />
-                    </div>
-                  </div>
-                  
-                  {/* Airport names - Enhanced visibility */}
-                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-blue-900/90 text-blue-100 text-xs font-bold rounded shadow-md">
-                    {departureAirport?.city || 'Departure'} ({departureCode})
-                  </div>
-                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-amber-900/90 text-amber-100 text-xs font-bold rounded shadow-md">
-                    {arrivalAirport?.city || 'Arrival'} ({arrivalCode})
+      ) : departureCode ? (
+        <>
+          {/* Single location - Departure airport */}
+          <div className="gdyup-map-overlay">
+            <div className="gdyup-map-inner">
+              {departureImage ? (
+                <Image
+                  src={imageError[departureCode] ? '/images/airports/placeholder_airport_map.png' : departureImage}
+                  alt={`${departureCode} Airport`}
+                  fill
+                  className="gdyup-map-image"
+                  unoptimized={true}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                  <div className="flex flex-col items-center">
+                    <MapPin className="h-8 w-8 mb-2 text-gray-400" />
+                    <span className="text-gray-300 text-sm">{departureCode}</span>
                   </div>
                 </div>
               )}
-              
-              {/* Single airport label */}
-              {!hasBoth && (
-                <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-gray-900/80 backdrop-blur-sm text-white text-xs font-bold rounded shadow-md">
-                  {hasDeparture
-                    ? `${departureAirport?.city || 'Departure'} (${departureCode})`
-                    : `${arrivalAirport?.city || 'Arrival'} (${arrivalCode})`
-                  }
-                </div>
-              )}
-              
-              {/* Private airport badge */}
-              {((hasDeparture && departureAirport?.is_private) || 
-                (hasArrival && arrivalAirport?.is_private)) && (
-                <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-[#DAFF0D]/80 text-black text-xs font-bold rounded">
-                  Private
-                </div>
-              )}
-            </>
-          )}
-          
-          {/* No airports selected */}
-          {!hasDeparture && !hasArrival && (
-            <div className="flex flex-col items-center justify-center h-full bg-gray-800/40 py-3" style={{ minHeight: '100px' }}>
-              <Map className="w-6 h-6 text-gray-500 mb-1" />
-              <span className="text-xs text-gray-400">No airports selected</span>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Default fallback state when no images are available */}
-      {!isLoading && !isFetching && ((showBothAirports && (!departureCode || !arrivalCode)) || (!showBothAirports && !hasDeparture && !hasArrival)) && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-          <div className="flex flex-col items-center space-y-2">
-            <Plane className="w-8 h-8 text-[#DAFF0D] opacity-50 plane-icon" />
-            <span className="text-xs text-gray-400">Route map</span>
           </div>
+        </>
+      ) : arrivalCode ? (
+        <>
+          {/* Single location - Arrival airport */}
+          <div className="gdyup-map-overlay">
+            <div className="gdyup-map-inner">
+              {arrivalImage ? (
+                <Image
+                  src={imageError[arrivalCode] ? '/images/airports/placeholder_airport_map.png' : arrivalImage}
+                  alt={`${arrivalCode} Airport`}
+                  fill
+                  className="gdyup-map-image"
+                  unoptimized={true}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                  <div className="flex flex-col items-center">
+                    <MapPin className="h-8 w-8 mb-2 text-gray-400" />
+                    <span className="text-gray-300 text-sm">{arrivalCode}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+        // Placeholder when no airport is selected
+        <div className="flex flex-col items-center justify-center h-full bg-gray-800/40 py-3 gdyup-map-container">
+          <MapPin className="h-8 w-8 mb-2 text-gray-400" />
+          <p className="text-sm text-gray-300">Select airports to see the route</p>
         </div>
       )}
     </div>
