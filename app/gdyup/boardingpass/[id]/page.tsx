@@ -1,308 +1,303 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase';
+import { useAuth } from '@/components/auth-provider';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Plane, Ticket, Wallet, Download, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, Plane, Calendar, AlertCircle, Download, ArrowLeft, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { ClientIdParams } from '@/lib/types/route-types'
 
-export default function BoardingPassPage({ params }: ClientIdParams) {
+interface BoardingPassPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const id = params.id as string;
-  const isTestMode = searchParams?.get('test') === 'true';
-  
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isWalletLoading, setIsWalletLoading] = useState(false);
-  const [boardingPass, setBoardingPass] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [offerData, setOfferData] = useState<any>(null);
+  const [boardingPassData, setBoardingPassData] = useState<any>(null);
   
-  // Fetch boarding pass details
   useEffect(() => {
-    async function fetchBoardingPass() {
-      if (!id) return;
+    const fetchData = async () => {
+      setIsLoading(true);
       
       try {
-        setIsLoading(true);
-        const testParam = isTestMode ? '&test=true' : '';
-        const response = await fetch(`/api/jetshare/generateBoardingPass?offerId=${id}${testParam}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch boarding pass details');
+        if (!user) {
+          // If no user, redirect to login
+          router.push(`/auth/login?returnUrl=${encodeURIComponent(`/gdyup/boardingpass/${params.id}`)}`);
+          return;
         }
         
-        const data = await response.json();
-        setBoardingPass(data.boardingPass);
-      } catch (err) {
-        console.error('Error fetching boarding pass:', err);
-        setError('Unable to load boarding pass details');
-        toast.error('Error loading boarding pass details');
+        const supabase = createClient();
+        
+        // First fetch the offer
+        const { data: offer, error: offerError } = await supabase
+          .from('jetshare_offers')
+          .select(`
+            *,
+            user:user_id (*),
+            matched_user:matched_user_id (*)
+          `)
+          .eq('id', params.id)
+          .single();
+          
+        if (offerError || !offer) {
+          throw new Error('Offer not found');
+        }
+        
+        // Check if the user has access to this offer
+        if (offer.user_id !== user.id && offer.matched_user_id !== user.id) {
+          throw new Error('You do not have access to this boarding pass');
+        }
+        
+        // Check if the offer is paid
+        if (offer.status !== 'completed' && offer.status !== 'paid' && offer.payment_status !== 'paid') {
+          throw new Error('Booking is not complete - payment required');
+        }
+        
+        setOfferData(offer);
+        
+        // Check if there's a boarding pass already
+        const { data: boardingPass, error: boardingPassError } = await supabase
+          .from('jetshare_tickets')
+          .select('*')
+          .eq('offer_id', params.id)
+          .eq('user_id', user.id)
+          .single();
+          
+        if (boardingPass) {
+          setBoardingPassData(boardingPass);
+        } else {
+          // Generate a boarding pass
+          // In a real app, this would be a more complex process with seat assignment
+          const seatNumber = user.id === offer.user_id ? '1A' : '1B';
+          const ticketCode = `JS-${Math.floor(1000 + Math.random() * 9000)}`;
+          
+          const newBoardingPass = {
+            offer_id: params.id,
+            user_id: user.id,
+            passenger_name: user.user_metadata?.full_name || 'GDY·UP Traveler',
+            ticket_code: ticketCode,
+            seat_number: seatNumber,
+            boarding_time: new Date(offer.flight_date).toISOString(),
+            gate: `A${Math.floor(1 + Math.random() * 20)}`,
+            status: 'active',
+            created_at: new Date().toISOString(),
+            metadata: {
+              departure_location: offer.departure_location,
+              arrival_location: offer.arrival_location,
+              flight_date: offer.flight_date,
+              aircraft_model: offer.aircraft_model
+            }
+          };
+          
+          const { data: insertedPass, error: insertError } = await supabase
+            .from('jetshare_tickets')
+            .insert([newBoardingPass])
+            .select()
+            .single();
+            
+          if (insertError) {
+            console.error('Error creating boarding pass:', insertError);
+            // Continue with the data we have
+            setBoardingPassData(newBoardingPass);
+          } else {
+            setBoardingPassData(insertedPass);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error loading boarding pass:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load boarding pass');
       } finally {
         setIsLoading(false);
       }
-    }
+    };
     
-    fetchBoardingPass();
-  }, [id, isTestMode]);
+    fetchData();
+  }, [params.id, router, user]);
   
-  const downloadBoardingPass = async () => {
-    setIsDownloading(true);
-    
-    try {
-      const testParam = isTestMode ? '&test=true' : '';
-      window.open(`/api/jetshare/mockBoardingPass?id=${id}${testParam}`, '_blank');
-      toast.success('Boarding pass downloaded');
-    } catch (err) {
-      console.error('Error downloading boarding pass:', err);
-      toast.error('Failed to download boarding pass');
-    } finally {
-      setIsDownloading(false);
-    }
+  const handleDownloadPass = () => {
+    toast.info('Boarding pass download will be available soon');
+    // In a real implementation, this would generate a downloadable boarding pass
   };
   
-  const addToAppleWallet = async () => {
-    setIsWalletLoading(true);
-    
-    try {
-      const testParam = isTestMode ? '&test=true' : '';
-      window.open(`/api/jetshare/appleWallet?id=${id}${testParam}`, '_blank');
-      toast.success('Boarding pass added to Apple Wallet', {
-        description: isTestMode ? 'Test mode: This is a simulated Apple Wallet pass' : undefined
-      });
-    } catch (err) {
-      console.error('Error adding to Apple Wallet:', err);
-      toast.error('Failed to add to Apple Wallet');
-    } finally {
-      setIsWalletLoading(false);
-    }
+  const handleAppleWallet = () => {
+    toast.info('Apple Wallet integration coming soon');
+    // In a real implementation, this would create a .pkpass file
   };
   
-  // Loading state
+  const handleGoBack = () => {
+    router.push('/gdyup/dashboard');
+  };
+  
+  const handleSeatSelection = () => {
+    toast.info('Seat selection is coming soon!');
+    // Future feature for selecting seats
+  };
+  
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-xl">
-        <div className="flex items-center mb-6">
-          <Button 
-            variant="ghost" 
-            className="mr-2 p-2" 
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">Boarding Pass</h1>
-        </div>
-        
+      <div className="container mx-auto px-4 py-12 max-w-md">
         <Card>
           <CardHeader>
-            <Skeleton className="h-8 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
+            <CardTitle className="text-center">Loading Boarding Pass...</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-40 w-full" />
-            <div className="grid grid-cols-2 gap-4">
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-full" />
+          <CardContent>
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-center gap-4">
-            <Skeleton className="h-10 w-40" />
-            <Skeleton className="h-10 w-40" />
+        </Card>
+      </div>
+    );
+  }
+  
+  if (error || !offerData) {
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-md">
+        <Card>
+          <CardHeader className="text-center">
+            <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-4" />
+            <CardTitle>Error Loading Boarding Pass</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-muted-foreground mb-4">{error}</p>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              onClick={handleGoBack}
+            >
+              Return to Dashboard
+            </Button>
           </CardFooter>
         </Card>
       </div>
     );
   }
   
-  // Error state
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-xl">
-        <div className="flex items-center mb-6">
-          <Button 
-            variant="ghost" 
-            className="mr-2 p-2" 
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">Boarding Pass</h1>
-        </div>
-        
-        <Card className="border-red-200 bg-red-50 dark:border-red-700 dark:bg-red-900/20">
-          <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-12 w-12 mx-auto text-red-500 mb-4" />
-            <h2 className="text-xl font-semibold text-red-700 dark:text-red-400 mb-2">Unable to Load Boarding Pass</h2>
-            <p className="text-red-600 dark:text-red-300 mb-4">{error}</p>
-            <Button 
-              onClick={() => router.push('/jetshare/dashboard?tab=bookings')}
-              className="mt-2"
-            >
-              Return to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
-  // Render boarding pass
   return (
-    <div className="container mx-auto px-4 py-8 max-w-xl">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          className="mr-2 p-2" 
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-bold dark:text-high-contrast">Boarding Pass</h1>
-      </div>
+    <div className="container mx-auto px-4 py-8 max-w-md">
+      <Button 
+        variant="ghost" 
+        className="mb-4 p-0" 
+        onClick={handleGoBack}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Dashboard
+      </Button>
       
-      {isTestMode && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-md text-blue-700 dark:text-blue-200">
-          <p className="text-sm font-medium">Test Mode Active</p>
-          <p className="text-xs">This is a test boarding pass and not valid for actual travel.</p>
-        </div>
-      )}
-      
-      <Card className="border-amber-200 dark:border-amber-700 mb-6 jetstream-card overflow-hidden">
-        <div className="h-2 bg-amber-500 w-full"></div>
-        <CardHeader>
-          <div className="flex justify-between items-start">
+      <Card className="border-2 border-amber-200 bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-slate-950 overflow-hidden">
+        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500 transform rotate-45 translate-x-8 -translate-y-8"></div>
+        
+        <CardHeader className="pb-2 relative">
+          <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-xl flex items-center justify-between">
-                <div className="flex items-center">
-                  <Plane className="h-5 w-5 mr-2 rotate-90" />
-                  Flight {boardingPass?.flightNumber || 'JS1234'}
-                </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                  Flight #{id?.substring(0, 6)}
-                </div>
-              </CardTitle>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {boardingPass ? format(new Date(boardingPass.departureTime), 'EEEE, MMMM d, yyyy') : new Date().toDateString()}
-              </p>
+              <CardTitle className="text-xl font-bold">Boarding Pass</CardTitle>
+              <p className="text-sm text-muted-foreground">GDY·UP Private Jet</p>
             </div>
-            <div className="bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full border border-green-200 dark:border-green-700">
-              <p className="text-sm font-medium text-green-700 dark:text-green-300 flex items-center">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Confirmed
-              </p>
-            </div>
+            <Plane className="h-8 w-8 text-amber-500" />
+          </div>
+          
+          <div className="mt-4 text-center">
+            <p className="text-3xl font-bold tracking-wide text-amber-600">{boardingPassData?.ticket_code || 'GDY-0000'}</p>
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">FROM</p>
-              <p className="text-lg font-semibold">{boardingPass?.departureLocation?.split(' ')[0] || 'JFK'}</p>
-              <p className="text-xs">{boardingPass?.departureLocation || 'New York'}</p>
-            </div>
-            
-            <div className="flex-1 px-4">
-              <div className="border-t-2 border-dashed border-gray-300 dark:border-gray-600 relative">
-                <Plane className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 text-amber-500 dark:text-amber-400 h-6 w-6 rotate-90" />
+        <CardContent className="pb-0">
+          <div className="mb-6">
+            <div className="flex items-center justify-between my-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">From</p>
+                <p className="text-lg font-semibold">{offerData.departure_location}</p>
+              </div>
+              
+              <div className="flex-1 flex items-center justify-center px-4">
+                <div className="w-full border-t border-dashed border-amber-300"></div>
+                <Plane className="mx-2 h-4 w-4 text-amber-500 transform rotate-90" />
+                <div className="w-full border-t border-dashed border-amber-300"></div>
+              </div>
+              
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">To</p>
+                <p className="text-lg font-semibold">{offerData.arrival_location}</p>
               </div>
             </div>
             
-            <div className="text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">TO</p>
-              <p className="text-lg font-semibold">{boardingPass?.arrivalLocation?.split(' ')[0] || 'LAX'}</p>
-              <p className="text-xs">{boardingPass?.arrivalLocation || 'Los Angeles'}</p>
-            </div>
-          </div>
-          
-          <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-100 dark:border-amber-800">
+            <div className="h-px bg-gray-200 my-6"></div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">PASSENGER</p>
-                <p className="font-medium">{boardingPass?.passengerName || 'GUEST'}</p>
+                <p className="text-sm text-muted-foreground">Date</p>
+                <p className="font-medium">{format(new Date(offerData.flight_date), 'MMM d, yyyy')}</p>
               </div>
+              
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">SEAT</p>
-                <p className="font-medium">{boardingPass?.seat || '1A'}</p>
+                <p className="text-sm text-muted-foreground">Seat</p>
+                <p className="font-medium">{boardingPassData?.seat_number || 'TBD'}</p>
               </div>
+              
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">GATE</p>
-                <p className="font-medium">{boardingPass?.gate || 'G12'}</p>
+                <p className="text-sm text-muted-foreground">Passenger</p>
+                <p className="font-medium">{boardingPassData?.passenger_name || 'GDY·UP Traveler'}</p>
               </div>
+              
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">BOARDING</p>
-                <p className="font-medium">
-                  {boardingPass?.boardingTime 
-                    ? format(new Date(boardingPass.boardingTime), 'h:mm a') 
-                    : '9:00 AM'}
-                </p>
+                <p className="text-sm text-muted-foreground">Gate</p>
+                <p className="font-medium">{boardingPassData?.gate || 'A1'}</p>
               </div>
             </div>
           </div>
           
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">BOARDING PASS ID</p>
-            <p className="font-mono text-sm">{boardingPass?.barcode || `JSBP-${id}`}</p>
-            <div className="mt-2 bg-gray-100 dark:bg-gray-800 rounded py-3 text-center">
-              <p className="font-mono text-sm">|||||||||||||||||||||||||||||||||||||||</p>
+          <div className="flex justify-center mb-4">
+            <div className="border border-amber-200 p-4 rounded-md bg-white">
+              <QrCode className="h-32 w-32 text-slate-900" />
             </div>
+          </div>
+          
+          <div className="text-center text-sm text-muted-foreground mb-4">
+            <p>Scan this QR code at the airport</p>
           </div>
         </CardContent>
         
-        <CardFooter className="flex flex-col sm:flex-row justify-center gap-3 border-t dark:border-gray-700 pt-6">
+        <CardFooter className="flex flex-col space-y-2">
           <Button 
-            className="w-full sm:w-auto"
-            onClick={downloadBoardingPass}
-            disabled={isDownloading}
+            className="w-full bg-black hover:bg-slate-800 text-white" 
+            onClick={handleAppleWallet}
           >
-            {isDownloading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                Download Boarding Pass
-              </>
-            )}
+            <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.0413 12.5046C17.0043 9.5333 19.5226 8.06973 19.6473 7.9947C18.2863 5.9574 16.1643 5.77427 15.4223 5.74753C13.6203 5.5574 11.8583 6.8414 10.9296 6.8414C10.0276 6.8414 8.50963 5.7624 7.01863 5.79507C5.05697 5.828 3.26897 6.93547 2.27697 8.67747C0.289633 12.1788 1.74297 17.3494 3.6683 20.2614C4.6323 21.6907 5.7423 23.3001 7.22097 23.2481C8.66363 23.1921 9.17763 22.3468 10.9083 22.3468C12.6123 22.3468 13.0856 23.2481 14.599 23.2188C16.151 23.1921 17.1096 21.7494 18.0396 20.3161C19.1563 18.6748 19.6296 17.0694 19.651 17.0001C19.609 16.9961 17.0816 16.0401 17.0413 12.5046Z" />
+              <path d="M14.1283 4.68C14.919 3.71627 15.4583 2.39493 15.3203 1.06667C14.1763 1.1154 12.731 1.8494 11.9043 2.79894C11.1703 3.6334 10.5236 4.9974 10.683 6.29627C11.967 6.3914 13.315 5.6414 14.1283 4.68Z" />
+            </svg>
+            Add to Apple Wallet
           </Button>
           
           <Button 
-            variant="secondary"
-            className="w-full sm:w-auto"
-            onClick={addToAppleWallet}
-            disabled={isWalletLoading}
+            variant="outline" 
+            className="w-full" 
+            onClick={handleDownloadPass}
           >
-            {isWalletLoading ? (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Wallet className="h-4 w-4 mr-2" />
-                Add to Apple Wallet
-              </>
-            )}
+            <Download className="mr-2 h-4 w-4" />
+            Download Boarding Pass
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            className="w-full text-amber-600" 
+            onClick={handleSeatSelection}
+          >
+            Change Seat
           </Button>
         </CardFooter>
       </Card>
-      
-      <div className="flex justify-center">
-        <Button 
-          variant="outline"
-          onClick={() => router.push('/jetshare/dashboard?tab=bookings')}
-        >
-          Back to My Bookings
-        </Button>
-      </div>
     </div>
   );
 } 

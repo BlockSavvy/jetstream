@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { JetShareOfferWithUser } from '@/types/jetshare';
 import { User } from '@supabase/supabase-js';
 import { format } from 'date-fns';
-import { ArrowLeft, Loader2, CreditCard, Bitcoin, CheckCircle, ArrowRight, Plane, Copy, QrCode, AlertCircle, Calendar, DollarSign, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Bitcoin, CheckCircle, ArrowRight, Plane, Copy, QrCode, AlertCircle, Calendar, DollarSign, Info, Timer, Clock } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroupItem } from '@/components/ui/radio-group';
@@ -34,7 +34,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
   const router = useRouter();
   const { user, refreshSession } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'crypto'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'btc'>('card');
   const [currentStep, setCurrentStep] = useState<'confirmation' | 'method' | 'details' | 'processing' | 'auth_error'>('confirmation');
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
@@ -53,6 +53,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [showPayLater, setShowPayLater] = useState(true);
   
   // Fetch saved payment methods on mount
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
   }, [user?.id]);
   
   const handlePaymentMethodChange = (value: string) => {
-    setPaymentMethod(value as 'card' | 'crypto');
+    setPaymentMethod(value as 'card' | 'btc');
   };
   
   const handleCardDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,7 +166,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
     setCurrentStep('details');
   };
   
-  // Modify the handleSubmit function to better handle authentication
+  // Modify the handleSubmit function to handle both Stripe and BTCPay
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -255,7 +256,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
         return;
       }
       
-      // Validate card details before proceeding
+      // Validate card details before proceeding if using card payment
       if (paymentMethod === 'card' && !validateCardDetails(true)) {
         setIsProcessing(false);
         return;
@@ -276,49 +277,37 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
         // Store payment completion in localStorage for test mode
         try {
           localStorage.setItem('payment_complete', 'true');
-          localStorage.setItem('jetstream_last_action', 'payment_complete');
+          localStorage.setItem('gdyup_last_action', 'payment_complete');
         } catch (e) {
           console.warn('Failed to store payment completion flag:', e);
         }
         
         // Wait briefly before redirecting
         setTimeout(() => {
-          router.push(`/jetshare/payment/success?offer_id=${offer.id}&t=${Date.now()}&test=true`);
+          router.push(`/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}&test=true`);
         }, 1000);
         
         setIsProcessing(false);
         return;
       }
       
-      // Generate unique identifiers for request
-      const timestamp = Date.now();
-      const requestId = Math.random().toString(36).substring(2, 15);
-      
-      // Process payment with the service role API (bypassing auth issues)
-      // In production, this would be replaced with Stripe.js to securely collect payment details
-      // See: https://docs.stripe.com/payments/accept-a-payment?platform=web&ui=elements
+      // Process payment with the API endpoint
+      // This will redirect to BTCPay Server for crypto or handle Stripe for cards
       const response = await fetch(
-        `/api/jetshare/process-payment?t=${timestamp}&rid=${requestId}&from=paymentForm&user_id=${validUserId}`,
+        `/api/jetshare/process-payment`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
-            ...(validUserId ? { 'x-user-id': validUserId } : {}),
-            // Always include this header in test mode
-            ...(isTestMode ? { 'x-test-mode': 'true' } : {})
+            ...(validUserId ? { 'x-user-id': validUserId } : {})
           },
           body: JSON.stringify({
             offer_id: offer.id,
             payment_method: paymentMethod,
             user_id: validUserId,
             payment_details: {
-              // Include test flags to help with test mode processing
-              test_mode: isTestMode,
               card_details: paymentMethod === 'card' ? {
-                // Only include non-sensitive details for logging
-                // In production, card details would NEVER be sent to the server directly
-                // Instead, use Stripe.js to tokenize the card information
                 brand: useSavedMethod && selectedSavedMethodId 
                   ? savedPaymentMethods.find(m => m.id === selectedSavedMethodId)?.brand 
                   : 'test-card',
@@ -326,9 +315,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                   ? savedPaymentMethods.find(m => m.id === selectedSavedMethodId)?.last4
                   : '4242'
               } : undefined
-            },
-            // In test mode, explicitly request auth bypass
-            bypass_auth: isTestMode
+            }
           })
         }
       );
@@ -347,7 +334,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
             setCurrentStep('auth_error');
             
             setTimeout(() => {
-              const returnUrl = errorData.action.returnUrl || `/jetshare/payment/${offer.id}`;
+              const returnUrl = errorData.action.returnUrl || `/gdyup/payment/${offer.id}`;
               router.push(`/auth/login?returnUrl=${encodeURIComponent(returnUrl)}&t=${Date.now()}`);
             }, 1500);
             return;
@@ -373,14 +360,29 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
       setIsSuccess(true);
       setCurrentStep('confirmation');
       
-      // Check if we should redirect immediately (direct navigation)
+      // For BTCPay, we need to redirect to the checkout URL
+      if (paymentMethod === 'btc' && data.data?.checkout_url) {
+        // Store payment state before redirecting
+        try {
+          localStorage.setItem('btcpay_invoice_id', data.data.invoice_id);
+          localStorage.setItem('current_payment_offer_id', offer.id);
+        } catch (e) {
+          console.warn('Failed to store BTCPay invoice info:', e);
+        }
+        
+        // Redirect to BTCPay checkout
+        window.location.href = data.data.checkout_url;
+        return;
+      }
+      
+      // For Stripe or if we should redirect immediately
       if (data.data?.redirect_now === true || data.data?.force_redirect === true) {
         console.log('Force redirect requested, using direct browser navigation');
         
         // Store some data for session persistence
         try {
           localStorage.setItem('payment_complete', 'true');
-          localStorage.setItem('jetstream_last_action', 'payment_complete');
+          localStorage.setItem('gdyup_last_action', 'payment_complete');
           localStorage.setItem('current_payment_offer_id', offer.id);
         } catch (e) {
           console.warn('Failed to store payment completion flag:', e);
@@ -388,7 +390,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
         
         // Force direct browser navigation for most reliable redirect
         const redirectUrl = data.data?.redirect_url || 
-          `/jetshare/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
+          `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
         
         console.log('Immediately redirecting to:', redirectUrl);
         window.location.href = redirectUrl;
@@ -401,7 +403,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
           // Store some data for session persistence
           try {
             localStorage.setItem('payment_complete', 'true');
-            localStorage.setItem('jetstream_last_action', 'payment_complete');
+            localStorage.setItem('gdyup_last_action', 'payment_complete');
             localStorage.setItem('current_payment_offer_id', offer.id);
           } catch (e) {
             console.warn('Failed to store payment completion flag:', e);
@@ -417,7 +419,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
               window.location.href = data.data.redirect_url;
             }, 300);
           } else {
-            const successUrl = `/jetshare/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
+            const successUrl = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
             console.log('Redirecting to default success URL:', successUrl);
             router.push(successUrl);
             
@@ -430,7 +432,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
           console.error('Redirect failed, using direct location change:', redirectError);
           // Use direct browser navigation as ultimate fallback
           window.location.href = data.data?.redirect_url || 
-            `/jetshare/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
+            `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
         }
       }, 1000);
       
@@ -488,6 +490,69 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
       setIsProcessing(false);
       setError('An error occurred while processing your payment');
     });
+  };
+  
+  // Add a handler for the "Pay Later" option
+  const handlePayLater = async () => {
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      // Get user ID using similar approach as handleSubmit
+      let userId = user?.id;
+      if (!userId) {
+        try {
+          userId = localStorage.getItem('jetstream_user_id') || undefined;
+        } catch (e) {
+          console.warn('Failed to get user ID from localStorage:', e);
+        }
+      }
+      
+      // If we still don't have a user ID and not in test mode, show error
+      if (!userId && process.env.NODE_ENV !== 'development') {
+        setError('You must be signed in to use the Pay Later option');
+        setCurrentStep('auth_error');
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Call the API to mark the offer as accepted but unpaid
+      const response = await fetch('/api/jetshare/process-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          offer_id: offer.id,
+          payment_method: paymentMethod,
+          user_id: userId,
+          pay_later: true // This is the key flag that indicates a deferred payment
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to set up deferred payment');
+      }
+      
+      const data = await response.json();
+      
+      // Show success message
+      toast.success('Offer held for 1 hour. Complete payment before it expires.');
+      
+      // Redirect to dashboard or success page
+      if (data.data?.redirect_url) {
+        window.location.href = data.data.redirect_url;
+      } else {
+        router.push('/gdyup/dashboard?payment=pending');
+      }
+    } catch (error) {
+      console.error('Error setting up deferred payment:', error);
+      setError(error instanceof Error ? error.message : 'Failed to set up deferred payment');
+      toast.error('Could not set up Pay Later option');
+    } finally {
+      setIsProcessing(false);
+    }
   };
   
   // Format the flight date
@@ -582,36 +647,74 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex flex-col space-y-2">
-                  <RadioGroup 
-                    value={paymentMethod}
-                    onValueChange={(value) => handlePaymentMethodChange(value as 'card' | 'crypto')}
-                    className="space-y-2"
-                  >
+              <div className="space-y-6">
+                <RadioGroup 
+                  value={paymentMethod}
+                  onValueChange={(value) => handlePaymentMethodChange(value as 'card' | 'btc')}
+                  className="space-y-4"
+                >
+                  <div className={cn(
+                    "relative rounded-md border-2 p-4 hover:border-amber-500 transition-all cursor-pointer",
+                    paymentMethod === 'card' ? "border-primary" : "border-muted"
+                  )}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="card" id="payment-card" />
                       <Label htmlFor="payment-card" className="flex items-center cursor-pointer">
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Credit Card
+                        <CreditCard className="h-5 w-5 mr-2" />
+                        <div>
+                          <p className="font-medium">Credit Card</p>
+                          <p className="text-sm text-muted-foreground">Pay securely with Stripe</p>
+                        </div>
                       </Label>
                     </div>
-                    
+                  </div>
+                  
+                  <div className={cn(
+                    "relative rounded-md border-2 p-4 hover:border-amber-500 transition-all cursor-pointer",
+                    paymentMethod === 'btc' ? "border-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : "border-muted"
+                  )}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="crypto" id="payment-crypto" />
-                      <Label htmlFor="payment-crypto" className="flex items-center cursor-pointer">
-                        <Bitcoin className="h-4 w-4 mr-2" />
-                        Cryptocurrency
+                      <RadioGroupItem value="btc" id="payment-bitcoin" />
+                      <Label htmlFor="payment-bitcoin" className="flex items-center cursor-pointer">
+                        <Bitcoin className="h-5 w-5 mr-2 text-amber-500" />
+                        <div>
+                          <p className="font-medium">Bitcoin</p>
+                          <p className="text-sm text-muted-foreground">Pay with Lightning or on-chain BTC</p>
+                        </div>
                       </Label>
                     </div>
-                  </RadioGroup>
-                </div>
+                  </div>
+                </RadioGroup>
+                
+                {/* Pay Later option */}
+                {showPayLater && (
+                  <div className="mt-6 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-sm font-medium">Pay later (1 hour hold)</p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handlePayLater}
+                        disabled={isProcessing}
+                      >
+                        Hold My Seat
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Locks your seat for 1 hour. You must complete payment before expiration.
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button 
                 variant="outline"
                 onClick={() => setCurrentStep('confirmation')}
+                disabled={isProcessing}
               >
                 Back
               </Button>
@@ -619,10 +722,13 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                 onClick={() => {
                   if (paymentMethod === 'card') {
                     setCurrentStep('details');
-                  } else {
-                    handleCryptoPayment();
+                  } else if (paymentMethod === 'btc') {
+                    // For Bitcoin, go straight to the details page showing BTC payment options
+                    setCurrentStep('details');
                   }
                 }}
+                disabled={isProcessing}
+                className={paymentMethod === 'btc' ? "bg-amber-500 hover:bg-amber-600" : ""}
               >
                 Continue
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -670,19 +776,21 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                   data-testid="payment-form"
                 >
                   {/* Test mode message */}
-                  <div className="rounded-md bg-blue-50 p-4 mb-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <Info className="h-5 w-5 text-blue-400" aria-hidden="true" />
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800">Test Mode Active</h3>
-                        <div className="mt-2 text-sm text-blue-700">
-                          <p>Using test payment cards. Any card details will work in test mode.</p>
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="rounded-md bg-blue-50 p-4 mb-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <Info className="h-5 w-5 text-blue-400" aria-hidden="true" />
+                        </div>
+                        <div className="ml-3">
+                          <h3 className="text-sm font-medium text-blue-800">Test Mode Active</h3>
+                          <div className="mt-2 text-sm text-blue-700">
+                            <p>Using test payment cards. Any card details will work in test mode.</p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                   
                   {savedPaymentMethods.length > 0 && (
                     <div className="space-y-4">
@@ -806,6 +914,29 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                       </div>
                     </div>
                   )}
+                  
+                  {/* Pay Later option */}
+                  {showPayLater && (
+                    <div className="mt-6 pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm font-medium">Pay later (1 hour hold)</p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handlePayLater}
+                          disabled={isProcessing}
+                        >
+                          Hold My Seat
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Locks your seat for 1 hour. You must complete payment before expiration.
+                      </p>
+                    </div>
+                  )}
                 </form>
               </CardContent>
               <CardFooter className="flex justify-center pt-2">
@@ -832,60 +963,94 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
             </Card>
           );
         } else {
-          // Crypto payment flow (simplified for demo)
+          // Bitcoin payment with BTCPay Server
           return (
-            <div className="space-y-6">
-              <CardHeader>
+            <Card className="w-full max-w-md mx-auto">
+              <CardHeader className="pb-2">
                 <Button 
                   variant="ghost" 
                   className="p-0 mb-2" 
                   onClick={() => setCurrentStep('method')}
+                  disabled={isProcessing}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back
                 </Button>
-                <CardTitle>Crypto Payment</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bitcoin className="h-5 w-5 text-amber-500" />
+                  <span>Pay with Bitcoin</span>
+                </CardTitle>
                 <CardDescription>
-                  Send cryptocurrency to complete your payment.
+                  You'll be redirected to BTCPay Server to complete your payment
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  <div className="rounded-lg border p-4">
-                    <div className="mb-4 text-center">
-                      <QrCode className="h-32 w-32 mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">Scan QR code to pay</p>
+                <div className="space-y-4">
+                  <div className="rounded-lg border p-6 bg-amber-50/50 dark:bg-amber-950/10">
+                    <div className="text-center mb-6">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-800 mb-3">
+                        <Bitcoin className="h-8 w-8" />
+                      </div>
+                      <h3 className="text-lg font-medium">Lightning Network Preferred</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Faster, cheaper Bitcoin payments
+                      </p>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Amount:</span>
-                        <span>0.01523 BTC</span>
+                        <span className="font-bold">${offer.requested_share_amount.toLocaleString()}</span>
                       </div>
                       
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Address:</span>
-                        <div className="flex items-center">
-                          <span className="text-xs truncate max-w-[150px] font-mono">3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5</span>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 ml-1">
-                            <Copy className="h-3 w-3" />
-                            <span className="sr-only">Copy</span>
-                          </Button>
-                        </div>
+                        <span className="text-sm font-medium">Flight:</span>
+                        <span>{offer.departure_location} → {offer.arrival_location}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Date:</span>
+                        <span>{format(new Date(offer.flight_date), 'MMM d, yyyy')}</span>
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="space-y-2 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    After sending the payment, click the button below to complete your purchase.
-                  </p>
+                  
+                  <div className="text-center space-y-1 mt-4">
+                    <p className="text-sm">
+                      You'll be redirected to secure BTCPay Server checkout to complete your payment.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      BTCPay Server supports Lightning Network and on-chain Bitcoin payments.
+                    </p>
+                  </div>
+                  
+                  {/* Pay Later option */}
+                  {showPayLater && (
+                    <div className="mt-6 pt-4 border-t">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <p className="text-sm font-medium">Pay later (1 hour hold)</p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handlePayLater}
+                          disabled={isProcessing}
+                        >
+                          Hold My Seat
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Locks your seat for 1 hour. You must complete payment before expiration.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardFooter>
                 <Button 
-                  className="w-full" 
+                  className="w-full py-6 bg-amber-500 hover:bg-amber-600" 
                   onClick={handleSubmit}
                   disabled={isProcessing}
                   autoFocus
@@ -893,16 +1058,17 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                   {isProcessing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Verifying Transaction...
+                      Initializing Payment...
                     </>
                   ) : (
                     <>
-                      I've Sent the Payment
+                      Continue to Bitcoin Payment
+                      <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
               </CardFooter>
-            </div>
+            </Card>
           );
         }
         
@@ -975,7 +1141,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                     }
                     
                     // Redirect to login with return URL
-                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/jetshare/payment/${offer.id}`)}&t=${Date.now()}`;
+                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
                   }}
                   autoFocus
                 >
@@ -993,7 +1159,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                     }
                     
                     // Redirect to login with return URL
-                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/jetshare/payment/${offer.id}`)}&t=${Date.now()}`;
+                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
                   }}
                 >
                   Sign In Again
