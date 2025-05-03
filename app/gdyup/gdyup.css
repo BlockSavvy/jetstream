@@ -72,6 +72,26 @@
   --gdyup-nav-active-bg: #F25C05 !important;
   --gdyup-nav-active-text: #FFFFFF !important;
   --gdyup-nav-hover-border: rgba(242, 92, 5, 0.6) !important;
+  --gdyup-carbon-texture: url('/carbonfibertexture.png') !important;
+  
+  /* Apply carbon fiber texture background */
+  background-image: var(--gdyup-carbon-texture) !important;
+  background-repeat: repeat !important;
+  background-size: 500px 500px !important;
+}
+
+/* Ensure proper styling for card backgrounds in Luxury Black theme */
+.gdyup-theme-blue .gdyup-card,
+.gdyup-theme-blue [class*="Card"],
+.gdyup-theme-blue .bg-card,
+.gdyup-theme-blue [role="dialog"],
+.gdyup-theme-blue .modal-content {
+  background-image: var(--gdyup-carbon-texture) !important;
+  background-color: rgba(20, 20, 20, 0.85) !important;
+  background-blend-mode: overlay !important;
+  backdrop-filter: blur(5px) !important;
+  border: 1px solid rgba(242, 92, 5, 0.3) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Bitcoin Orange Theme */
@@ -1312,7 +1332,9 @@ button svg.lucide-chevron-right {
 /* Fix SVG icons inside buttons with theme background color */
 .bg-\[\#DAFF0D\] svg,
 button.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] svg {
+a.bg-\[\#DAFF0D\] svg,
+nav button.bg-\[\#DAFF0D\] svg,
+nav a.bg-\[\#DAFF0D\] svg {
   color: var(--gdyup-button-text) !important;
   stroke: var(--gdyup-button-text) !important;
   fill: none !important;
@@ -1321,7 +1343,9 @@ a.bg-\[\#DAFF0D\] svg {
 /* Fix text inside buttons with theme background color */
 .bg-\[\#DAFF0D\] span,
 button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span {
+a.bg-\[\#DAFF0D\] span,
+nav button.bg-\[\#DAFF0D\] span,
+nav a.bg-\[\#DAFF0D\] span {
   color: var(--gdyup-button-text) !important;
 }
 
@@ -2607,4 +2631,81 @@ html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primar
   fill: none !important;
   stroke-width: 2px !important;
   filter: none !important;
+}
+
+/* Enhanced styling for Luxury Black theme's carbon fiber texture */
+.gdyup-theme-blue .gdyup-app {
+  background-image: var(--gdyup-carbon-texture) !important;
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  background-blend-mode: overlay !important;
+  background-size: 600px 600px !important;
+  position: relative !important;
+}
+
+/* Add subtle gradient overlay to the app container */
+.gdyup-theme-blue .gdyup-app::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.85) 50%, rgba(0,0,0,0.9) 100%) !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+/* Give buttons in Luxury Black theme a metallic, glossy finish */
+.gdyup-theme-blue .gdyup-button,
+.gdyup-theme-blue button.bg-\[var\(--gdyup-primary\)\],
+.gdyup-theme-blue a.bg-\[var\(--gdyup-primary\)\],
+.gdyup-theme-blue button.bg-primary,
+.gdyup-theme-blue .gdyup-primary-button {
+  background: linear-gradient(180deg, #F25C05 0%, #D04A04 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(242, 92, 5, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Add hover effect for Luxury Black theme buttons */
+.gdyup-theme-blue .gdyup-button:hover,
+.gdyup-theme-blue button.bg-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-blue a.bg-\[var\(--gdyup-primary\)\]:hover,
+.gdyup-theme-blue button.bg-primary:hover,
+.gdyup-theme-blue .gdyup-primary-button:hover {
+  background: linear-gradient(180deg, #F77A2E 0%, #F25C05 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 15px rgba(242, 92, 5, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Add carbon-fiber style to specific UI components */
+.gdyup-theme-blue input,
+.gdyup-theme-blue select,
+.gdyup-theme-blue textarea,
+.gdyup-theme-blue .dropdown-content,
+.gdyup-theme-blue [role="combobox"],
+.gdyup-theme-blue [role="listbox"] {
+  background-image: var(--gdyup-carbon-texture) !important;
+  background-color: rgba(15, 15, 15, 0.8) !important;
+  background-blend-mode: overlay !important;
+  background-size: 300px 300px !important;
+  border: 1px solid rgba(242, 92, 5, 0.3) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+/* Add orange glow to focused elements */
+.gdyup-theme-blue input:focus,
+.gdyup-theme-blue select:focus,
+.gdyup-theme-blue textarea:focus,
+.gdyup-theme-blue button:focus,
+.gdyup-theme-blue a:focus {
+  box-shadow: 0 0 0 2px rgba(242, 92, 5, 0.5) !important;
+  border-color: rgba(242, 92, 5, 0.8) !important;
+}
+
+/* Orange glow for theme icons and SVGs */
+.gdyup-theme-blue svg,
+.gdyup-theme-blue .lucide,
+.gdyup-theme-blue .gdyup-icon {
+  filter: drop-shadow(0 0 3px rgba(242, 92, 5, 0.6)) !important;
 }
