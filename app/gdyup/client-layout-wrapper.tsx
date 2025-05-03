@@ -22,79 +22,30 @@ export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
     }
   }, [user, authLoading]);
 
-  // Initialize default theme on first load and watch for changes
+  // Get current theme from localStorage - simplified since ThemeManager handles application
   useEffect(() => {
-    // Function to apply theme
-    const applyTheme = (themeName: string) => {
-      // Remove all existing theme classes
-      document.documentElement.classList.remove(
-        'gdyup-theme-default',
-        'gdyup-theme-blue',
-        'gdyup-theme-pink'
-      );
-      
-      // Add the selected theme class
-      document.documentElement.classList.add(`gdyup-theme-${themeName}`);
-      setTheme(themeName);
-      
-      console.log(`Theme applied by client wrapper: ${themeName}`);
-    };
-    
     try {
-      // Get stored theme or default to the lime green theme
+      // Just get the current theme for className use below
       const storedTheme = localStorage.getItem('gdyup-theme') || 'default';
+      setTheme(storedTheme);
       
-      // Apply initial theme
-      applyTheme(storedTheme);
-      
-      // Listen for theme changes from other components
+      // Listen for theme changes from ThemeManager
       const handleStorageChange = (e: StorageEvent) => {
         if (e.key === 'gdyup-theme') {
           const newTheme = e.newValue || 'default';
-          applyTheme(newTheme);
+          setTheme(newTheme);
         }
       };
       
-      // Also listen for direct changes to localStorage from same window
       window.addEventListener('storage', handleStorageChange);
       
-      // Create a MutationObserver to watch for theme class changes
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (
-            mutation.type === 'attributes' && 
-            mutation.attributeName === 'class'
-          ) {
-            const htmlElement = document.documentElement;
-            const classList = Array.from(htmlElement.classList);
-            
-            // Check if theme class is missing
-            const hasThemeClass = classList.some(cls => cls.startsWith('gdyup-theme-'));
-            
-            if (!hasThemeClass) {
-              // Re-apply theme if class was removed
-              applyTheme(storedTheme);
-              console.log('Theme class was lost, reapplied');
-            }
-          }
-        });
-      });
-      
-      // Start observing document element
-      observer.observe(document.documentElement, { 
-        attributes: true,
-        attributeFilter: ['class']
-      });
-      
-      // Clean up
       return () => {
         window.removeEventListener('storage', handleStorageChange);
-        observer.disconnect();
       };
     } catch (error) {
-      console.error('Theme initialization error:', error);
+      console.error('Theme state error:', error);
       // Fallback to default theme on error
-      document.documentElement.classList.add('gdyup-theme-default');
+      setTheme('default');
     }
   }, []);
 
