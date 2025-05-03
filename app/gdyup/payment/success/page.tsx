@@ -1,335 +1,220 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle, ArrowRight, AlertCircle, Plane, Ticket, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import React from 'react';
-import { toast } from 'sonner';
+import { CheckCircle, Loader2, ArrowRight, BookOpen, MessageSquare, Ticket } from 'lucide-react';
+import { createClient } from '@/lib/supabase';
+import { useAuth } from '@/components/auth-provider';
 
-// Loading component to use in Suspense
-function LoadingCard() {
-  return (
-    <div className="container mx-auto px-4 py-16 max-w-md">
-      <Card className="jetstream-card dark:border-gray-700">
-        <CardHeader className="text-center">
-          <Skeleton className="h-8 w-full max-w-[250px] mx-auto mb-2 dark:bg-gray-700" />
-          <Skeleton className="h-4 w-full max-w-[200px] mx-auto dark:bg-gray-700" />
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center pt-4">
-          <Skeleton className="h-16 w-16 rounded-full mb-4 dark:bg-gray-700" />
-          <Skeleton className="h-4 w-full max-w-[280px] mb-2 dark:bg-gray-700" />
-          <Skeleton className="h-4 w-full max-w-[220px] dark:bg-gray-700" />
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Skeleton className="h-10 w-full max-w-[180px] dark:bg-gray-700" />
-        </CardFooter>
-      </Card>
-    </div>
-  );
-}
-
-// Error card component with better dark mode support
-function ErrorCard({ error, onReturn }: { error: string, onReturn: () => void }) {
-  return (
-    <div className="container mx-auto px-4 py-16 max-w-md">
-      <Card className="border-red-200 dark:border-red-700 dark:bg-red-900/20 jetstream-card">
-        <CardHeader className="text-center">
-          <CardTitle className="text-red-600 dark:text-red-400">Payment Error</CardTitle>
-        </CardHeader>
-        <CardContent className="text-center pt-4">
-          <div className="bg-red-50 dark:bg-red-900/30 p-6 rounded-full inline-flex items-center justify-center mb-4">
-            <AlertCircle className="h-12 w-12 text-red-500 dark:text-red-400" />
-          </div>
-          <p className="text-gray-700 dark:text-gray-300 mb-2">There was a problem completing your payment:</p>
-          <p className="text-red-600 dark:text-red-300 font-medium">{error}</p>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button 
-            onClick={onReturn}
-            className="dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
-          >
-            Return to Dashboard
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
-  );
-}
-
-// Success card with improved contrast
-function SuccessCard({ 
-  offerDetails, 
-  paymentIntentId, 
-  isRedirecting, 
-  onViewDetails, 
-  onDashboard,
-  onBoardingPass,
-  offerId
-}: { 
-  offerDetails: any, 
-  paymentIntentId: string | null, 
-  isRedirecting: boolean, 
-  onViewDetails: () => void, 
-  onDashboard: () => void,
-  onBoardingPass: () => void,
-  offerId: string | null
-}) {
-  return (
-    <div className="container mx-auto px-4 py-16 max-w-md">
-      <Card className="border-green-200 dark:border-green-700 dark:bg-green-900/10 jetstream-card dark:futuristic-border">
-        <CardHeader className="text-center">
-          <CardTitle className="text-green-600 dark:text-green-400">Payment Successful!</CardTitle>
-          {offerId && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">
-              Flight #{offerId.substring(0, 6)}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="text-center pt-4">
-          <div className="bg-green-50 dark:bg-green-900/30 p-6 rounded-full inline-flex items-center justify-center mb-4">
-            <CheckCircle className="h-12 w-12 text-green-500 dark:text-green-400" />
-          </div>
-          
-          {offerDetails ? (
-            <div className="mb-4">
-              <div className="flex items-center justify-center text-gray-700 dark:text-gray-200 mb-2">
-                <p className="font-medium dark:text-high-contrast">Your flight from {offerDetails.departure_location} to {offerDetails.arrival_location} is booked!</p>
-              </div>
-              <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-                <Plane className="h-4 w-4" /> 
-                <span>
-                  {new Date(offerDetails.departure_date || offerDetails.flight_date).toLocaleDateString()} 
-                  {offerDetails.departure_time && ` at ${offerDetails.departure_time}`}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-700 dark:text-gray-200 mb-2">Your JetShare payment has been processed successfully.</p>
-          )}
-          
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
-            A confirmation has been sent to your email with all the flight details.
-          </p>
-          
-          {paymentIntentId && (
-            <div className="mt-4 text-xs text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 rounded p-2 border border-gray-100 dark:border-gray-700">
-              Transaction ID: {paymentIntentId.substring(0, 8)}...
-            </div>
-          )}
-          
-          {isRedirecting && (
-            <div className="mt-4 animate-pulse">
-              <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">
-                Redirecting to your booking...
-              </p>
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3">
-          <div className="flex justify-center gap-3 w-full">
-            <Button 
-              onClick={onViewDetails}
-              className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white"
-            >
-              View Details
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={onDashboard}
-              className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              Dashboard
-            </Button>
-          </div>
-          
-          <Button
-            onClick={onBoardingPass}
-            variant="secondary"
-            className="w-full"
-          >
-            <Ticket className="mr-2 h-4 w-4" />
-            Access Boarding Pass
-          </Button>
-        </CardFooter>
-      </Card>
-      
-      <div className="text-center mt-6 text-sm text-gray-500 dark:text-gray-400">
-        <p className="mb-2">Have questions about your booking?</p>
-        <Link href="/jetshare/support" className="text-blue-600 dark:text-blue-400 hover:underline">
-          Contact Support
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// Component that uses search params
-function PaymentSuccessContent() {
+export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const offerId = searchParams?.get('offer_id');
-  const paymentIntentId = searchParams?.get('payment_intent_id') || searchParams?.get('txn');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [offerDetails, setOfferDetails] = useState<any>(null);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  const [bookingFinalized, setBookingFinalized] = useState(false);
+  const { user } = useAuth();
   
-  // Store successful booking info
   useEffect(() => {
-    if (!offerId) return;
-    
-    // Store booking data in localStorage for recovery
-    try {
-      localStorage.setItem('last_completed_booking', offerId);
-      localStorage.setItem('booking_completed_at', Date.now().toString());
-      localStorage.setItem('jetstream_last_action', 'payment_complete');
-    } catch (e) {
-      console.warn('Failed to update localStorage:', e);
-    }
-  }, [offerId]);
-  
-  // Get offer details for better display
-  useEffect(() => {
-    async function getOfferDetails() {
-      if (!offerId) return;
-      
+    const verifyPayment = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/jetshare/offer?id=${offerId}`);
         
-        if (response.ok) {
-          const data = await response.json();
-          setOfferDetails(data.offer);
+        // Get offer ID from query parameters
+        const offerId = searchParams?.get('offer_id');
+        const paymentIntentId = searchParams?.get('payment_intent_id');
+        const invoiceId = searchParams?.get('invoiceId') || localStorage.getItem('btcpay_invoice_id');
+        
+        if (!offerId) {
+          setError('Missing offer ID. Please try again.');
+          setIsLoading(false);
+          return;
         }
-      } catch (err) {
-        console.warn('Could not fetch offer details:', err);
-      } finally {
+        
+        const supabase = createClient();
+        
+        // Get the offer details
+        const { data: offer, error: offerError } = await supabase
+          .from('jetshare_offers')
+          .select(`
+            *,
+            user:user_id (*),
+            matched_user:matched_user_id (*)
+          `)
+          .eq('id', offerId)
+          .single();
+          
+        if (offerError || !offer) {
+          console.error('Error fetching offer:', offerError);
+          setError('Could not fetch offer details.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Check if the offer status indicates payment
+        if (offer.status !== 'completed' && offer.status !== 'paid') {
+          // If we have an invoice ID, check the status with BTCPay
+          if (invoiceId) {
+            try {
+              const response = await fetch(`/api/jetshare/check-payment?offer_id=${offerId}&invoice_id=${invoiceId}`);
+              if (!response.ok) {
+                throw new Error('Failed to verify payment status');
+              }
+              
+              const data = await response.json();
+              
+              if (data.status === 'paid' || data.status === 'completed') {
+                // Payment is confirmed, update local state
+                offer.status = 'completed';
+                offer.payment_status = 'paid';
+              }
+            } catch (e) {
+              console.error('Error checking payment status:', e);
+              // Continue with what we have from the database
+            }
+          }
+          
+          // If still not paid, show appropriate message
+          if (offer.status !== 'completed' && offer.status !== 'paid') {
+            // If the payment hasn't been confirmed yet, we'll still show a success message
+            // but alert the user that the confirmation might take some time
+            console.log('Payment is still processing. Current status:', offer.status);
+          }
+        }
+        
+        setOfferDetails(offer);
+        setIsLoading(false);
+        
+        // Clean up any payment-related local storage
+        try {
+          localStorage.removeItem('btcpay_invoice_id');
+          localStorage.removeItem('pending_payment_id');
+          localStorage.setItem('payment_complete', 'true');
+        } catch (e) {
+          console.warn('Error cleaning up local storage:', e);
+        }
+        
+      } catch (error) {
+        console.error('Error verifying payment:', error);
+        setError('An error occurred while verifying payment.');
         setIsLoading(false);
       }
-    }
+    };
     
-    getOfferDetails();
-  }, [offerId]);
+    verifyPayment();
+  }, [searchParams, user]);
   
-  // Finalize the booking and create tickets
-  useEffect(() => {
-    async function finalizeBooking() {
-      if (!offerId || bookingFinalized) return;
-      
-      try {
-        console.log('Finalizing booking for offer:', offerId);
-        const response = await fetch('/api/jetshare/offer-completed', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            offer_id: offerId,
-            user_id: localStorage.getItem('jetstream_user_id') || undefined
-          }),
-        });
-        
-        const data = await response.json();
-        if (response.ok && data.success) {
-          console.log('Booking finalized successfully:', data);
-          setBookingFinalized(true);
-          toast.success('Your flight has been booked!', {
-            description: 'Boarding passes are now available on your dashboard'
-          });
-          
-          // Mark the booking as completed in session storage to avoid duplicate notifications
-          try {
-            sessionStorage.setItem(`booking_${offerId}_finalized`, 'true');
-            sessionStorage.setItem('last_booking_time', new Date().toISOString());
-          } catch (e) {
-            console.warn('Could not update session storage:', e);
-          }
-        } else {
-          console.error('Error finalizing booking:', data);
-          // Don't show error to user if already shown
-          if (!sessionStorage.getItem(`booking_${offerId}_error_shown`)) {
-            toast.error('There was an issue processing your booking details');
-            try {
-              sessionStorage.setItem(`booking_${offerId}_error_shown`, 'true');
-            } catch (e) {}
-          }
-        }
-      } catch (err) {
-        console.error('Exception finalizing booking:', err);
-        // Silent error - we don't want to alarm the user on the success page
-      }
-    }
-    
-    // Call finalization API
-    finalizeBooking();
-  }, [offerId, bookingFinalized]);
-  
-  const viewTransaction = () => {
-    if (offerId) {
-      // Preserve test mode flag for test transactions
-      const testParam = searchParams?.get('test') === 'true' ? '&test=true' : '';
-      const url = `/jetshare/transaction/${offerId}?from=payment&payment_complete=true${testParam}&t=${Date.now()}`;
-      
-      // Set a cookie to remember the transaction
-      try {
-        document.cookie = `last_transaction=${offerId}; path=/; max-age=3600`;
-      } catch (e) {
-        console.warn('Could not set cookie:', e);
-      }
-      
-      router.push(url);
-    } else {
-      router.push('/jetshare/dashboard');
-    }
+  const handleNavigateToDashboard = () => {
+    router.push('/gdyup/dashboard');
   };
   
-  const goToDashboard = () => {
-    router.push(`/jetshare/dashboard?booked=${offerId}&t=${Date.now()}`);
+  const handleNavigateToSeating = () => {
+    router.push(`/gdyup/boardingpass/${offerDetails.id}`);
   };
   
-  const goToBoardingPass = () => {
-    if (offerId) {
-      // Preserve test mode flag for test transactions
-      const testParam = searchParams?.get('test') === 'true' ? '&test=true' : '';
-      router.push(`/jetshare/boardingpass/${offerId}?${testParam}`);
-    } else {
-      router.push('/jetshare/dashboard?tab=bookings');
-    }
+  const handleNavigateToMessages = () => {
+    // Redirect to the messaging interface
+    router.push(`/gdyup/messages?offer=${offerDetails.id}`);
   };
   
   if (isLoading) {
-    return <LoadingCard />;
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center">Verifying Payment</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center">
+            <Loader2 className="h-12 w-12 animate-spin text-amber-500 mb-4" />
+            <p className="text-center text-muted-foreground">
+              Please wait while we verify your payment...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
   
   if (error) {
-    return <ErrorCard error={error} onReturn={() => router.push('/jetshare/dashboard')} />;
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Payment Verification Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center mb-4">{error}</p>
+            <p className="text-center text-muted-foreground">
+              If you believe this is an error, please check your dashboard for the latest status.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" onClick={handleNavigateToDashboard}>
+              Go to Dashboard
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
   }
   
   return (
-    <SuccessCard 
-      offerDetails={offerDetails}
-      paymentIntentId={paymentIntentId ?? null}
-      isRedirecting={isRedirecting}
-      onViewDetails={viewTransaction}
-      onDashboard={goToDashboard}
-      onBoardingPass={goToBoardingPass}
-      offerId={offerId ?? null}
-    />
-  );
-}
-
-// Main component with Suspense boundary
-export default function PaymentSuccessPage() {
-  return (
-    <Suspense fallback={<LoadingCard />}>
-      <PaymentSuccessContent />
-    </Suspense>
+    <div className="container mx-auto px-4 py-12 max-w-md">
+      <Card className="border-green-200 shadow-md">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+          </div>
+          <CardTitle className="text-2xl text-green-700">Payment Successful!</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-lg mb-4">
+            Your flight share has been confirmed.
+          </p>
+          
+          <div className="bg-slate-50 dark:bg-slate-900 rounded-md p-4 mb-6">
+            <p className="font-medium mb-1">Flight Details:</p>
+            <p className="text-muted-foreground mb-1">
+              {offerDetails.departure_location} → {offerDetails.arrival_location}
+            </p>
+            <p className="text-muted-foreground">
+              {new Date(offerDetails.flight_date).toLocaleDateString()}
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex flex-col space-y-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center justify-center"
+                onClick={handleNavigateToSeating}
+              >
+                <Ticket className="mr-2 h-4 w-4" />
+                View Boarding Pass
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex items-center justify-center"
+                onClick={handleNavigateToMessages}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Message Jet Owner
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            className="w-full" 
+            onClick={handleNavigateToDashboard}
+          >
+            Go to Dashboard
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 } 
