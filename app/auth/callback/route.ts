@@ -13,16 +13,23 @@ export async function GET(request: NextRequest) {
     const type = requestUrl.searchParams.get('type')
     const error = requestUrl.searchParams.get('error')
     const errorDescription = requestUrl.searchParams.get('error_description')
+    const isMobile = request.headers.get('user-agent')?.includes('Mobile') || false
     
     console.log('🔍 Auth callback params:', { 
       hasCode: !!code, 
       type: type || 'standard', 
-      hasError: !!error
+      hasError: !!error,
+      isMobile
     });
     
     // Log cookie header for debugging
     const cookieHeader = request.headers.get('cookie');
     console.log('🍪 Cookie header present:', !!cookieHeader);
+    
+    // Get the app mode/name to determine redirect behavior
+    const appMode = process.env.NEXT_PUBLIC_APP_MODE || 'jetstream';
+    const isGdyup = appMode === 'gdyup';
+    console.log('🔧 App mode:', appMode, 'Is GDYUP:', isGdyup);
     
     // Check for error in the URL - commonly happens when the link is expired
     if (error) {
@@ -65,9 +72,15 @@ export async function GET(request: NextRequest) {
           console.log('⏱️ Allowing additional time for cookies to be properly set');
           await new Promise(resolve => setTimeout(resolve, 500))
           
-          // Check for JetShare URLs in the referrer or redirect param
+          // Get the returnUrl and referrer for redirection logic
           const referrer = request.headers.get('referer') || ''
           const returnUrl = requestUrl.searchParams.get('returnUrl') || '/'
+          
+          // For GDYUP deployments, prioritize redirecting to the GDYUP app
+          if (isGdyup) {
+            console.log('🚀 GDYUP Mode: Redirecting to GDYUP app after authentication')
+            return NextResponse.redirect(new URL('/gdyup', requestUrl.origin))
+          }
           
           // If the referrer or returnUrl is from JetShare, redirect there
           if (referrer.includes('/jetshare') || returnUrl.includes('/jetshare')) {
@@ -75,7 +88,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.redirect(new URL('/jetshare', requestUrl.origin))
           }
           
-          // If this is after signup/verification or password recovery
+          // If this is a mobile app and the type is signup or recovery
+          if (isMobile && (type === 'signup' || type === 'recovery')) {
+            if (isGdyup) {
+              console.log('📱 Mobile signup/recovery detected for GDYUP, redirecting to GDYUP app')
+              return NextResponse.redirect(new URL('/gdyup', requestUrl.origin))
+            } else {
+              console.log('📱 Mobile signup/recovery detected, redirecting to appropriate dashboard')
+              return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+            }
+          }
+          
+          // If this is after signup/verification or password recovery (non-mobile)
           if (type === 'signup' || type === 'recovery') {
             console.log('🚀 Redirecting to dashboard after signup/recovery')
             return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
@@ -97,9 +121,10 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // If we get here without a code or after processing the code, redirect home
+    // If we get here without a code or after processing the code, redirect to appropriate home
     console.log('ℹ️ No code provided or processing complete, redirecting to home');
-    return NextResponse.redirect(new URL('/', requestUrl.origin))
+    const homePath = isGdyup ? '/gdyup' : '/';
+    return NextResponse.redirect(new URL(homePath, requestUrl.origin))
   } catch (error) {
     console.error('❌ Error in auth callback:', error)
     // In case of error, redirect to home page

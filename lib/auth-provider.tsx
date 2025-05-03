@@ -344,17 +344,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setSessionError(null);
       
-      // Get the app URL for redirect
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
+      // Use a fully qualified URL with HTTPS protocol
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz';
+      const appMode = process.env.NEXT_PUBLIC_APP_MODE || '';
+      const isGdyup = appMode === 'gdyup';
+      const callbackUrl = `${appUrl}/auth/callback`;
+      
+      console.log(`📧 Email signup using redirect URL: ${callbackUrl}`);
+      
+      // Mobile detection
+      const isMobile = typeof window !== 'undefined' && 
+        (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        window.innerWidth < 768);
       
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${appUrl}/auth/callback`,
+          emailRedirectTo: callbackUrl,
           data: {
-            email // Include email in user metadata
+            email, // Include email in user metadata
+            is_mobile: isMobile, // Track mobile sign-ups
+            app_mode: isGdyup ? 'gdyup' : 'jetstream' // Track app mode
           }
         },
       });
@@ -498,11 +509,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setSessionError(null);
       
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
+      // Use a fully qualified URL with HTTPS protocol
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz';
+      const callbackUrl = `${appUrl}/auth/callback?type=recovery`;
+      
+      console.log(`🔑 Password reset using redirect URL: ${callbackUrl}`);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${appUrl}/auth/callback?type=recovery`,
+        redirectTo: callbackUrl,
       });
       
       if (error) {
