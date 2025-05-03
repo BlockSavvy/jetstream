@@ -155,7 +155,9 @@ export default function LocationAutocompleteClient({
           );
           
           filtered = [...codeMatches, ...startsWithMatches, ...containsMatches];
-        } else {
+        } 
+        // Only use popularLocations as fallback if no airports from database or filtered results are empty
+        if ((!airports || airports.length === 0 || filtered.length === 0) && popularLocations.length > 0) {
           filtered = popularLocations
             .filter(location => location.toLowerCase().includes(searchValue.toLowerCase()))
             .map(location => {
@@ -299,6 +301,17 @@ export default function LocationAutocompleteClient({
     <div className={cn("relative w-full", className)}>
       {label && (
         <label className="block text-sm font-medium text-white mb-1.5 ml-1">{label}</label>
+      )}
+      
+      {/* Debug info in development mode */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="absolute -top-6 right-0 text-[10px] text-gray-500 z-10">
+          {airports.length > 0 ? (
+            <span>Using {airports.length} airports</span>
+          ) : (
+            <span className="text-amber-500">No airport data</span>
+          )}
+        </div>
       )}
       
       <div 

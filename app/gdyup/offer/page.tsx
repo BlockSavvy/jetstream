@@ -32,6 +32,7 @@ function JetShareOfferContent() {
         
         // Add timestamp to prevent caching
         const timestamp = new Date().getTime();
+        console.log('==== GDYUP AIRPORT LOADING ====');
         console.log('Fetching airports data from database...');
         
         // Use a direct API call with no credentials
@@ -45,6 +46,7 @@ function JetShareOfferContent() {
           'Pragma': 'no-cache'
         };
         
+        console.log('Starting API request with headers:', headers);
         const response = await fetch(url, {
           method: 'GET',
           headers,
@@ -52,15 +54,18 @@ function JetShareOfferContent() {
           next: { revalidate: 0 } // Ensure no Next.js caching
         });
         
-        console.log(`Airports API response status: ${response.status}`);
+        console.log(`Airports API response status: ${response.status} ${response.statusText}`);
         
         if (!response.ok) {
+          console.error(`Airport API error: ${response.status} ${response.statusText}`);
           throw new Error(`API error: ${response.status}`);
         }
         
         // Check content type
         const contentType = response.headers.get('content-type');
+        console.log(`Response content type: ${contentType}`);
         if (!contentType || !contentType.includes('application/json')) {
+          console.error(`Non-JSON content received: ${contentType}`);
           throw new Error(`API returned non-JSON content: ${contentType}`);
         }
         
@@ -68,10 +73,12 @@ function JetShareOfferContent() {
         const airports = await response.json();
         
         if (!Array.isArray(airports)) {
+          console.error('Response is not an array:', typeof airports);
           throw new Error('API did not return an array of airports');
         }
         
         console.log(`Successfully loaded ${airports.length} airports from database`);
+        console.log('Sample airport data:', airports.slice(0, 2));
         
         // Sort airports by city name for better UX
         const sortedAirports = [...airports].sort((a, b) => a.city.localeCompare(b.city));
@@ -84,7 +91,9 @@ function JetShareOfferContent() {
         } catch (e) {
           console.warn('Failed to cache airports in sessionStorage:', e);
         }
+        console.log('==== GDYUP AIRPORT LOADING COMPLETE ====');
       } catch (error) {
+        console.error('==== GDYUP AIRPORT LOADING ERROR ====');
         console.error('Error fetching airports from database:', error);
         
         // Check if we have cached data to use temporarily
@@ -97,10 +106,12 @@ function JetShareOfferContent() {
               setAirports(parsed);
             } else {
               // If no valid cache, just show empty array - no fallbacks
+              console.log('No valid cached airport data available');
               setAirports([]);
             }
           } else {
             // If no cache, just show empty array - no fallbacks
+            console.log('No cached airport data found in sessionStorage');
             setAirports([]);
           }
         } catch (e) {
@@ -108,6 +119,7 @@ function JetShareOfferContent() {
           // No fallbacks - just show empty array
           setAirports([]);
         }
+        console.log('==== GDYUP AIRPORT LOADING ERROR HANDLING COMPLETE ====');
       } finally {
         setIsLoadingAirports(false);
       }
