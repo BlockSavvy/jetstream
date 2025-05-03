@@ -71,21 +71,39 @@ interface TableConfig {
 const TABLES_CONFIG: Record<string, TableConfig> = {
   jetshare_offers: {
     getBatchSql: `SELECT * FROM get_jetshare_offers_needing_embedding($1)`,
-    generateTextFn: 'generate_jetshare_offer_embedding_text',
+    generateTextFn: 'generate_jetshare_offer_embedding_text_with_nostr',
     markEmbeddedFn: 'mark_jetshare_offer_as_embedded',
     priority: 1, // Highest priority
   },
+  nostr_offer_events: {
+    getBatchSql: `SELECT * FROM get_nostr_entities_needing_embedding('nostr_event', $1)`,
+    generateTextFn: 'generate_nostr_event_embedding_text',
+    markEmbeddedFn: 'mark_nostr_entity_as_embedded',
+    priority: 2, // High priority for Nostr events
+  },
+  nostr_messages: {
+    getBatchSql: `SELECT * FROM get_nostr_entities_needing_embedding('nostr_message', $1)`,
+    generateTextFn: 'generate_nostr_message_embedding_text',
+    markEmbeddedFn: 'mark_nostr_entity_as_embedded',
+    priority: 3, // Medium priority for messages
+  },
+  nostr_zaps: {
+    getBatchSql: `SELECT * FROM get_nostr_entities_needing_embedding('nostr_zap', $1)`,
+    generateTextFn: 'generate_nostr_zap_embedding_text',
+    markEmbeddedFn: 'mark_nostr_entity_as_embedded',
+    priority: 4, // Lower priority for zaps
+  },
   airports: {
     getBatchSql: `SELECT code FROM airports WHERE embedding IS NULL LIMIT $1`,
-    priority: 3,
+    priority: 5,
   },
   flights: {
     getBatchSql: `SELECT id FROM flights WHERE embedding IS NULL LIMIT $1`,
-    priority: 2,
+    priority: 6,
   },
   jets: {
     getBatchSql: `SELECT id FROM jets WHERE embedding IS NULL LIMIT $1`,
-    priority: 4,
+    priority: 7,
   }
 };
 

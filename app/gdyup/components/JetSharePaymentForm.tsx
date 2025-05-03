@@ -719,14 +719,7 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                 Back
               </Button>
               <Button 
-                onClick={() => {
-                  if (paymentMethod === 'card') {
-                    setCurrentStep('details');
-                  } else if (paymentMethod === 'btc') {
-                    // For Bitcoin, go straight to the details page showing BTC payment options
-                    setCurrentStep('details');
-                  }
-                }}
+                onClick={goToDetailsStep}
                 disabled={isProcessing}
                 className={paymentMethod === 'btc' ? "bg-amber-500 hover:bg-amber-600" : ""}
               >
@@ -915,8 +908,8 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                     </div>
                   )}
                   
-                  {/* Pay Later option */}
-                  {showPayLater && (
+                  {/* Pay Later option - only show in card details view */}
+                  {showPayLater && !isProcessing && (
                     <div className="mt-6 pt-4 border-t">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
@@ -1024,8 +1017,8 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
                     </p>
                   </div>
                   
-                  {/* Pay Later option */}
-                  {showPayLater && (
+                  {/* Pay Later option - only show if not processing */}
+                  {showPayLater && !isProcessing && (
                     <div className="mt-6 pt-4 border-t">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
@@ -1181,58 +1174,8 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
   };
   
   return (
-    <Card className="max-w-md mx-auto">
-      <CardHeader className="pb-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="mb-2" 
-          onClick={() => router.back()}
-          disabled={isProcessing}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
-        </Button>
-        <CardTitle className="font-bold text-xl">
-          {offer.departure_location} → {offer.arrival_location}
-        </CardTitle>
-        <CardDescription>
-          Flight date: {formattedDate}
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {renderCurrentStep()}
-      </CardContent>
-      
-      <CardFooter>
-        {currentStep === 'method' && (
-          <Button className="w-full" onClick={goToDetailsStep}>
-            Continue to Payment
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-        
-        {currentStep === 'details' && (
-          <Button 
-            className="w-full" 
-            onClick={handleSubmit}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                Complete Payment
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        )}
-      </CardFooter>
-    </Card>
+    <div className="w-full max-w-md mx-auto">
+      {renderCurrentStep()}
+    </div>
   );
 } 

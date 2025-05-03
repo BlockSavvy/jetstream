@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth-provider";
 import ConditionalNavbar from "@/components/conditional-navbar";
 import { ConciergeProvider } from "./components/concierge-provider";
 import { AuthPersistenceProvider } from "@/components/auth-persistence-provider";
+import { NostrProvider } from '@/components/nostr-provider'
 
 import "./globals.css";
 
@@ -32,12 +33,14 @@ export default function RootLayout({
       >
         <AuthProvider>
           <AuthPersistenceProvider>
-            <div className="relative flex min-h-screen flex-col">
-              <ConditionalNavbar />
-              <div className="flex-1">{children}</div>
-            </div>
-            <Toaster />
-            <ConciergeProvider />
+            <NostrProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <ConditionalNavbar />
+                <div className="flex-1">{children}</div>
+              </div>
+              <Toaster />
+              <ConciergeProvider />
+            </NostrProvider>
           </AuthPersistenceProvider>
         </AuthProvider>
       </body>

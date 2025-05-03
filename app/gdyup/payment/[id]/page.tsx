@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientIdParams } from '@/lib/types/route-types'
 
 // Page component is now a Server Component (no 'use client')
-export default function JetSharePaymentPage({ params }: ClientIdParams) {
-  const offerId = params?.id;
+export default async function JetSharePaymentPage({ params }: ClientIdParams) {
+  // Await the params to properly handle dynamic route parameters
+  const { id } = params;
+  const offerId = id;
   
   // Handle server-side validation
   if (!offerId || offerId === 'undefined' || offerId.length < 10) {

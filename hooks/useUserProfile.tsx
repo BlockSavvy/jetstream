@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-provider";
 import { toast } from 'sonner';
+import { NostrProfile, NostrFeatureFlags } from "@/types/nostr";
 
 export type UserTravelPreferences = {
   id?: string;
@@ -75,6 +76,24 @@ export type UserProfile = {
     show_upcoming_flights?: boolean;
     show_company?: boolean;
     show_social_links?: boolean;
+  };
+  // Nostr-related fields
+  npub?: string | null;
+  nip05?: string | null;
+  lud16?: string | null;
+  nostr_pubkey?: string | null;
+  nostr_relays?: string[];
+  nostr_settings?: {
+    enabled: boolean;
+    broadcast_offers: boolean;
+    receive_messages: boolean;
+    enable_zaps: boolean;
+    private_mode: boolean;
+    auto_connect: boolean;
+  };
+  nostr_signature?: string | null;
+  feature_flags?: NostrFeatureFlags & {
+    [key: string]: boolean;
   };
 };
 

@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
       .from('jetshare_offers')
       .select(`
         *,
-        user:user_id (id, email, display_name, full_name),
-        matched_user:matched_user_id (id, email, display_name, full_name)
+        user:user_id (id, email, full_name),
+        matched_user:matched_user_id (id, email, full_name)
       `)
       .eq('id', offer_id)
       .single();

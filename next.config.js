@@ -88,6 +88,11 @@ const nextConfig = {
             }
           ]
         },
+        // Rewrite for .well-known/nostr.json
+        {
+          source: '/.well-known/nostr.json',
+          destination: '/api/well-known/nostr',
+        },
       ];
     }
     return [];
