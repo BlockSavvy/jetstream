@@ -65,6 +65,8 @@ interface TableConfig {
   generateTextFn?: string;
   markEmbeddedFn?: string;
   priority: number;
+  generateTextParamName?: string;
+  markEmbeddedParamNames?: Record<string, string>;
 }
 
 // Define tables to process
@@ -80,18 +82,33 @@ const TABLES_CONFIG: Record<string, TableConfig> = {
     generateTextFn: 'generate_nostr_event_embedding_text',
     markEmbeddedFn: 'mark_nostr_entity_as_embedded',
     priority: 2, // High priority for Nostr events
+    generateTextParamName: 'event_id_param',
+    markEmbeddedParamNames: {
+      entity_id_param: 'id',
+      entity_type_param: 'nostr_event'
+    }
   },
   nostr_messages: {
     getBatchSql: `SELECT * FROM get_nostr_entities_needing_embedding('nostr_message', $1)`,
     generateTextFn: 'generate_nostr_message_embedding_text',
     markEmbeddedFn: 'mark_nostr_entity_as_embedded',
     priority: 3, // Medium priority for messages
+    generateTextParamName: 'message_id',
+    markEmbeddedParamNames: {
+      entity_id_param: 'id',
+      entity_type_param: 'nostr_message'
+    }
   },
   nostr_zaps: {
     getBatchSql: `SELECT * FROM get_nostr_entities_needing_embedding('nostr_zap', $1)`,
     generateTextFn: 'generate_nostr_zap_embedding_text',
     markEmbeddedFn: 'mark_nostr_entity_as_embedded',
     priority: 4, // Lower priority for zaps
+    generateTextParamName: 'zap_id',
+    markEmbeddedParamNames: {
+      entity_id_param: 'id', 
+      entity_type_param: 'nostr_zap'
+    }
   },
   airports: {
     getBatchSql: `SELECT code FROM airports WHERE embedding IS NULL LIMIT $1`,
@@ -141,22 +158,33 @@ async function checkRateLimit(): Promise<void> {
  * Generate text content for embedding based on record type
  */
 async function generateEmbeddingText(table: string, id: string): Promise<string> {
-  // For jetshare_offers
-  if (table === 'jetshare_offers') {
+  // Check if we have a special database function with custom parameter name
+  if (TABLES_CONFIG[table].generateTextFn) {
+    const paramName = TABLES_CONFIG[table].generateTextParamName || 
+      (table === 'jetshare_offers' ? 'offer_id' : 'id');
+    
     try {
-      // First try the database function if it exists
+      // Call database function with the appropriate parameter name
       const { data: functionData, error: functionError } = await supabase.rpc(
         TABLES_CONFIG[table].generateTextFn as string, 
-        { offer_id: id }
+        { [paramName]: id }
       );
       
       if (!functionError && functionData) {
         return functionData;
       }
       
-      // If the function doesn't exist, fetch and format the data ourselves
-      console.log(`Function ${TABLES_CONFIG[table].generateTextFn} not found, generating text manually`);
-      
+      // If the function call failed, log and continue with direct fetching
+      console.log(`Function ${TABLES_CONFIG[table].generateTextFn} failed: ${functionError?.message || 'Unknown error'}, generating text manually`);
+    } catch (e) {
+      console.warn(`Error calling database function: ${e}`);
+    }
+  }
+  
+  // For jetshare_offers
+  if (table === 'jetshare_offers') {
+    try {
+      // Function failed or doesn't exist, fetch and format the data ourselves
       const { data: record, error } = await supabase
         .from(table)
         .select('*, profiles(*)') // Join with profiles to get user info
@@ -397,15 +425,40 @@ async function updateEmbedding(table: string, id: string): Promise<void> {
     }
     
     // Mark as embedded for jetshare_offers
-    if (table === 'jetshare_offers' && TABLES_CONFIG[table].markEmbeddedFn) {
+    if (TABLES_CONFIG[table].markEmbeddedFn) {
       try {
-        const { error: markError } = await supabase.rpc(
-          TABLES_CONFIG[table].markEmbeddedFn as string,
-          { offer_id: id }
-        );
-        
-        if (markError) {
-          console.warn(`Failed to mark as embedded: ${markError.message}`);
+        if (table === 'jetshare_offers') {
+          const { error: markError } = await supabase.rpc(
+            TABLES_CONFIG[table].markEmbeddedFn as string,
+            { offer_id: id }
+          );
+          
+          if (markError) {
+            console.warn(`Failed to mark as embedded: ${markError.message}`);
+          }
+        } 
+        // Handle Nostr entities with custom parameter names
+        else if (table.startsWith('nostr_') && TABLES_CONFIG[table].markEmbeddedParamNames) {
+          const params: Record<string, any> = {};
+          const paramNames = TABLES_CONFIG[table].markEmbeddedParamNames as Record<string, string>;
+          
+          // Map the parameters according to the configuration
+          Object.entries(paramNames).forEach(([paramName, valueSource]) => {
+            if (valueSource === 'id') {
+              params[paramName] = id;
+            } else {
+              params[paramName] = valueSource;
+            }
+          });
+          
+          const { error: markError } = await supabase.rpc(
+            TABLES_CONFIG[table].markEmbeddedFn as string,
+            params
+          );
+          
+          if (markError) {
+            console.warn(`Failed to mark ${table} as embedded: ${markError.message}`);
+          }
         }
       } catch (e) {
         console.warn(`Failed to mark as embedded: ${e}`);

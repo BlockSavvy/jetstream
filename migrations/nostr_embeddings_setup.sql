@@ -20,14 +20,14 @@ ALTER TABLE nostr_zaps ADD COLUMN IF NOT EXISTS needs_embedding boolean DEFAULT 
 
 -- Create function to generate embedding text for Nostr events
 CREATE OR REPLACE FUNCTION generate_nostr_event_embedding_text(
-  event_id text
+  event_id_param text
 ) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE
   event_record nostr_offer_events%ROWTYPE;
   offer_record jetshare_offers%ROWTYPE;
 BEGIN
   -- Get the event record
-  SELECT * INTO event_record FROM nostr_offer_events WHERE event_id = event_id;
+  SELECT * INTO event_record FROM nostr_offer_events WHERE event_id = event_id_param;
   
   -- Get related offer if available
   IF event_record.offer_id IS NOT NULL THEN
@@ -202,14 +202,14 @@ WHERE needs_embedding = TRUE;
 
 -- Function to get Nostr entities needing embedding 
 CREATE OR REPLACE FUNCTION get_nostr_entities_needing_embedding(
-  entity_type text,
+  entity_type_param text,
   batch_size int DEFAULT 20
 ) RETURNS TABLE (
   id text, -- Using text to accommodate both UUID and string IDs
   entity_type text
 ) LANGUAGE plpgsql AS $$
 BEGIN
-  CASE entity_type
+  CASE entity_type_param
     WHEN 'nostr_event' THEN
       RETURN QUERY
       SELECT event_id::text, 'nostr_event'::text
@@ -232,38 +232,38 @@ BEGIN
       LIMIT batch_size;
       
     ELSE
-      RAISE EXCEPTION 'Unsupported entity type: %', entity_type;
+      RAISE EXCEPTION 'Unsupported entity type: %', entity_type_param;
   END CASE;
 END;
 $$;
 
 -- Function to mark Nostr entities as embedded
 CREATE OR REPLACE FUNCTION mark_nostr_entity_as_embedded(
-  entity_id text,
-  entity_type text
+  entity_id_param text,
+  entity_type_param text
 ) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
-  CASE entity_type
+  CASE entity_type_param
     WHEN 'nostr_event' THEN
       UPDATE nostr_offer_events
       SET needs_embedding = FALSE,
           embedding_updated_at = NOW()
-      WHERE event_id = entity_id;
+      WHERE event_id = entity_id_param;
       
     WHEN 'nostr_message' THEN
       UPDATE nostr_messages
       SET needs_embedding = FALSE,
           embedding_updated_at = NOW()
-      WHERE id = entity_id::uuid;
+      WHERE id = entity_id_param::uuid;
       
     WHEN 'nostr_zap' THEN
       UPDATE nostr_zaps
       SET needs_embedding = FALSE,
           embedding_updated_at = NOW()
-      WHERE id = entity_id::uuid;
+      WHERE id = entity_id_param::uuid;
       
     ELSE
-      RAISE EXCEPTION 'Unsupported entity type: %', entity_type;
+      RAISE EXCEPTION 'Unsupported entity type: %', entity_type_param;
   END CASE;
 END;
 $$;
