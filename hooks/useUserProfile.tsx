@@ -145,6 +145,16 @@ export function useUserProfile() {
               }
             }
             
+            // Ensure first_name is never null
+            if (!firstName || firstName.trim() === '') {
+              firstName = 'User';
+            }
+            
+            // Ensure last_name is never null
+            if (!lastName || lastName.trim() === '') {
+              lastName = email ? email.split('@')[0] : 'Profile';
+            }
+            
             console.log(`Creating profile with name: ${firstName} ${lastName}, email: ${email}`);
             
             const { data: newProfile, error: createError } = await supabase

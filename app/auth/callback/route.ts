@@ -91,7 +91,8 @@ export async function GET(request: NextRequest) {
           await new Promise(resolve => setTimeout(resolve, 1500))
           
           // Create or update user profile
-          await createOrUpdateUserProfile(supabase, data.session.user.id, data.session.user.email)
+          const profileResult = await createOrUpdateUserProfile(supabase, data.session.user.id, data.session.user.email)
+          console.log('👤 Profile creation result:', profileResult);
           
           // Allow cookies to be properly set after profile update
           console.log('⏱️ Allowing additional time for cookies to be properly set');
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
                                    userData.source === 'gdyup' || 
                                    userData.app === 'gdyup';
           
-          console.log('�� User metadata:', { 
+          console.log(' User metadata:', { 
             userAppMode, 
             isUserFromGdyup,
             userData: JSON.stringify(userData).substring(0, 100) 
@@ -184,11 +185,16 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
   try {
     console.log('🔍 Checking if profile exists for user:', userId);
     // First check if profile exists
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: profileQueryError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
+    
+    if (profileQueryError) {
+      console.log(`⚠️ Error checking if profile exists: ${profileQueryError.message}. Profile might not exist yet.`);
+      // Continue to profile creation if error is "not found"
+    }
     
     if (!existingProfile) {
       console.log(`🆕 Creating new profile for user ${userId}`);
@@ -224,31 +230,50 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
       
       const fullName = `${firstName} ${lastName}`.trim();
       
+      // Create profile object with all required fields
+      const profileData = {
+        id: userId,
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: fullName,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        // Required fields from schema
+        user_type: 'traveler',
+        verification_status: 'pending',
+        // Onboarding fields
+        onboarding_completed: false,
+        onboarding_step: 'profile',
+        profile_visibility: 'public',
+        has_jet: false
+      };
+      
+      console.log('📝 Inserting profile with data:', JSON.stringify(profileData));
+      
       // Create new profile with all required fields
-      const { error: insertError } = await supabase
+      const { data: newProfile, error: insertError } = await supabase
         .from('profiles')
-        .insert({
-          id: userId,
-          email: email,
-          first_name: firstName,
-          last_name: lastName,
-          full_name: fullName,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          // Required fields from schema
-          user_type: 'traveler',
-          verification_status: 'pending',
-          // Onboarding fields
-          onboarding_completed: false,
-          onboarding_step: 'profile',
-          profile_visibility: 'public',
-          has_jet: false
-        });
+        .insert(profileData)
+        .select()
+        .single();
       
       if (insertError) {
         console.error('❌ Error creating user profile:', insertError);
+        // Log more details about the error
+        console.error('Error code:', insertError.code);
+        console.error('Error details:', insertError.details);
+        console.error('Error message:', insertError.message);
+        console.error('Error hint:', insertError.hint);
+        
+        return { 
+          success: false, 
+          error: insertError,
+          message: `Failed to create profile: ${insertError.message}` 
+        };
       } else {
         console.log(`✅ Profile created successfully for user ${userId}`);
+        return { success: true, profile: newProfile };
       }
     } else {
       console.log(`🔄 Profile already exists for user ${userId}, updating last login`);
@@ -264,11 +289,22 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
       
       if (updateError) {
         console.error('❌ Error updating user profile:', updateError);
+        return {
+          success: false,
+          error: updateError,
+          message: `Failed to update profile: ${updateError.message}`
+        };
       } else {
         console.log(`✅ Profile updated successfully for user ${userId}`);
+        return { success: true, profile: existingProfile };
       }
     }
   } catch (error) {
     console.error('❌ Error in createOrUpdateUserProfile:', error);
+    return { 
+      success: false, 
+      error: { message: (error as Error).message },
+      message: `Error ensuring user profile: ${(error as Error).message}` 
+    };
   }
 } 
