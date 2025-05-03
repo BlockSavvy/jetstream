@@ -346,7 +346,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Get the app URL for redirect
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+        (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -499,7 +499,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionError(null);
       
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
-        (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+        (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${appUrl}/auth/callback?type=recovery`,
