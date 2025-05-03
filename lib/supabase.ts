@@ -101,6 +101,17 @@ export function getSupabaseClient(): SupabaseClient {
   // Create enhanced storage that works consistently across devices
   const enhancedStorage = createEnhancedStorage();
   
+  // Get the correct site URL - will be used for redirects in auth calls
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+    (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
+  
+  console.log(`🔐 Initializing Supabase client with app URL: ${appUrl}`);
+  
+  // Store the app URL in a global variable so other modules can use it
+  if (typeof window !== 'undefined') {
+    (window as any).GDYUP_APP_URL = appUrl;
+  }
+  
   supabaseClient = createSupabaseClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
       persistSession: true,

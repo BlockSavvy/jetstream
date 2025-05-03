@@ -344,17 +344,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setSessionError(null);
       
-      // Use a fully qualified URL with HTTPS protocol
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz';
-      const appMode = process.env.NEXT_PUBLIC_APP_MODE || '';
-      const isGdyup = appMode === 'gdyup';
-      const callbackUrl = `${appUrl}/auth/callback`;
+      // Get the app URL for redirect - ensure it's a full absolute URL
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+        (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
+      
+      // Make sure we have a full URL with correct protocol
+      const appUrlObj = new URL(appUrl.startsWith('http') ? appUrl : `https://${appUrl}`);
+      const callbackUrl = `${appUrlObj.toString().replace(/\/$/, '')}/auth/callback`;
       
       // Add app parameter for cross-domain recognition
       const callbackUrlWithParams = new URL(callbackUrl);
-      if (isGdyup) {
-        callbackUrlWithParams.searchParams.set('app', 'gdyup');
-      }
+      callbackUrlWithParams.searchParams.set('app', 'gdyup');
       
       console.log(`📧 Email signup using redirect URL: ${callbackUrlWithParams.toString()}`);
       
@@ -370,7 +370,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           emailRedirectTo: callbackUrlWithParams.toString(),
           data: {
             email, // Include email in user metadata
-            app_mode: isGdyup ? 'gdyup' : 'jetstream', // Include app mode in user metadata
+            app_mode: 'gdyup', // Include app mode in user metadata
             is_mobile: isMobile
           }
         },
@@ -521,18 +521,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setSessionError(null);
 
-      // Get the app URL for redirect
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz';
-      const appMode = process.env.NEXT_PUBLIC_APP_MODE || '';
-      const isGdyup = appMode === 'gdyup';
-      const callbackUrl = `${appUrl}/auth/callback`;
+      // Get the app URL for redirect - ensure it's a full absolute URL
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+        (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
+      
+      // Make sure we have a full URL with correct protocol
+      const appUrlObj = new URL(appUrl.startsWith('http') ? appUrl : `https://${appUrl}`);
+      const callbackUrl = `${appUrlObj.toString().replace(/\/$/, '')}/auth/callback`;
       
       // Add app parameter for cross-domain recognition
       const callbackUrlWithParams = new URL(callbackUrl);
-      if (isGdyup) {
-        callbackUrlWithParams.searchParams.set('app', 'gdyup');
-        callbackUrlWithParams.searchParams.set('type', 'recovery');
-      }
+      callbackUrlWithParams.searchParams.set('app', 'gdyup');
+      callbackUrlWithParams.searchParams.set('type', 'recovery');
       
       console.log(`📧 Password reset using redirect URL: ${callbackUrlWithParams.toString()}`);
 
