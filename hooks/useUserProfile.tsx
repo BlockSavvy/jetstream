@@ -128,9 +128,44 @@ export function useUserProfile() {
             const { data: userData } = await supabase.auth.getUser();
             const email = userData?.user?.email || '';
             
+            // Extract first and last name from email
+            let firstName = 'User';
+            let lastName = 'Profile';
+            
+            if (email) {
+              const emailName = email.split('@')[0];
+              // Try to split on common separators
+              const nameParts = emailName.split(/[._-]/);
+              if (nameParts.length > 1) {
+                firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+                lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
+              } else {
+                // Just use the email name as first name
+                firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+              }
+            }
+            
+            console.log(`Creating profile with name: ${firstName} ${lastName}, email: ${email}`);
+            
             const { data: newProfile, error: createError } = await supabase
               .from('profiles')
-              .insert([{ id: userId, email }])
+              .insert([{ 
+                id: userId, 
+                email,
+                first_name: firstName,
+                last_name: lastName,
+                full_name: `${firstName} ${lastName}`.trim(),
+                // Required fields from schema
+                user_type: 'traveler',
+                verification_status: 'pending',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                // Onboarding fields
+                onboarding_completed: false,
+                onboarding_step: 'profile',
+                profile_visibility: 'public',
+                has_jet: false
+              }])
               .select('*')
               .single();
             

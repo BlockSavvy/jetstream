@@ -104,11 +104,17 @@ export async function ensureUserProfile(
           email: user.email,
           first_name: firstName,
           last_name: lastName,
+          full_name: `${firstName} ${lastName}`.trim(),
           avatar_url: null,
           user_type: 'traveler',
           verification_status: 'pending',
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          // Onboarding fields
+          onboarding_completed: false,
+          onboarding_step: 'profile',
+          profile_visibility: 'public',
+          has_jet: false
         })
         .select()
         .single();

@@ -215,14 +215,16 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
         firstName = 'User';
       }
       
-      // Ensure last_name is never null (if it's a required field)
+      // Ensure last_name is never null (it's a required field)
       if (!lastName || lastName.trim() === '') {
         lastName = email ? email.split('@')[0] : 'Profile';
       }
       
       console.log(`👤 Extracted name info: first_name="${firstName}", last_name="${lastName}"`);
       
-      // Create new profile
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      // Create new profile with all required fields
       const { error: insertError } = await supabase
         .from('profiles')
         .insert({
@@ -230,9 +232,17 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
           email: email,
           first_name: firstName,
           last_name: lastName,
-          full_name: `${firstName} ${lastName}`.trim(),
+          full_name: fullName,
           created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          // Required fields from schema
+          user_type: 'traveler',
+          verification_status: 'pending',
+          // Onboarding fields
+          onboarding_completed: false,
+          onboarding_step: 'profile',
+          profile_visibility: 'public',
+          has_jet: false
         });
       
       if (insertError) {
