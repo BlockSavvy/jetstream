@@ -166,9 +166,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userEmail = user?.email || '';
         console.log('Creating user profile for:', userEmail);
         
+        // Extract name from email if available
+        let firstName = 'User';  // Default value
+        let lastName = '';
+        
+        if (userEmail) {
+          const emailName = userEmail.split('@')[0];
+          // Try to split on common separators
+          const nameParts = emailName.split(/[._-]/);
+          if (nameParts.length > 1) {
+            firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+            lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
+          } else {
+            // Just use the email name as first name
+            firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+          }
+        }
+        
+        // Ensure first_name is never null
+        if (!firstName || firstName.trim() === '') {
+          firstName = 'User';
+        }
+        
+        // Ensure last_name is never null
+        if (!lastName || lastName.trim() === '') {
+          lastName = userEmail ? userEmail.split('@')[0] : 'Profile';
+        }
+        
+        const fullName = `${firstName} ${lastName}`.trim();
+        console.log(`Creating profile with name: ${firstName} ${lastName}, email: ${userEmail}`);
+        
         const { error: createError } = await supabase
           .from('profiles')
-          .insert([{ id: userId, email: userEmail }]);
+          .insert([{ 
+            id: userId, 
+            email: userEmail,
+            first_name: firstName,
+            last_name: lastName,
+            full_name: fullName,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            // Required fields from schema
+            user_type: 'traveler',
+            verification_status: 'pending',
+            // Onboarding fields
+            onboarding_completed: false,
+            onboarding_step: 'profile',
+            profile_visibility: 'public',
+            has_jet: false
+          }]);
           
         if (createError) {
           console.error('Error creating profile:', createError);
