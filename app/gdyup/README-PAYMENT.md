@@ -5,6 +5,7 @@ This document outlines the Bitcoin payment flow integration, "Pay Later" functio
 ## Overview
 
 The implementation provides a complete payment flow for GDY·UP with the following features:
+
 - BTCPay Server integration for Bitcoin payments (Lightning + On-chain)
 - Stripe integration for credit card payments
 - "Pay Later" functionality with 1-hour hold
@@ -63,26 +64,30 @@ INTERNAL_API_KEY=gdyup-internal-api
 ## File Structure
 
 ### Components
+
 - `app/gdyup/components/JetSharePaymentForm.tsx`: Main payment form component
 
 ### API Routes
+
 - `app/api/jetshare/process-payment/route.ts`: Payment processing API
 - `app/api/jetshare/check-payment/route.ts`: Payment status checking
 - `app/api/webhooks/btcpay/route.ts`: BTCPay webhook handler
 - `app/api/jetshare/cleanup-expired-offers/route.ts`: Expired offer cleanup
 
 ### Pages
+
 - `app/gdyup/payment/[id]/page.tsx`: Payment page
 - `app/gdyup/payment/success/page.tsx`: Success page
 - `app/gdyup/dashboard/offers/[id]/page.tsx`: Offer detail page
 - `app/gdyup/boardingpass/[id]/page.tsx`: Boarding pass page
 
 ### Services
+
 - `lib/services/btcpay-api.ts`: BTCPay Server API integration
 
 ## Setting Up BTCPay Server
 
-1. Access your BTCPay Server at https://btc.gdyup.xyz
+1. Access your BTCPay Server at <https://btc.gdyup.xyz>
 2. Create a new API key with the following permissions:
    - `btcpay.store.canviewinvoices`
    - `btcpay.store.cancreateinvoice`
@@ -120,4 +125,4 @@ curl -X GET "https://yourapp.com/api/jetshare/cleanup-expired-offers?key=your-in
 - .pkpass boarding pass generation for Apple Wallet
 - Advanced seat selection interface
 - Nostr DM integration for messaging
-- Add npub field to users for future Nostr integration 
+- Add npub field to users for future Nostr integration
