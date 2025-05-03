@@ -390,7 +390,7 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
             } else if (status === 'accepted') {
             // If this is a booking we made (we are the matched_user)
             if (offer.matched_user_id && offer.matched_user?.id === offer.matched_user_id) {
-              router.push(`/jetshare/payment/${offer.id}`);
+              router.push(`/gdyup/payment/${offer.id}`);
             } else {
               // If we created this offer and it's accepted but not paid for
               router.push(`/jetshare/offer/${offer.id}`);
@@ -455,7 +455,7 @@ export default function JetShareDashboard({ initialTab = 'dashboard', errorMessa
                     </span>
                     <Button size="sm" variant="outline" className="text-xs" onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/jetshare/payment/${offer.id}`);
+                      router.push(`/gdyup/payment/${offer.id}`);
                     }}>
                       Complete Payment
                     </Button>

@@ -745,7 +745,7 @@ export default function JetShareListingsContent() {
                 }
                 
                 // Go directly to the payment page which handles authentication more gracefully
-                window.location.href = `/jetshare/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+                window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
                 return;
               }
               
@@ -756,7 +756,7 @@ export default function JetShareListingsContent() {
             console.log('Offer acceptance successful:', apiData);
             
             // Use the redirect URL from the API if available
-            let redirectUrl = apiData.data?.redirect_url || `/jetshare/payment/${selectedOffer.id}?from=accept`;
+            let redirectUrl = apiData.data?.redirect_url || `/gdyup/payment/${selectedOffer.id}?from=accept`;
             
             // Add timestamp to prevent caching issues
             if (!redirectUrl.includes('?')) {
@@ -792,7 +792,7 @@ export default function JetShareListingsContent() {
         }
         
         // Go to payment page which will handle auth correctly
-        window.location.href = `/jetshare/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct_noauth`;
+        window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct_noauth`;
         return;
       }
       
@@ -838,7 +838,7 @@ export default function JetShareListingsContent() {
           }
           
           // Go directly to the payment page which handles authentication more gracefully
-          window.location.href = `/jetshare/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+          window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
           return;
         }
         
@@ -849,7 +849,7 @@ export default function JetShareListingsContent() {
       console.log('Offer acceptance successful:', apiData);
       
       // Use the redirect URL from the API if available
-      let redirectUrl = apiData.data?.redirect_url || `/jetshare/payment/${selectedOffer.id}?from=accept`;
+      let redirectUrl = apiData.data?.redirect_url || `/gdyup/payment/${selectedOffer.id}?from=accept`;
       
       // Add timestamp to prevent caching issues
       if (!redirectUrl.includes('?')) {

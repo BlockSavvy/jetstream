@@ -239,7 +239,7 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
         
         // If we're on the wrong URL, redirect to the correct one
         if (recovered !== propOfferId) {
-          window.location.href = `/jetshare/payment/${recovered}?t=${Date.now()}&recovered=true`;
+          window.location.href = `/gdyup/payment/${recovered}?t=${Date.now()}&recovered=true`;
         }
       } else {
         // Failed to recover, redirect to listings
@@ -626,7 +626,7 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
                     }
                     
                     // Use window.location instead of router.push
-                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/jetshare/payment/${offer.id}`)}&lastAction=payment`;
+                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&lastAction=payment`;
                   }
                 } catch (e) {
                   console.error('Error during session refresh attempts:', e);

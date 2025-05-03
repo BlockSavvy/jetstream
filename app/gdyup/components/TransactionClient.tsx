@@ -311,7 +311,7 @@ export default function TransactionClient({
           {transaction.payment_status === 'pending' && transaction.payment_method === 'fiat' && (
             <Button 
               className="text-sm bg-amber-500 hover:bg-amber-600 text-white w-full sm:w-auto"
-              onClick={() => router.push(`/jetshare/payment/${offer.id}`)}
+              onClick={() => router.push(`/gdyup/payment/${offer.id}`)}
             >
               Complete Payment
             </Button>
