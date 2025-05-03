@@ -33,12 +33,26 @@ export async function GET(request: NextRequest) {
     
     // Also check for GDYUP in the URL or referrer to handle cross-domain redirects
     const referrer = request.headers.get('referer') || '';
-    const isFromGdyup = referrer.includes('gdyup') || requestUrl.searchParams.get('app') === 'gdyup';
-    const finalIsGdyup = isGdyup || isFromGdyup;
-    
+    const userAgent = request.headers.get('user-agent') || '';
+    const url = request.url || '';
+
+    // Multiple ways to detect if this is a GDYUP-related request
+    const isFromGdyup = 
+      referrer.includes('gdyup') || 
+      requestUrl.searchParams.get('app') === 'gdyup' ||
+      url.includes('gdyup') ||
+      userAgent.includes('GDYUP-App');
+
+    // Force GDYUP mode if the URL contains 'gdyup' (highest priority)
+    const forceGdyupMode = url.includes('gdyup');
+    const finalIsGdyup = isGdyup || isFromGdyup || forceGdyupMode;
+
     console.log('📱 Request context:', {
       referrer: referrer.substring(0, 50) + (referrer.length > 50 ? '...' : ''),
+      url: url.substring(0, 50) + (url.length > 50 ? '...' : ''),
+      userAgent: userAgent.substring(0, 50) + (userAgent.length > 50 ? '...' : ''),
       isFromGdyup,
+      forceGdyupMode,
       finalIsGdyup
     });
     
@@ -86,9 +100,15 @@ export async function GET(request: NextRequest) {
           // Get user metadata to check if this was a GDYUP signup
           const userData = data.session.user.user_metadata || {};
           const userAppMode = userData.app_mode as string || '';
-          const isUserFromGdyup = userAppMode === 'gdyup';
+          const isUserFromGdyup = userAppMode === 'gdyup' || 
+                                   userData.source === 'gdyup' || 
+                                   userData.app === 'gdyup';
           
-          console.log('👤 User metadata:', { userAppMode, isUserFromGdyup });
+          console.log('�� User metadata:', { 
+            userAppMode, 
+            isUserFromGdyup,
+            userData: JSON.stringify(userData).substring(0, 100) 
+          });
           
           // Determine if we should redirect to GDYUP
           const shouldRedirectToGdyup = finalIsGdyup || isUserFromGdyup;
@@ -174,7 +194,7 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
       console.log(`🆕 Creating new profile for user ${userId}`);
       
       // Extract name from email if available
-      let firstName = '';
+      let firstName = 'User';  // Default value
       let lastName = '';
       
       if (email) {
@@ -189,6 +209,18 @@ async function createOrUpdateUserProfile(supabase: any, userId: string, email: s
           firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
         }
       }
+      
+      // Ensure first_name is never null
+      if (!firstName || firstName.trim() === '') {
+        firstName = 'User';
+      }
+      
+      // Ensure last_name is never null (if it's a required field)
+      if (!lastName || lastName.trim() === '') {
+        lastName = email ? email.split('@')[0] : 'Profile';
+      }
+      
+      console.log(`👤 Extracted name info: first_name="${firstName}", last_name="${lastName}"`);
       
       // Create new profile
       const { error: insertError } = await supabase
