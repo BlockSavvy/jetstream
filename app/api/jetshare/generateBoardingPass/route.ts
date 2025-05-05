@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
     const transactionId = searchParams.get('transactionId');
     const offerId = searchParams.get('offerId');
     const format = searchParams.get('format') || 'html'; // html, pdf, wallet, qr
-    const isTestMode = searchParams.get('test') === 'true' || transactionId?.startsWith('test-');
+    const isTestMode = searchParams.get('test') === 'true' || 
+                      transactionId?.startsWith('test-') || 
+                      process.env.NODE_ENV === 'development'; // Always treat as test mode in development
     
     if (!transactionId && !offerId) {
       return NextResponse.json({ error: 'Missing required parameter: transactionId or offerId' }, { status: 400 });
@@ -20,12 +22,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    // For test transactions, we'll bypass auth checks
+    // For test transactions or development, we'll bypass auth checks
     if (!isTestMode && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // For test transactions, return a mock boarding pass
+    // For test transactions or development mode, return a mock boarding pass
     if (isTestMode) {
       console.log('Generating test boarding pass');
       

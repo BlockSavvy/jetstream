@@ -41,6 +41,13 @@ export default function BoardingPassButton({
       const response = await fetch(`/api/jetshare/generateBoardingPass?${idParam}${testParam}`);
       
       if (!response.ok) {
+        // For development, show a simulated boarding pass
+        if (process.env.NODE_ENV === 'development') {
+          window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&test=true&timestamp=${Date.now()}`, '_blank');
+          toast.success('Development mode: Simulated boarding pass generated');
+          return;
+        }
+        
         const errorData = await response.json();
         throw new Error(errorData.message || errorData.error || 'Failed to generate boarding pass');
       }
@@ -53,7 +60,14 @@ export default function BoardingPassButton({
     } catch (err) {
       console.error('Error downloading boarding pass:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to download boarding pass';
-      toast.error(errorMsg);
+      
+      // Show a more user-friendly error in dev mode
+      if (process.env.NODE_ENV === 'development') {
+        toast.error('Development mode: Using a simulated boarding pass instead');
+        window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&test=true&timestamp=${Date.now()}`, '_blank');
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -75,6 +89,13 @@ export default function BoardingPassButton({
       const response = await fetch(`/api/jetshare/generateBoardingPass?${idParam}${testParam}&format=wallet`);
       
       if (!response.ok) {
+        // For development, show a simulated wallet pass
+        if (process.env.NODE_ENV === 'development') {
+          window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=wallet&test=true&timestamp=${Date.now()}`, '_blank');
+          toast.success('Development mode: Simulated Apple Wallet pass generated');
+          return;
+        }
+        
         const errorData = await response.json();
         throw new Error(errorData.message || errorData.error || 'Failed to generate Apple Wallet pass');
       }
@@ -90,7 +111,14 @@ export default function BoardingPassButton({
     } catch (err) {
       console.error('Error generating Apple Wallet pass:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to add to Apple Wallet';
-      toast.error(errorMsg);
+      
+      // Show a more user-friendly error in dev mode
+      if (process.env.NODE_ENV === 'development') {
+        toast.error('Development mode: Using a simulated Apple Wallet pass instead');
+        window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=wallet&test=true&timestamp=${Date.now()}`, '_blank');
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsAppleWalletLoading(false);
     }
@@ -112,6 +140,13 @@ export default function BoardingPassButton({
       const response = await fetch(`/api/jetshare/generateBoardingPass?${idParam}${testParam}&format=qr`);
       
       if (!response.ok) {
+        // For development, show a simulated QR code page
+        if (process.env.NODE_ENV === 'development') {
+          window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=qr&test=true&timestamp=${Date.now()}`, '_blank');
+          toast.success('Development mode: Simulated Nostr QR code generated');
+          return;
+        }
+        
         const errorData = await response.json();
         throw new Error(errorData.message || errorData.error || 'Failed to generate Nostr QR code');
       }
@@ -124,7 +159,14 @@ export default function BoardingPassButton({
     } catch (err) {
       console.error('Error generating Nostr QR code:', err);
       const errorMsg = err instanceof Error ? err.message : 'Failed to generate Nostr QR code';
-      toast.error(errorMsg);
+      
+      // Show a more user-friendly error in dev mode
+      if (process.env.NODE_ENV === 'development') {
+        toast.error('Development mode: Could not generate Nostr QR. Using a simulated one instead.');
+        window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=qr&test=true&timestamp=${Date.now()}`, '_blank');
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setIsQRLoading(false);
     }
@@ -183,9 +225,9 @@ export default function BoardingPassButton({
             onClick={downloadBoardingPass}
             className={getThemeClasses({
               base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1",
-              default: "bg-gray-800 hover:bg-gray-700 text-white",
-              blue: "bg-blue-800 hover:bg-blue-700 text-white",
-              pink: "bg-pink-800 hover:bg-pink-700 text-white"
+              default: "bg-primary hover:bg-primary/90 text-primary-foreground",
+              blue: "bg-blue-500 hover:bg-blue-600 text-white",
+              pink: "bg-pink-500 hover:bg-pink-600 text-white"
             })}
           >
             {isLoading ? (
@@ -234,6 +276,7 @@ export default function BoardingPassButton({
                 blue: "bg-purple-800 hover:bg-purple-700 text-white",
                 pink: "bg-purple-800 hover:bg-purple-700 text-white"
               })}
+              title="Nostr QR codes allow for decentralized verification of your boarding pass on the Nostr protocol, enhancing privacy and security"
             >
               {isQRLoading ? (
                 <>

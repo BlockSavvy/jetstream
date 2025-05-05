@@ -151,7 +151,52 @@ export async function POST(request: NextRequest) {
           });
           
           // Create a BTCPay invoice
-          const invoice = await createBTCPayInvoice(invoiceData);
+          let invoice;
+          try {
+            invoice = await createBTCPayInvoice(invoiceData);
+          } catch (btcpayError) {
+            console.error('BTCPay invoice creation failed:', btcpayError);
+            
+            // If in development mode, provide a simulated invoice
+            if (isDevMode) {
+              console.log('DEV MODE: Creating simulated BTCPay invoice since real server is unavailable');
+              
+              // Update the offer with payment details indicating development mode
+              try {
+                await updateOfferPaymentStatus(
+                  offer_id,
+                  'pending',
+                  'btcpay',
+                  {
+                    invoice_id: `dev-invoice-${Date.now()}`,
+                    checkout_url: `/gdyup/payment/success?offer_id=${offer_id}&simulated=true&dev=true`,
+                    created_at: new Date().toISOString(),
+                    is_test: true
+                  }
+                );
+              } catch (updateError) {
+                console.error('Error updating offer with dev payment details:', updateError);
+                // Continue anyway - this is just for development
+              }
+              
+              // Return a development mode response with simulated data
+              return NextResponse.json({
+                success: true,
+                message: 'DEV MODE: BTC payment simulated due to BTCPay server unavailability',
+                data: {
+                  invoice_id: `dev-invoice-${Date.now()}`,
+                  checkout_url: `/gdyup/payment/dev-btcpay-simulator?offer_id=${offer_id}`,
+                  redirect_url: `/gdyup/payment/dev-btcpay-simulator?offer_id=${offer_id}`,
+                  force_redirect: true,
+                  is_simulated: true,
+                  post_payment_redirect: `/gdyup/boardingpass/${offer_id}?from=simulated-btcpay&t=${Date.now()}`
+                }
+              });
+            }
+            
+            // In production, just rethrow the error
+            throw btcpayError;
+          }
           
           if (!invoice || !invoice.id || !invoice.checkoutLink) {
             throw new Error('BTCPay Server returned an invalid invoice response');
@@ -203,6 +248,22 @@ export async function POST(request: NextRequest) {
               errorMessage = 'Payment provider authorization failed';
               statusCode = 500;
             }
+          }
+          
+          // In development mode, create a fallback response if there's a server issue
+          if (isDevMode && statusCode === 503) {
+            console.log('DEV MODE: BTC payment failed with service unavailable, providing fallback option');
+            
+            return NextResponse.json({
+              success: false,
+              error: errorMessage,
+              fallback_available: true,
+              details: {
+                dev_mode: true,
+                original_error: error instanceof Error ? error.message : 'Unknown error',
+                fallback_url: `/gdyup/payment/dev-btcpay-simulator?offer_id=${offer_id}&error_recovery=true`
+              }
+            }, { status: 200 }); // Use 200 to prevent UI error, but include error details
           }
           
           return NextResponse.json(
