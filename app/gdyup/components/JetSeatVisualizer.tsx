@@ -8,6 +8,7 @@ import React from 'react';
 import { MousePointer, CheckCheck, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { debounce } from 'lodash';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 // Define a local SeatConfig type instead of importing from Prisma
 export type SeatConfig = Record<string, boolean>;
@@ -108,6 +109,9 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
     seatConfig,
     selectionDisabled = false,
   }, ref) => {
+    // Get theme functionality
+    const { getThemeClasses, theme } = useGdyupTheme();
+    
     // Default layout if none provided
     const [layout, setLayout] = useState<SeatLayout>(() => {
         // Initialize layout based on totalSeats or default
@@ -136,8 +140,8 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
     // Add refs to avoid stale closures
     const isMounted = useRef(true);
 
-    // Refs for seats
-    const seatsRef = useRef<HTMLDivElement[]>([]);
+    // Update the seatsRef to use a Record with string keys
+    const seatsRef = useRef<Record<string, HTMLDivElement>>({});
     const selectoRef = useRef<Selecto>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -240,40 +244,32 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         // Mid-sized jets often have 3 seats per row
         seatsPerRow = 3;
         rows = Math.ceil(seats / seatsPerRow);
-      } else if (seats === 10) {
-        // For 10-seat jets, 5×2 layout is standard
+      } else if (seats <= 10) {
+        // For 10-seat jets, 2×5 layout is common (5 rows of 2 seats)
         seatsPerRow = 2;
         rows = 5;
       } else if (seats <= 12) {
-        // For 11-12 seats, typically 3 seats per row
+        // For 12-seat jets, 3×4 layout is common (4 rows of 3 seats)
         seatsPerRow = 3;
-        rows = Math.ceil(seats / seatsPerRow);
-      } else if (seats === 14) {
-        // For 14-seat jets, 4×4 layout with 2 empty seats
+        rows = 4;
+      } else if (seats <= 16) {
+        // For 16-seat jets, 4×4 layout is common (4 rows of 4 seats)
         seatsPerRow = 4;
         rows = 4;
       } else {
-        // For larger jets, 4 seats per row is common
+        // For larger jets, use 4-5 seats per row
         seatsPerRow = 4;
         rows = Math.ceil(seats / seatsPerRow);
+
+        // If we have many seats, consider 5 seats per row
+        if (seats > 20) {
+          seatsPerRow = 5;
+          rows = Math.ceil(seats / seatsPerRow);
+        }
       }
-      
-      // Create a new layout with the calculated dimensions
-      const newLayout: SeatLayout = {
-        rows,
-        seatsPerRow,
-        layoutType: 'standard',
-        totalSeats: seats
-      };
-      
-      setLayout(newLayout);
-      setSkipPositions([]);
-      
-      // Log the change for debugging
-      debugLog(`Calculated optimal layout for ${seats} seats: ${rows} rows × ${seatsPerRow} columns`);
-      
-      return newLayout;
-    }, [debugLog]);
+
+      return { rows, seatsPerRow };
+    }, []);
 
     // Update layout based on totalSeats or customLayout
     useEffect(() => {
@@ -297,7 +293,9 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         }
       } else if (totalSeats && totalSeats > 0 && !isLoading) {
         // Only apply this if we're not currently loading from the API
-        calculateOptimalLayout(totalSeats);
+        const { rows, seatsPerRow } = calculateOptimalLayout(totalSeats);
+        setLayout({ rows, seatsPerRow, layoutType: 'standard', totalSeats: totalSeats });
+        setSkipPositions([]);
       }
     }, [totalSeats, customLayout, forceExactLayout, calculateOptimalLayout, debugLog, isLoading]);
 
@@ -313,7 +311,8 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         debugLog('No jet_id provided. Using default layout.');
         // If totalSeats is provided, calculate optimal layout
         if (totalSeats && totalSeats > 0) {
-          calculateOptimalLayout(totalSeats);
+          const { rows, seatsPerRow } = calculateOptimalLayout(totalSeats);
+          setLayout({ rows, seatsPerRow, layoutType: 'standard', totalSeats: totalSeats });
         }
         setIsLoading(false);
         return;
@@ -370,7 +369,8 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           
           // Set fallback layout if needed
           if (totalSeats && totalSeats > 0) {
-            calculateOptimalLayout(totalSeats);
+            const { rows, seatsPerRow } = calculateOptimalLayout(totalSeats);
+            setLayout({ rows, seatsPerRow, layoutType: 'standard', totalSeats: totalSeats });
           }
           
           // Set error message
@@ -586,159 +586,399 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
 
     // Improved render function for seat grid with GDY UP aesthetics
     const renderSeatGrid = () => {
-      if (!layout || layout.rows === undefined || layout.seatsPerRow === undefined) return null;
+      if (!layout || layout.rows === undefined || layout.seatsPerRow === undefined) {
+        return <div>Layout not available</div>;
+      }
+
+      const gridItems = [];
       
-      // Keep track of rendered seats count
-      let renderedSeatsCount = 0;
+      // Determine the middle point to add an aisle
+      // For even number of seats per row, we'll add space after the middle seat
+      // For odd number of seats per row, we'll add more space around the middle seat
+      const middlePoint = Math.floor(layout.seatsPerRow / 2);
+      const hasAisle = layout.seatsPerRow > 2; // Only add aisle if more than 2 seats per row
       
+      // Dynamic grid template with aisle
+      let gridTemplateColumns = "";
+      if (hasAisle) {
+        // Create column definitions with wider gap in the middle for the aisle
+        for (let i = 0; i < layout.seatsPerRow; i++) {
+          gridTemplateColumns += "minmax(0, 1fr) ";
+          // Add extra space after the middle column for the aisle
+          if (i === middlePoint - 1 && layout.seatsPerRow > 2) {
+            gridTemplateColumns += "0.5fr "; // Aisle space
+          }
+        }
+        gridTemplateColumns = gridTemplateColumns.trim();
+      } else {
+        // Default equal columns if no aisle
+        gridTemplateColumns = `repeat(${layout.seatsPerRow}, minmax(0, 1fr))`;
+      }
+      
+      // Calculate seat size based on total seats
+      // Fewer seats = larger seats
+      const totalSeats = layout.rows * layout.seatsPerRow - skipPositions.length;
+      const sizingClass = totalSeats <= 8 
+        ? "aspect-square p-3 min-h-[48px] text-lg" // Large seats for few seats
+        : totalSeats <= 12 
+          ? "aspect-square p-2 min-h-[40px] text-base" // Medium seats
+          : "aspect-square p-1 min-h-[36px] text-sm"; // Smaller seats for many seats
+
+      // Function to check if seat is selectable
+      const isSeatSelectable = (seatId: string): boolean => {
+        // If selectionDisabled is true, all seats are not selectable
+        if (selectionDisabled) return false;
+        
+        // If readonly mode is enabled, only show selected seats
+        if (readOnly) return selectedSeats.includes(seatId);
+        
+        // If there's a seatConfig with non-empty keys, check against it
+        if (seatConfig && Object.keys(seatConfig).length > 0) {
+          return seatConfig[seatId] !== false;
+        }
+        
+        return true; // Default to selectable
+      };
+
+      // Prepare the grid with aisle
+      for (let row = 0; row < layout.rows; row++) {
+        let currentCol = 0; // Keep track of the actual column index
+        
+        for (let col = 0; col < layout.seatsPerRow; col++) {
+          const posString = `${row},${col}`;
+          
+          // Skip positions defined as empty
+          if (skipPositions.includes(posString)) {
+            currentCol++; // Increment the actual column index
+            continue;
+          }
+          
+          const seatId = generateSeatId(row, col);
+          const isSelected = selectedSeats.includes(seatId);
+          const isSelectable = isSeatSelectable(seatId);
+          
+          // Get theme-specific seat styling
+          const seatClasses = getThemeClasses({
+            base: cn(
+              "flex items-center justify-center rounded-lg transition-all font-medium",
+              sizingClass, // Dynamic sizing based on total seat count
+              isSelectable ? "focus:outline-none focus:ring-2 cursor-pointer hover:scale-105" : "opacity-50 cursor-not-allowed",
+              isSelected ? "shadow-md transform scale-[0.98] transition-transform" : ""
+            ),
+            default: cn(
+              isSelected 
+                ? "bg-gdyup-primary text-black border border-gdyup-primary/70 focus:ring-gdyup-primary/50" 
+                : "bg-gdyup-accent text-white/90 border border-gray-700 hover:bg-gray-700 focus:ring-gdyup-primary/40",
+              !isSelectable && "bg-gray-800 text-gray-500 border-gray-700 hover:bg-gray-800"  
+            ),
+            blue: cn(
+              isSelected 
+                ? "bg-blue-500 text-white border border-blue-400 focus:ring-blue-400/50" 
+                : "bg-blue-900/60 text-white/90 border border-blue-800 hover:bg-blue-800 focus:ring-blue-500/40",
+              !isSelectable && "bg-blue-900/30 text-blue-300/50 border-blue-900 hover:bg-blue-900/30"  
+            ),
+            pink: cn(
+              isSelected 
+                ? "bg-pink-500 text-white border border-pink-400 focus:ring-pink-400/50" 
+                : "bg-pink-900/60 text-white/90 border border-pink-800 hover:bg-pink-800 focus:ring-pink-500/40",
+              !isSelectable && "bg-pink-900/30 text-pink-300/50 border-pink-900 hover:bg-pink-900/30"  
+            )
+          });
+          
+          gridItems.push(
+            <div
+              key={seatId}
+              className={seatClasses}
+              data-key={seatId}
+              onClick={() => {
+                if (selectionMode === 'tap' && isSelectable && !readOnly) {
+                  handleSeatClick(seatId);
+                }
+              }}
+              onMouseEnter={() => {
+                // Optional hover effect
+              }}
+              aria-label={`Seat ${seatId}`}
+              role="button"
+              tabIndex={isSelectable ? 0 : -1}
+              ref={(el) => {
+                if (el) seatsRef.current[seatId] = el;
+              }}
+              style={{
+                // Push columns to correct position accounting for aisle
+                gridColumn: hasAisle && col > middlePoint - 1 ? col + 2 : col + 1
+              }}
+            >
+              {seatId}
+            </div>
+          );
+          
+          // Add an aisle marker after the middle seat if we have an aisle
+          if (hasAisle && col === middlePoint - 1) {
+            gridItems.push(
+              <div
+                key={`aisle-${row}-${col}`}
+                className={getThemeClasses({
+                  base: "flex items-center justify-center opacity-30 text-xs",
+                  default: "text-white",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}
+                style={{
+                  gridColumn: middlePoint + 1,
+                  gridRow: row + 1
+                }}
+                aria-hidden="true"
+              >
+                ⟡
+              </div>
+            );
+          }
+          
+          currentCol++; // Increment the actual column index
+        }
+      }
+
       return (
-        <div className="grid gap-2 p-4 w-full" style={{
-          gridTemplateColumns: `repeat(${layout.seatsPerRow}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))`,
-        }}>
-          {Array.from({ length: layout.rows }).flatMap((_, row) =>
-            Array.from({ length: layout.seatsPerRow }).map((_, col) => {
-              // Skip if this position should be empty
-              if (skipPositions.includes(`${row},${col}`)) {
-                return null;
-              }
-              
-              // Only render up to the actual total seats count
-              if (renderedSeatsCount >= actualTotalSeats) {
-                return null;
-              }
-              
-              // Increment rendered seats counter
-              renderedSeatsCount++;
-              
-              const seatId = generateSeatId(row, col);
-              const isSelected = selectedSeats.includes(seatId);
-              
-              return (
-                <div
-                  key={`seat-${row}-${col}`}
-                  ref={(el) => {
-                    if (el) seatsRef.current[row * layout.seatsPerRow + col] = el;
-                  }}
-                  data-seat-id={seatId}
-                  data-seat-number={renderedSeatsCount}
-                  className={cn(
-                    // Base styling - enhanced with GDY UP aesthetics
-                    "flex items-center justify-center py-3 rounded-lg select-none transition-all duration-150",
-                    // Dynamic classes based on state
-                    isSelected
-                      ? "bg-[#DAFF0D] text-black font-bold shadow-[0_0_8px_rgba(218,255,13,0.4)]"
-                      : readOnly
-                      ? "bg-gray-800 text-gray-600 cursor-not-allowed"
-                      : "bg-gray-700 text-gray-300 cursor-pointer hover:bg-gray-600 hover:shadow-md",
-                    readOnly ? "pointer-events-none" : ""
-                  )}
-                  onClick={() => handleSeatClick(seatId)}
-                  role="checkbox"
-                  aria-checked={isSelected}
-                  aria-label={`Seat ${seatId} ${isSelected ? 'Selected' : (readOnly ? 'Unavailable' : 'Available')}`}
-                >
-                  <span className="text-lg font-medium">{seatId}</span>
-                </div>
-              );
+        <div
+          className={cn(
+            "seat-grid relative w-full overflow-hidden rounded-lg transition-colors",
+            getThemeClasses({
+              base: "shadow-inner p-3",
+              default: "bg-black/70 border border-gray-800",
+              blue: "bg-blue-950/60 border border-blue-900",
+              pink: "bg-pink-950/60 border border-pink-900"
             })
           )}
+          style={{ width: '100%' }}
+          ref={containerRef}
+        >
+          <div className="flex flex-wrap justify-center items-center h-full">
+            <div
+              className="grid w-full gap-2 md:gap-3"
+              style={{ 
+                gridTemplateColumns: gridTemplateColumns, 
+                width: '100%',
+                gridAutoRows: "auto"
+              }}
+            >
+              {gridItems}
+            </div>
+          </div>
         </div>
       );
     };
 
     // Main render
     return (
-      <div className={cn('relative rounded-lg overflow-hidden bg-gray-900', className)}>
+      <div className={cn("jet-seat-visualizer relative transition-all", className)}>
         {isLoading ? (
-          <div className="flex justify-center items-center h-48">
-            <div className="animate-spin h-10 w-10 rounded-full border-4 border-[#DAFF0D] border-t-transparent"></div>
+          <div className={getThemeClasses({
+            base: "flex items-center justify-center p-6 rounded-lg bg-opacity-50 border animate-pulse h-48 transition-colors",
+            default: "bg-black border-gray-800",
+            blue: "bg-blue-950 border-blue-900",
+            pink: "bg-pink-950 border-pink-900" 
+          })}>
+            <span className={getThemeClasses({
+              base: "opacity-70",
+              default: "text-white",
+              blue: "text-blue-200",
+              pink: "text-pink-200"
+            })}>Loading seat configuration...</span>
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center h-48 gap-2">
-            <AlertTriangle className="h-8 w-8 text-[#DC143C]" />
-            <p className="text-sm text-[#DC143C]">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
-              size="sm" 
-              variant="outline" 
-              className="mt-2 text-xs border-[#DAFF0D] text-[#DAFF0D] hover:bg-[#DAFF0D]/10"
-            >
-              Try Again
-            </Button>
+          <div className={getThemeClasses({
+            base: "flex items-center justify-center p-4 rounded-lg border shadow-sm transition-colors",
+            default: "bg-red-900/30 text-red-500 border-red-900/50",
+            blue: "bg-red-900/30 text-red-400 border-red-900/50",
+            pink: "bg-red-900/30 text-red-400 border-red-900/50"
+          })}>
+            <AlertTriangle className="w-5 h-5 mr-2 opacity-70" />
+            <span>{error}</span>
           </div>
         ) : (
           <>
-            {/* Seat allocation summary - only show if explicitly requested */}
-            {showSummary && (
-              <div className="grid grid-cols-2 divide-x divide-gray-700/50">
-                <div className="bg-gray-900 px-4 py-3">
-                  <div className="text-left">
-                    <div className="text-sm text-gray-300 mb-1">Selected Seats</div>
-                    <div className="flex items-baseline">
-                      {/* Display total selected count */}
-                      <span className="text-3xl font-bold text-white">{selectedSeats.length}</span>
-                      <span className="text-sm text-gray-400 ml-1.5">seats</span>
-                    </div>
+            {/* Main seat grid */}
+            {renderSeatGrid()}
+
+            {/* Controls */}
+            {showControls && !readOnly && (
+              <div className={getThemeClasses({
+                base: "flex flex-col space-y-2 mt-4 p-3 rounded-lg border transition-colors",
+                default: "bg-gray-900/60 border-gray-800",
+                blue: "bg-blue-950/60 border-blue-900",
+                pink: "bg-pink-950/60 border-pink-900"
+              })}>
+                <div className="flex justify-between items-center">
+                  <div className={getThemeClasses({
+                    base: "text-sm font-medium",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    Selection Mode
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectionMode('tap')}
+                      className={cn(
+                        "px-2 py-1 rounded text-xs font-medium transition-colors",
+                        selectionMode === 'tap' ? getThemeClasses({
+                          base: "border",
+                          default: "bg-gdyup-primary text-black border-gdyup-primary",
+                          blue: "bg-blue-500 text-white border-blue-400",
+                          pink: "bg-pink-500 text-white border-pink-400"
+                        }) : getThemeClasses({
+                          base: "border",
+                          default: "bg-gray-800 text-white border-gray-700 hover:bg-gray-700",
+                          blue: "bg-blue-900 text-blue-100 border-blue-800 hover:bg-blue-800",
+                          pink: "bg-pink-900 text-pink-100 border-pink-800 hover:bg-pink-800"
+                        })
+                      )}
+                    >
+                      <MousePointer className="w-4 h-4" />
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setSelectionMode('drag')}
+                      className={cn(
+                        "px-2 py-1 rounded text-xs font-medium transition-colors",
+                        selectionMode === 'drag' ? getThemeClasses({
+                          base: "border",
+                          default: "bg-gdyup-primary text-black border-gdyup-primary",
+                          blue: "bg-blue-500 text-white border-blue-400",
+                          pink: "bg-pink-500 text-white border-pink-400"
+                        }) : getThemeClasses({
+                          base: "border",
+                          default: "bg-gray-800 text-white border-gray-700 hover:bg-gray-700",
+                          blue: "bg-blue-900 text-blue-100 border-blue-800 hover:bg-blue-800",
+                          pink: "bg-pink-900 text-pink-100 border-pink-800 hover:bg-pink-800"
+                        })
+                      )}
+                    >
+                      <div className="w-4 h-4 flex items-center justify-center">≣</div>
+                    </button>
                   </div>
                 </div>
-                <div className="bg-gray-800 px-4 py-3">
-                   <div className="text-left">
-                     <div className="text-sm text-gray-300 mb-1">Total Seats</div>
-                     <div className="flex items-baseline">
-                       <span className="text-3xl font-bold text-white">{actualTotalSeats}</span>
-                       <span className="text-sm text-gray-400 ml-1.5">seats</span>
-                     </div>
-                   </div>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSeats([]);
+                    if (onChange) onChange([]);
+                  }}
+                  className={getThemeClasses({
+                    base: "px-3 py-1.5 mt-1 text-sm rounded font-medium transition-colors border flex items-center justify-center",
+                    default: "bg-gray-800 hover:bg-gray-700 text-white border-gray-700",
+                    blue: "bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-800",
+                    pink: "bg-pink-900 hover:bg-pink-800 text-pink-100 border-pink-800"
+                  })}
+                >
+                  <CheckCheck className="w-4 h-4 mr-1 opacity-70" />
+                  <span>Reset to Zero</span>
+                </button>
+              </div>
+            )}
+            
+            {/* Summary information */}
+            {showSummary && (
+              <div className={getThemeClasses({
+                base: "mt-3 p-2 text-sm rounded-md",
+                default: "bg-gray-800/70 text-white",
+                blue: "bg-blue-900/70 text-blue-100",
+                pink: "bg-pink-900/70 text-pink-100"
+              })}>
+                <div className="flex justify-between">
+                  <span>Selected:</span>
+                  <span className="font-medium">{selectedSeats.length} / {generateAllSeatIds().length}</span>
                 </div>
               </div>
             )}
             
-            {/* Seat selection legend */}
+            {/* Legend */}
             {showLegend && (
-              <div className="flex items-center gap-4 p-2 px-4 bg-gray-800/90">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 rounded bg-[#DAFF0D]"></div>
-                  <span className="text-xs text-white">Selected</span>
+              <div className={getThemeClasses({
+                base: "mt-3 text-xs grid grid-cols-2 gap-x-2 gap-y-1",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}>
+                <div className="flex items-center">
+                  <div className={getThemeClasses({
+                    base: "w-3 h-3 rounded mr-1",
+                    default: "bg-gdyup-primary",
+                    blue: "bg-blue-500",
+                    pink: "bg-pink-500"
+                  })}></div>
+                  <span>Selected</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 rounded bg-gray-700"></div>
-                  <span className="text-xs text-white">Available</span>
+                <div className="flex items-center">
+                  <div className={getThemeClasses({
+                    base: "w-3 h-3 rounded mr-1",
+                    default: "bg-gdyup-accent",
+                    blue: "bg-blue-900/60",
+                    pink: "bg-pink-900/60"
+                  })}></div>
+                  <span>Available</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 rounded bg-gray-800"></div>
-                  <span className="text-xs text-white">Unavailable</span>
-                </div>
+                {Object.keys(seatConfig).length > 0 && (
+                  <>
+                    <div className="flex items-center">
+                      <div className={getThemeClasses({
+                        base: "w-3 h-3 rounded mr-1 opacity-50",
+                        default: "bg-gray-700",
+                        blue: "bg-blue-900/30",
+                        pink: "bg-pink-900/30"
+                      })}></div>
+                      <span>Unavailable</span>
+                    </div>
+                  </>
+                )}
               </div>
             )}
-            
-            {/* Seat grid */}
-            <div 
-              ref={containerRef}
-              className="relative mx-auto bg-gray-900 p-2"
-              style={{ 
-                width: '100%',
-                minHeight: '280px',
-              }}
-            >
-              {renderSeatGrid()}
-              
-              {/* Selecto component for drag selection */}
-              {!readOnly && selectionMode === 'drag' && containerRef.current && (
-                <Selecto
-                  ref={selectoRef}
-                  container={containerRef.current}
-                  selectableTargets={['[data-seat-id]']}
-                  selectByClick={false}
-                  selectFromInside={false}
-                  toggleContinueSelect={['shift']}
-                  hitRate={0}
-                  onSelect={handleSelectoSelect}
-                  ratio={0}
-                />
-              )}
-            </div>
           </>
+        )}
+        
+        {/* Drag selection component */}
+        {selectionMode === 'drag' && !readOnly && !selectionDisabled && (
+          <Selecto
+            ref={selectoRef}
+            container={containerRef.current}
+            selectableTargets={['.jet-seat-visualizer [data-key]']}
+            selectByClick={false}
+            selectFromInside={false}
+            toggleContinueSelect={['shift']}
+            hitRate={0}
+            ratio={0}
+            onSelect={(e) => {
+              const selectedElements = e.selected || [];
+              const newSelectedIds = selectedElements
+                .map(el => el.getAttribute('data-key') as string)
+                .filter(id => id && (!seatConfig || seatConfig[id] !== false));
+              
+              if (e.isDragStartEnd) {
+                setSelectedSeats(e.inputEvent.shiftKey 
+                  ? [...selectedSeats, ...newSelectedIds] 
+                  : newSelectedIds);
+              }
+            }}
+            onSelectEnd={() => {
+              if (onChange) {
+                onChange(selectedSeats);
+              }
+            }}
+            dragContainer={document.body}
+            boundContainer={containerRef.current}
+            className={getThemeClasses({
+              base: "!fixed", // Override Selecto's positioning
+              default: "",
+              blue: "", 
+              pink: ""
+            })}
+          />
         )}
       </div>
     );

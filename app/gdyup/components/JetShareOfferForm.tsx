@@ -57,6 +57,14 @@ import EnhancedAirportMap from './EnhancedAirportMap'; // Add the new import
 import { PiArmchair } from 'react-icons/pi';
 import Image from 'next/image';
 import { debounce } from 'lodash';
+import EnhancedLocationAutocomplete from './EnhancedLocationAutocomplete';
+import { FormThemedDateTimePicker } from './FormThemedDateTimePicker';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { ThemedDateTimePicker } from './ThemedDateTimePicker';
+import { RiFlightTakeoffLine } from 'react-icons/ri';
+import { formatCurrency } from '@/lib/utils';
+import JetDetailsTabs from './JetDetailsTabs';
+import MobileJetSelector from "./MobileJetSelector";
 
 // Import GDYUP form styles
 import '../components/gdyup-forms.css';
@@ -155,6 +163,43 @@ const POPULAR_AIRCRAFT = [
   "Dassault Falcon 2000LXS",
   "Gulfstream G280",
   "Gulfstream G550"
+];
+
+// Add a FALLBACK_JETS constant at the top of the file, near other constants like POPULAR_AIRPORTS
+const FALLBACK_JETS = [
+  {
+    id: 'fallback-g650',
+    manufacturer: 'Gulfstream',
+    model: 'G650',
+    tail_number: 'N650JS',
+    capacity: 19,
+    image_url: '/images/jets/gulfstream/g650.jpg',
+    range_nm: 7000,
+    cruise_speed_kts: 516,
+    year: 2020
+  },
+  {
+    id: 'fallback-global7500',
+    manufacturer: 'Bombardier',
+    model: 'Global 7500',
+    tail_number: 'N7500G',
+    capacity: 19,
+    image_url: '/images/jets/bombardier/global7500.jpg', 
+    range_nm: 7700,
+    cruise_speed_kts: 516,
+    year: 2021
+  },
+  {
+    id: 'fallback-phenom300',
+    manufacturer: 'Embraer',
+    model: 'Phenom 300',
+    tail_number: 'N300EM',
+    capacity: 10,
+    image_url: '/images/jets/embraer/phenom300.jpg',
+    range_nm: 2010,
+    cruise_speed_kts: 453,
+    year: 2022
+  }
 ];
 
 // Add a new interface for aircraft models
@@ -369,6 +414,7 @@ interface JetDetails {
   galley?: boolean;
   entertainment?: string;
   wifi?: boolean;
+  interior_type?: string;
 }
 
 // Define image formatters before the component that uses them
@@ -385,11 +431,11 @@ const formatJetImageUrl = (manufacturer?: string, model?: string): string => {
 
 const formatJetInteriorImageUrl = (manufacturer?: string, model?: string): string => {
   try {
-    if (!manufacturer || !model) return '/images/jets/interior/default-interior.jpg';
+    if (!manufacturer || !model) return '/images/jets/interior/interior1.jpg';
     return `/images/jets/interior/${model.toLowerCase().replace(/\s+/g, '-')}-interior.jpg`;
   } catch (e) {
     console.error('Error formatting jet interior image URL:', e);
-    return '/images/jets/interior/default-interior.jpg';
+    return '/images/jets/interior/interior1.jpg';
   }
 };
 
@@ -408,6 +454,108 @@ const extractAirportCode = (locationString: string): string | null => {
   return null;
 };
 
+// First, define the ThemeSwitcher component near the top of the file, before the main component
+// Add after imports but before the helper functions
+
+// Theme Switcher component for live testing
+function ThemeSwitcher() {
+  const { theme, changeTheme, getThemeClasses, getThemeName } = useGdyupTheme();
+  
+  // Only show in development mode
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+  
+ return (
+    <div className={getThemeClasses({
+      base: "px-4 py-2 mb-4 flex items-center justify-between border-b text-sm",
+      default: "bg-gdyup-accent/70 border-gdyup-border",
+      blue: "bg-blue-900/70 border-blue-800",
+      pink: "bg-pink-900/70 border-pink-800"
+    })}>
+      <div className="flex items-center">
+        <span className={getThemeClasses({
+          base: "mr-2 opacity-70",
+          default: "text-white",
+          blue: "text-blue-100",
+          pink: "text-pink-100"
+        })}>Theme:</span>
+        <span className={getThemeClasses({
+          base: "font-medium",
+          default: "text-white",
+          blue: "text-blue-100",
+          pink: "text-pink-100"
+        })}>{getThemeName()}</span>
+      </div>
+      <div className="flex space-x-2">
+        <button
+          onClick={() => changeTheme('default')}
+          className={cn(
+            "w-6 h-6 rounded-full relative",
+            theme === 'default' ? 'ring-2 ring-white ring-offset-1 ring-offset-black' : '',
+            "bg-[#DAFF0D]"
+          )}
+          aria-label="Switch to Default theme"
+        />
+        <button
+          onClick={() => changeTheme('blue')}
+          className={cn(
+            "w-6 h-6 rounded-full relative",
+            theme === 'blue' ? 'ring-2 ring-white ring-offset-1 ring-offset-black' : '',
+            "bg-[#F25C05]"
+          )}
+          aria-label="Switch to Luxury Black theme"
+        />
+        <button
+          onClick={() => changeTheme('pink')}
+          className={cn(
+            "w-6 h-6 rounded-full relative",
+            theme === 'pink' ? 'ring-2 ring-white ring-offset-1 ring-offset-black' : '',
+            "bg-[#F7931A]"
+          )}
+          aria-label="Switch to BTC Orange theme"
+        />
+      </div>
+    </div>
+  );
+}
+
+// Add this style before the component definition - after the ThemeSwitcher component
+// Custom style to hide the input field in the JetSelector
+const customJetSelectorStyles = `
+  /* Hide all input fields with this placeholder anywhere in the document */
+  input[placeholder="Enter custom aircraft model"] {
+    display: none !important;
+  }
+  
+  /* Hide input fields inside specific parents */
+  .aircraft-selection-container input[placeholder="Enter custom aircraft model"] {
+    display: none !important;
+  }
+  
+  /* Target the container itself by custom classes */
+  .aircraft-selection-container .input-field-container,
+  .jet-selector-wrapper .input-field-container,
+  div:has(> input[placeholder="Enter custom aircraft model"]) {
+    display: none !important;
+  }
+  
+  /* Target by attributes for specific matching */
+  input[type="text"][placeholder="Enter custom aircraft model"] {
+    display: none !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    pointer-events: none !important;
+  }
+  
+  /* By position in DOM */
+  .jet-selector-wrapper .mt-2 {
+    display: none !important;
+  }
+`;
 // --- Start of the component definition ---
 export default function JetShareOfferForm({ airportsList = [] as Airport[], editOfferId = null }: JetShareOfferFormProps) {
   // --- Top Level State and Refs ---
@@ -420,6 +568,60 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const [isLoadingAirports, setIsLoadingAirports] = useState(false);
   const [currentJetData, setCurrentJetData] = useState<JetDetails | null>(null);
   const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
+  
+  // Get isMobile from theme hook instead of a separate media query
+  const { isMobile } = useGdyupTheme();
+  
+  // State for aircraft details tabs
+  const [detailsTab, setDetailsTab] = useState<string>('specs');
+  
+  // Function to fetch airports directly from the API
+  const fetchAirports = useCallback(async () => {
+    try {
+      if (airports.length > 0) return; // Don't fetch if we already have airports
+      
+      setIsLoadingAirports(true);
+      console.log('[JetShareOfferForm] Fetching airports data...');
+      
+      // Add timestamp to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/airports?t=${timestamp}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Airport API error: ${response.status}`);
+      }
+      
+      const airportsData = await response.json();
+      
+      if (!Array.isArray(airportsData)) {
+        throw new Error('API did not return an array of airports');
+      }
+      
+      console.log(`[JetShareOfferForm] Successfully loaded ${airportsData.length} airports`);
+      setAirports(airportsData);
+    } catch (error) {
+      console.error('[JetShareOfferForm] Error fetching airports:', error);
+      
+      // If we have airports from props, use those as fallback
+      if (airportsList && airportsList.length > 0) {
+        console.log(`[JetShareOfferForm] Using ${airportsList.length} airports from props`);
+        setAirports(airportsList);
+      }
+    } finally {
+      setIsLoadingAirports(false);
+    }
+  }, [airports.length, airportsList]);
+  
+  // Fetch airports when component mounts
+  useEffect(() => {
+    fetchAirports();
+  }, [fetchAirports]);
+  
   const previousJetIdRef = useRef<string>('');
   const form = useForm<z.infer<typeof enhancedFormSchema>>({
     resolver: zodResolver(enhancedFormSchema),
@@ -440,7 +642,6 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const swiperRef = useRef<any>(null);
   const [isSliderActive, setIsSliderActive] = useState(false);
   const [isSwiperInitialized, setIsSwiperInitialized] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [departureResults, setDepartureResults] = useState<string[]>([]);
   const [arrivalResults, setArrivalResults] = useState<string[]>([]);
   const [showDepartureResults, setShowDepartureResults] = useState(false);
@@ -460,7 +661,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const [initialSeatConfig, setInitialSeatConfig] = useState<string[]>([]);
   const visualizerRef = useRef<JetSeatVisualizerRef>(null);
   const [jetImagePath, setJetImagePath] = useState<string>('/images/jets/default-jet.jpg');
-  const [jetInteriorPath, setJetInteriorPath] = useState<string>('/images/jets/interior/default-interior.jpg');
+  const [jetInteriorPath, setJetInteriorPath] = useState<string>('/images/jets/interior/interior1.jpg');
   const [showInteriorImage, setShowInteriorImage] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<string>("specs");
   const isUpdatingRef = useRef(false);
@@ -468,6 +669,8 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const [visualizerSelectedSeats, setVisualizerSelectedSeats] = useState<string[]>([]);
   // Ref to track initial mount for the visualizer effect
   const isVisualizerEffectInitialMount = useRef(true);
+  // Add theme hook
+  const { theme, getThemeClasses, changeTheme } = useGdyupTheme();
 
   // --- Watched Values & Constants ---
   const totalFlightCost = form.watch('total_flight_cost');
@@ -627,15 +830,161 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     // No need to call updateSeatsByRatio anymore
   }, [setIsSliderActive, updateShareAmount]); // Removed updateSeatsByRatio
 
+  // Fix the handleResetTo5050 function to properly handle 50/50 allocation
   const handleResetTo5050 = useCallback(() => {
-    console.log('[FORM handleResetTo5050] Resetting ratio to 50%'); // Log call
+    console.log('[FORM handleResetTo5050] Resetting to 50/50 allocation');
+    
+    // Set the ratio to exactly 50%
+    setShareRatio(50);
+    
+    // Get the current total seats
     const totalSeats = form.getValues('total_seats') || 0;
-    const targetCount = Math.round(totalSeats * 0.50);
-    if (visualizerRef.current?.selectSeatsByCount) {
-      visualizerRef.current.selectSeatsByCount(targetCount);
+    if (totalSeats <= 0) {
+      console.warn('[FORM handleResetTo5050] Total seats not available or invalid.');
+      return;
     }
-    // updateShareAmount(50); // This will be handled by the visualizer's onChange -> useEffect
-  }, [form, visualizerRef]); // Removed setShareRatio, updateShareAmount
+    
+    // Calculate exactly half the seats (rounded)
+    const yourSeats = Math.ceil(totalSeats / 2);
+    const partnerSeats = totalSeats - yourSeats;
+    
+    // Update the form with the partner seats
+    form.setValue('available_seats', partnerSeats, { shouldValidate: true });
+    
+    // Update the share amount
+    const totalCost = form.getValues('total_flight_cost') || 0;
+    const newRequestedShareAmount = Math.round(totalCost * 0.5);
+    form.setValue('requested_share_amount', newRequestedShareAmount, { shouldValidate: true });
+    
+    console.log(`[FORM handleResetTo5050] Setting visualization to ${yourSeats} seats for you, ${partnerSeats} for partner`);
+    
+    // Update the visualizer to show half the seats selected - with retry logic
+    if (visualizerRef.current) {
+      try {
+        // First attempt
+        visualizerRef.current.selectSeatsByCount(yourSeats);
+        console.log(`[FORM handleResetTo5050] Visualizer updated on first try: ${yourSeats} seats`);
+      } catch (e) {
+        console.warn('[FORM handleResetTo5050] Error updating visualizer on first try:', e);
+        // Retry after a short delay
+        setTimeout(() => {
+          try {
+            if (visualizerRef.current) {
+              visualizerRef.current.selectSeatsByCount(yourSeats);
+              console.log(`[FORM handleResetTo5050] Visualizer updated on retry: ${yourSeats} seats`);
+            }
+          } catch (retryError) {
+            console.error('[FORM handleResetTo5050] Error updating visualizer on retry:', retryError);
+          }
+        }, 200);
+      }
+    } else {
+      console.warn('[FORM handleResetTo5050] Visualizer ref not available for selection');
+    }
+    
+    // Immediately force update split configuration state
+    const updatedConfig: OldSplitConfiguration = {
+      jetId: selectedJetId || 'default',
+      splitOrientation: 'horizontal',
+      splitRatio: '50:50',
+      splitPercentage: 50,
+      allocatedSeats: {
+        front: []  // This will be populated by the visualizer's onChange event
+      }
+    };
+    setSplitConfiguration(updatedConfig);
+    
+    // Force a component update to reflect changes
+    setForceUpdateCounter(prev => prev + 1);
+    
+  }, [form, visualizerRef, selectedJetId, setSplitConfiguration, setForceUpdateCounter, setShareRatio]);
+  
+  // Ensure proper seat initialization on load and reset to 50/50 when seats change
+  useEffect(() => {
+    const currentTotalSeats = form.getValues('total_seats');
+    
+    // Use a flag to track if this is the very first time we have a valid seat count
+    const previousTotalSeats = prevTotalSeatsRef.current;
+    const isInitialValidLoad = previousTotalSeats === undefined && 
+                              typeof currentTotalSeats === 'number' && 
+                              currentTotalSeats > 0;
+    
+    const hasChanged = previousTotalSeats !== undefined && 
+                       typeof currentTotalSeats === 'number' && 
+                       currentTotalSeats > 0 &&
+                       previousTotalSeats !== currentTotalSeats;
+    
+    // Check if we're in the seat configuration section
+    const isOnSeatSection = activeSection === 2;
+    
+    console.log(`[useEffect totalSeats] Current: ${currentTotalSeats}, Previous: ${previousTotalSeats}, IsInitial: ${isInitialValidLoad}, HasChanged: ${hasChanged}, IsOnSeatSection: ${isOnSeatSection}`);
+    
+    // Initial load or seat count changed - reset to 50/50
+    if (isInitialValidLoad || hasChanged) {
+      console.log('[useEffect totalSeats] Need to reset 50/50 split.');
+      
+      // Add a slightly longer delay to ensure visualizer is fully ready
+      const timer = setTimeout(() => {
+        handleResetTo5050();
+        // Force an extra update to ensure the visualizer reflects the 50/50 split
+        setForceUpdateCounter(prev => prev + 1);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+    // If we entered the seat section, make sure visualizer shows correct seats
+    else if (isOnSeatSection) {
+      console.log('[useEffect totalSeats] On seat section, ensuring visualizer is synchronized');
+      
+      const timer = setTimeout(() => {
+        const availableSeats = form.getValues('available_seats') || 0;
+        const yourSeats = currentTotalSeats - availableSeats;
+        
+        // Update visualizer to match current form state
+        if (visualizerRef.current && currentTotalSeats > 0) {
+          try {
+            visualizerRef.current.selectSeatsByCount(yourSeats);
+            console.log(`[useEffect totalSeats] Visualizer updated with ${yourSeats} selected seats`);
+          } catch (error) {
+            console.error('[useEffect totalSeats] Error updating visualizer:', error);
+          }
+        }
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+    
+    // Update the previous seats ref for next render
+    prevTotalSeatsRef.current = currentTotalSeats;
+    
+  }, [form, handleResetTo5050, prevTotalSeatsRef, setForceUpdateCounter, activeSection, visualizerRef]);
+
+  // Add effect to synchronize visualizer when returning to seat section
+  useEffect(() => {
+    // Only run when on the seat configuration section (section 2)
+    if (activeSection === 2) {
+      // Small delay to ensure the section is fully rendered
+      const timer = setTimeout(() => {
+        // Get current form values
+        const totalSeats = form.getValues('total_seats') || 0;
+        const availableSeats = form.getValues('available_seats') || 0;
+        const yourSeats = totalSeats - availableSeats;
+        
+        console.log(`[SeatSection Effect] Updating visualizer: Your seats=${yourSeats}, Partner seats=${availableSeats}`);
+        
+        // Update the visualizer to show the current selection
+        if (visualizerRef.current && totalSeats > 0) {
+          try {
+            visualizerRef.current.selectSeatsByCount(yourSeats);
+          } catch (error) {
+            console.error('[SeatSection Effect] Error updating visualizer:', error);
+          }
+        }
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeSection, form, visualizerRef]);
 
   const handleClearSelection = useCallback(() => {
     console.log('[FORM handleClearSelection] Clearing selection'); // Log call
@@ -773,7 +1122,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       toast.error('Authentication error. Please sign in again.');
       return;
     }
-
+    
     // Prevent multiple submissions (already handled in onClick, but double-check here)
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -950,7 +1299,6 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   }, [totalSeats, updateShareAmount, prevTotalSeatsRef, visualizerRef]); // Added visualizerRef dependency
   // *** END NEW EFFECT ***
 
-  useEffect(() => { /* checkMobile */ }, []);
   useEffect(() => { /* Debug logging for image states */ }, [jetImagePath, jetInteriorPath, showInteriorImage, selectedTab]);
   useEffect(() => { /* Auth check */
     console.log('[Auth Effect Check] Running - authLoading:', authLoading, 'User:', !!user);
@@ -1022,6 +1370,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
         galley: detail.galley !== undefined ? detail.galley : undefined,
         entertainment: detail.entertainment || undefined,
         wifi: detail.wifi !== undefined ? detail.wifi : undefined,
+        interior_type: detail.interior_type || undefined,
       };
       setCurrentJetData(newJetDetails); // Update state
       
@@ -1043,7 +1392,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       
       // Image path logic
       if (newJetDetails.image_url) { setJetImagePath(newJetDetails.image_url); } else { setJetImagePath('/images/jets/default-jet.jpg'); }
-      if (newJetDetails.interior_image_url) { setJetInteriorPath(newJetDetails.interior_image_url); } else { setJetInteriorPath('/images/jets/interior/default-interior.jpg'); }
+      if (newJetDetails.interior_image_url) { setJetInteriorPath(newJetDetails.interior_image_url); } else { setJetInteriorPath('/images/jets/interior/interior1.jpg'); }
       
       // console.log("[...] Skipping fetchJetData for now."); // Keep skipping if intended
       
@@ -1066,950 +1415,1206 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   // *** REMOVE currentJetData FROM DEPENDENCIES ***
   }, [form, fetchJetData, setJetImagePath, setJetInteriorPath, setSelectedJetId, isValidUUID, forceUpdate, selectedTab]); // Re-added full dependency array
 
-  // --- CONDITIONAL RETURNS --- 
-  if (isAuthenticating || authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="h-12 w-12 animate-spin gdyup-primary mb-4" />
-        <p className="text-white opacity-70">Verifying authentication...</p>
-      </div>
-    );
-  }
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="p-4 mb-6 rounded-full bg-red-100 text-red-500">
-          <UserPlus className="h-12 w-12" />
-        </div>
-        <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
-        <p className="text-white opacity-70 mb-6 max-w-md">
-          You need to be signed in to create a flight share offer. Please sign in or create an account to continue.
-        </p>
-        <Button
-          onClick={() => router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`)}
-          className="mb-4"
-        >
-          Sign In
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => router.push('/jetshare')}
-        >
-          Return to JetShare Home
-        </Button>
-      </div>
-    );
-  }
-  // --- MAIN RETURN --- 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="gdyup-form relative bg-gray-900 dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden dark">
-        {/* Current Section Label with path-style heading */}
-        <div className="px-4 pt-3 pb-2 sticky top-0 z-10 bg-gdyup-accent/80 backdrop-blur-md text-white border-b border-gdyup-border">
-          <div className="flex items-center text-sm text-white opacity-70">
-            <span className="gdyup-primary font-medium">Create Offer</span>
-            <ChevronRight className="h-4 w-4 mx-1 text-white opacity-50" />
-            <span className="font-medium text-white">{sections[activeSection]}</span>
-          </div>
-        </div>
+  // Event handler for jet change events coming from both selectors
+  useEffect(() => {
+    const handleJetChange = (event: any) => {
+      console.log('JetChange event received:', event.detail);
+      
+      const { 
+        value, 
+        jetId, 
+        seatCapacity, 
+        manufacturer, 
+        model,
+        tail_number,
+        range_nm,
+        cruise_speed_kts,
+        image_url
+      } = event.detail;
+      
+      // Update form with complete aircraft model
+      form.setValue('aircraft_model', value, { shouldValidate: true });
+      
+      // Update jet_id if provided
+      if (jetId) {
+        form.setValue('jet_id', jetId, { shouldValidate: true });
+        setSelectedJetId(jetId);
         
-        {/* Swipeable Sections - Using direct children for less nesting */}
-        <Swiper
-          modules={[Navigation, Pagination, A11y]}
-          spaceBetween={0}
-          slidesPerView={1}
-          onSlideChange={(swiper) => {
-            debugNavigation(`Slide changed to: ${swiper.activeIndex}`);
-            setActiveSection(swiper.activeIndex);
-          }}
-          onSwiper={(swiper) => {
-            debugNavigation("Swiper initialized", swiper);
-            swiperRef.current = swiper;
-            setIsSwiperInitialized(true);
-          }}
-          threshold={10}
-          resistance={true}
-          resistanceRatio={0.85}
-          keyboard={{ enabled: true }}
-          className="gdyup-swiper mb-16"
-          allowTouchMove={!isSliderActive}
-          touchStartPreventDefault={false}
-          touchReleaseOnEdges={true}
-          preventInteractionOnTransition={isSliderActive}
-          noSwipingClass="no-swiper-interaction"
-          watchOverflow={true}
-          simulateTouch={true}
-          style={{ height: 'calc(100vh - 180px)' }}
-        >
-          {/* Section 1: Flight Details - Simplified container structure */}
-          <SwiperSlide className="h-full">
-            <div className="gdyup-section p-3 space-y-3 h-full overflow-y-auto pb-16 bg-gradient-to-b from-gdyup-background to-black">
-              <div className="form-section">
-                <div className="form-section-header">
-                  <Plane className="gdyup-icon w-5 h-5" />
-                  <h2 className="form-section-title">Flight Details</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="departure_time"
-                    render={({ field }) => (
-                      <FormItem className="col-span-1">
-                        <FormLabel className="text-white">Departure Date & Time</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "pl-3 text-left font-normal h-10 w-full", // Reduced height further
-                                  "bg-gdyup-background/80 hover:bg-gdyup-accent border-gdyup-border text-white",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
-                                {field.value ? (
-                                  format(field.value, "MMM d, yyyy 'at' h:mm a")
-                                ) : (
-                                  <span>Select date & time</span>
-                                )}
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date < new Date() || date > new Date(2100, 0, 1)
-                              }
-                              initialFocus
-                            />
-                            <div className="p-2 border-t border-gdyup-border/50">
-                              <TimePickerDemo
-                                date={field.value}
-                                onChange={(newDate) => {
-                                  const updatedDate = new Date(field.value);
-                                  updatedDate.setHours(newDate.getHours());
-                                  updatedDate.setMinutes(newDate.getMinutes());
-                                  field.onChange(updatedDate);
-                                }}
-                              />
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        // Refresh jet data for the display
+        setCurrentJetData({
+          id: jetId,
+          manufacturer,
+          model,
+          tail_number,
+          capacity: seatCapacity,
+          range_nm,
+          cruise_speed_kts,
+          image_url
+        });
+      }
+      
+      // If seat capacity is provided, update related fields
+      if (seatCapacity && typeof seatCapacity === 'number' && seatCapacity > 0) {
+        form.setValue('total_seats', seatCapacity, { shouldValidate: true });
+        
+        // Update available seats to default 50% if not already set
+        if (!form.getValues('available_seats')) {
+          form.setValue('available_seats', Math.floor(seatCapacity / 2), { shouldValidate: true });
+        }
+        // Cap available seats if they exceed the new total
+        else if (form.getValues('available_seats') > seatCapacity) {
+          form.setValue('available_seats', seatCapacity, { shouldValidate: true });
+        }
+      }
+    };
+    
+    // Listen for both regular and custom events
+    window.addEventListener('jetchange', handleJetChange);
+    window.addEventListener('gdyup-jet-change', handleJetChange);
+    
+    return () => {
+      window.removeEventListener('jetchange', handleJetChange);
+      window.removeEventListener('gdyup-jet-change', handleJetChange);
+    };
+  }, [form, setSelectedJetId, setCurrentJetData]);
+  
+  // --- RENDER FUNCTIONS ---
+  
+  // Helper function for icon styling
+  const getIconStyle = (isYellow: boolean = false) => {
+    return isYellow 
+      ? { color: 'black', stroke: 'black', strokeWidth: 2.5, fill: 'none', opacity: 1 } 
+      : { opacity: 1 };
+  };
 
-                  <FormField
-                    control={form.control}
-                    name="departure_location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Departure</FormLabel>
-                        <FormControl>
-                          <LocationAutocomplete
-                            {...field}
-                            placeholder="Enter departure location"
-                            airports={airportsList}
-                            className="bg-gdyup-background/70"
-                            variant="departure"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="arrival_location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Arrival</FormLabel>
-                        <FormControl>
-                          <LocationAutocomplete
-                            {...field}
-                            placeholder="Enter arrival location"
-                            airports={airportsList}
-                            className="bg-gdyup-background/70"
-                            variant="arrival"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Optimized Route Visualization */}
-              {(() => {
-                const departureLocationValue = form.watch('departure_location');
-                const arrivalLocationValue = form.watch('arrival_location');
-                const shouldShowMap = departureLocationValue && arrivalLocationValue;
-                
-                return shouldShowMap ? (
-                  <div className="enhanced-map-container mt-3 mb-2">
-                    <EnhancedAirportMap
-                      departure={departureLocationValue}
-                      arrival={arrivalLocationValue}
-                      className="w-full enhanced-map"
+  // Function to render the flight details section
+  const renderFlightDetailsSection = () => {
+    return (
+      <div className="flex flex-col min-h-[85vh]">
+        <div className="flex-grow px-1 md:px-4 mb-24">
+          {/* Form starts directly without the duplicate header */}
+          <Form {...form}>
+            <div className="space-y-6">
+              {/* Departure Date/Time - with enhanced visibility for icons */}
+              <FormField
+                control={form.control}
+                name="departure_time"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className={getThemeClasses({
+                      base: "text-sm font-medium",
+                      default: "text-white",
+                      blue: "text-blue-100",
+                      pink: "text-pink-100"
+                    })}>
+                      Departure Date & Time
+                    </FormLabel>
+                    <ThemedDateTimePicker
+                      date={field.value}
+                      setDate={field.onChange}
                     />
-                  </div>
-                ) : null;
-              })()}
-            </div>
-          </SwiperSlide>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-          {/* Section 2: Aircraft Selection - Simplified container structure */}
-          <SwiperSlide className="h-full">
-            <div className="gdyup-section p-3 space-y-3 h-full overflow-y-auto pb-16 bg-gradient-to-b from-gdyup-background to-black">
-              <div className="form-section">
-                <div className="form-section-header">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="gdyup-icon w-5 h-5">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <path d="M22 7H2"></path>
-                    <path d="M7 12h7"></path>
-                    <path d="M7 9h4"></path>
-                    <path d="M7 15h4"></path>
-                  </svg>
-                  <h2 className="form-section-title">Aircraft Selection</h2>
-                </div>
-
-                {/* Aircraft model selector - Simplified wrapper */}
+              {/* Departure & Arrival Locations */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Departure Location */}
                 <FormField
                   control={form.control}
-                  name="aircraft_model"
+                  name="departure_location"
                   render={({ field }) => (
-                    <FormItem className="mb-2">
-                      <FormLabel className="text-white sr-only">
-                        <span>Aircraft</span>
+                    <FormItem>
+                      <FormLabel className={getThemeClasses({
+                        base: "text-sm font-medium",
+                        default: "text-white",
+                        blue: "text-blue-100",
+                        pink: "text-pink-100"
+                      })}>
+                        Departure Airport
                       </FormLabel>
                       <FormControl>
-                        <JetSelector
+                        <EnhancedLocationAutocomplete
                           value={field.value}
-                          className="w-full aircraft-model-field"
+                          onChange={field.onChange}
+                          placeholder="Enter departure location"
+                          airports={airports}
+                          variant="departure"
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Jet Details - Flattened structure */}
-                {(() => {
-                  const modelVal = form.getValues('aircraft_model');
-                  const idVal = form.getValues('jet_id');
-                  return modelVal || idVal ? (
-                    <div className="jet-details">
-                      {/* Jet image */}
-                      <div className="jet-main-image-container relative w-full h-40 bg-gdyup-background border-b border-gdyup-border overflow-hidden">
-                        {!showInteriorImage ? (
-                          <img
-                            src={jetImagePath}
-                            alt={form.getValues('aircraft_model') || "Aircraft"}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = "/images/jets/default-jet.jpg";
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={jetInteriorPath}
-                            alt={`${form.getValues('aircraft_model') || "Aircraft"} Interior`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = "/images/jets/interior/default-interior.jpg";
-                            }}
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-gdyup-background to-transparent opacity-80"></div>
-                        <div className="absolute bottom-0 left-0 p-3 flex flex-col">
-                          <h3 className="font-bold text-xl text-white">{currentJetData?.manufacturer || ''} {currentJetData?.model || form.getValues('aircraft_model') || 'Not selected'}</h3>
-                          <div className="flex items-center mt-1">
-                            <Badge variant="outline" className="bg-gdyup-accent/50 border-gdyup-primary/50 text-white text-xs font-semibold">
-                              <span className="text-sm mr-1">{currentJetData?.capacity || form.getValues('total_seats') || 10}</span> seats
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Tabs for jet info - Keeping all content while improving mobile layout */}
-                      <Tabs defaultValue="specs" className="jet-info-tabs" value={selectedTab} onValueChange={(value) => { 
-                        setSelectedTab(value); 
-                        setShowInteriorImage(value === "interior" || value === "amenities");
-                      }}>
-                        <TabsList className="jet-tabs-list w-full grid grid-cols-3 bg-gdyup-accent/90 border-b border-gdyup-border/50 rounded-none h-10">
-                          <TabsTrigger value="specs" className="data-[state=active]:bg-gdyup-accent/60 rounded-none text-sm">Specifications</TabsTrigger>
-                          <TabsTrigger value="interior" className="data-[state=active]:bg-gdyup-accent/60 rounded-none text-sm">Interior</TabsTrigger>
-                          <TabsTrigger value="amenities" className="data-[state=active]:bg-gdyup-accent/60 rounded-none text-sm">Amenities</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="specs" className="p-3 bg-gdyup-accent/30">
-                          <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-                            <div className="flex flex-col border-l-2 border-gdyup-primary/30 pl-2"><span className="text-xs gdyup-primary uppercase">Range</span><span className="font-medium text-white">{currentJetData?.range_nm ? `${currentJetData.range_nm} nm` : '4,500 nm'}</span></div>
-                            <div className="flex flex-col border-l-2 border-gdyup-primary/30 pl-2"><span className="text-xs gdyup-primary uppercase">Speed</span><span className="font-medium text-white">{currentJetData?.cruise_speed_kts ? `${currentJetData.cruise_speed_kts} kts` : '480 kts'}</span></div>
-                            <div className="flex flex-col border-l-2 border-gdyup-primary/30 pl-2"><span className="text-xs gdyup-primary uppercase">Altitude</span><span className="font-medium text-white">{currentJetData?.max_altitude ? `${currentJetData.max_altitude} ft` : '45,000 ft'}</span></div>
-                            <div className="flex flex-col border-l-2 border-gdyup-primary/30 pl-2"><span className="text-xs gdyup-primary uppercase">Capacity</span><span className="font-medium text-white">{currentJetData?.capacity || form.getValues('total_seats')} passengers</span></div>
-                            <div className="flex flex-col border-l-2 border-gdyup-primary/30 pl-2"><span className="text-xs gdyup-primary uppercase">Year</span><span className="font-medium text-white">{currentJetData?.year || 'N/A'}</span></div>
-                            <div className="flex flex-col border-l-2 border-gdyup-primary/30 pl-2"><span className="text-xs gdyup-primary uppercase">Tail Number</span><span className="font-medium text-white">{currentJetData?.tail_number || 'N/A'}</span></div>
-                          </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="interior" className="p-3 bg-gdyup-accent/30">
-                          <div className="space-y-3">
-                            <div className="bg-gdyup-accent/60 rounded-lg p-2 border border-gdyup-border/40">
-                              <h4 className="text-sm font-medium text-white mb-1">Interior Details</h4>
-                              <p className="text-xs text-white opacity-80">{currentJetData?.entertainment || "Standard luxury interior with premium finishes."}</p>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="bg-gdyup-accent/70 rounded-lg p-2 border border-gdyup-border/40">
-                                <h5 className="text-xs font-medium gdyup-primary uppercase">Cabin Length</h5>
-                                <p className="text-sm font-medium text-white">{currentJetData?.cabin_length ? `${currentJetData.cabin_length} ft` : 'Standard'}</p>
-                              </div>
-                              <div className="bg-gdyup-accent/70 rounded-lg p-2 border border-gdyup-border/40">
-                                <h5 className="text-xs font-medium gdyup-primary uppercase">Cabin Width</h5>
-                                <p className="text-sm font-medium text-white">{currentJetData?.cabin_width ? `${currentJetData.cabin_width} ft` : 'Standard'}</p>
-                              </div>
-                              <div className="bg-gdyup-accent/70 rounded-lg p-2 border border-gdyup-border/40">
-                                <h5 className="text-xs font-medium gdyup-primary uppercase">Cabin Height</h5>
-                                <p className="text-sm font-medium text-white">{currentJetData?.cabin_height ? `${currentJetData.cabin_height} ft` : 'Standard'}</p>
-                              </div>
-                              <div className="bg-gdyup-accent/70 rounded-lg p-2 border border-gdyup-border/40">
-                                <h5 className="text-xs font-medium gdyup-primary uppercase">Berths</h5>
-                                <p className="text-sm font-medium text-white">{currentJetData?.berths ? 'Available' : 'Not Available'}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </TabsContent>
-                        
-                        <TabsContent value="amenities" className="p-3 bg-gdyup-accent/30">
-                          <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-gdyup-accent/70 rounded-lg py-2 px-1 border border-gdyup-border/40 text-center">
-                              <Wifi className="w-4 h-4 gdyup-secondary mx-auto mb-1" />
-                              <p className="text-xs font-medium text-white">{currentJetData?.wifi ? "WiFi" : "No WiFi"}</p>
-                            </div>
-                            <div className="bg-gdyup-accent/70 rounded-lg py-2 px-1 border border-gdyup-border/40 text-center">
-                              <Utensils className="w-4 h-4 gdyup-secondary mx-auto mb-1" />
-                              <p className="text-xs font-medium text-white">{currentJetData?.galley ? "Catering" : "No Catering"}</p>
-                            </div>
-                            <div className="bg-gdyup-accent/70 rounded-lg py-2 px-1 border border-gdyup-border/40 text-center">
-                              <Bath className="w-4 h-4 gdyup-secondary mx-auto mb-1" />
-                              <p className="text-xs font-medium text-white">{currentJetData?.lavatory ? "Lavatory" : "No Lavatory"}</p>
-                            </div>
-                            <div className="bg-gdyup-accent/70 rounded-lg py-2 px-1 border border-gdyup-border/40 text-center">
-                              <MonitorPlay className="w-4 h-4 gdyup-secondary mx-auto mb-1" />
-                              <p className="text-xs font-medium text-white">{currentJetData?.entertainment ? "Entertainment" : "No Entertainment"}</p>
-                            </div>
-                            <div className="bg-gdyup-accent/70 rounded-lg py-2 px-1 border border-gdyup-border/40 text-center">
-                              <Bed className="w-4 h-4 gdyup-secondary mx-auto mb-1" />
-                              <p className="text-xs font-medium text-white">{currentJetData?.berths ? "Sleeping Berths" : "No Berths"}</p>
-                            </div>
-                            <div className="bg-gdyup-accent/70 rounded-lg py-2 px-1 border border-gdyup-border/40 text-center">
-                              <ThermometerSun className="w-4 h-4 gdyup-secondary mx-auto mb-1" />
-                              <p className="text-xs font-medium text-white">Climate Control</p>
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                      
-                      {/* Hidden form fields */}
-                      <>
-                        <input type="hidden" name="total_seats" id="total_seats_hidden" value={form.getValues('total_seats')} />
-                        <input type="hidden" name="available_seats" id="available_seats_hidden" value={form.getValues('available_seats')} />
-                      </>
-                    </div>
-                  ) : null;
-                })()}
-
-                {/* Simplified route visualization for aircraft screen */}
-                {(() => {
-                  const departure = form.watch('departure_location');
-                  const arrival = form.watch('arrival_location');
-                  const departureCode = departure ? extractAirportCode(departure) : null;
-                  const arrivalCode = arrival ? extractAirportCode(arrival) : null;
-                  
-                  return departure && arrival ? (
-                    <div className="route-map-mini mt-2 relative bg-gdyup-accent/50 rounded-lg border border-gdyup-border/50 overflow-hidden shadow-inner p-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <div className="w-3 h-3 bg-gdyup-primary rounded-full"></div>
-                          <div className="text-sm text-white font-medium truncate max-w-[120px]">
-                            {departureCode || 'DEP'}
-                          </div>
-                        </div>
-                        
-                        <div className="flex-1 flex items-center justify-center px-2">
-                          <div className="h-0.5 flex-1 gdyup-gradient route-line">
-                            <Plane className="absolute -top-2 left-1/2 transform -translate-x-1/2 h-4 w-4 gdyup-primary rotate-45 plane-icon" />
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-1">
-                          <div className="text-sm text-white font-medium truncate max-w-[120px]">
-                            {arrivalCode || 'ARR'}
-                          </div>
-                          <div className="w-3 h-3 bg-gdyup-primary rounded-full"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null;
-                })()}
-              </div>
-            </div>
-          </SwiperSlide>
-
-          {/* Section 3: Seat Configuration - Simplified container structure */}
-          <SwiperSlide className="h-full">
-            <div className="gdyup-section p-3 h-full overflow-y-auto pb-16 bg-gradient-to-b from-gdyup-background to-black">
-              <div className="form-section">
-                <div className="form-section-header">
-                  <Users className="gdyup-icon w-5 h-5" />
-                  <h2 className="form-section-title">Seat Configuration</h2>
-                </div>
                 
-                {/* Jet seat visualizer section - Better structure for mobile */}
-                {showSeatVisualizer && (
-                  <div className="seat-configuration">
-                    <p className="text-white opacity-80 text-sm mb-2">Select seats or use the slider to adjust the split ratio.</p>
+                {/* Arrival Location */}
+                <FormField
+                  control={form.control}
+                  name="arrival_location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={getThemeClasses({
+                        base: "text-sm font-medium",
+                        default: "text-white",
+                        blue: "text-blue-100",
+                        pink: "text-pink-100"
+                      })}>
+                        Arrival Airport
+                      </FormLabel>
+                      <FormControl>
+                        <EnhancedLocationAutocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Enter arrival location"
+                          airports={airports}
+                          variant="arrival"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              {/* Flight route visualization - moved to the bottom */}
+              {(form.watch('departure_location') || form.watch('arrival_location')) && (
+                <div className={getThemeClasses({
+                  base: "relative p-4 rounded-lg border mt-6 transition-colors",
+                  default: "bg-gray-900/50 border-gray-800",
+                  blue: "bg-blue-950/50 border-blue-900",
+                  pink: "bg-pink-950/50 border-pink-900"
+                })}>
+                  <div className="flex items-center justify-center">
+                    <div className={getThemeClasses({
+                      base: "text-center",
+                      default: "text-white",
+                      blue: "text-blue-100",
+                      pink: "text-pink-100"
+                    })}>
+                      {form.watch('departure_location') || 'Departure'}
+                    </div>
                     
-                    {/* Split ratio slider */}
-                    <div className="seat-slider-container mb-3">
-                      <div className="flex justify-between items-center mb-1 px-1">
-                        <span className="text-white opacity-80 text-xs">You: <span className="text-white font-bold">{shareRatio}%</span></span>
-                        <span className="text-white opacity-80 text-xs">Guest: <span className="text-white font-bold">{100 - shareRatio}%</span></span>
+                    <div className="mx-4 flex-1 flex items-center justify-center">
+                      <div className={getThemeClasses({
+                        base: "h-0.5 flex-1 relative",
+                        default: "bg-[#DAFF0D]",
+                        blue: "bg-blue-500",
+                        pink: "bg-pink-500"
+                      })}>
+                        <RiFlightTakeoffLine className={getThemeClasses({
+                          base: "absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 text-lg",
+                          default: "text-[#DAFF0D]",
+                          blue: "text-blue-500",
+                          pink: "text-pink-500"
+                        })} />
                       </div>
-                      
-                      <Slider
-                        defaultValue={[50]}
-                        max={99}
-                        min={1}
-                        step={1}
-                        onValueChange={(values) => {
-                          // Update share ratio state
-                          handleSliderChange(values);
+                    </div>
+                    
+                    <div className={getThemeClasses({
+                      base: "text-center",
+                      default: "text-white",
+                      blue: "text-blue-100",
+                      pink: "text-pink-100"
+                    })}>
+                      {form.watch('arrival_location') || 'Arrival'}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 text-center">
+                    <span className={getThemeClasses({
+                      base: "text-sm",
+                      default: "text-white/70",
+                      blue: "text-blue-200/70",
+                      pink: "text-pink-200/70"
+                    })}>
+                      {form.watch('departure_time') 
+                        ? format(form.watch('departure_time'), "EEEE, MMMM d, yyyy 'at' h:mm a") 
+                        : 'Select departure date and time'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Form>
+        </div>
+        
+        {/* Fixed navigation footer */}
+        <div className="fixed bottom-0 left-0 right-0 w-full px-4 py-2 bg-black/80 backdrop-blur-sm border-t border-gray-800 z-20">
+          <div className="max-w-screen-md mx-auto">
+            {/* Navigation buttons with indicators between them */}
+            <div className="flex justify-between items-center">
+              {/* Disabled Back button for first section */}
+              <Button
+                type="button"
+                disabled={true}
+                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D]/50 text-black font-medium cursor-not-allowed"
+              >
+                <ChevronLeft className="h-5 w-5 mr-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+                Back
+              </Button>
+              
+              {/* Step indicators between buttons */}
+              <div className="flex justify-center">
+                {Array.from({ length: totalSections }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 mx-1 rounded-full ${
+                      index === activeSection 
+                        ? "bg-[#DAFF0D]" 
+                        : getThemeClasses({
+                          base: "bg-opacity-30",
+                          default: "bg-gray-400",
+                          blue: "bg-blue-400",
+                          pink: "bg-pink-400"
+                        })
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Next button */}
+              <Button
+                type="button"
+                onClick={() => goToNextSection()}
+                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+              >
+                Next
+                <ArrowRight className="h-5 w-5 ml-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Function to render the aircraft selection section
+  const renderAircraftSelectionSection = () => {
+    return (
+      <div className="flex flex-col min-h-[85vh]">
+        <div className="flex-grow px-1 md:px-4 mb-24 overflow-y-auto aircraft-selection-container">
+          <Form {...form}>
+            <div className="space-y-6">
+              {/* Jet selector with mobile support */}
+              <FormField
+                control={form.control}
+                name="aircraft_model"
+                render={({ field }) => (
+                  <FormItem className="jet-selector-wrapper">
+                    <div className={getThemeClasses({
+                      base: "rounded-lg border p-4 transition-colors",
+                      default: "bg-black/30 border-gray-800",
+                      blue: "bg-blue-950/30 border-blue-900",
+                      pink: "bg-pink-950/30 border-pink-900"
+                    })}>
+                      <FormControl>
+                        <div className="relative">
+                          {/* Add a subtle highlight to the selector */}
+                          <div className="absolute inset-0 rounded-md animate-pulse bg-[#DAFF0D]/20 -m-0.5"></div>
                           
-                          // Update visualizer based on slider value
-                          if (visualizerRef.current?.selectSeatsByCount) {
-                            const totalSeats = form.getValues('total_seats') || 0;
-                            const seatCount = Math.round((values[0] / 100) * totalSeats);
-                            visualizerRef.current.selectSeatsByCount(seatCount);
-                          }
+                          {/* Conditionally render Mobile or Desktop selector */}
+                          {isMobile ? (
+                            <MobileJetSelector
+                              key={`mobile-jet-selector-${forceUpdateCounter}`}
+                              value={field.value}
+                              onChangeValue="gdyup-jet-change"
+                              className="relative z-10"
+                            />
+                          ) : (
+                            <JetSelector
+                              key={`jet-selector-${forceUpdateCounter}`}
+                              value={field.value}
+                              className={getThemeClasses({
+                                base: "p-3 rounded-md border relative z-10", 
+                                default: "bg-gray-800 border-gray-700 focus-within:border-[#DAFF0D]",
+                                blue: "bg-blue-900 border-blue-800 focus-within:border-blue-400",
+                                pink: "bg-pink-900 border-pink-800 focus-within:border-pink-400"
+                              })}
+                            />
+                          )}
+                        </div>
+                      </FormControl>
+                      
+                      {/* Only show Change Aircraft button for desktop */}
+                      {currentJetData && !isMobile && (
+                        <div className="mt-3 text-center">
+                          <Button
+                            type="button"
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              // Trigger the dropdown to open
+                              const jetSelectorButton = document.querySelector('.jet-selector-wrapper button[role="combobox"]');
+                              if (jetSelectorButton) {
+                                (jetSelectorButton as HTMLButtonElement).click();
+                              }
+                            }}
+                            className={getThemeClasses({
+                              base: "text-xs border",
+                              default: "bg-gray-900 hover:bg-gray-800 border-gray-700 text-white",
+                              blue: "bg-blue-900 hover:bg-blue-800 border-blue-700 text-blue-100",
+                              pink: "bg-pink-900 hover:bg-pink-800 border-pink-700 text-pink-100"
+                            })}
+                          >
+                            Change Aircraft
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Display aircraft details if available */}
+              {currentJetData && (
+                <motion.div 
+                  className="space-y-6 mt-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Aircraft image and tabs */}
+                  <div className={getThemeClasses({
+                    base: "rounded-lg border overflow-hidden transition-colors shadow-lg",
+                    default: "bg-black/50 border-gray-700",
+                    blue: "bg-black/50 border-blue-800",
+                    pink: "bg-black/50 border-pink-800"
+                  })}>
+                    {/* Aircraft image with enhanced background */}
+                    <div className="p-3">
+                      <div className="aspect-video relative overflow-hidden rounded shadow-inner bg-gradient-to-b from-black/70 to-black/40">
+                        <motion.img
+                          key={showInteriorImage ? 'interior' : 'exterior'}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          src={showInteriorImage ? jetInteriorPath : jetImagePath}
+                          alt={form.watch('aircraft_model') || `${currentJetData.manufacturer} ${currentJetData.model}`}
+                          className="object-cover w-full h-full"
+                        />
+
+                        {/* Aircraft name with improved visibility */}
+                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black via-black/80 to-transparent">
+                          <div className="flex flex-col bg-black/70 backdrop-blur-md p-3 rounded-md shadow-lg border border-[#DAFF0D]/30">
+                            <span className="text-[#DAFF0D] font-bold text-lg">
+                              {`${currentJetData.manufacturer} ${currentJetData.model}`}
+                            </span>
+                            {currentJetData.tail_number && (
+                              <span className="text-gray-300 text-sm">
+                                Tail: {currentJetData.tail_number}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Implement JetDetailsTabs component */}
+                    <div className="p-3">
+                      <JetDetailsTabs 
+                        jetData={currentJetData}
+                        selectedTab={selectedTab}
+                        onTabChange={(tab) => {
+                          setSelectedTab(tab);
+                          // Toggle between exterior/interior image based on selected tab
+                          setShowInteriorImage(tab === 'interior' || tab === 'amenities');
                         }}
-                        onValueCommit={handleSliderCommit}
-                        value={[shareRatio]}
-                        onMouseDown={() => setIsSliderActive(true)}
-                        onMouseUp={() => setIsSliderActive(false)}
-                        className="my-3"
                       />
                     </div>
-                    
-                    {/* Seat Visualizer with legend */}
-                    <div className="visualizer-container bg-gdyup-background/80 rounded-lg border border-gdyup-border p-3 mt-3">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="flex items-center">
-                          <PiArmchair className="w-4 h-4 gdyup-primary mr-1" />
-                          <span className="text-white text-sm font-medium">Your Seats: {shareRatio}%</span>
-                        </div>
-                        <Badge 
-                          variant="outline" 
-                          className="bg-gdyup-accent/20 text-white border-gdyup-primary/30 text-xs"
-                        >
-                          {form.getValues('total_seats') || 0} Seats
-                        </Badge>
-                      </div>
-                      
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* Simple message when no jet is selected */}
+              {!currentJetData && (
+                <div className={getThemeClasses({
+                  base: "mt-6 p-6 rounded-lg border text-center",
+                  default: "bg-gray-900/20 border-gray-800/30 text-white/80",
+                  blue: "bg-blue-950/20 border-blue-900/30 text-blue-200/80",
+                  pink: "bg-pink-950/20 border-pink-900/30 text-pink-200/80"
+                })}>
+                  <p>Please select an aircraft from the dropdown above</p>
+                </div>
+              )}
+            </div>
+          </Form>
+        </div>
+        
+        {/* Fixed navigation footer */}
+        <div className="fixed bottom-0 left-0 right-0 w-full px-4 py-2 bg-black/80 backdrop-blur-sm border-t border-gray-800 z-20">
+          <div className="max-w-screen-md mx-auto">
+            {/* Navigation buttons with indicators between them */}
+            <div className="flex justify-between items-center">
+              {/* Back button */}
+              <Button
+                type="button"
+                onClick={() => goToPrevSection()}
+                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+              >
+                <ChevronLeft className="h-5 w-5 mr-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+                Back
+              </Button>
+              
+              {/* Step indicators between buttons */}
+              <div className="flex justify-center">
+                {Array.from({ length: totalSections }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 mx-1 rounded-full ${
+                      index === activeSection 
+                        ? "bg-[#DAFF0D]" 
+                        : getThemeClasses({
+                          base: "bg-opacity-30",
+                          default: "bg-gray-400",
+                          blue: "bg-blue-400",
+                          pink: "bg-pink-400"
+                        })
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Next button */}
+              <Button
+                type="button"
+                onClick={() => goToNextSection()}
+                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+              >
+                Next
+                <ArrowRight className="h-5 w-5 ml-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Function to render the seat configuration section
+  const renderSeatConfigurationSection = () => {
+    return (
+      <div className="flex flex-col min-h-[85vh]">
+        <div className="flex-grow px-1 md:px-4 mb-24"> {/* Added padding for mobile */}
+          {/* Remove duplicate heading */}
+          <div className="space-y-4">
+            <Form {...form}>
+              <div className="space-y-6">
+                {/* Simplified instruction message with clearer text */}
+                <div className={getThemeClasses({
+                  base: "p-4 rounded-lg border text-sm",
+                  default: "bg-black/20 border-gray-800 text-white/90",
+                  blue: "bg-blue-950/30 border-blue-900 text-blue-100/90",
+                  pink: "bg-pink-950/30 border-pink-900 text-pink-100/90"
+                })}>
+                  <p className="text-center font-medium">Select how many seats to keep for yourself</p>
+                </div>
+                
+                {/* Seat Visualizer with integrated allocation summary */}
+                <div className="relative">
+                  {showSeatVisualizer && (
+                    <div className={getThemeClasses({
+                      base: "rounded-lg border p-2 md:p-4 transition-colors",
+                      default: "bg-black/30 border-gray-800",
+                      blue: "bg-blue-950/30 border-blue-900",
+                      pink: "bg-pink-950/30 border-pink-900"
+                    })}>
                       <JetSeatVisualizer
                         ref={visualizerRef}
-                        totalSeats={form.getValues('total_seats') || 0}
-                        onChange={(selectedSeats) => {
-                          handleSplitConfigurationChange(selectedSeats);
-                        }}
-                        initialSelection={{
-                          jet_id: selectedJetId,
-                          selectedSeats: initialSeatConfig,
-                          totalSeats: form.getValues('total_seats') || 0,
-                          totalSelected: initialSeatConfig.length,
-                          selectionPercentage: shareRatio
-                        }}
-                        jet_id={selectedJetId}
-                        showLegend={false}
+                        jet_id={selectedJetId || 'default'}
+                        totalSeats={form.getValues('total_seats')}
+                        onChange={handleSplitConfigurationChange}
+                        readOnly={false}
+                        showControls={false} // Hide embedded controls
+                        showLegend={true}
+                        selectionDisabled={false}
                         seatConfig={{}}
-                        showControls={false}
-                        className="mb-1"
+                        className="mb-0"
+                        key={`visualizer-${selectedJetId}-${form.getValues('total_seats')}`} // Force re-render when jet or seat count changes
                       />
-                      
-                      {/* Replace the seats text with reset buttons */}
-                      <div className="flex justify-between items-center mt-4 px-1">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => {
-                            // Reset to 0/100 (all seats for guest)
-                            const totalSeats = form.getValues('total_seats') || 0;
-                            setShareRatio(0);
-                            
-                            // Update seat visualizer - clear all selected seats
-                            if (visualizerRef.current?.clearSelection) {
-                              visualizerRef.current.clearSelection();
-                            }
-                            
-                            // Update form values
-                            form.setValue('available_seats', totalSeats, { shouldValidate: true });
-                            updateShareAmount(0);
-                          }}
-                          className="gdyup-button-secondary min-h-[36px] text-xs flex-1 mr-2"
-                          size="sm"
-                        >
-                          Reset to 0/100
-                        </Button>
-                        
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={() => {
-                            // Reset to 50/50
-                            const totalSeats = form.getValues('total_seats') || 0;
-                            const targetCount = Math.round(totalSeats * 0.5);
-                            setShareRatio(50);
-                            
-                            // Update seat visualizer
-                            if (visualizerRef.current?.selectSeatsByCount) {
-                              visualizerRef.current.selectSeatsByCount(targetCount);
-                            }
-                            
-                            // Update form values
-                            form.setValue('available_seats', totalSeats - targetCount, { shouldValidate: true });
-                            updateShareAmount(50);
-                          }}
-                          className="gdyup-button-secondary min-h-[36px] text-xs flex-1"
-                          size="sm"
-                        >
-                          Reset to 50/50
-                        </Button>
+                                </div>
+                              )}
+                              
+                  {/* Seat allocation summary, slider, and actions - redesigned for mobile */}
+                  <div className={getThemeClasses({
+                    base: "mt-6 p-4 rounded-lg border space-y-5 transition-colors",
+                    default: "bg-gray-900/50 border-gray-800",
+                    blue: "bg-blue-950/50 border-blue-900",
+                    pink: "bg-pink-950/50 border-pink-900"
+                  })}>
+                    {/* Seat counters with improved styling */}
+                    <div className="grid grid-cols-2 gap-4 bg-black/30 rounded-lg p-4">
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center text-sm text-yellow-400 mb-1">
+                          <Users className="h-4 w-4 mr-1.5" />
+                          <span>Your seats</span>
+                        </div>
+                        <span className="text-3xl font-bold text-white">{form.watch('total_seats') - form.watch('available_seats')}</span>
                       </div>
-
-                      {/* Keep the legend but adjust styling */}
-                      <div className="flex justify-between items-center mt-2 px-1 text-xs opacity-70">
-                        <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 rounded bg-gdyup-primary"></div>
-                          <span className="text-white">Your seats: {
-                            Math.round((shareRatio / 100) * (form.getValues('total_seats') || 0))
-                          }</span>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center text-sm text-yellow-400 mb-1">
+                          <Users className="h-4 w-4 mr-1.5" />
+                          <span>Partner seats</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 rounded bg-gdyup-accent"></div>
-                          <span className="text-white">Guest's seats: {
-                            (form.getValues('total_seats') || 0) - Math.round((shareRatio / 100) * (form.getValues('total_seats') || 0))
-                          }</span>
-                        </div>
+                        <span className="text-3xl font-bold text-white">{form.watch('available_seats')}</span>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                <div className="info-box bg-gdyup-accent/20 rounded-lg p-2 border border-gdyup-accent/30 mt-2">
-                  <div className="flex items-center">
-                    <Info className="w-4 h-4 gdyup-primary mr-1 shrink-0" />
-                    <p className="text-xs text-white opacity-80">
-                      Seats you select will be reserved for you. Remaining seats will be available 
-                      for your guest.
-                    </p>
+                    
+                    {/* Slider section with improved spacing and style */}
+                    <div className="mt-5">
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="text-sm font-medium text-white/80">
+                          Adjust seat allocation:
+                        </div>
+                        <div className="text-sm font-semibold px-3 py-1 rounded-full bg-[#DAFF0D] text-black">
+                          {shareRatio}%
+                        </div>
+                      </div>
+                      
+                      {/* Enhanced slider with better styling */}
+                      <Slider
+                        defaultValue={[50]} // Default to 50%
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[shareRatio]}
+                        onValueChange={(values) => {
+                          // Update share ratio state
+                          const newRatio = values[0];
+                          setShareRatio(newRatio);
+                          
+                          // Calculate and select seats based on the ratio
+                          const totalSeats = form.getValues('total_seats') || 0;
+                          const targetCount = Math.round(totalSeats * (newRatio / 100));
+                          
+                          // Update available seats directly
+                          const partnerSeats = totalSeats - targetCount;
+                          form.setValue('available_seats', partnerSeats, { shouldValidate: true });
+                          
+                          // Update the visualizer if available
+                          if (visualizerRef.current?.selectSeatsByCount) {
+                            visualizerRef.current.selectSeatsByCount(targetCount);
+                          }
+                          
+                          // Update share amount
+                          updateShareAmount(newRatio);
+                        }}
+                        className="my-4 [&>.range]:bg-[#DAFF0D] [&>[role=slider]]:bg-[#DAFF0D] [&>[role=slider]]:h-5 [&>[role=slider]]:w-5 [&>[role=slider]]:mt-[-8px]"
+                        aria-label="Seat allocation percentage"
+                      />
+                      
+                      {/* Simplified ratio display */}
+                      <div className="flex items-center justify-between text-sm text-white/80 px-1">
+                        <div>You: {shareRatio}%</div>
+                        <div>Partner: {100 - shareRatio}%</div>
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons with improved visibility */}
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                      <Button
+                        type="button"
+                        onClick={handleResetTo5050}
+                        className="h-12 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+                      >
+                        Reset to 50/50
+                      </Button>
+                      
+                      <Button
+                        type="button"
+                        onClick={handleClearSelection}
+                        className="h-12 rounded-md bg-green-500 hover:bg-green-600 text-white font-medium"
+                      >
+                        Clear Selection
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
+            </Form>
+          </div>
+        </div>
+        
+        {/* Fixed navigation footer */}
+        <div className="fixed bottom-0 left-0 right-0 w-full px-4 py-2 bg-black/80 backdrop-blur-sm border-t border-gray-800 z-20">
+          <div className="max-w-screen-md mx-auto">
+            {/* Navigation buttons with indicators between them */}
+            <div className="flex justify-between items-center">
+              {/* Navigation buttons */}
+              <Button
+                type="button"
+                onClick={() => goToPrevSection()}
+                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+              >
+                <ChevronLeft className="h-5 w-5 mr-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+                Back
+              </Button>
+              
+              {/* Step indicators between buttons */}
+              <div className="flex justify-center">
+                {Array.from({ length: totalSections }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 mx-1 rounded-full ${
+                      index === activeSection 
+                        ? "bg-[#DAFF0D]" 
+                        : getThemeClasses({
+                          base: "bg-opacity-30",
+                          default: "bg-gray-400",
+                          blue: "bg-blue-400",
+                          pink: "bg-pink-400"
+                        })
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Continue button */}
+              <Button
+                type="button"
+                onClick={() => goToNextSection()}
+                className="w-32 md:w-36 h-11 rounded-md bg-green-500 hover:bg-green-600 text-white font-medium"
+              >
+                Continue
+                <ChevronRight className="h-5 w-5 ml-1" />
+              </Button>
             </div>
-          </SwiperSlide>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-          {/* Section 4: Cost Details - Simplified container structure */}
-          <SwiperSlide className="h-full">
-            <div className="gdyup-section p-4 space-y-4 h-full overflow-y-auto pb-16 bg-gradient-to-b from-gdyup-background to-black">
-              {/* Add form validation status at the top of the final page */}
-              <div className="form-section">
-                <div className="form-section-header">
-                  <ListChecks className="w-5 h-5" />
-                  <h2 className="form-section-title">Submission Checklist</h2>
-                </div>
-                <div className="grid grid-cols-1 gap-1 text-sm mt-1">
-                  <div className="flex items-center">
-                    <div className={cn(
-                      "w-4 h-4 rounded-full mr-2 flex items-center justify-center",
-                      form.getValues('departure_location') && form.getValues('arrival_location')
-                        ? "bg-success/20 text-success"
-                        : "bg-error/20 text-error"
-                    )}>
-                      {form.getValues('departure_location') && form.getValues('arrival_location')
-                        ? <CheckCircle className="w-3 h-3" />
-                        : <Info className="w-3 h-3" />
-                      }
-                    </div>
-                    <span className={form.getValues('departure_location') && form.getValues('arrival_location')
-                        ? "text-success"
-                        : "text-error"
-                    }>
-                      Flight route is complete
-                    </span>
+  // Function to render the cost details section
+  const renderCostDetailsSection = () => {
+    return (
+      <div className="flex flex-col min-h-[85vh]">
+        <div className="flex-grow px-1 md:px-4 mb-24">
+          {/* Removed duplicate heading */}
+          <Form {...form}>
+            <div className="space-y-6">
+              {/* Flight Summary */}
+              <div className={getThemeClasses({
+                base: "p-4 rounded-lg border mb-6 transition-colors",
+                default: "bg-gray-900/50 border-gray-800",
+                blue: "bg-blue-950/50 border-blue-900",
+                pink: "bg-pink-950/50 border-pink-900"
+              })}>
+                <h4 className={getThemeClasses({
+                  base: "text-sm font-medium mb-3",
+                  default: "text-white",
+                  blue: "text-blue-100",
+                  pink: "text-pink-100"
+                })}>
+                  Flight Summary
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className={getThemeClasses({
+                    base: "flex flex-col",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    <span className="opacity-70">Departure:</span>
+                    <span className="font-medium">{form.watch('departure_location') || 'Not specified'}</span>
                   </div>
                   
-                  <div className="flex items-center">
-                    <div className={cn(
-                      "w-4 h-4 rounded-full mr-2 flex items-center justify-center",
-                      form.getValues('aircraft_model')
-                        ? "bg-success/20 text-success"
-                        : "bg-error/20 text-error"
-                    )}>
-                      {form.getValues('aircraft_model')
-                        ? <CheckCircle className="w-3 h-3" />
-                        : <Info className="w-3 h-3" />
-                      }
-                    </div>
-                    <span className={form.getValues('aircraft_model')
-                        ? "text-success"
-                        : "text-error"
-                    }>
-                      Aircraft is selected
-                    </span>
+                  <div className={getThemeClasses({
+                    base: "flex flex-col",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    <span className="opacity-70">Arrival:</span>
+                    <span className="font-medium">{form.watch('arrival_location') || 'Not specified'}</span>
                   </div>
                   
-                  <div className="flex items-center">
-                    <div className={cn(
-                      "w-4 h-4 rounded-full mr-2 flex items-center justify-center",
-                      getTotalAllocatedSeats(splitConfiguration) > 0
-                        ? "bg-success/20 text-success"
-                        : "bg-warning/20 text-warning"
-                    )}>
-                      {getTotalAllocatedSeats(splitConfiguration) > 0
-                        ? <CheckCircle className="w-3 h-3" />
-                        : <Info className="w-3 h-3" />
-                      }
-                    </div>
-                    <span className={getTotalAllocatedSeats(splitConfiguration) > 0
-                        ? "text-success"
-                        : "text-warning"
-                    }>
-                      Seat configuration is set
-                      {getTotalAllocatedSeats(splitConfiguration) === 0 && " (optional)"}
-                    </span>
+                  <div className={getThemeClasses({
+                    base: "flex flex-col",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    <span className="opacity-70">Date & Time:</span>
+                    <span className="font-medium">
+                      {form.watch('departure_time') 
+                        ? format(form.watch('departure_time'), "MMM d, yyyy 'at' h:mm a") 
+                        : 'Not specified'}
+                                  </span>
+                                  </div>
+                  
+                  <div className={getThemeClasses({
+                    base: "flex flex-col",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    <span className="opacity-70">Aircraft:</span>
+                    <span className="font-medium">{form.watch('aircraft_model') || 'Not specified'}</span>
+                                </div>
+                  
+                  <div className={getThemeClasses({
+                    base: "flex flex-col",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    <span className="opacity-70">Your Seats:</span>
+                    <span className="font-medium">{form.watch('total_seats') - form.watch('available_seats')} of {form.watch('total_seats')}</span>
                   </div>
                   
-                  <div className="flex items-center">
-                    <div className={cn(
-                      "w-4 h-4 rounded-full mr-2 flex items-center justify-center",
-                      totalFlightCost > 0 && requestedShareAmount > 0
-                        ? "bg-success/20 text-success"
-                        : "bg-error/20 text-error"
-                    )}>
-                      {totalFlightCost > 0 && requestedShareAmount > 0
-                        ? <CheckCircle className="w-3 h-3" />
-                        : <Info className="w-3 h-3" />
-                      }
-                    </div>
-                    <span className={totalFlightCost > 0 && requestedShareAmount > 0
-                        ? "text-success"
-                        : "text-error"
-                    }>
-                      Cost details are complete
-                    </span>
+                  <div className={getThemeClasses({
+                    base: "flex flex-col",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    <span className="opacity-70">Available Seats:</span>
+                    <span className="font-medium">{form.watch('available_seats')}</span>
                   </div>
                 </div>
               </div>
               
-              <div className="space-y-6">
-                {/* Total Flight Cost with enhanced styling */}
-                <div className="form-section">
-                  <div className="form-section-header">
-                    <DollarSign className="w-5 h-5" />
-                    <h2 className="form-section-title">Total Flight Cost</h2>
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="total_flight_cost"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="total_flight_cost" className="flex items-center text-white mb-2">
-                          <DollarSign className="h-5 w-5 mr-2 gdyup-primary" />
-                          <span className="font-medium">Total Flight Cost ($)</span>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              id="total_flight_cost"
-                              type="number"
-                              min={1}
-                              placeholder="Enter total flight cost"
-                              {...field}
-                              onChange={(e) => {
-                                const newTotalCost = parseInt(e.target.value) || 0;
-                                field.onChange(newTotalCost);
-                                
-                                // Update requestedShareAmount when total cost changes
-                                // based on current ratio
-                                if (newTotalCost > 0) {
-                                  const newShareAmount = Math.round(newTotalCost * ((100 - shareRatio) / 100));
-                                  form.setValue('requested_share_amount', newShareAmount, { shouldValidate: true });
-                                }
-                              }}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-red-400 mt-2" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Requested Share Amount with enhanced styling */}
-                <div className="form-section">
-                  <div className="form-section-header">
-                    <DollarSign className="w-5 h-5" />
-                    <h2 className="form-section-title">Requested Share Amount</h2>
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="requested_share_amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel htmlFor="requested_share_amount" className="flex items-center text-white mb-2">
-                          <DollarSign className="h-5 w-5 mr-2 gdyup-primary" />
-                          <span className="font-medium">Requested Share Amount ($)</span>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              id="requested_share_amount"
-                              type="number"
-                              min={1}
-                              max={totalFlightCost || 999999999}
-                              className="pl-3 min-h-[44px] bg-gdyup-background/80 border-gdyup-border focus:ring-gdyup-primary focus:border-gdyup-primary rounded-lg text-white"
-                              {...field}
-                              onChange={(e) => {
-                                const requestedAmount = parseInt(e.target.value) || 0;
-                                field.onChange(requestedAmount);
-                                
-                                // Update shareRatio when requested amount changes
-                                const totalCost = form.getValues('total_flight_cost') || 0;
-                                if (totalCost > 0) {
-                                  // Calculate ratio based on what the *other* person pays (requestedAmount)
-                                  const otherPaysRatio = Math.round((requestedAmount / totalCost) * 100);
-                                  // Your ratio is 100 minus that
-                                  const newRatio = Math.min(99, Math.max(1, 100 - otherPaysRatio));
-                                  console.log(`[FORM Requested Amount Change] Updating shareRatio to: ${newRatio}%`);
-                                  setShareRatio(newRatio);
-                                }
-                              }}
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage className="text-red-400 mt-2" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Enhanced Summary with visual representation */}
-                <div className="mt-6 overflow-hidden rounded-xl bg-gdyup-accent/50 backdrop-blur-sm border border-gdyup-border shadow-xl">
-                  {/* Add the airport map above the summary */}
-                  {form.watch('departure_location') && form.watch('arrival_location') && (
-                    <div className="w-full h-60 relative rounded-t-xl overflow-hidden border-b border-gray-700/50">
-                      <EnhancedAirportMap
-                        departure={form.watch('departure_location')}
-                        arrival={form.watch('arrival_location')}
-                        className="w-full h-full"
+              {/* Total Flight Cost */}
+              <FormField
+                control={form.control}
+                name="total_flight_cost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={getThemeClasses({
+                      base: "text-sm font-medium flex items-center",
+                      default: "text-white",
+                      blue: "text-blue-100",
+                      pink: "text-pink-100"
+                    })}>
+                      <DollarSign className="h-4 w-4 mr-1 opacity-70" />
+                      Total Flight Cost (USD)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        {...field}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          field.onChange(isNaN(value) ? '' : value);
+                          
+                          // Update requested share amount based on total cost and current ratio
+                          const totalCost = isNaN(value) ? 0 : value;
+                          if (totalCost > 0) {
+                            // Calculate based on the current shareRatio
+                            const newShareAmount = Math.round(totalCost * ((100 - shareRatio) / 100));
+                            form.setValue('requested_share_amount', newShareAmount, { shouldValidate: true });
+                          }
+                        }}
+                        className={getThemeClasses({
+                          base: "border",
+                          default: "bg-gray-800 border-gray-700 focus:border-[#DAFF0D] text-white",
+                          blue: "bg-blue-900 border-blue-800 focus:border-blue-400 text-blue-100",
+                          pink: "bg-pink-900 border-pink-800 focus:border-pink-400 text-pink-100"
+                        })}
                       />
-                    </div>
-                  )}
-                  <div className="bg-gradient-to-r from-gray-800/90 to-gray-700/90 text-white px-4 py-3">
-                    <h3 className="font-bold text-base">Flight Share Offer Summary</h3>
+                    </FormControl>
+                    <FormDescription className={getThemeClasses({
+                      base: "text-xs mt-1",
+                      default: "text-white/60",
+                      blue: "text-blue-200/60",
+                      pink: "text-pink-200/60"
+                    })}>
+                      The total cost of the flight in USD.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Requested Share Amount */}
+              <FormField
+                control={form.control}
+                name="requested_share_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={getThemeClasses({
+                      base: "text-sm font-medium flex items-center",
+                      default: "text-white",
+                      blue: "text-blue-100",
+                      pink: "text-pink-100"
+                    })}>
+                      <DollarSign className="h-4 w-4 mr-1 opacity-70" />
+                      Requested Share Amount (USD)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        max={form.watch('total_flight_cost')}
+                        {...field}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          field.onChange(isNaN(value) ? '' : value);
+                        }}
+                        className={getThemeClasses({
+                          base: "border",
+                          default: "bg-gray-800 border-gray-700 focus:border-[#DAFF0D] text-white",
+                          blue: "bg-blue-900 border-blue-800 focus:border-blue-400 text-blue-100",
+                          pink: "bg-pink-900 border-pink-800 focus:border-pink-400 text-pink-100"
+                        })}
+                      />
+                    </FormControl>
+                    <FormDescription className={getThemeClasses({
+                      base: "text-xs mt-1",
+                      default: "text-white/60",
+                      blue: "text-blue-200/60",
+                      pink: "text-pink-200/60"
+                    })}>
+                      The amount you're requesting from your partner. Cannot exceed the total flight cost.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Cost summary */}
+              <div className={getThemeClasses({
+                base: "p-4 rounded-lg border mt-4 transition-colors",
+                default: "bg-gray-900/50 border-gray-800",
+                blue: "bg-blue-950/50 border-blue-900",
+                pink: "bg-pink-950/50 border-pink-900"
+              })}>
+                <div className="flex justify-between items-center mb-2">
+                  <div className={getThemeClasses({
+                    base: "text-sm",
+                    default: "text-white/70",
+                    blue: "text-blue-200/70",
+                    pink: "text-pink-200/70"
+                  })}>
+                    Total Flight Cost:
+                                </div>
+                  <div className={getThemeClasses({
+                    base: "font-medium",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    ${form.watch('total_flight_cost') || 0}
+                              </div>
+                            </div>
+                
+                <div className="flex justify-between items-center mb-2">
+                  <div className={getThemeClasses({
+                    base: "text-sm",
+                    default: "text-white/70",
+                    blue: "text-blue-200/70",
+                    pink: "text-pink-200/70"
+                  })}>
+                    Your Cost:
                   </div>
-                  <div className="bg-gdyup-accent/90 px-4 py-3 space-y-3 shadow-inner">
-                    <div className="flex justify-between items-center">
-                      <span className="text-white opacity-60 text-sm">Flight Date:</span>
-                      <span className="font-medium text-white text-sm">{form.getValues('departure_time') ? format(form.getValues('departure_time'), "MMM d, yyyy h:mm a") : "Not set"}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white opacity-60 text-sm">Route:</span>
-                      <span className="font-medium text-white text-sm">{form.getValues('departure_location') || "Not set"} → {form.getValues('arrival_location') || "Not set"}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white opacity-60 text-sm">Aircraft:</span>
-                      <span className="font-medium text-white text-sm">{form.getValues('aircraft_model') || "Not set"}</span>
-                    </div>
-                    
-                    {/* Visual share ratio indicator */}
-                    <div className="pt-3 border-t border-gray-700">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-white opacity-60 text-sm">Share Ratio:</span>
-                        <div className="flex items-center gap-2">
-                          <div className="gdyup-split-ratio-bar">
-                            <div className="gdyup-split-ratio-primary" style={{ width: `${shareRatio}%` }}></div>
-                            <div className="gdyup-split-ratio-secondary" style={{ width: `${100 - shareRatio}%` }}></div>
-                          </div>
-                          <span className="font-medium text-white text-sm">{shareRatio}% / {100 - shareRatio}%</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Cost breakdown with enhanced styling */}
-                    <div className="mt-4 bg-gdyup-background/70 rounded-lg p-3 border border-gdyup-border/80">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium text-white opacity-60 text-sm">Total Flight Cost:</span>
-                        <span className="font-bold text-white">${totalFlightCost || 0}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium gdyup-primary opacity-80 text-sm">You Pay:</span>
-                        <span className="font-bold gdyup-primary">${totalFlightCost ? totalFlightCost - requestedShareAmount : 0}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-white opacity-60 text-sm">Sharer Pays:</span>
-                        <span className="font-bold text-white opacity-80">${requestedShareAmount || 0}</span>
-                      </div>
-                    </div>
+                  <div className={getThemeClasses({
+                    base: "font-medium",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    ${(form.watch('total_flight_cost') || 0) - (form.watch('requested_share_amount') || 0)}
                   </div>
                 </div>
                 
-                {/* Add a new final submission review section */}
-                <div className="mt-6 overflow-hidden rounded-xl bg-gdyup-accent/50 backdrop-blur-sm border border-gdyup-border shadow-xl">
-                  <div className="bg-gradient-to-r from-gdyup-primary/20 to-gdyup-primary/10 text-white px-4 py-3 flex items-center border-b border-gdyup-primary/20">
-                    <CheckCircle className="w-5 h-5 mr-2 gdyup-primary" />
-                    <h3 className="font-bold text-base">Ready to Submit</h3>
+                <div className="flex justify-between items-center">
+                  <div className={getThemeClasses({
+                    base: "text-sm",
+                    default: "text-white/70",
+                    blue: "text-blue-200/70",
+                    pink: "text-pink-200/70"
+                  })}>
+                    Partner Cost:
                   </div>
-                  <div className="bg-gdyup-accent/90 px-4 py-3 shadow-inner">
-                    <p className="text-white opacity-80 text-sm mb-3">
-                      Your JetShare offer is ready to submit. Once published, it will appear in the marketplace
-                      where other members can see it and request to join your flight.
-                    </p>
-                    
-                    <div className="space-y-2 mt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-white opacity-60 text-sm">Seat Configuration:</span>
-                        <Badge className="bg-gdyup-primary/20 text-gdyup-primary border-gdyup-primary/30">
-                          {/* Use form value for display */}
-                          {form.getValues('available_seats') > 0
-                            ? `${form.getValues('available_seats')} seats selected (${shareRatio}%)`
-                            : 'Default configuration (50/50)'}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-white opacity-60 text-sm">Available to Book:</span>
-                        <Badge className="bg-gdyup-accent/50 text-white border-gdyup-border/50">
-                          {form.getValues('available_seats')} seats
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-white opacity-60 text-sm">Offer Status:</span>
-                        <Badge className="bg-gdyup-primary/20 text-gdyup-primary border-gdyup-primary/30">
-                          Open
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-5 bg-gdyup-primary/10 rounded-lg p-3 border border-gdyup-primary/20">
-                      <p className="gdyup-primary opacity-90 text-xs">
-                        Click the Submit button below to publish your offer to the JetShare marketplace.
-                        You can always edit or cancel your offer from your dashboard later.
-                      </p>
-                    </div>
+                  <div className={getThemeClasses({
+                    base: "font-medium",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    ${form.watch('requested_share_amount') || 0}
+                  </div>
+                </div>
+                
+                <div className="w-full h-px my-3 bg-gray-800"></div>
+                
+                <div className="flex justify-between items-center">
+                  <div className={getThemeClasses({
+                    base: "text-sm",
+                    default: "text-white/70",
+                    blue: "text-blue-200/70",
+                    pink: "text-pink-200/70"
+                  })}>
+                    Cost per Seat (Avg):
+                  </div>
+                  <div className={getThemeClasses({
+                    base: "font-medium",
+                    default: "text-white",
+                    blue: "text-blue-100",
+                    pink: "text-pink-100"
+                  })}>
+                    ${form.watch('total_flight_cost') && form.watch('total_seats') 
+                      ? Math.round((form.watch('total_flight_cost') || 0) / (form.watch('total_seats') || 1)) 
+                      : 0}
                   </div>
                 </div>
               </div>
             </div>
-          </SwiperSlide>
-        </Swiper>
+          </Form>
+        </div>
         
-        {/* Sticky Navigation Footer - No changes needed */}
-        <div className="fixed bottom-0 left-0 right-0 bg-gdyup-accent/90 backdrop-blur-md border-t border-gdyup-border p-3 flex items-center justify-between shadow-lg z-20">
-          {activeSection > 0 ? (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => goToPrevSection()}
-              className="gdyup-button-secondary min-h-[44px] px-4 text-white text-sm font-medium"
-              aria-label="Go back to previous section"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1 gdyup-icon" />
-              Back
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.push('/gdyup/dashboard?tab=offers')}
-              className="gdyup-button-secondary min-h-[44px] px-4 text-white text-sm font-medium"
-              disabled={isSubmitting}
-              aria-label="Cancel and go back to dashboard"
-            >
-              Cancel
-            </Button>
-          )}
-          
-          {/* Section indicators in the middle of the footer */}
-          <div className="flex items-center justify-center gap-1">
-            {sections.map((section, index) => (
-              <button
-                key={index}
+        {/* Fixed navigation footer */}
+        <div className="fixed bottom-0 left-0 right-0 w-full px-4 py-2 bg-black/80 backdrop-blur-sm border-t border-gray-800 z-20">
+          <div className="max-w-screen-md mx-auto">
+            {/* Navigation buttons with indicators between them */}
+            <div className="flex justify-between items-center">
+              {/* Back button */}
+              <Button
                 type="button"
-                onClick={() => goToSection(index)}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-all",
-                  activeSection === index 
-                    ? "bg-gdyup-primary" 
-                    : "bg-gdyup-accent"
+                onClick={() => goToPrevSection()}
+                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+              >
+                <ChevronLeft className="h-5 w-5 mr-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+                Back
+              </Button>
+              
+              {/* Step indicators between buttons */}
+              <div className="flex justify-center">
+                {Array.from({ length: totalSections }).map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 mx-1 rounded-full ${
+                      index === activeSection 
+                        ? "bg-[#DAFF0D]" 
+                        : getThemeClasses({
+                          base: "bg-opacity-30",
+                          default: "bg-gray-400",
+                          blue: "bg-blue-400",
+                          pink: "bg-pink-400"
+                        })
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              {/* Submit button */}
+              <Button
+                type="button"
+                onClick={() => {
+                  // Validate form before submitting
+                  form.trigger().then(isValid => {
+                    if (isValid) {
+                      console.log("Form is valid, submitting...");
+                      // Ensure we have split configuration before submission
+                      if (!splitConfiguration && visualizerRef.current) {
+                        // Get current values from form
+                        const totalSeats = form.getValues('total_seats') || 0;
+                        const availableSeats = form.getValues('available_seats') || 0;
+                        const yourSeats = totalSeats - availableSeats;
+                        const percentage = totalSeats > 0 ? Math.round((yourSeats / totalSeats) * 100) : 50;
+                        
+                        // Create minimal split configuration
+                        setSplitConfiguration({
+                          jetId: selectedJetId || 'default',
+                          splitOrientation: 'horizontal',
+                          splitRatio: `${percentage}:${100-percentage}`,
+                          splitPercentage: percentage,
+                          allocatedSeats: { front: [] }
+                        });
+                      }
+                      onSubmit(form.getValues());
+                    } else {
+                      // Show validation errors
+                      console.log("Form validation failed");
+                      toast.error('Please fix form errors before submitting');
+                    }
+                  });
+                }}
+                disabled={isSubmitting}
+                className={`w-32 md:w-36 h-11 rounded-md font-medium ${
+                  isSubmitting 
+                    ? 'bg-green-700 text-white/70 cursor-not-allowed' 
+                    : 'bg-green-500 hover:bg-green-600 text-white'
+                }`}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin text-white" style={getIconStyle(false)} />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    Submit
+                    <ArrowRight className="h-5 w-5 ml-1 text-white" style={getIconStyle(false)} />
+                  </>
                 )}
-                aria-label={`Go to ${section}`}
-              />
-            ))}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // --- MAIN RETURN --- 
+  if (isAuthenticating || authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-12 w-12 animate-spin gdyup-primary mb-4" />
+        <p className={getThemeClasses({
+          base: "text-center",
+          default: "text-white/70",
+          blue: "text-blue-200/70",
+          pink: "text-pink-200/70"
+        })}>Verifying authentication...</p>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+                            <div className={getThemeClasses({
+          base: "p-4 mb-6 rounded-full",
+          default: "bg-gdyup-primary/20 text-gdyup-primary",
+          blue: "bg-blue-500/20 text-blue-500",
+          pink: "bg-pink-500/20 text-pink-500"
+        })}>
+          <UserPlus className="h-12 w-12" />
+        </div>
+        <h2 className={getThemeClasses({
+          base: "text-2xl font-bold mb-4",
+          default: "text-white",
+          blue: "text-blue-100",
+          pink: "text-pink-100"
+        })}>Authentication Required</h2>
+        <p className={getThemeClasses({
+          base: "mb-6 max-w-md",
+          default: "text-white/70",
+          blue: "text-blue-200/70",
+          pink: "text-pink-200/70"
+        })}>
+          You need to be signed in to create a flight share offer. Please sign in or create an account to continue.
+        </p>
+        <Button
+          onClick={() => router.push(`/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`)}
+          className={getThemeClasses({
+            base: "mb-4",
+            default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-black",
+            blue: "bg-blue-500 hover:bg-blue-600 text-white",
+            pink: "bg-pink-500 hover:bg-pink-600 text-white"
+          })}
+        >
+          Sign In
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => router.push('/jetshare')}
+          className={getThemeClasses({
+            base: "",
+            default: "border-gray-700 text-white hover:bg-gray-800",
+            blue: "border-blue-800 text-blue-100 hover:bg-blue-900",
+            pink: "border-pink-800 text-pink-100 hover:bg-pink-900"
+          })}
+        >
+          Return to JetShare Home
+        </Button>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={getThemeClasses({
+      base: "relative rounded-lg border shadow-sm overflow-hidden transition-colors",
+      default: "bg-gray-900 border-gray-800",
+      blue: "bg-blue-950 border-blue-900",
+      pink: "bg-pink-950 border-pink-900"
+    })}>
+      {/* Inject the custom style to hide the input field */}
+      <style>{customJetSelectorStyles}</style>
+      
+      <div className="p-4 md:p-6">
+        {/* Form content */}
+        <div className="relative">
+          {/* Title area - single title only */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className={getThemeClasses({
+                base: "text-xl font-bold",
+                default: "text-white",
+                blue: "text-blue-100", 
+                pink: "text-pink-100"
+              })}>
+                {sections[activeSection]}
+              </h2>
+              
+              <p className={getThemeClasses({
+                base: "text-sm mt-1",
+                default: "text-white/70",
+                blue: "text-blue-200/70", 
+                pink: "text-pink-200/70"
+              })}>
+                {activeSection === 0 && "Enter your flight route details for existing or new bookings"}
+                {activeSection === 1 && "Use the dropdown below to select from your fleet or available options"}
+                {activeSection === 2 && "Configure seat allocation between you and your partner"}
+                {activeSection === 3 && "Set your share pricing and review details"}
+              </p>
+            </div>
           </div>
           
-          {activeSection < totalSections - 1 ? (
-            <Button 
-              type="button" 
-              onClick={() => goToNextSection()}
-              className="gdyup-button-primary min-h-[44px] px-4 text-black font-medium text-sm"
-              aria-label={`Continue to ${sections[activeSection + 1]}`}
-            >
-              Next
-              <ChevronRight className="w-4 h-4 ml-1 opacity-100 visible text-black" />
-            </Button>
-          ) : (
-            <Button 
-              type="button"
-              disabled={isSubmitting || isAuthenticating}
-              className="gdyup-button-primary min-h-[44px] px-4 text-black font-medium text-sm"
-              aria-label="Review and submit offer"
-              onClick={(e) => {
-                console.log("Submit button clicked - initiating manual submit process");
-                if (window.confirm('Are you ready to submit your JetShare offer?')) {
-                  console.log("User confirmed submission - calling form.handleSubmit(onSubmit)");
-                  form.handleSubmit(onSubmit)(e); // Explicitly call the submit handler with the event
-                } else {
-                  console.log("Submission cancelled by user.");
-                }
+          {isEditMode && (
+            <div className={getThemeClasses({
+              base: "mb-4 p-3 rounded-md text-sm",
+              default: "bg-amber-900/20 text-amber-400 border border-amber-900/30",
+              blue: "bg-amber-900/20 text-amber-400 border border-amber-900/30",
+              pink: "bg-amber-900/20 text-amber-400 border border-amber-900/30"
+            })}>
+              <div className="flex items-center">
+                <Info className="w-5 h-5 mr-2 opacity-70" />
+                <span>You are editing an existing offer. Changes will be saved when you submit.</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+          {/* Remove the main progress indicator */}
+          
+          {/* Sections */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 300, 
+                damping: 30,
+                opacity: { duration: 0.2 }
               }}
+              className="relative"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin text-black" />
-                  {editOfferId ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                <>{editOfferId ? 'Update Offer' : 'Submit Offer'}</>
-              )}
-            </Button>
-          )}
+              {/* Remove the progress dots from the top */}
+              
+              {/* Render the active section */}
+              {activeSection === 0 && renderFlightDetailsSection()}
+              {activeSection === 1 && renderAircraftSelectionSection()}
+              {activeSection === 2 && renderSeatConfigurationSection()}
+              {activeSection === 3 && renderCostDetailsSection()}
+            </motion.div>
+          </AnimatePresence>
         </div>
-      </form>
-    </Form>
+      </div>
+    </div>
   );
-} 
+}
+  
+  // ... existing code ...
+
 
 
