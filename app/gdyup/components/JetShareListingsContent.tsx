@@ -677,151 +677,43 @@ export default function JetShareListingsContent() {
   };
   
   const confirmOfferAccept = async () => {
-    // Early return if selectedOffer is null
+    setIsAccepting(true);
+    
+    // Ensure we have a selected offer
     if (!selectedOffer) {
-      console.error('Cannot accept offer: No offer selected');
-      toast.error('Something went wrong. Please try again.');
+      toast.error('No offer selected');
+      setIsAccepting(false);
       return;
     }
-
+    
     try {
-      // Show loading state immediately for better UX
-      setIsAccepting(true);
-      setError(null);
+      const apiUrl = `/api/jetshare/acceptOffer`;
+      console.log(`Attempting to accept offer ${selectedOffer.id} via ${apiUrl}`);
       
-      // Get user ID from all possible sources for robustness
-      const currentUserId: string | undefined = user?.id;
-      let hasValidSession = !!user;
-      let authToken = null;
-      
-      // Skip extensive auth recovery attempts if we already have a user ID
-      if (!currentUserId) {
-        // Try localStorage as a quick alternative
-        try {
-          const storedUserId = localStorage.getItem('jetstream_user_id');
-          if (storedUserId) {
-            console.log('Using cached user ID from localStorage:', storedUserId);
-            // Use this userId instead of modifying currentUserId (which is const)
-            // We'll use this in the payload directly
-            const payload = { 
-              offer_id: selectedOffer.id,
-              payment_method: 'fiat', // Default to fiat payments
-              user_id: storedUserId // Type-safe user ID from localStorage
-            };
-            
-            console.log('Accepting offer with payload:', { offer_id: payload.offer_id, user_id: payload.user_id });
-            
-            // Make the API call to accept the offer - simplified headers
-            const timestamp = Date.now();
-            const requestId = Math.random().toString(36).substring(2, 15);
-            
-            const response = await fetch(`/api/jetshare/acceptOffer?t=${timestamp}&rid=${requestId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache, no-store'
-              },
-              body: JSON.stringify(payload),
-              credentials: 'include', // Important for cookie-based auth
-            });
-            
-            // Parse the API response
-            const apiData = await response.json();
-            
-            // Continue with response handling as before
-            // Handle API response
-            if (!response.ok) {
-              console.warn('Error from accept offer API:', apiData);
-              
-              // Special case for authentication errors
-              if (response.status === 401) {
-                console.log('Authentication needed for booking. Storing offer info and redirecting to payment page directly.');
-                
-                // Store the offer ID in localStorage for later recovery
-                try {
-                  localStorage.setItem('current_payment_offer_id', selectedOffer.id);
-                } catch (e) {
-                  console.warn('Error storing offer ID in localStorage:', e);
-                }
-                
-                // Go directly to the payment page which handles authentication more gracefully
-                window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
-                return;
-              }
-              
-              throw new Error(apiData.message || 'Failed to accept offer');
-            }
-            
-            // Handle successful response
-            console.log('Offer acceptance successful:', apiData);
-            
-            // Use the redirect URL from the API if available
-            let redirectUrl = apiData.data?.redirect_url || `/gdyup/payment/${selectedOffer.id}?from=accept`;
-            
-            // Add timestamp to prevent caching issues
-            if (!redirectUrl.includes('?')) {
-              redirectUrl += `?t=${Date.now()}`;
-            } else if (!redirectUrl.includes('t=')) {
-              redirectUrl += `&t=${Date.now()}`;
-            }
-            
-            // Store essential data for recovery
-            try {
-              localStorage.setItem('current_payment_offer_id', selectedOffer.id);
-            } catch (e) {
-              console.warn('Error storing offer ID in localStorage:', e);
-            }
-            
-            toast.success('Proceeding to payment...');
-            
-            // Use window.location for a hard redirect
-            window.location.href = redirectUrl;
-            return;
-          }
-        } catch (e) {
-          console.warn('Error reading localStorage user ID:', e);
-        }
-
-        // If still no user ID from localStorage, go directly to payment page 
-        // which has better auth handling
-        console.log('No user ID found, redirecting to payment page directly');
-        try {
-          localStorage.setItem('current_payment_offer_id', selectedOffer.id);
-        } catch (e) {
-          console.warn('Error storing offer ID in localStorage:', e);
-        }
-        
-        // Go to payment page which will handle auth correctly
-        window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct_noauth`;
-        return;
-      }
-      
-      // If we have a currentUserId, continue with original flow
-      const payload = { 
-        offer_id: selectedOffer.id,
-        payment_method: 'fiat', // Default to fiat payments
-        user_id: currentUserId 
-      };
-
-      console.log('Accepting offer with payload:', { offer_id: payload.offer_id, user_id: payload.user_id });
-      
-      // Make the API call to accept the offer - simplified headers
-      const timestamp = Date.now();
-      const requestId = Math.random().toString(36).substring(2, 15);
-      
-      const response = await fetch(`/api/jetshare/acceptOffer?t=${timestamp}&rid=${requestId}`, {
+      // Make API request to accept the offer
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store'
         },
-        body: JSON.stringify(payload),
-        credentials: 'include', // Important for cookie-based auth
+        body: JSON.stringify({
+          offer_id: selectedOffer.id,
+          accept_type: 'full',
+        }),
       });
       
-      // Parse the API response
-      const apiData = await response.json();
+      // Parse the response JSON
+      let apiData;
+      try {
+        apiData = await response.json();
+      } catch (jsonError) {
+        console.error('Error parsing response JSON:', jsonError);
+        throw new Error('Failed to parse server response');
+      }
       
+      console.log('Accept offer API response:', apiData);
+      
+      // Continue with response handling as before
       // Handle API response
       if (!response.ok) {
         console.warn('Error from accept offer API:', apiData);
@@ -837,8 +729,20 @@ export default function JetShareListingsContent() {
             console.warn('Error storing offer ID in localStorage:', e);
           }
           
-          // Go directly to the payment page which handles authentication more gracefully
-          window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+          // Instead of direct navigation which might cause issues, use router.push first
+          // with a fallback to direct navigation
+          try {
+            router.push(`/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`);
+            
+            // Add fallback direct navigation after a short delay
+            setTimeout(() => {
+              window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+            }, 300);
+          } catch (navError) {
+            console.error('Navigation error:', navError);
+            // Ultimate fallback - direct location change
+            window.location.href = `/gdyup/payment/${selectedOffer.id}?t=${Date.now()}&from=listing_direct`;
+          }
           return;
         }
         
@@ -861,20 +765,35 @@ export default function JetShareListingsContent() {
       // Store essential data for recovery
       try {
         localStorage.setItem('current_payment_offer_id', selectedOffer.id);
+        localStorage.setItem('last_accepted_offer_id', selectedOffer.id);
+        localStorage.setItem('last_action', 'offer_accepted');
       } catch (e) {
         console.warn('Error storing offer ID in localStorage:', e);
       }
       
       toast.success('Proceeding to payment...');
       
-      // Use window.location for a hard redirect
-      window.location.href = redirectUrl;
+      // Use router.push first for cleaner navigation
+      try {
+        router.push(redirectUrl);
+        
+        // Fallback to direct navigation after a short delay
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 300);
+      } catch (navError) {
+        console.error('Navigation error:', navError);
+        // Ultimate fallback - direct location change
+        window.location.href = redirectUrl;
+      }
+      
     } catch (error) {
       console.error('Error accepting offer:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
-      toast.error('Failed to accept offer. Please try again.');
-    } finally {
+      toast.error(error instanceof Error ? error.message : 'Failed to accept offer');
+      
+      // Reset UI state
       setIsAccepting(false);
+      setShowConfirmDialog(false);
     }
   };
   

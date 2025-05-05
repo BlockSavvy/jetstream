@@ -6,18 +6,36 @@ import { useRouter } from 'next/navigation';
 export default function ClientRedirect({ url }: { url: string }) {
   const router = useRouter();
   
-  // Use setTimeout(0) to ensure this happens after render cycle
+  // Use multiple redirect strategies for better reliability
   useEffect(() => {
-    // Attempt immediate redirect
-    router.replace(url);
+    console.log(`ClientRedirect: Redirecting to ${url}`);
     
-    // If that doesn't work, try again with a timeout
-    const timer = setTimeout(() => {
-      console.log('Fallback redirect to:', url);
+    // Strategy 1: Use Next.js router (cleanest, but sometimes has issues with dynamic routes)
+    try {
+      router.replace(url);
+      console.log('ClientRedirect: router.replace() called');
+    } catch (routerError) {
+      console.error('ClientRedirect: router.replace() failed:', routerError);
+      // If router fails, fall back to direct navigation
       window.location.href = url;
+    }
+    
+    // Strategy 2: Fallback with a direct location change after a short delay
+    const directNavTimer = setTimeout(() => {
+      console.log('ClientRedirect: Fallback direct navigation triggered');
+      window.location.href = url;
+    }, 500);
+    
+    // Strategy 3: Final fallback with a longer timeout as last resort
+    const finalFallbackTimer = setTimeout(() => {
+      console.log('ClientRedirect: Final fallback navigation triggered');
+      window.location.replace(url);
     }, 2000);
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(directNavTimer);
+      clearTimeout(finalFallbackTimer);
+    };
   }, [router, url]);
   
   return (

@@ -13,10 +13,36 @@ export default async function JetSharePaymentPage({ params }: ClientIdParams) {
   const { id } = params;
   const offerId = id;
   
-  // Handle server-side validation
+  // Add detailed logging for debugging
+  console.log(`Payment page accessed for offer ID: ${offerId}`);
+  
+  // Handle server-side validation with more detailed error messages
   if (!offerId || offerId === 'undefined' || offerId.length < 10) {
-    console.error(`Invalid offer ID: ${offerId}`);
-    notFound();
+    console.error(`Invalid offer ID format: ${offerId} - does not meet minimum requirements`);
+    // Return a more graceful 404 rather than crashing
+    return notFound();
+  }
+
+  // Additional validation - attempt to check if the offer exists
+  try {
+    const supabase = await createClient();
+    const { data: offer, error } = await supabase
+      .from('jetshare_offers')
+      .select('id')
+      .eq('id', offerId)
+      .single();
+      
+    if (error || !offer) {
+      console.error(`Offer ID ${offerId} not found in database: ${error?.message || 'Record not found'}`);
+      // If offer doesn't exist, return not found
+      return notFound();
+    }
+    
+    console.log(`Offer ID ${offerId} validated, proceeding to payment`);
+  } catch (err) {
+    console.error(`Error validating offer ID ${offerId}:`, err);
+    // In case of any other error, allow the client to handle it
+    // This prevents unnecessary 404s when we can't check the database
   }
 
   return (
