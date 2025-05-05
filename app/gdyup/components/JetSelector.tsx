@@ -194,221 +194,54 @@ function JetSelectorImpl({
         
         // Add timestamp to prevent caching
         const timestamp = new Date().getTime();
+        const apiUrl = `/api/jetshare/getJets?t=${timestamp}`;
         
-        // First attempt with credentials
-        console.log('Attempting to fetch jets with credentials...');
-        try {
-          const response = await fetch(`/api/jetshare/getJets?t=${timestamp}`, {
-            method: 'GET',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-              'Expires': '0'
-            },
-            credentials: 'include' // Include cookies
-          });
-          
-          // If we got a successful response, process it
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Jets API response:', data);
-            
-            if (data.jets && Array.isArray(data.jets) && data.jets.length > 0) {
-              // Type-safe cast of the jets
-              const loadedJets = data.jets as Jet[];
-              
-              // Debug: log the first jet to see its structure
-              if (loadedJets.length > 0) {
-                console.log('Sample jet data structure:', loadedJets[0]);
-              }
-              
-              // Enhance jets with display_name and use safer image URL handling
-              const enhancedJets = loadedJets.map(jet => {
-                // Log any jets with string capacity to debug
-                if (typeof jet.capacity === 'string') {
-                  console.log(`Jet with string capacity: ${jet.id} - ${jet.manufacturer} ${jet.model} - capacity: ${jet.capacity}`);
-                }
-                
-                return {
-                  ...jet,
-                  display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
-                  // Use the safe image function to get the thumbnail URL
-                  thumbnail_url: getSafeImageUrl(jet)
-                };
-              });
-              
-              setJets(enhancedJets);
-              logJetsLoaded(enhancedJets.length, 'API');
-              
-              // Extract unique manufacturers
-              const uniqueManufacturers: string[] = [...new Set(
-                enhancedJets.map(jet => String(jet.manufacturer))
-                  .filter(mfr => typeof mfr === 'string' && mfr.length > 0)
-              )];
-              setManufacturers(uniqueManufacturers);
-              
-              // Reset retry count on success
-              setRetryCount(0);
-              return; // Exit early on success
-            }
-          } else if (response.status === 401) {
-            // If unauthorized, try the fallback approach
-            console.log('Auth error (401), trying alternative fetch...');
-            // Continue to fallback attempt below
-          } else {
-            // For other error status codes
-            throw new Error(`Failed to fetch jets: ${response.status} ${response.statusText}`);
-          }
-        } catch (credentialError) {
-          console.error('Error in credentials fetch:', credentialError);
-          // Continue to fallback attempt
+        console.log('Fetching jets from API:', apiUrl);
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
         }
         
-        // Second attempt without credentials if the first failed
-        console.log('Trying direct fetch without auth...');
-        const fallbackResponse = await fetch(`/api/jetshare/getJets?t=${timestamp + 1}`, {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Content-Type': 'application/json',
-          },
-          // No credentials included
+        const data = await response.json();
+        
+        if (!data || !data.jets || !Array.isArray(data.jets)) {
+          throw new Error('Invalid API response format');
+        }
+        
+        // Process the jets data
+        const jetsList = data.jets.map((jet: any) => ({
+          ...jet,
+          display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
+          capacity: typeof jet.capacity === 'string' ? parseInt(jet.capacity) : jet.capacity,
+          is_popular: ['Gulfstream G650', 'Bombardier Global 7500', 'Embraer Phenom 300E'].includes(`${jet.manufacturer} ${jet.model}`)
+        }));
+        
+        logJetsLoaded(jetsList.length, 'API');
+        setJets(jetsList);
+        
+        // Extract manufacturers as string array and sort alphabetically
+        const uniqueManufacturers = new Set<string>();
+        jetsList.forEach((jet: any) => {
+          if (jet.manufacturer && typeof jet.manufacturer === 'string') {
+            uniqueManufacturers.add(jet.manufacturer);
+          }
         });
-        
-        if (!fallbackResponse.ok) {
-          throw new Error(`Fallback fetch failed: ${fallbackResponse.status}`);
-        }
-        
-        const fallbackData = await fallbackResponse.json();
-        
-        if (fallbackData.jets && Array.isArray(fallbackData.jets) && fallbackData.jets.length > 0) {
-          // Process data as before
-          const loadedJets = fallbackData.jets as Jet[];
-          
-          const enhancedJets = loadedJets.map(jet => {
-            return {
-              ...jet,
-              display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
-              thumbnail_url: getSafeImageUrl(jet)
-            };
-          });
-          
-          setJets(enhancedJets);
-          logJetsLoaded(enhancedJets.length, 'API (fallback)');
-          
-          const uniqueManufacturers: string[] = [...new Set(
-            enhancedJets.map(jet => String(jet.manufacturer))
-              .filter(mfr => typeof mfr === 'string' && mfr.length > 0)
-          )];
-          setManufacturers(uniqueManufacturers);
-          
-          // Reset retry count on success
-          setRetryCount(0);
-        } else {
-          logError('API returned empty or invalid jets', 
-            { responseStatus: fallbackResponse.status, data: fallbackData }
-          );
-          throw new Error('Invalid response format or empty jets list');
-        }
+        const manufacturersArray = Array.from(uniqueManufacturers).sort();
+        setManufacturers(manufacturersArray);
       } catch (error) {
-        logError('Error fetching jets', error);
-        
-        // Check if we should retry (up to 3 times)
-        if (retryCount < 3) {
-          setRetryCount(prev => prev + 1);
-          
-          // Wait a bit before retrying (exponential backoff)
-          const retryDelay = Math.pow(2, retryCount) * 500;
-          console.log(`Retrying jets fetch in ${retryDelay}ms...`);
-          
-          setTimeout(() => {
-            fetchJets();
-          }, retryDelay);
-          return;
-        }
-        
-        // *** ADD DETAILED LOGGING BEFORE FALLBACK ***
-        console.error('[JetSelector Fetch Error] All API fetch attempts failed. Error:', error);
-        setError('API Error: Could not load jet list. Using fallback data for selection.');
-        // *** END LOGGING ***
-        
-        // If all attempts fail, use fallback data
-        setError('Using fallback jet data - you can still select models');
-        
-        // Provide fallback data when API fails
-        const fallbackJets: Jet[] = [
-          { 
-            id: 'gulfstream-g650', 
-            manufacturer: 'Gulfstream', 
-            model: 'G650', 
-            tail_number: 'N1JS',
-            display_name: 'Gulfstream G650 (N1JS)', 
-            capacity: 19,
-            is_popular: true,
-            image_url: "/images/placeholder-jet.jpg"
-          },
-          { 
-            id: 'bombardier-global-7500', 
-            manufacturer: 'Bombardier', 
-            model: 'Global 7500', 
-            tail_number: 'N2JS',
-            display_name: 'Bombardier Global 7500 (N2JS)', 
-            capacity: 19,
-            is_popular: true,
-            image_url: "/images/placeholder-jet.jpg"
-          },
-          { 
-            id: 'embraer-phenom-300e', 
-            manufacturer: 'Embraer', 
-            model: 'Phenom 300E', 
-            tail_number: 'N3JS',
-            display_name: 'Embraer Phenom 300E (N3JS)', 
-            capacity: 10,
-            is_popular: true,
-            image_url: "/images/placeholder-jet.jpg"
-          },
-          { 
-            id: 'cessna-citation-longitude', 
-            manufacturer: 'Cessna', 
-            model: 'Citation Longitude', 
-            tail_number: 'N4JS',
-            display_name: 'Cessna Citation Longitude (N4JS)', 
-            capacity: 12,
-            image_url: "/images/placeholder-jet.jpg"
-          },
-          { 
-            id: 'dassault-falcon-8x', 
-            manufacturer: 'Dassault', 
-            model: 'Falcon 8X', 
-            tail_number: 'N5JS',
-            display_name: 'Dassault Falcon 8X (N5JS)', 
-            capacity: 16,
-            image_url: "/images/placeholder-jet.jpg"
-          },
-          { 
-            id: 'other-custom', 
-            manufacturer: 'Other', 
-            model: 'Custom', 
-            tail_number: '',
-            display_name: 'Other (Custom Aircraft)', 
-            capacity: 8,
-            image_url: "/images/placeholder-jet.jpg"
-          }
-        ];
-        
-        setJets(fallbackJets);
-        // Extract manufacturers as string array
-        const fallbackManufacturers: string[] = [...new Set(
-          fallbackJets.map(jet => jet.manufacturer)
-        )];
-        setManufacturers(fallbackManufacturers);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        logError('Failed to fetch jets data', error);
+        setError(`Failed to fetch jets: ${errorMsg}`);
+        setJets([]);
+        setManufacturers([]);
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchJets();
-  }, []);
+  }, [retryCount]);
   
   // Check if current value is "Other" and show custom input
   useEffect(() => {

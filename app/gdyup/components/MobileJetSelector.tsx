@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocalStorage } from '../../../lib/use-local-storage';
+import { toast } from 'sonner';
 
 // Define Jet interface
 interface Jet {
@@ -55,54 +56,6 @@ interface Jet {
   wifi?: boolean;
   interior_type?: string;
 }
-
-// Add some fallback jets 
-const FALLBACK_JETS: Jet[] = [
-  {
-    id: 'fallback-g650',
-    manufacturer: 'Gulfstream',
-    model: 'G650',
-    tail_number: 'N650JS',
-    capacity: 19,
-    image_url: '/images/jets/gulfstream/g650.jpg',
-    range_nm: 7000,
-    cruise_speed_kts: 516,
-    year: 2020
-  },
-  {
-    id: 'fallback-global7500',
-    manufacturer: 'Bombardier',
-    model: 'Global 7500',
-    tail_number: 'N7500G',
-    capacity: 19,
-    image_url: '/images/jets/bombardier/global7500.jpg', 
-    range_nm: 7700,
-    cruise_speed_kts: 516,
-    year: 2021
-  },
-  {
-    id: 'fallback-phenom300',
-    manufacturer: 'Embraer',
-    model: 'Phenom 300',
-    tail_number: 'N300EM',
-    capacity: 10,
-    image_url: '/images/jets/embraer/phenom300.jpg',
-    range_nm: 2010,
-    cruise_speed_kts: 453,
-    year: 2022
-  },
-  {
-    id: 'fallback-falcon900lx',
-    manufacturer: 'Dassault',
-    model: 'Falcon 900LX',
-    tail_number: 'N900DA',
-    capacity: 14,
-    image_url: '/images/jets/dassault/Falcon 900LX.jpg',
-    range_nm: 4750,
-    cruise_speed_kts: 459,
-    year: 2018
-  }
-];
 
 interface MobileJetSelectorProps {
   value: string;
@@ -152,44 +105,62 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
       setIsLoading(true);
       
       try {
-        // Try to fetch from API first
-        const response = await fetch('/api/jets');
+        // Get the current user's ID for filtering
+        const userId = user ? user.id : null;
         
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) {
-            const jetsList = data.map(jet => ({
-              ...jet,
-              display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
-              image_url: jet.image_url || getSafeImageUrl(jet)
-            }));
-            setJets(jetsList);
-            setFilteredJets(jetsList);
+        // Use the correct API endpoint for GDYUP with correct parameters
+        let apiUrl = '/api/jetshare/getJets';
+        
+        // Add timestamp to prevent caching issues
+        const timestamp = Date.now();
+        apiUrl += `?t=${timestamp}`;
+        
+        console.log(`Fetching jets from: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error(`API request failed with status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.jets && Array.isArray(data.jets)) {
+          console.log(`Successfully fetched ${data.jets.length} jets from database`);
+          
+          const jetsList = data.jets.map((jet: Jet) => ({
+            ...jet,
+            display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
+            image_url: jet.image_url || getSafeImageUrl(jet)
+          }));
+          
+          setJets(jetsList);
+          
+          // Initially filter to only show user's jets if we have a userId
+          if (userId && showOnlyMyJets) {
+            const userJets = jetsList.filter((jet: Jet) => jet.owner_id === userId);
+            console.log(`Found ${userJets.length} jets owned by current user`);
+            setFilteredJets(userJets);
           } else {
-            throw new Error('Invalid API response format');
+            setFilteredJets(jetsList);
           }
         } else {
-          throw new Error('API request failed');
+          console.error('Invalid API response format:', data);
+          throw new Error('Invalid API response format');
         }
       } catch (error) {
         console.error('Error fetching jets:', error);
-        
-        // Use fallback jets if API fails
-        const fallbackData = FALLBACK_JETS.map(jet => ({
-          ...jet,
-          display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
-          image_url: jet.image_url || getSafeImageUrl(jet)
-        }));
-        
-        setJets(fallbackData);
-        setFilteredJets(fallbackData);
+        // Instead of using fallback data, show an empty list and notify user
+        setJets([]);
+        setFilteredJets([]);
+        toast?.error && toast.error('Failed to load jets. Please try again later.');
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchJets();
-  }, []);
+  }, [user, showOnlyMyJets]);
   
   // Find currently selected jet when value changes
   useEffect(() => {
@@ -568,7 +539,9 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
                 .filter((jet: Jet) => !favoriteJets.some((fav: Jet) => fav.id === jet.id))
                 .map((jet: Jet, idx: number) => renderJetItem(jet, idx, false))
             ) : (
-              FALLBACK_JETS.map((jet, idx) => renderJetItem(jet, idx, false))
+              <div className="p-4 text-center">
+                No jets found. Please try again later.
+              </div>
             )}
           </div>
         </SheetContent>

@@ -165,43 +165,6 @@ const POPULAR_AIRCRAFT = [
   "Gulfstream G550"
 ];
 
-// Add a FALLBACK_JETS constant at the top of the file, near other constants like POPULAR_AIRPORTS
-const FALLBACK_JETS = [
-  {
-    id: 'fallback-g650',
-    manufacturer: 'Gulfstream',
-    model: 'G650',
-    tail_number: 'N650JS',
-    capacity: 19,
-    image_url: '/images/jets/gulfstream/g650.jpg',
-    range_nm: 7000,
-    cruise_speed_kts: 516,
-    year: 2020
-  },
-  {
-    id: 'fallback-global7500',
-    manufacturer: 'Bombardier',
-    model: 'Global 7500',
-    tail_number: 'N7500G',
-    capacity: 19,
-    image_url: '/images/jets/bombardier/global7500.jpg', 
-    range_nm: 7700,
-    cruise_speed_kts: 516,
-    year: 2021
-  },
-  {
-    id: 'fallback-phenom300',
-    manufacturer: 'Embraer',
-    model: 'Phenom 300',
-    tail_number: 'N300EM',
-    capacity: 10,
-    image_url: '/images/jets/embraer/phenom300.jpg',
-    range_nm: 2010,
-    cruise_speed_kts: 453,
-    year: 2022
-  }
-];
-
 // Add a new interface for aircraft models
 interface AircraftModel {
   id: string;
