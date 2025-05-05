@@ -2009,3 +2009,535 @@ button[aria-label="Close"] svg {
   color: #000000 !important;
   stroke: #000000 !important;
 }
+
+/* Fix icon contrast in yellow-green buttons */
+.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] svg,
+a.bg-\[\#DAFF0D\] svg,
+.gdyup-button svg,
+.gdyup-button-primary svg,
+.bg-\[\#DAFF0D\] .lucide,
+button.bg-\[\#DAFF0D\] .lucide,
+a.bg-\[\#DAFF0D\] .lucide {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix text contrast in yellow-green buttons */
+.bg-\[\#DAFF0D\] span,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] span,
+.gdyup-button span,
+.gdyup-button-primary span {
+  color: black !important;
+  font-weight: 600 !important;
+  text-shadow: none !important;
+}
+
+/* Airport menu close button fix */
+.h-7.w-7 button svg,
+button.h-7.w-7 svg,
+.rounded-full svg.h-4.w-4,
+[class*="airport-popup"] button svg,
+[class*="location-menu"] button svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+  stroke-width: 2.5px !important;
+  opacity: 1 !important;
+}
+
+/* Airport search close button specific fix */
+button:has(.h-4.w-4.text-gray-400) svg,
+button:has(.h-4.w-4.text-gray-400) .lucide {
+  color: #9ca3af !important;
+  stroke: #9ca3af !important;
+  filter: none !important;
+}
+
+/* Calendar navigation button fixes */
+.nav_button svg,
+[class*="nav_button"] svg,
+[class*="calendar"] button svg,
+[class*="calendar-nav"] svg,
+.datepicker button svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+  stroke-width: 2px !important;
+}
+
+/* Star icon in airport favorites should be yellow */
+.fill-yellow-500 {
+  fill: #eab308 !important;
+  color: #eab308 !important;
+  stroke: #eab308 !important;
+}
+
+/* Close icon in airport search field */
+button:has(.h-4.w-4) .h-4.w-4.text-gray-400,
+button:has(> .h-4.w-4.text-gray-400) {
+  color: #9ca3af !important;
+  stroke: #9ca3af !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for X button in location autocomplete component specifically */
+button[type="button"]:has(> .h-4.w-4.text-gray-400),
+button[type="button"] .h-4.w-4.text-gray-400,
+.rounded-full .h-4.w-4.text-gray-400,
+.h-7.w-7.rounded-full .h-4.w-4 {
+  color: #9ca3af !important;
+  stroke: #9ca3af !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  stroke-width: 2px !important;
+  filter: none !important;
+}
+
+/* Ensure Star icons are visible */
+svg.h-4.w-4.fill-yellow-500,
+svg.h-4.w-4.text-yellow-500,
+svg.h-3.w-3.fill-yellow-500,
+svg.h-3.w-3.text-yellow-500 {
+  fill: #eab308 !important;
+  color: #eab308 !important;
+  stroke: #eab308 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for calendar and time picker components */
+.gdyup-app button:has(.h-5.w-5.text-\[\#DAFF0D\]) .h-5.w-5.text-\[\#DAFF0D\],
+.gdyup-app button:has(.h-4.w-4.text-\[\#DAFF0D\]) .h-4.w-4.text-\[\#DAFF0D\],
+[class*="calendar"] button svg,
+[class*="time-picker"] button svg,
+[class*="date-time"] button svg {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure yellow-green buttons have black icons */
+.bg-\[\#DAFF0D\] button svg,
+.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] svg,
+button.bg-\[\#DAFF0D\] span,
+a.bg-\[\#DAFF0D\] svg,
+.gdyup-primary-button svg {
+  color: black !important;
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+  font-weight: 600 !important;
+}
+
+/* Fix for nav buttons in calendar */
+[class*="nav_button"] svg,
+[class*="nav-button"] svg,
+button[class*="calendar-nav"] svg,
+.calendar-header button svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+}
+
+/* ====== CRITICAL OVERRIDE FOR YELLOW/GREEN BUTTON ICONS ====== */
+
+/* HIGHER SPECIFICITY TARGETING FOR YELLOW BUTTON SVGs - !important flags throughout */
+.bg-\\[\\#DAFF0D\\] svg,
+button.bg-\\[\\#DAFF0D\\] svg,
+a.bg-\\[\\#DAFF0D\\] svg,
+.bg-\\[\\#DAFF0D\\] svg *,
+button.bg-\\[\\#DAFF0D\\] svg *,
+a.bg-\\[\\#DAFF0D\\] svg *,
+.bg-\\[\\#DAFF0D\\] svg path,
+button.bg-\\[\\#DAFF0D\\] svg path,
+a.bg-\\[\\#DAFF0D\\] svg path,
+.bg-\\[\\#DAFF0D\\] .h-5.w-5,
+button.bg-\\[\\#DAFF0D\\] .h-5.w-5,
+a.bg-\\[\\#DAFF0D\\] .h-5.w-5,
+.bg-\\[\\#DAFF0D\\] .lucide,
+button.bg-\\[\\#DAFF0D\\] .lucide,
+a.bg-\\[\\#DAFF0D\\] .lucide,
+.bg-\\[\\#DAFF0D\\] .lucide *,
+button.bg-\\[\\#DAFF0D\\] .lucide *,
+a.bg-\\[\\#DAFF0D\\] .lucide * {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* SVG direct path override */
+.bg-\\[\\#DAFF0D\\] svg path,
+button.bg-\\[\\#DAFF0D\\] svg path,
+a.bg-\\[\\#DAFF0D\\] svg path,
+.bg-\\[\\#DAFF0D\\] .lucide path,
+button.bg-\\[\\#DAFF0D\\] .lucide path,
+a.bg-\\[\\#DAFF0D\\] .lucide path {
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+}
+
+/* HIGHER SPECIFICITY FOR CLOSE BUTTON IN AIRPORT MENU */
+.rounded-full svg.h-4.w-4,
+.h-7.w-7.rounded-full svg.h-4.w-4,
+button.rounded-full svg.h-4.w-4,
+button:has(.h-4.w-4.text-gray-400) svg,
+button:has(.h-4.w-4.text-gray-400) .h-4.w-4.text-gray-400,
+button:has(.h-4.w-4.text-gray-400) svg path,
+button:has(.h-4.w-4.text-gray-400) svg *,
+[type="button"]:has(.h-4.w-4.text-gray-400) svg,
+[type="button"]:has(.h-4.w-4.text-gray-400) svg *,
+[type="button"] .h-4.w-4.text-gray-400,
+svg.h-4.w-4.text-gray-400,
+.text-gray-400.h-4.w-4 {
+  color: #9ca3af !important;
+  stroke: #9ca3af !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* CALENDAR AND TIME PICKER CORRECTIONS */
+[class*="calendar"] button svg,
+[class*="time-picker"] button svg,
+[class*="date-time"] button svg,
+button:has(.h-5.w-5) svg,
+button:has(.h-4.w-4) svg,
+.nav_button svg,
+.nav-button svg,
+button.nav-button svg,
+button.nav_button svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Calendar selector/highlight state */
+.selected svg,
+[data-selected=true] svg,
+.active svg,
+[data-active=true] svg {
+  color: black !important;
+  stroke: black !important;
+}
+
+/* AIRPORT STAR ICONS FIX */
+.fill-yellow-500,
+svg.fill-yellow-500,
+svg.text-yellow-500,
+.text-yellow-500.h-4.w-4,
+.text-yellow-500.h-3.w-3,
+svg.h-4.w-4.fill-yellow-500,
+svg.h-4.w-4.text-yellow-500,
+svg.h-3.w-3.fill-yellow-500,
+svg.h-3.w-3.text-yellow-500 {
+  fill: #eab308 !important;
+  color: #eab308 !important;
+  stroke: #eab308 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* INLINE SVG FIX FOR SPECIFIC COMPONENTS */
+button[type="button"] > svg,
+a[type="button"] > svg,
+button > svg.h-4.w-4,
+button > svg.h-5.w-5,
+a > svg.h-4.w-4,
+a > svg.h-5.w-5 {
+  color: inherit !important;
+  stroke: inherit !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* DIRECT SVG PATH MANIPULATION - HIGHEST SPECIFICITY */
+.bg-\\[\\#DAFF0D\\] path,
+button.bg-\\[\\#DAFF0D\\] path,
+a.bg-\\[\\#DAFF0D\\] path,
+.bg-\\[\\#DAFF0D\\] svg path,
+button.bg-\\[\\#DAFF0D\\] svg path,
+a.bg-\\[\\#DAFF0D\\] svg path {
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+}
+
+/* DIRECT TARGETING OF CLOSE BUTTON IN SEARCH FIELDS */
+.search-input button svg.h-4.w-4,
+div[role="combobox"] button svg.h-4.w-4,
+[role="dialog"] button svg.h-4.w-4,
+div[role="combobox"] button .lucide-x,
+header button .lucide-x,
+nav button .lucide-x,
+button .lucide-x.h-4.w-4,
+svg.lucide-x.h-4.w-4 {
+  color: #9ca3af !important;
+  stroke: #9ca3af !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* DIRECT STAR ICON TARGETING */
+svg.lucide-star.fill-yellow-500,
+svg.lucide-star-off.fill-yellow-500,
+svg.lucide-star.text-yellow-500,
+svg.lucide-star-off.text-yellow-500,
+svg.lucide-star,
+svg.lucide-star-off,
+button svg.lucide-star,
+button svg.lucide-star-off,
+[class*="star"] {
+  fill: #eab308 !important;
+  color: #eab308 !important;
+  stroke: #eab308 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* SPECIFICALLY TARGET THE CALENDAR AND TIME PICKER NAVIGATION */
+[class*="calendar"] [class*="nav"] svg,
+[class*="time-picker"] [class*="nav"] svg,
+[data-testid*="calendar"] [class*="nav"] svg,
+[data-testid*="time-picker"] [class*="nav"] svg,
+[class*="calendar"] button svg,
+[class*="time-picker"] button svg,
+[class*="calendar"] .lucide-chevron-left,
+[class*="calendar"] .lucide-chevron-right,
+[class*="time-picker"] .lucide-chevron-left,
+[class*="time-picker"] .lucide-chevron-right {
+  color: #DAFF0D !important;
+  stroke: #DAFF0D !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* FINAL CATCH-ALL FOR YELLOW/GREEN BUTTON STYLING */
+body button.bg-\\[\\#DAFF0D\\] svg,
+body .bg-\\[\\#DAFF0D\\] svg,
+body button.bg-\\[\\#DAFF0D\\] .lucide,
+body .bg-\\[\\#DAFF0D\\] .lucide {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2.5px !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* SVG PATH LEVEL CONTROL - HIGHEST SPECIFICITY */
+body button.bg-\\[\\#DAFF0D\\] svg path,
+body .bg-\\[\\#DAFF0D\\] svg path,
+body button.bg-\\[\\#DAFF0D\\] .lucide path,
+body .bg-\\[\\#DAFF0D\\] .lucide path {
+  stroke: black !important;
+  stroke-width: 2.5px !important;
+}
+
+/* ===== ULTIMATE FIX FOR ALL SVG ICONS IN BUTTONS ===== */
+
+/* Direct selector for all SVG icons inside any yellow-green background buttons */
+.bg-\\[\\#DAFF0D\\] svg *, 
+.bg-\\[\\#DAFF0D\\] svg path, 
+.bg-\\[\\#DAFF0D\\] svg line, 
+.bg-\\[\\#DAFF0D\\] svg polyline, 
+.bg-\\[\\#DAFF0D\\] svg rect, 
+.bg-\\[\\#DAFF0D\\] svg circle,
+button.bg-\\[\\#DAFF0D\\] svg *, 
+button.bg-\\[\\#DAFF0D\\] svg path, 
+button.bg-\\[\\#DAFF0D\\] svg line, 
+button.bg-\\[\\#DAFF0D\\] svg polyline, 
+button.bg-\\[\\#DAFF0D\\] svg rect, 
+button.bg-\\[\\#DAFF0D\\] svg circle,
+a.bg-\\[\\#DAFF0D\\] svg *, 
+a.bg-\\[\\#DAFF0D\\] svg path, 
+a.bg-\\[\\#DAFF0D\\] svg line, 
+a.bg-\\[\\#DAFF0D\\] svg polyline, 
+a.bg-\\[\\#DAFF0D\\] svg rect, 
+a.bg-\\[\\#DAFF0D\\] svg circle {
+  stroke: black !important;
+  fill: none !important;
+  color: black !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+}
+
+/* Force black for any hover states */
+.bg-\\[\\#DAFF0D\\]:hover svg *, 
+.bg-\\[\\#DAFF0D\\]:active svg *, 
+.bg-\\[\\#DAFF0D\\]:focus svg *,
+button.bg-\\[\\#DAFF0D\\]:hover svg *, 
+button.bg-\\[\\#DAFF0D\\]:active svg *, 
+button.bg-\\[\\#DAFF0D\\]:focus svg *,
+a.bg-\\[\\#DAFF0D\\]:hover svg *, 
+a.bg-\\[\\#DAFF0D\\]:active svg *, 
+a.bg-\\[\\#DAFF0D\\]:focus svg * {
+  stroke: black !important;
+  fill: none !important;
+  color: black !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+}
+
+/* Force for all states and interactions */
+.bg-\\[\\#DAFF0D\\] svg, 
+.bg-\\[\\#DAFF0D\\]:hover svg, 
+.bg-\\[\\#DAFF0D\\]:active svg, 
+.bg-\\[\\#DAFF0D\\]:focus svg,
+button.bg-\\[\\#DAFF0D\\] svg, 
+button.bg-\\[\\#DAFF0D\\]:hover svg, 
+button.bg-\\[\\#DAFF0D\\]:active svg, 
+button.bg-\\[\\#DAFF0D\\]:focus svg,
+a.bg-\\[\\#DAFF0D\\] svg, 
+a.bg-\\[\\#DAFF0D\\]:hover svg, 
+a.bg-\\[\\#DAFF0D\\]:active svg, 
+a.bg-\\[\\#DAFF0D\\]:focus svg {
+  color: black !important;
+  stroke: black !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+}
+
+/* Specific fix for close buttons in dialogs and modals */
+[role="dialog"] button svg.h-4.w-4,
+[role="dialog"] button svg.lucide-x,
+[role="combobox"] button svg.h-4.w-4,
+[role="combobox"] button svg.lucide-x,
+[class*="popup"] button svg.h-4.w-4,
+[class*="popup"] button svg.lucide-x,
+[class*="modal"] button svg.h-4.w-4,
+[class*="modal"] button svg.lucide-x,
+[class*="sheet"] button svg.h-4.w-4,
+[class*="sheet"] button svg.lucide-x {
+  color: #9ca3af !important;
+  stroke: #9ca3af !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Star icon should always be filled yellow */
+svg.fill-yellow-500, 
+svg.lucide-star.fill-yellow-500,
+button svg.fill-yellow-500, 
+button svg.lucide-star.fill-yellow-500,
+[class*="airport"] .fill-yellow-500,
+[class*="favorite"] .fill-yellow-500,
+svg.text-yellow-500, 
+svg.lucide-star.text-yellow-500,
+button svg.text-yellow-500, 
+button svg.lucide-star.text-yellow-500 {
+  fill: #eab308 !important;
+  color: #eab308 !important;
+  stroke: #eab308 !important;
+  filter: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* ICON CONTRAST FIXES - HIGH SPECIFICITY */
+
+/* High-contrast rules for icons in yellow-green buttons */
+.bg-\[#DAFF0D\] svg path,
+.bg-\[#DAFF0D\] svg line,
+.bg-\[#DAFF0D\] svg polyline,
+.bg-\[#DAFF0D\] svg circle,
+.bg-\[#DAFF0D\] svg rect,
+button.bg-\[#DAFF0D\] svg path,
+button.bg-\[#DAFF0D\] svg line,
+button.bg-\[#DAFF0D\] svg polyline,
+button.bg-\[#DAFF0D\] svg circle,
+button.bg-\[#DAFF0D\] svg rect {
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+  fill: none !important;
+}
+
+/* Calendar and time picker controls - ensure icons are black on yellow */
+[class*="calendar"] button svg,
+[class*="time-picker"] button svg,
+[class*="date-time"] button svg,
+button:has(.text-\[#DAFF0D\]) svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+}
+
+/* Ensure proper contrast for star icon in favorites */
+svg.h-3.w-3.fill-yellow-500,
+svg.h-4.w-4.fill-yellow-500,
+.fill-yellow-500,
+svg.lucide-star.fill-yellow-500,
+svg.lucide-star-off.fill-yellow-500 {
+  fill: #DAFF0D !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 1px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Fix close button (X) in search fields */
+button:has(.lucide-x),
+button:has(svg.h-4.w-4) .lucide-x, 
+.h-7.w-7.rounded-full svg.h-4.w-4 {
+  stroke: #9ca3af !important;
+  stroke-width: 2px !important;
+  color: #9ca3af !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure yellow/green buttons always have black text and icons */
+.gdyup-theme-default .bg-\[#DAFF0D\],
+.gdyup-theme-default button.bg-\[#DAFF0D\],
+.gdyup-theme-default a.bg-\[#DAFF0D\] {
+  color: #000000 !important;
+}
+
+.gdyup-theme-default .bg-\[#DAFF0D\] svg,
+.gdyup-theme-default button.bg-\[#DAFF0D\] svg,
+.gdyup-theme-default a.bg-\[#DAFF0D\] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+}
+
+/* Fix for time picker icon to use black */
+button:has(> .h-5.w-5.text-\[#DAFF0D\]),
+button:has(> .h-4.w-4.text-\[#DAFF0D\]),
+.CalendarIcon,
+.Clock {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  stroke-width: 2px !important;
+}

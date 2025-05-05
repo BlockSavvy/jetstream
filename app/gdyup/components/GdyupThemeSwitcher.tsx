@@ -1,29 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { applyTheme, getCurrentTheme, themeInfo, GdyupTheme } from '../utils/theme-utils';
 
 export default function GdyupThemeSwitcher() {
   const [activeTheme, setActiveTheme] = useState<GdyupTheme>('default');
+  const isInitialized = useRef(false);
+  const currentThemeRef = useRef<GdyupTheme>('default');
   
-  // On mount, check localStorage for theme
+  // On mount, check localStorage for theme - only once
   useEffect(() => {
-    setActiveTheme(getCurrentTheme());
+    if (isInitialized.current) return;
+    
+    isInitialized.current = true;
+    const theme = getCurrentTheme();
+    currentThemeRef.current = theme;
+    setActiveTheme(theme);
+    
+    // Listen for external theme changes (from other components)
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'gdyup-theme') {
+        const newTheme = e.newValue as GdyupTheme || 'default';
+        
+        // Only update if different from what we're tracking
+        if (newTheme !== currentThemeRef.current) {
+          currentThemeRef.current = newTheme;
+          setActiveTheme(newTheme);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageEvent);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, []);
 
   // Handle theme button click
   const handleThemeClick = (theme: GdyupTheme) => {
     // If already active, no change needed
-    if (theme === activeTheme) return;
+    if (theme === currentThemeRef.current) return;
     
-    // Update state
+    // Update our refs and state
+    currentThemeRef.current = theme;
     setActiveTheme(theme);
     
-    // Apply the theme using the utility function
+    // Apply the theme using the utility function - this also updates localStorage
     applyTheme(theme);
-    
-    console.log(`Theme switched to: ${theme}`);
   };
 
   return (
