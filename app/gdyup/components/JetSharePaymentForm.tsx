@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { JetShareOfferWithUser } from '@/types/jetshare';
 import { User } from '@supabase/supabase-js';
 import { format } from 'date-fns';
-import { ArrowLeft, Loader2, CreditCard, Bitcoin, CheckCircle, ArrowRight, Plane, Copy, QrCode, AlertCircle, Calendar, DollarSign, Info, Timer, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Bitcoin, CheckCircle, ArrowRight, Plane, Copy, QrCode, AlertCircle, Calendar, DollarSign, Info, Timer, Clock, Zap } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroupItem } from '@/components/ui/radio-group';
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase';
 import { useAuth } from '@/components/auth-provider';
 import { RadioGroup } from "@/components/ui/radio-group";
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 // Add a comment near the top indicating future Stripe integration
 // Note: This form uses a simplified test environment.
@@ -33,6 +34,7 @@ interface JetSharePaymentFormProps {
 export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps) {
   const router = useRouter();
   const { user, refreshSession } = useAuth();
+  const { getThemeClasses, theme } = useGdyupTheme();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'btc'>('card');
   const [currentStep, setCurrentStep] = useState<'confirmation' | 'method' | 'details' | 'processing' | 'auth_error'>('confirmation');
@@ -452,45 +454,112 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
     }
   };
   
-  const handleCryptoPayment = () => {
+  // Handle BTC Payment flow with improved UI
+  const handleCryptoPayment = async () => {
     setIsProcessing(true);
     setError(null);
-    toast.info("Redirecting to cryptocurrency payment...");
-    
-    // Implement crypto payment flow using the same API endpoint but with crypto method
-    const timestamp = Date.now();
-    const requestId = Math.random().toString(36).substring(2, 10);
-    
-    fetch(`/api/jetshare/process-payment?t=${timestamp}&rid=${requestId}`, {
+
+    try {
+      console.log('Starting BTC payment process for offer:', offer.id);
+      
+      // Get required information from user context or localStorage
+      let userId = user?.id;
+      if (!userId) {
+        try {
+          userId = localStorage.getItem('jetstream_user_id') || undefined;
+        } catch (e) {
+          console.warn('Failed to get user ID from localStorage:', e);
+        }
+      }
+      
+      // Call the API to process payment
+      const response = await fetch('/api/jetshare/process-payment', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+          ...(userId ? { 'x-user-id': userId } : {})
       },
       body: JSON.stringify({
         offer_id: offer.id,
-        payment_method: 'crypto',
-        amount: offer.requested_share_amount
-      }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      setIsProcessing(false);
-      if (data.success) {
-        // If crypto payment is successful, redirect to provided URL or dashboard
-        if (data.redirect_url) {
-          window.location.href = data.redirect_url;
-        } else {
-          router.push('/jetshare/dashboard');
-        }
-      } else {
-        setError(data.error || 'Failed to initiate cryptocurrency payment');
+          payment_method: 'btc',
+          user_id: userId || 'guest'
+        }),
+      });
+      
+      // Parse the response as JSON, with error handling
+      let data;
+      try {
+        data = await response.json();
+      } catch (error) {
+        console.error('Error parsing payment response:', error);
+        throw new Error('Invalid response from payment server');
       }
-    })
-    .catch(err => {
-      console.error('Error processing crypto payment:', err);
+      
+      // Special case for development mode when fallback is available
+      if (data.fallback_available && process.env.NODE_ENV === 'development') {
+        console.log('Dev mode fallback available:', data);
+        setError('BTCPay Server is currently unavailable. Use the simulation mode for testing.');
+        
+        // Store info for dev simulation
+        try {
+          localStorage.setItem('btcpay_dev_fallback_url', data.details?.fallback_url || '');
+          localStorage.setItem('current_payment_offer_id', offer.id);
+        } catch (e) {
+          console.warn('Failed to store fallback info:', e);
+        }
+        
+        // Show simulation button and stop loading state
       setIsProcessing(false);
-      setError('An error occurred while processing your payment');
-    });
+        
+        // Display fallback option but don't continue with normal flow
+        return;
+      }
+      
+      // Handle error responses 
+      if (!response.ok || !data.success) {
+        // Handle 503 Service Unavailable specifically
+        if (response.status === 503) {
+          throw new Error('Payment provider is temporarily unavailable. Please try again later.');
+        }
+        
+        const errorMessage = data.error || data.message || 'Failed to create BTC payment invoice';
+        throw new Error(errorMessage);
+      }
+      
+      // Save invoice ID for status checking
+      try {
+        if (data.data?.invoice_id) {
+          localStorage.setItem('btcpay_invoice_id', data.data.invoice_id);
+        }
+        localStorage.setItem('current_payment_offer_id', offer.id);
+      } catch (e) {
+        console.warn('Failed to save invoice ID to localStorage:', e);
+      }
+      
+      // Update offer status in database to indicate pending payment
+      await updateOfferStatus(offer.id, 'payment_pending');
+      
+      // Redirect user to BTCPay checkout page
+      if (data.data?.checkout_url || data.data?.redirect_url) {
+        window.location.href = data.data.checkout_url || data.data.redirect_url;
+      } else {
+        throw new Error('No checkout link returned from payment server');
+      }
+      
+    } catch (error) {
+      console.error('Error setting up BTC payment:', error);
+      setError(error instanceof Error ? error.message : 'Failed to set up BTC payment');
+      setIsProcessing(false);
+      toast.error(error instanceof Error ? error.message : 'Payment setup failed. Please try again.');
+    }
+  };
+  
+  // Add a new handler for the development mode simulation
+  const handleDevSimulation = () => {
+    const fallbackUrl = localStorage.getItem('btcpay_dev_fallback_url') || `/gdyup/payment/dev-btcpay-simulator?offer_id=${offer.id}`;
+    
+    // Navigate to the dev simulator
+    window.location.href = fallbackUrl;
   };
   
   // Add a handler for the "Pay Later" option
@@ -566,10 +635,349 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
     total: Math.round(offer.requested_share_amount * 1.075)
   };
   
-  // Render a different view based on the current step
+  // Function to update offer status in the database
+  const updateOfferStatus = async (offerId: string, status: string) => {
+    try {
+      const supabase = createClient();
+      
+      // First, prepare the basic update data
+      const updateData: Record<string, any> = { 
+        status,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Attempt to add payment_status if that column exists in the database
+      try {
+        // First update without payment_status
+        const { error: initialError } = await supabase
+          .from('jetshare_offers')
+          .update(updateData)
+          .eq('id', offerId);
+          
+        if (!initialError) {
+          // Successfully updated the basic fields
+          console.log(`Successfully updated offer status to ${status}`);
+          
+          // Now try to update metadata with payment information
+          const { data: offer } = await supabase
+            .from('jetshare_offers')
+            .select('metadata')
+            .eq('id', offerId)
+            .single();
+          
+          // Prepare metadata update with payment info
+          const metadataUpdate = {
+            metadata: {
+              ...(offer?.metadata || {}),
+              payment: {
+                status: status === 'payment_pending' ? 'pending' : status,
+                updated_at: new Date().toISOString()
+              }
+            }
+          };
+          
+          // Update metadata separately
+          await supabase
+            .from('jetshare_offers')
+            .update(metadataUpdate)
+            .eq('id', offerId);
+        } else {
+          console.warn('Error in initial offer update:', initialError);
+        }
+      } catch (error) {
+        console.error('Error updating offer status:', error);
+        // Continue execution, as this is not critical to the payment flow
+      }
+    } catch (e) {
+      console.warn('Error in updateOfferStatus:', e);
+      // Continue with payment flow regardless
+    }
+  };
+  
+  // Function to render the current step UI based on state
   const renderCurrentStep = () => {
-    switch (currentStep) {
-      case 'confirmation':
+    if (currentStep === 'auth_error') {
+      return renderAuthError();
+    }
+    
+    if (currentStep === 'confirmation') {
+      return renderConfirmationStep();
+    }
+    
+    if (currentStep === 'method') {
+      if (paymentMethod === 'btc') {
+        return renderCryptoPaymentSection();
+      }
+      return renderPaymentMethodSelection();
+    }
+    
+    if (currentStep === 'details') {
+      return renderCardDetailsForm();
+    }
+    
+    if (currentStep === 'processing') {
+      return renderProcessingStep();
+    }
+    
+    return null;
+  };
+  
+  // Function to render the crypto payment section with enhanced UI
+  const renderCryptoPaymentSection = () => {
+    const isDevMode = process.env.NODE_ENV === 'development';
+    const hasFallback = Boolean(localStorage.getItem('btcpay_dev_fallback_url'));
+    
+    return (
+      <div className={getThemeClasses({
+        base: "space-y-6 p-4 rounded-lg border",
+        default: "bg-black/20 border-gray-800",
+        blue: "bg-blue-950/20 border-blue-900",
+        pink: "bg-pink-950/20 border-pink-900"
+      })}>
+        <div className="text-center space-y-2">
+          <Bitcoin className={getThemeClasses({
+            base: "h-8 w-8 mx-auto",
+            default: "text-amber-500",
+            blue: "text-amber-400",
+            pink: "text-amber-300"
+          })} />
+          
+          <h3 className={getThemeClasses({
+            base: "text-lg font-semibold",
+            default: "text-white",
+            blue: "text-blue-100",
+            pink: "text-pink-100"
+          })}>Pay with Bitcoin</h3>
+          
+          <p className={getThemeClasses({
+            base: "text-sm",
+            default: "text-gray-300",
+            blue: "text-blue-200",
+            pink: "text-pink-200"
+          })}>
+            Secure and private Bitcoin payments
+          </p>
+        </div>
+        
+        <div className="grid gap-2">
+          <div className="flex items-start">
+            <Zap className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+            <div>
+              <span className="font-medium">Lightning: </span>
+              <span>Instant payment option available</span>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+            <div>
+              <span className="font-medium">Confirmation: </span>
+              <span>1-2 confirmations required</span>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <Plane className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+            <div>
+              <span className="font-medium">Ticket Issuance: </span>
+              <span>Immediate upon payment confirmation</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Bitcoin Payment Button */}
+        <Button
+          type="button"
+          onClick={handleCryptoPayment}
+          disabled={isProcessing}
+          className={getThemeClasses({
+            base: "w-full py-6 text-base font-medium relative",
+            default: "bg-primary hover:bg-primary/90 text-primary-foreground",
+            blue: "bg-blue-500 hover:bg-blue-600 text-white",
+            pink: "bg-pink-500 hover:bg-pink-600 text-white"
+          })}
+        >
+          {isProcessing ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin inline-block" />
+              <span>Processing...</span>
+            </>
+          ) : (
+            <>
+              <Bitcoin className="h-5 w-5 mr-2 inline-block" />
+              <span className="font-bold">Pay with Bitcoin</span>
+            </>
+          )}
+        </Button>
+        
+        {/* Development fallback button */}
+        {isDevMode && error && error.includes('unavailable') && (
+          <Button
+            type="button"
+            onClick={handleDevSimulation}
+            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Info className="h-4 w-4 mr-2" />
+            Use Development Simulation
+          </Button>
+        )}
+        
+        <p className={getThemeClasses({
+          base: "text-xs text-center",
+          default: "text-white/60",
+          blue: "text-blue-100/60",
+          pink: "text-pink-100/60"
+        })}>
+          Powered by self-custodial BTC Pay Server
+        </p>
+        
+        {error && (
+          <div className="mt-4 p-3 rounded-md bg-red-900/30 border border-red-800">
+            <p className="text-sm text-red-200 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+              {error}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  // Function to render the payment method selection with enhanced UI
+  const renderPaymentMethodSelection = () => {
+    return (
+      <div className="space-y-6">
+        <div className={getThemeClasses({
+          base: "p-4 rounded-lg border mb-6",
+          default: "bg-black/20 border-gray-800 text-white/90",
+          blue: "bg-blue-950/20 border-blue-900 text-blue-100/90",
+          pink: "bg-pink-950/20 border-pink-900 text-pink-100/90"
+        })}>
+          <h3 className="font-medium mb-2">Choose Payment Method</h3>
+          <p className="text-sm opacity-80">
+            Pay securely using your preferred payment method. All transactions are encrypted.
+          </p>
+        </div>
+        
+        <RadioGroup 
+          value={paymentMethod} 
+          onValueChange={handlePaymentMethodChange}
+          className="space-y-4"
+        >
+          <div className={getThemeClasses({
+            base: "flex items-center p-4 rounded-lg border transition-colors cursor-pointer",
+            default: paymentMethod === 'card' ? "bg-gray-800/80 border-gray-700" : "bg-black/20 border-gray-800",
+            blue: paymentMethod === 'card' ? "bg-blue-900/80 border-blue-800" : "bg-blue-950/20 border-blue-900",
+            pink: paymentMethod === 'card' ? "bg-pink-900/80 border-pink-800" : "bg-pink-950/20 border-pink-900"
+          })}>
+            <RadioGroupItem value="card" id="card" className="mr-3" />
+            <Label 
+              htmlFor="card" 
+              className={getThemeClasses({
+                base: "flex-grow cursor-pointer flex items-center",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}
+            >
+              <CreditCard className="h-5 w-5 mr-3" />
+              <div>
+                <div className="font-medium">Credit / Debit Card</div>
+                <div className="text-sm opacity-70">Pay with your existing card (VISA, Mastercard, etc.)</div>
+              </div>
+            </Label>
+          </div>
+          
+          <div className={getThemeClasses({
+            base: "flex items-center p-4 rounded-lg border transition-colors cursor-pointer",
+            default: paymentMethod === 'btc' ? "bg-gray-800/80 border-gray-700" : "bg-black/20 border-gray-800",
+            blue: paymentMethod === 'btc' ? "bg-blue-900/80 border-blue-800" : "bg-blue-950/20 border-blue-900",
+            pink: paymentMethod === 'btc' ? "bg-pink-900/80 border-pink-800" : "bg-pink-950/20 border-pink-900"
+          })}>
+            <RadioGroupItem value="btc" id="btc" className="mr-3" />
+            <Label 
+              htmlFor="btc" 
+              className={getThemeClasses({
+                base: "flex-grow cursor-pointer flex items-center",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}
+            >
+              <Bitcoin className={getThemeClasses({
+                base: "h-5 w-5 mr-3",
+                default: "text-amber-500",
+                blue: "text-amber-400",
+                pink: "text-amber-300"
+              })} />
+              <div>
+                <div className="font-medium">Bitcoin</div>
+                <div className="text-sm opacity-70">Pay with BTC - secure, private, and borderless</div>
+              </div>
+            </Label>
+          </div>
+        </RadioGroup>
+        
+        <div className="pt-6">
+          <Button
+            type="button"
+            onClick={() => {
+              paymentMethod === 'card' ? goToDetailsStep() : handleCryptoPayment();
+            }}
+            disabled={isProcessing}
+            style={paymentMethod === 'btc' ? { backgroundColor: '#F59E0B', color: 'black' } : undefined}
+            className={`w-full py-6 text-base font-medium ${
+              paymentMethod === 'btc' 
+                ? 'hover:bg-amber-600' 
+                : getThemeClasses({
+                    base: "",
+                    default: "bg-green-500 hover:bg-green-600 text-white",
+                    blue: "bg-green-500 hover:bg-green-600 text-white",
+                    pink: "bg-green-500 hover:bg-green-600 text-white"
+                  })
+            }`}
+          >
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : paymentMethod === 'card' ? (
+              <>
+                <CreditCard className="h-5 w-5 mr-2" />
+                Continue to Card Details
+              </>
+            ) : (
+              <>
+                <Bitcoin className="h-5 w-5 mr-2" />
+                <span className="font-bold">Pay with Bitcoin</span>
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {showPayLater && (
+          <div className="pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handlePayLater}
+              disabled={isProcessing}
+              className={getThemeClasses({
+                base: "w-full text-sm font-normal",
+                default: "text-gray-400 hover:text-white hover:bg-gray-800/50",
+                blue: "text-blue-400 hover:text-blue-200 hover:bg-blue-900/50",
+                pink: "text-pink-400 hover:text-pink-200 hover:bg-pink-900/50"
+              })}
+            >
+              Pay Later
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  // Function to render the confirmation step UI
+  const renderConfirmationStep = () => {
         return (
           <Card className="w-full max-w-md mx-auto">
             <CardHeader>
@@ -638,100 +1046,10 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
             </CardFooter>
           </Card>
         );
-      case 'method':
-        return (
-          <Card className="w-full max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle>Payment Method</CardTitle>
-              <CardDescription>
-                Choose how you would like to pay for your flight share
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <RadioGroup 
-                  value={paymentMethod}
-                  onValueChange={(value) => handlePaymentMethodChange(value as 'card' | 'btc')}
-                  className="space-y-4"
-                >
-                  <div className={cn(
-                    "relative rounded-md border-2 p-4 hover:border-amber-500 transition-all cursor-pointer",
-                    paymentMethod === 'card' ? "border-primary" : "border-muted"
-                  )}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="card" id="payment-card" />
-                      <Label htmlFor="payment-card" className="flex items-center cursor-pointer">
-                        <CreditCard className="h-5 w-5 mr-2" />
-                        <div>
-                          <p className="font-medium">Credit Card</p>
-                          <p className="text-sm text-muted-foreground">Pay securely with Stripe</p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                  
-                  <div className={cn(
-                    "relative rounded-md border-2 p-4 hover:border-amber-500 transition-all cursor-pointer",
-                    paymentMethod === 'btc' ? "border-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : "border-muted"
-                  )}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="btc" id="payment-bitcoin" />
-                      <Label htmlFor="payment-bitcoin" className="flex items-center cursor-pointer">
-                        <Bitcoin className="h-5 w-5 mr-2 text-amber-500" />
-                        <div>
-                          <p className="font-medium">Bitcoin</p>
-                          <p className="text-sm text-muted-foreground">Pay with Lightning or on-chain BTC</p>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-                
-                {/* Pay Later option */}
-                {showPayLater && (
-                  <div className="mt-6 pt-4 border-t">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm font-medium">Pay later (1 hour hold)</p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handlePayLater}
-                        disabled={isProcessing}
-                      >
-                        Hold My Seat
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Locks your seat for 1 hour. You must complete payment before expiration.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button 
-                variant="outline"
-                onClick={() => setCurrentStep('confirmation')}
-                disabled={isProcessing}
-              >
-                Back
-              </Button>
-              <Button 
-                onClick={goToDetailsStep}
-                disabled={isProcessing}
-                className={paymentMethod === 'btc' ? "bg-amber-500 hover:bg-amber-600" : ""}
-              >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      case 'details':
-        if (paymentMethod === 'card') {
+  };
+  
+  // Function to render the card details form UI
+  const renderCardDetailsForm = () => {
           return (
             <Card className="w-full max-w-md mx-auto">
               <CardHeader className="pb-0">
@@ -956,117 +1274,10 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
               </CardFooter>
             </Card>
           );
-        } else {
-          // Bitcoin payment with BTCPay Server
-          return (
-            <Card className="w-full max-w-md mx-auto">
-              <CardHeader className="pb-2">
-                <Button 
-                  variant="ghost" 
-                  className="p-0 mb-2" 
-                  onClick={() => setCurrentStep('method')}
-                  disabled={isProcessing}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <CardTitle className="flex items-center space-x-2">
-                  <Bitcoin className="h-5 w-5 text-amber-500" />
-                  <span>Pay with Bitcoin</span>
-                </CardTitle>
-                <CardDescription>
-                  You'll be redirected to BTCPay Server to complete your payment
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="rounded-lg border p-6 bg-amber-50/50 dark:bg-amber-950/10">
-                    <div className="text-center mb-6">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 text-amber-800 mb-3">
-                        <Bitcoin className="h-8 w-8" />
-                      </div>
-                      <h3 className="text-lg font-medium">Lightning Network Preferred</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Faster, cheaper Bitcoin payments
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Amount:</span>
-                        <span className="font-bold">${offer.requested_share_amount.toLocaleString()}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Flight:</span>
-                        <span>{offer.departure_location} → {offer.arrival_location}</span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Date:</span>
-                        <span>{format(new Date(offer.flight_date), 'MMM d, yyyy')}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center space-y-1 mt-4">
-                    <p className="text-sm">
-                      You'll be redirected to secure BTCPay Server checkout to complete your payment.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      BTCPay Server supports Lightning Network and on-chain Bitcoin payments.
-                    </p>
-                  </div>
-                  
-                  {/* Pay Later option - only show if not processing */}
-                  {showPayLater && !isProcessing && (
-                    <div className="mt-6 pt-4 border-t">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-sm font-medium">Pay later (1 hour hold)</p>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={handlePayLater}
-                          disabled={isProcessing}
-                        >
-                          Hold My Seat
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Locks your seat for 1 hour. You must complete payment before expiration.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full py-6 bg-amber-500 hover:bg-amber-600" 
-                  onClick={handleSubmit}
-                  disabled={isProcessing}
-                  autoFocus
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Initializing Payment...
-                    </>
-                  ) : (
-                    <>
-                      Continue to Bitcoin Payment
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-        }
-        
-      case 'processing':
+  };
+  
+  // Function to render the processing step UI
+  const renderProcessingStep = () => {
         return (
           <div className="space-y-6">
             <CardHeader>
@@ -1080,8 +1291,10 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
             </CardContent>
           </div>
         );
+  };
         
-      case 'auth_error':
+  // Function to render the auth error UI
+  const renderAuthError = () => {
         return (
           <div>
             <CardContent className="flex flex-col items-center py-6">
@@ -1168,10 +1381,6 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
             </CardContent>
           </div>
         );
-        
-      default:
-        return null;
-    }
   };
   
   return (

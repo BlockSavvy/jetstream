@@ -1897,8 +1897,8 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                         className="mb-0"
                         key={`visualizer-${selectedJetId}-${form.getValues('total_seats')}`} // Force re-render when jet or seat count changes
                       />
-                                </div>
-                              )}
+                    </div>
+                  )}
                               
                   {/* Seat allocation summary, slider, and actions - redesigned for mobile */}
                   <div className={getThemeClasses({
@@ -1910,29 +1910,59 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     {/* Seat counters with improved styling */}
                     <div className="grid grid-cols-2 gap-4 bg-black/30 rounded-lg p-4">
                       <div className="flex flex-col items-center">
-                        <div className="flex items-center text-sm text-yellow-400 mb-1">
+                        <div className={getThemeClasses({
+                          base: "flex items-center text-sm mb-1",
+                          default: "text-[#DAFF0D]",
+                          blue: "text-blue-300",
+                          pink: "text-pink-300"
+                        })}>
                           <Users className="h-4 w-4 mr-1.5" />
                           <span>Your seats</span>
                         </div>
-                        <span className="text-3xl font-bold text-white">{form.watch('total_seats') - form.watch('available_seats')}</span>
+                        <span className={getThemeClasses({
+                          base: "text-3xl font-bold",
+                          default: "text-white",
+                          blue: "text-blue-100",
+                          pink: "text-pink-100"
+                        })}>{form.watch('total_seats') - form.watch('available_seats')}</span>
                       </div>
                       
                       <div className="flex flex-col items-center">
-                        <div className="flex items-center text-sm text-yellow-400 mb-1">
+                        <div className={getThemeClasses({
+                          base: "flex items-center text-sm mb-1",
+                          default: "text-[#DAFF0D]",
+                          blue: "text-blue-300",
+                          pink: "text-pink-300"
+                        })}>
                           <Users className="h-4 w-4 mr-1.5" />
                           <span>Partner seats</span>
                         </div>
-                        <span className="text-3xl font-bold text-white">{form.watch('available_seats')}</span>
+                        <span className={getThemeClasses({
+                          base: "text-3xl font-bold",
+                          default: "text-white",
+                          blue: "text-blue-100",
+                          pink: "text-pink-100"
+                        })}>{form.watch('available_seats')}</span>
                       </div>
                     </div>
                     
                     {/* Slider section with improved spacing and style */}
                     <div className="mt-5">
                       <div className="flex justify-between items-center mb-3">
-                        <div className="text-sm font-medium text-white/80">
+                        <div className={getThemeClasses({
+                          base: "text-sm font-medium",
+                          default: "text-white/80",
+                          blue: "text-blue-100/80",
+                          pink: "text-pink-100/80"
+                        })}>
                           Adjust seat allocation:
                         </div>
-                        <div className="text-sm font-semibold px-3 py-1 rounded-full bg-[#DAFF0D] text-black">
+                        <div className={getThemeClasses({
+                          base: "text-sm font-semibold px-3 py-1 rounded-full",
+                          default: "bg-[#DAFF0D] text-black",
+                          blue: "bg-blue-500 text-white",
+                          pink: "bg-pink-500 text-white"
+                        })}>
                           {shareRatio}%
                         </div>
                       </div>
@@ -1965,12 +1995,22 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                           // Update share amount
                           updateShareAmount(newRatio);
                         }}
-                        className="my-4 [&>.range]:bg-[#DAFF0D] [&>[role=slider]]:bg-[#DAFF0D] [&>[role=slider]]:h-5 [&>[role=slider]]:w-5 [&>[role=slider]]:mt-[-8px]"
+                        className={getThemeClasses({
+                          base: "my-4",
+                          default: "[&>.range]:bg-[#DAFF0D] [&>[role=slider]]:bg-[#DAFF0D] [&>[role=slider]]:h-5 [&>[role=slider]]:w-5 [&>[role=slider]]:mt-[-8px]",
+                          blue: "[&>.range]:bg-blue-500 [&>[role=slider]]:bg-blue-500 [&>[role=slider]]:h-5 [&>[role=slider]]:w-5 [&>[role=slider]]:mt-[-8px]",
+                          pink: "[&>.range]:bg-pink-500 [&>[role=slider]]:bg-pink-500 [&>[role=slider]]:h-5 [&>[role=slider]]:w-5 [&>[role=slider]]:mt-[-8px]"
+                        })}
                         aria-label="Seat allocation percentage"
                       />
                       
                       {/* Simplified ratio display */}
-                      <div className="flex items-center justify-between text-sm text-white/80 px-1">
+                      <div className={getThemeClasses({
+                        base: "flex items-center justify-between text-sm px-1",
+                        default: "text-white/80",
+                        blue: "text-blue-100/80",
+                        pink: "text-pink-100/80"
+                      })}>
                         <div>You: {shareRatio}%</div>
                         <div>Partner: {100 - shareRatio}%</div>
                       </div>
@@ -1981,7 +2021,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       <Button
                         type="button"
                         onClick={handleResetTo5050}
-                        className="h-12 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+                        className={getThemeClasses({
+                          base: "h-12 rounded-md font-medium",
+                          default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
+                          blue: "bg-blue-500 hover:bg-blue-600 text-white",
+                          pink: "bg-pink-500 hover:bg-pink-600 text-white"
+                        })}
                       >
                         Reset to 50/50
                       </Button>
@@ -1989,7 +2034,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                       <Button
                         type="button"
                         onClick={handleClearSelection}
-                        className="h-12 rounded-md bg-green-500 hover:bg-green-600 text-white font-medium"
+                        className={getThemeClasses({
+                          base: "h-12 rounded-md font-medium",
+                          default: "bg-green-500 hover:bg-green-600 text-white",
+                          blue: "bg-green-500 hover:bg-green-600 text-white",
+                          pink: "bg-green-500 hover:bg-green-600 text-white"
+                        })}
                       >
                         Clear Selection
                       </Button>
@@ -2010,9 +2060,14 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               <Button
                 type="button"
                 onClick={() => goToPrevSection()}
-                className="w-32 md:w-36 h-11 rounded-md bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black font-medium"
+                className={getThemeClasses({
+                  base: "w-32 md:w-36 h-11 rounded-md font-medium",
+                  default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
+                  blue: "bg-blue-500 hover:bg-blue-600 text-white",
+                  pink: "bg-pink-500 hover:bg-pink-600 text-white"
+                })}
               >
-                <ChevronLeft className="h-5 w-5 mr-1 text-black" style={{ color: 'black', stroke: 'black', strokeWidth: 2 }} />
+                <ChevronLeft className="h-5 w-5 mr-1" style={theme === 'default' ? { color: 'black', stroke: 'black', strokeWidth: 2 } : {}} />
                 Back
               </Button>
               
@@ -2021,16 +2076,20 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 {Array.from({ length: totalSections }).map((_, index) => (
                   <div
                     key={index}
-                    className={`w-2 h-2 mx-1 rounded-full ${
-                      index === activeSection 
-                        ? "bg-[#DAFF0D]" 
-                        : getThemeClasses({
-                          base: "bg-opacity-30",
+                    className={index === activeSection 
+                      ? getThemeClasses({
+                          base: "w-2 h-2 mx-1 rounded-full",
+                          default: "bg-[#DAFF0D]",
+                          blue: "bg-blue-500",
+                          pink: "bg-pink-500"
+                        })
+                      : getThemeClasses({
+                          base: "w-2 h-2 mx-1 rounded-full bg-opacity-30",
                           default: "bg-gray-400",
                           blue: "bg-blue-400",
                           pink: "bg-pink-400"
                         })
-                    }`}
+                    }
                   />
                 ))}
               </div>
@@ -2039,7 +2098,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               <Button
                 type="button"
                 onClick={() => goToNextSection()}
-                className="w-32 md:w-36 h-11 rounded-md bg-green-500 hover:bg-green-600 text-white font-medium"
+                className={getThemeClasses({
+                  base: "w-32 md:w-36 h-11 rounded-md font-medium",
+                  default: "bg-green-500 hover:bg-green-600 text-white",
+                  blue: "bg-green-500 hover:bg-green-600 text-white",
+                  pink: "bg-green-500 hover:bg-green-600 text-white"
+                })}
               >
                 Continue
                 <ChevronRight className="h-5 w-5 ml-1" />

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const transactionId = searchParams.get('transactionId');
     const offerId = searchParams.get('offerId');
-    const format = searchParams.get('format') || 'html'; // html, pdf, wallet
+    const format = searchParams.get('format') || 'html'; // html, pdf, wallet, qr
     const isTestMode = searchParams.get('test') === 'true' || transactionId?.startsWith('test-');
     
     if (!transactionId && !offerId) {
@@ -35,6 +35,26 @@ export async function GET(request: NextRequest) {
           success: true,
           message: 'Test boarding pass generated for Apple Wallet',
           walletUrl: `/api/jetshare/appleWallet?id=${transactionId || offerId}&test=true&timestamp=${Date.now()}`,
+          boardingPass: {
+            id: transactionId || `test-boardingpass-${Date.now()}`,
+            flightNumber: 'JS1234',
+            departureLocation: 'New York (JFK)',
+            arrivalLocation: 'Los Angeles (LAX)',
+            departureTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+            arrivalTime: new Date(Date.now() + 86400000 + 21600000).toISOString(), // Tomorrow + 6 hours
+            passengerName: user?.email || 'Test Passenger',
+            gate: 'A12',
+            seat: '1A',
+            boardingTime: new Date(Date.now() + 86400000 - 3600000).toISOString(), // 1 hour before departure
+            status: 'CONFIRMED'
+          }
+        });
+      } else if (format === 'qr') {
+        // Return a URL for QR code display
+        return NextResponse.json({
+          success: true,
+          message: 'Test Nostr QR code generated successfully',
+          qrUrl: `/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&test=true&format=qr&timestamp=${Date.now()}`,
           boardingPass: {
             id: transactionId || `test-boardingpass-${Date.now()}`,
             flightNumber: 'JS1234',
@@ -181,6 +201,14 @@ export async function GET(request: NextRequest) {
         success: true,
         message: 'Boarding pass generated for Apple Wallet',
         walletUrl: `/api/jetshare/appleWallet?id=${transactionData?.id || offerData.id}&timestamp=${Date.now()}`,
+        boardingPass
+      });
+    } else if (format === 'qr') {
+      // Return a URL for QR code display for Nostr
+      return NextResponse.json({
+        success: true,
+        message: 'Nostr QR code generated successfully',
+        qrUrl: `/api/jetshare/mockBoardingPass?id=${transactionData?.id || offerData.id}&format=qr&timestamp=${Date.now()}`,
         boardingPass
       });
     } else {

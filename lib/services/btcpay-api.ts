@@ -206,7 +206,7 @@ export async function updateOfferPaymentStatus(
     // First check if the offer exists
     const { data: offer, error: offerError } = await supabase
       .from('jetshare_offers')
-      .select('id, status, payment_status')
+      .select('id, status, metadata')
       .eq('id', offerId)
       .single();
       
@@ -215,31 +215,85 @@ export async function updateOfferPaymentStatus(
       throw new Error(`Offer not found: ${offerId}`);
     }
     
-    // Prepare the update data
-    const updateData: Record<string, any> = {
-      payment_status: status,
-      payment_method: paymentMethod,
-      payment_details: details,
+    // Check if payment_status column exists by introspecting the schema
+    console.log(`Updating payment status for offer ${offerId} to ${status}`);
+    
+    // Prepare the update data, with and without payment_status to handle both schemas
+    let updateData: Record<string, any> = {
       updated_at: new Date().toISOString()
+    };
+    
+    // Add payment details to a JSON field that likely exists in both schemas
+    updateData.metadata = {
+      ...(offer.metadata as Record<string, any> || {}),
+      payment: {
+        status,
+        method: paymentMethod,
+        details,
+        updated_at: new Date().toISOString()
+      }
     };
     
     // If payment is successful, update the offer status to completed
     if (status === 'paid') {
       updateData.status = 'completed';
+    } else if (status === 'pending') {
+      updateData.status = 'payment_pending';
     }
     
-    // Update the offer
-    const { error: updateError } = await supabase
-      .from('jetshare_offers')
-      .update(updateData)
-      .eq('id', offerId);
-    
-    if (updateError) {
-      console.error('Error updating offer payment status:', updateError);
-      throw new Error(`Failed to update offer payment status: ${updateError.message}`);
+    // Try to update with payment_status field - if it fails, we'll retry without it
+    try {
+      updateData.payment_status = status;
+      updateData.payment_method = paymentMethod;
+      updateData.payment_details = details;
+      
+      const { error: updateError } = await supabase
+        .from('jetshare_offers')
+        .update(updateData)
+        .eq('id', offerId);
+      
+      if (updateError) {
+        // If the error is about column not existing, retry without those columns
+        if (updateError.message?.includes('column') && updateError.message?.includes('not exist')) {
+          console.log('Schema missing payment_status columns, using metadata field instead');
+          
+          // Remove the problematic fields
+          delete updateData.payment_status;
+          delete updateData.payment_method;
+          delete updateData.payment_details;
+          
+          const { error: retryError } = await supabase
+            .from('jetshare_offers')
+            .update(updateData)
+            .eq('id', offerId);
+            
+          if (retryError) {
+            throw retryError;
+          }
+        } else {
+          throw updateError;
+        }
+      }
+    } catch (error: any) {
+      console.warn('First update attempt failed, retrying with alternative schema:', error.message);
+      
+      // Remove problematic fields for the second attempt
+      delete updateData.payment_status;
+      delete updateData.payment_method;
+      delete updateData.payment_details;
+      
+      const { error: fallbackError } = await supabase
+        .from('jetshare_offers')
+        .update(updateData)
+        .eq('id', offerId);
+        
+      if (fallbackError) {
+        console.error('Error updating offer payment info (fallback attempt):', fallbackError);
+        throw fallbackError;
+      }
     }
     
-    console.log(`Updated payment status for offer ${offerId} to ${status}`);
+    console.log(`Successfully updated payment info for offer ${offerId}`);
     
     // Create a transaction record if payment was successful
     if (status === 'paid') {
@@ -251,33 +305,36 @@ export async function updateOfferPaymentStatus(
           .eq('id', offerId)
           .single();
           
-        if (offerDetails) {
-          const { error: transactionError } = await supabase
-            .from('jetshare_transactions')
-            .insert([
-              {
-                offer_id: offerId,
-                payer_user_id: offerDetails.matched_user_id,
-                recipient_user_id: offerDetails.user_id,
-                amount: offerDetails.requested_share_amount,
-                handling_fee: Math.round(offerDetails.requested_share_amount * 0.075), // 7.5% handling fee
-                payment_method: paymentMethod,
-                payment_status: 'completed',
-                transaction_date: new Date().toISOString(),
-                transaction_reference: details.invoice_id || details.payment_intent_id || `manual-${Date.now()}`
-              }
-            ]);
-            
-          if (transactionError) {
-            console.error('Error creating transaction record:', transactionError);
-          }
+        if (!offerDetails) {
+          console.warn(`Couldn't find offer details for transaction record: ${offerId}`);
+          return;
         }
-      } catch (transactionError) {
-        console.error('Error creating transaction record:', transactionError);
+        
+        // Create transaction record
+        const { error: txError } = await supabase
+          .from('jetshare_transactions')
+          .insert({
+            offer_id: offerId,
+            payer_user_id: offerDetails.matched_user_id,
+            recipient_user_id: offerDetails.user_id,
+            amount: offerDetails.requested_share_amount,
+            payment_method: paymentMethod,
+            payment_details: details,
+            transaction_date: new Date().toISOString(),
+            status: 'completed'
+          });
+          
+        if (txError) {
+          console.error('Error creating transaction record:', txError);
+          // Don't throw here, as the payment was successful
+        }
+      } catch (txCreateError) {
+        console.error('Error creating transaction record:', txCreateError);
+        // Don't throw here, as the payment was successful
       }
     }
   } catch (error) {
-    console.error('Error in updateOfferPaymentStatus:', error);
+    console.error('Error updating offer payment status:', error);
     throw error;
   }
 }

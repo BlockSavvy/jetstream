@@ -7,68 +7,34 @@ export async function GET(request: NextRequest) {
   try {
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
-    const id = searchParams.get('id');
-    const isTestMode = searchParams.get('test') === 'true' || id?.startsWith('test-');
+    const id = searchParams.get('id') || '';
+    const isTestMode = searchParams.get('test') === 'true' || id.startsWith('test-');
+    const format = searchParams.get('format') || 'text';
     
-    if (!id) {
-      return NextResponse.json({ error: 'Missing required parameter: id' }, { status: 400 });
-    }
-    
-    // Get the authenticated user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // For test transactions, we'll bypass auth checks
-    if (!isTestMode && !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    // Generate flight details
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 86400000);
-    
+    // Default values for boarding pass
     let flightNumber = 'JS1234';
     let departureLocation = 'New York (JFK)';
     let arrivalLocation = 'Los Angeles (LAX)';
-    let departureDate = tomorrow.toDateString();
-    let departureTime = '10:00 AM EDT';
-    let boardingTime = '9:00 AM EDT';
+    let departureDate = 'Tomorrow';
+    let departureTime = '10:00 AM EST';
+    let boardingTime = '9:00 AM EST';
     let gate = 'G12';
     let seat = '1A';
     let passengerName = 'TEST PASSENGER';
     
-    // If not a test mode, get real data
-    if (!isTestMode) {
+    // For real boarding passes, try to get the actual data
+    if (!isTestMode && id) {
+      // Get the authenticated user (for production pass)
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
       try {
-        // Check if it's a transaction ID or offer ID
-        let transactionData;
-        let offerData;
-        
-        // First try to find as transaction
-        const { data: txData, error: txError } = await supabase
-          .from('jetshare_transactions')
-          .select(`
-            *,
-            offer:offer_id(*)
-          `)
-          .eq('id', id)
-          .single();
-        
-        if (!txError && txData) {
-          transactionData = txData;
-          offerData = txData.offer;
-        } else {
-          // Try to find as offer ID
-          const { data: ofData, error: ofError } = await supabase
-            .from('jetshare_offers')
-            .select('*')
-            .eq('id', id)
-            .single();
-          
-          if (!ofError && ofData) {
-            offerData = ofData;
-          }
-        }
+        // Try to find the transaction or offer
+        const { data: offerData, error: offerError } = await supabase
+          .from('jetshare_offers')
+          .select('*')
+          .or(`id.eq.${id},transaction_id.eq.${id}`)
+          .maybeSingle();
         
         if (offerData) {
           // Get user profile for name
@@ -130,7 +96,108 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Generate a simple ASCII boarding pass
+    // Handle QR code format specifically for Nostr
+    if (format === 'qr') {
+      // Create a simple HTML page with a QR code display for Nostr verification
+      const barcodeValue = `nostr:${id}:flight=${flightNumber}:seat=${seat}:time=${Date.now()}`;
+      const nostrQRHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nostr Boarding Pass QR Code</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      background-color: #111;
+      color: #fff;
+    }
+    .qr-container {
+      margin: 20px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+      max-width: 300px;
+    }
+    .flight-info {
+      margin: 20px 0;
+      padding: 20px;
+      background-color: #222;
+      border-radius: 10px;
+      text-align: left;
+    }
+    .flight-info p {
+      margin: 5px 0;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+    .test-notice {
+      color: #ff3e00;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="title">GDY·UP Private Jet Boarding Pass</div>
+  <div class="subtitle">Nostr Verification QR Code</div>
+  
+  ${isTestMode ? '<div class="test-notice">TEST MODE - NOT A REAL BOARDING PASS</div>' : ''}
+  
+  <div class="qr-container" id="qrcode"></div>
+  
+  <div class="flight-info">
+    <p><strong>Flight:</strong> ${flightNumber}</p>
+    <p><strong>From:</strong> ${departureLocation}</p>
+    <p><strong>To:</strong> ${arrivalLocation}</p>
+    <p><strong>Date:</strong> ${departureDate}</p>
+    <p><strong>Time:</strong> ${departureTime}</p>
+    <p><strong>Passenger:</strong> ${passengerName}</p>
+    <p><strong>Seat:</strong> ${seat}</p>
+    <p><strong>Gate:</strong> ${gate}</p>
+    <p><strong>Boarding:</strong> ${boardingTime}</p>
+  </div>
+  
+  <script>
+    // Generate QR code
+    QRCode.toCanvas(document.getElementById('qrcode'), '${barcodeValue}', {
+      width: 250,
+      margin: 2,
+      color: {
+        dark: '#000',
+        light: '#FFF'
+      }
+    }, function(error) {
+      if (error) console.error(error);
+    });
+  </script>
+</body>
+</html>
+      `;
+
+      return new NextResponse(nostrQRHtml, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8'
+        }
+      });
+    }
+    
+    // Generate a simple ASCII boarding pass for text format
     const boardingPass = `
 JETSTREAM PRIVATE JET BOARDING PASS
 ==================================
@@ -176,7 +243,7 @@ For support: support@jetstream.aiya.sh
     });
     
   } catch (error) {
-    console.error('Error generating boarding pass:', error);
+    console.error('Error generating mock boarding pass:', error);
     return NextResponse.json(
       { error: 'Failed to generate boarding pass', message: (error as Error).message },
       { status: 500 }

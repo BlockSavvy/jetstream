@@ -331,38 +331,88 @@ export default function PaymentContent({ offerId: propOfferId }: { offerId: stri
 
         // Use fetch to call the API with optimal caching disabled
         const apiUrl = `/api/jetshare/getOfferById?id=${offerId}&t=${Date.now()}&u=${localUserId || 'anonymous'}`;
-        const offerResponse = await fetch(apiUrl, {
-          method: 'GET',
-          headers,
-          credentials: 'include', // Important for cookie auth fallback in API
-        });
+        
+        try {
+          const offerResponse = await fetch(apiUrl, {
+            method: 'GET',
+            headers,
+            credentials: 'include', // Important for cookie auth fallback in API
+          });
 
-        if (!offerResponse.ok) {
-          // Try direct DB access as fallback (using anon key, relies on RLS)
-          console.warn(`API fetch failed (${offerResponse.status}), trying direct DB lookup.`);
-          const { data: directOffer, error: directError } = await supabase
-            .from('jetshare_offers')
-            .select('*')
-            .eq('id', offerId)
-            .maybeSingle();
+          if (!offerResponse.ok) {
+            // Try direct DB access as fallback (using anon key, relies on RLS)
+            console.warn(`API fetch failed (${offerResponse.status}), trying direct DB lookup.`);
+            const { data: directOffer, error: directError } = await supabase
+              .from('jetshare_offers')
+              .select('*')
+              .eq('id', offerId)
+              .maybeSingle();
 
-          if (directError || !directOffer) {
-            console.error('Direct DB fallback also failed:', directError);
-            throw new Error(`Failed to load offer details (Status: ${offerResponse.status})`);
+            if (directError || !directOffer) {
+              console.error('Direct DB fallback also failed:', directError);
+              throw new Error(`Failed to load offer details (Status: ${offerResponse.status})`);
+            }
+            console.log('Direct DB fallback succeeded.');
+            setOffer(directOffer as JetShareOfferWithUser);
+          } else {
+            const offerData = await offerResponse.json();
+            console.log('Payment page: Received offer data via API:', offerData);
+            if (!offerData.offer) {
+              throw new Error('Offer data not found in API response');
+            }
+            // Attach user/matched_user if present in response
+            const loadedOffer = offerData.offer;
+            if(offerData.user) loadedOffer.user = offerData.user;
+            if(offerData.matched_user) loadedOffer.matched_user = offerData.matched_user;
+            setOffer(loadedOffer as JetShareOfferWithUser);
           }
-          console.log('Direct DB fallback succeeded.');
-          setOffer(directOffer as JetShareOfferWithUser);
-        } else {
-          const offerData = await offerResponse.json();
-          console.log('Payment page: Received offer data via API:', offerData);
-          if (!offerData.offer) {
-            throw new Error('Offer data not found in API response');
+        } catch (fetchError) {
+          console.warn('Network fetch error, attempting local fallback:', fetchError);
+          
+          // Development mode fallback with mock data if fetch completely fails
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Using development fallback for offer data');
+            
+            // Try direct DB access first
+            const { data: devOffer, error: devError } = await supabase
+              .from('jetshare_offers')
+              .select('*')
+              .eq('id', offerId)
+              .maybeSingle();
+              
+            if (devOffer) {
+              console.log('Development fallback: Found offer in direct DB lookup');
+              setOffer(devOffer as JetShareOfferWithUser);
+              return;
+            }
+            
+            // Final fallback with mock data
+            if (devError || !devOffer) {
+              console.log('Development fallback: Creating mock offer data for UI testing');
+              // Cast to unknown first to fix TypeScript error
+              setOffer({
+                id: offerId,
+                status: 'open',
+                flight_date: new Date().toISOString(),
+                departure_location: 'New York (JFK)',
+                arrival_location: 'Los Angeles (LAX)',
+                departure_time: new Date().toISOString(),
+                total_flight_cost: 50000,
+                requested_share_amount: 12500,
+                total_seats: 8,
+                available_seats: 2,
+                user_id: localUserId || 'dev-user',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                aircraft_id: 'dev-aircraft',
+                user: {} as any, // Minimal user data to satisfy the type
+              } as unknown as JetShareOfferWithUser);
+              return;
+            }
+          } else {
+            // In production, rethrow the error
+            throw fetchError;
           }
-          // Attach user/matched_user if present in response
-          const loadedOffer = offerData.offer;
-          if(offerData.user) loadedOffer.user = offerData.user;
-          if(offerData.matched_user) loadedOffer.matched_user = offerData.matched_user;
-          setOffer(loadedOffer as JetShareOfferWithUser);
         }
 
         setError(null); // Clear error on success
