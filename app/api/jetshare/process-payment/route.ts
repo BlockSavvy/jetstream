@@ -7,11 +7,13 @@ import Stripe from 'stripe';
 export const dynamic = 'force-dynamic';
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
-});
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-02-24.acacia' })
+  : null;
 
 export async function POST(request: NextRequest) {
+  console.log('process-payment API called');
+  
   try {
     // Get the Supabase client
     const supabase = await createClient();
@@ -20,7 +22,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { offer_id, payment_method, user_id, payment_details, pay_later = false } = body;
     
+    console.log('Payment request received:', { 
+      offer_id, 
+      payment_method,
+      user_id: user_id ? `${user_id.substring(0, 8)}...` : 'not provided',
+      pay_later 
+    });
+    
     if (!offer_id) {
+      console.error('Missing offer ID in payment request');
       return NextResponse.json(
         { error: 'Missing offer ID' }, 
         { status: 400 }
@@ -28,6 +38,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Fetch the offer to get the correct amount and details
+    console.log(`Fetching offer details for ID: ${offer_id}`);
     const { data: offer, error: offerError } = await supabase
       .from('jetshare_offers')
       .select(`
@@ -38,16 +49,31 @@ export async function POST(request: NextRequest) {
       .eq('id', offer_id)
       .single();
       
-    if (offerError || !offer) {
+    if (offerError) {
       console.error('Error fetching offer:', offerError);
       return NextResponse.json(
-        { error: 'Failed to fetch offer details' }, 
+        { 
+          error: 'Failed to fetch offer details', 
+          details: offerError.message 
+        }, 
         { status: 500 }
       );
     }
     
-    // Verify the offer is in an accepted state
-    if (offer.status !== 'accepted' && offer.status !== 'accepted_but_unpaid') {
+    if (!offer) {
+      console.error(`Offer with ID ${offer_id} not found`);
+      return NextResponse.json(
+        { error: `Offer with ID ${offer_id} not found` }, 
+        { status: 404 }
+      );
+    }
+    
+    console.log(`Offer found: ${offer.departure_location} to ${offer.arrival_location}, status: ${offer.status}`);
+    
+    // Verify the offer is in an accepted state or allow any state in development
+    const isDevMode = process.env.NODE_ENV === 'development';
+    if (!isDevMode && offer.status !== 'accepted' && offer.status !== 'accepted_but_unpaid') {
+      console.error(`Offer is in invalid state for payment: ${offer.status}`);
       return NextResponse.json(
         { error: `Offer is not in accepted state. Current status: ${offer.status}` }, 
         { status: 400 }
@@ -73,14 +99,17 @@ export async function POST(request: NextRequest) {
           data: {
             offer_id,
             expires_at: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now
-            redirect_url: `/gdyup/dashboard?offerId=${offer_id}&status=pending`,
+            redirect_url: `/gdyup/payment/${offer_id}?t=${Date.now()}&status=pending`,
             force_redirect: true
           }
         });
       } catch (error) {
         console.error('Error updating offer for pay later:', error);
         return NextResponse.json(
-          { error: 'Failed to update offer payment status' }, 
+          { 
+            error: 'Failed to update offer payment status',
+            details: error instanceof Error ? error.message : 'Unknown error' 
+          }, 
           { status: 500 }
         );
       }
@@ -88,7 +117,56 @@ export async function POST(request: NextRequest) {
     
     // Process payment based on the selected method
     if (payment_method === 'btc' || payment_method === 'bitcoin' || payment_method === 'crypto') {
-      // Process Bitcoin payment via BTCPay Server
+      console.log(`Processing BTC payment for offer ${offer_id}`);
+      
+      // Check if BTCPay Server is properly configured
+      if (!process.env.BTCPAY_API_KEY || !process.env.BTCPAY_HOST) {
+        console.error('BTCPay Server configuration is missing');
+        
+        if (isDevMode) {
+          console.log('DEV MODE: Simulating successful BTCPay flow without actual API call');
+          
+          // Create a mock BTCPay response for development
+          const mockBTCPayResponse = {
+            id: `dev-invoice-${Date.now()}`,
+            checkoutLink: `${process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz'}/gdyup/payment/success?offer_id=${offer_id}&mockbtc=true`
+          };
+          
+          // Update the offer with simulated payment details
+          try {
+            await updateOfferPaymentStatus(
+              offer_id,
+              'pending',
+              'btcpay',
+              {
+                invoice_id: mockBTCPayResponse.id,
+                checkout_url: mockBTCPayResponse.checkoutLink,
+                created_at: new Date().toISOString(),
+                is_test: true
+              }
+            );
+          } catch (updateError) {
+            console.error('Error updating offer with mock payment details:', updateError);
+          }
+          
+          return NextResponse.json({
+            success: true,
+            message: 'TEST MODE: BTC payment simulated',
+            data: {
+              invoice_id: mockBTCPayResponse.id,
+              checkout_url: mockBTCPayResponse.checkoutLink,
+              redirect_url: mockBTCPayResponse.checkoutLink,
+              force_redirect: true
+            }
+          });
+        }
+        
+        return NextResponse.json(
+          { error: 'BTCPay Server configuration is missing' }, 
+          { status: 500 }
+        );
+      }
+      
       try {
         // Prepare BTCPay Server invoice data
         const invoiceData = {
@@ -97,13 +175,24 @@ export async function POST(request: NextRequest) {
           orderId: `GDYUP-${offer_id}`,
           itemDesc: `Flight share: ${offer.departure_location} to ${offer.arrival_location}`,
           buyerEmail: offer.matched_user?.email || undefined,
-          redirectURL: `${process.env.NEXT_PUBLIC_APP_URL || 'https://fly.gdyup.xyz'}/gdyup/payment/success?offer_id=${offer_id}`,
+          redirectURL: `${process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz'}/gdyup/payment/success?offer_id=${offer_id}`,
           redirectAutomatically: true,
           expirationTime: 3600, // 1 hour expiration
         };
         
+        console.log('Creating BTCPay invoice with data:', {
+          ...invoiceData,
+          buyerEmail: invoiceData.buyerEmail ? '***@***' : undefined // Redact email for logs
+        });
+        
         // Create a BTCPay invoice
         const invoice = await createBTCPayInvoice(invoiceData);
+        
+        if (!invoice || !invoice.id || !invoice.checkoutLink) {
+          throw new Error('BTCPay Server returned an invalid invoice response');
+        }
+        
+        console.log(`BTCPay invoice created successfully: ${invoice.id}`);
         
         // Update the offer with payment details
         await updateOfferPaymentStatus(
@@ -124,26 +213,91 @@ export async function POST(request: NextRequest) {
             invoice_id: invoice.id,
             checkout_url: invoice.checkoutLink,
             redirect_url: invoice.checkoutLink,
-            force_redirect: true
+            force_redirect: true,
+            post_payment_redirect: `/gdyup/boardingpass/${offer_id}?from=btcpay&t=${Date.now()}`
           }
         });
       } catch (error) {
         console.error('Error processing BTC payment:', error);
+        
+        // If we're in development mode, fallback to a simulated success path
+        if (isDevMode) {
+          console.log('DEV MODE: BTC payment failed, using fallback simulation');
+          
+          const mockCheckoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz'}/gdyup/payment/success?offer_id=${offer_id}&mockbtc=true&error_recovery=true`;
+          
+          return NextResponse.json({
+            success: true,
+            message: 'TEST MODE: BTC payment simulated after real attempt failed',
+            data: {
+              invoice_id: `dev-recovery-${Date.now()}`,
+              checkout_url: mockCheckoutUrl,
+              redirect_url: mockCheckoutUrl,
+              force_redirect: true,
+              post_payment_redirect: `/gdyup/boardingpass/${offer_id}?from=mockbtc&t=${Date.now()}`
+            }
+          });
+        }
+        
         return NextResponse.json(
-          { error: 'Failed to process BTC payment' }, 
+          { 
+            error: 'Failed to process BTC payment',
+            details: error instanceof Error ? error.message : 'Unknown error'
+          }, 
           { status: 500 }
         );
       }
     } else if (payment_method === 'card' || payment_method === 'stripe') {
-      // Process Stripe payment
-      try {
-        // In a real implementation, we'd use the Stripe SDK to create a payment intent
-        // For this implementation, we're simulating a successful payment
+      console.log(`Processing card payment for offer ${offer_id}`);
+      
+      // Check if Stripe is properly configured
+      if (!stripe) {
+        console.error('Stripe configuration is missing');
         
+        if (isDevMode) {
+          console.log('DEV MODE: Simulating successful Stripe payment without actual API call');
+          
+          // Update the offer with simulated payment details for development
+          try {
+            await updateOfferPaymentStatus(
+              offer_id,
+              'paid',
+              'stripe',
+              {
+                payment_intent_id: `dev-pi-${Date.now()}`,
+                amount: offer.requested_share_amount,
+                created_at: new Date().toISOString(),
+                is_test: true
+              }
+            );
+          } catch (updateError) {
+            console.error('Error updating offer with mock payment details:', updateError);
+          }
+          
+          return NextResponse.json({
+            success: true,
+            message: 'TEST MODE: Card payment simulated',
+            data: {
+              payment_intent_id: `dev-pi-${Date.now()}`,
+              redirect_url: `/gdyup/payment/success?offer_id=${offer_id}&mockstripe=true`,
+              redirect_now: true
+            }
+          });
+        }
+        
+        return NextResponse.json(
+          { error: 'Stripe configuration is missing' }, 
+          { status: 500 }
+        );
+      }
+      
+      try {
         // Calculate the total amount including fees
         const amount = Math.round(offer.requested_share_amount * 100); // Stripe uses cents
         const fee = Math.round(amount * 0.075); // 7.5% fee
         const total = amount + fee;
+        
+        console.log(`Creating Stripe payment intent for $${(total / 100).toFixed(2)} (${offer.requested_share_amount} + fees)`);
         
         // Create a Stripe payment intent
         const paymentIntent = await stripe.paymentIntents.create({
@@ -160,6 +314,8 @@ export async function POST(request: NextRequest) {
             enabled: true,
           }
         });
+        
+        console.log(`Stripe payment intent created: ${paymentIntent.id}`);
         
         // Update the offer with payment details
         await updateOfferPaymentStatus(
@@ -179,18 +335,38 @@ export async function POST(request: NextRequest) {
           data: {
             payment_intent_id: paymentIntent.id,
             client_secret: paymentIntent.client_secret,
-            redirect_url: `/gdyup/payment/success?offer_id=${offer_id}&payment_intent_id=${paymentIntent.id}`,
+            redirect_url: `/gdyup/boardingpass/${offer_id}?payment_intent_id=${paymentIntent.id}&t=${Date.now()}`,
             redirect_now: true
           }
         });
       } catch (error) {
         console.error('Error processing Stripe payment:', error);
+        
+        // If we're in development mode, fallback to a simulated success path
+        if (isDevMode) {
+          console.log('DEV MODE: Stripe payment failed, using fallback simulation');
+          
+          return NextResponse.json({
+            success: true,
+            message: 'TEST MODE: Stripe payment simulated after real attempt failed',
+            data: {
+              payment_intent_id: `dev-recovery-${Date.now()}`,
+              redirect_url: `/gdyup/boardingpass/${offer_id}?mockstripe=true&error_recovery=true&t=${Date.now()}`,
+              redirect_now: true
+            }
+          });
+        }
+        
         return NextResponse.json(
-          { error: 'Failed to process card payment' }, 
+          { 
+            error: 'Failed to process card payment',
+            details: error instanceof Error ? error.message : String(error)
+          }, 
           { status: 500 }
         );
       }
     } else {
+      console.error(`Invalid payment method: ${payment_method}`);
       return NextResponse.json(
         { error: 'Invalid payment method' }, 
         { status: 400 }
@@ -200,7 +376,8 @@ export async function POST(request: NextRequest) {
     console.error('Unhandled error in process-payment:', error);
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
+      details: error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }

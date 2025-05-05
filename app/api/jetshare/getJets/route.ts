@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-server';
 
-// Initialize Supabase client with environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Ensure the response is not cached
+export const dynamic = 'force-dynamic';
+
+// Define type for jet data
+interface Jet {
+  id: string;
+  manufacturer: string;
+  model: string;
+  tail_number?: string;
+  capacity?: number;
+  image_url?: string;
+  range_nm?: number;
+  cruise_speed_kts?: number;
+  year?: number;
+  [key: string]: any; // Allow additional properties
+}
 
 // Helper function to get CORS headers
 function getCorsHeaders(request: NextRequest) {
@@ -16,6 +28,7 @@ function getCorsHeaders(request: NextRequest) {
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
+    'Content-Type': 'application/json',
   };
 }
 
@@ -38,11 +51,8 @@ export async function GET(request: NextRequest) {
     
     console.log('Query params:', { manufacturer, minCapacity, maxCapacity, sort, order, search, withImageOnly });
     
-    // Create Supabase client with service role key for admin access
-    const supabase = createClient(
-      supabaseUrl,
-      serviceKey || supabaseKey // Fallback to anon key if service key is not available
-    );
+    // Create Supabase client using the shared helper function
+    const supabase = await createClient();
     
     // Build query
     let query = supabase
@@ -78,52 +88,45 @@ export async function GET(request: NextRequest) {
     // Execute query
     const { data, error } = await query;
     
-    console.log('Raw data fetched from jets table:', data);
-    
     if (error) {
       console.error('Error fetching jets from Supabase:', error);
-      
       return NextResponse.json(
-        { error: 'Failed to fetch jets', message: error.message },
+        { error: 'Failed to fetch jets from database', details: error.message },
         { status: 500, headers: corsHeaders }
       );
     }
     
     if (!data || data.length === 0) {
-      console.log('No jets found in database.');
-      // Return empty list instead of fallback
-      return NextResponse.json({ 
-        jets: [],
-        total: 0,
-        manufacturers: []
-      }, { status: 200, headers: corsHeaders });
+      console.log('No jets found in database');
+      return NextResponse.json(
+        { jets: [], total: 0, manufacturers: [] },
+        { status: 200, headers: corsHeaders }
+      );
     }
     
     console.log(`Successfully fetched ${data.length} jets`);
     
-    // Enhance the response with additional data (thumbnail URLs, etc.)
-    const enhancedData = data.map(jet => {
-      // Generate thumbnail URL from full image URL
-      let thumbnailUrl = jet.image_url;
-      
-      // If we have a real image URL, enhance with additional data
-      if (jet.image_url && jet.image_url !== '/images/placeholder-jet.jpg') {
-        // You can process the URL here to generate a thumbnail path
-        // For now, we'll just use the same URL
-      }
-      
+    // Type the data as Jet[]
+    const jetsData = data as Jet[];
+    
+    // Enhance the response with additional data
+    const enhancedData = jetsData.map((jet: Jet) => {
       return {
         ...jet,
-        thumbnail_url: thumbnailUrl,
-        // Add additional data here as needed
+        thumbnail_url: jet.image_url,
         manufacturer_logo: `/images/logos/${jet.manufacturer.toLowerCase()}.png`,
         is_popular: ['Gulfstream G650', 'Bombardier Global 7500', 'Embraer Phenom 300E'].includes(`${jet.manufacturer} ${jet.model}`)
       };
     });
     
     // Try to fetch interior details for each jet to get seat capacity
-    const interiorPromises = enhancedData.map(async (jet) => {
+    const interiorPromises = enhancedData.map(async (jet: Jet) => {
       try {
+        // Check if the jet already has capacity data
+        if (jet.capacity) {
+          return jet;
+        }
+        
         // First check if the jet_interiors table has seats data
         const { data: interiorData, error: interiorError } = await supabase
           .from('jet_interiors')
@@ -178,13 +181,14 @@ export async function GET(request: NextRequest) {
       total: jetsWithInteriors.length,
       manufacturers: [...new Set(jetsWithInteriors.map(jet => jet.manufacturer))].sort()
     }, { status: 200, headers: corsHeaders });
+    
   } catch (error) {
     console.error('Unexpected error in getJets API:', error);
-    return NextResponse.json({ 
-      jets: [],
-      total: 0,
-      manufacturers: []
-    }, { status: 200, headers: corsHeaders });
+    
+    return NextResponse.json(
+      { error: 'An unexpected error occurred', details: error instanceof Error ? error.message : String(error) },
+      { status: 500, headers: corsHeaders }
+    );
   }
 }
 
