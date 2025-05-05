@@ -174,7 +174,8 @@ export default function JetSharePaymentForm({ offer }: JetSharePaymentFormProps)
     
     // Detect test mode for more resilient processing
     const isTestMode = process.env.NODE_ENV === 'development' || 
-                       window.location.hostname === 'localhost';
+                       window.location.hostname.includes('dev.gdyup.xyz') ||
+                       window.location.hostname.includes('staging.gdyup.xyz');
     
     console.log(`Payment form: Processing in ${isTestMode ? 'TEST' : 'PRODUCTION'} mode`);
     

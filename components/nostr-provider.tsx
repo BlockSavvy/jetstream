@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { NostrEvent, NostrKeyPair, NostrProfile, RelayInfo, NostrEventKind } from '@/types/nostr';
 import * as NostrUtils from '@/lib/services/nostr';
@@ -41,14 +41,17 @@ export function NostrProvider({ children }: { children: ReactNode }) {
   const [connecting, setConnecting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [relays, setRelays] = useState<RelayInfo[]>([]);
-  const [relayConnections, setRelayConnections] = useState<Map<string, WebSocket>>(new Map());
+  const [events, setEvents] = useState<NostrEvent[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Record<string, any>>({});
   const [keypair, setKeypair] = useLocalStorage<NostrKeyPair | null>('gdyup_nostr_keypair', null);
-  const [subscriptions, setSubscriptions] = useState<string[]>([]);
+  
+  // Use ref for relay connections to avoid state updates causing loops
+  const relayConnectionsRef = useRef<Map<string, WebSocket>>(new Map());
   
   // Check if Nostr is enabled in user profile
   const isEnabled = !!profile?.nostr_settings?.enabled || false;
   
-  // Handle messages from relays
+  // First, memoize the handleRelayMessage function with useCallback
   const handleRelayMessage = useCallback((data: any, relayUrl: string) => {
     if (!Array.isArray(data) || data.length < 2) {
       return;
@@ -65,52 +68,81 @@ export function NostrProvider({ children }: { children: ReactNode }) {
         const event = rest[0] as NostrEvent;
         if (!event || !event.id || !event.kind) return;
         
-        // Handle based on event kind
-        switch (event.kind) {
-          case NostrEventKind.EncryptedDirectMessage:
-            // Handle direct message (will be implemented in messaging component)
-            console.log(`Received DM on relay ${relayUrl}:`, event.id);
-            break;
-            
-          case NostrEventKind.JetShareOffer:
-            // Handle JetShare offer (will be implemented in offer component)
-            console.log(`Received JetShare offer on relay ${relayUrl}:`, event.id);
-            break;
-            
-          case NostrEventKind.Zap:
-          case NostrEventKind.ZapRequest:
-            // Handle zap event (will be implemented in payment component)
-            console.log(`Received Zap on relay ${relayUrl}:`, event.id);
-            break;
-        }
+        // Store the event in events array, not relays
+        setEvents(prevEvents => {
+          // Check if we already have this event to avoid duplicates
+          if (prevEvents.some(e => e.id === event.id)) {
+            return prevEvents;
+          }
+          return [...prevEvents, event];
+        });
+        
+        // Update subscription state
+        setSubscriptions(currentSubs => {
+          // Make a stable copy that we can modify
+          const subsCopy = {...currentSubs};
+          
+          // For each active subscription, check if this event matches criteria
+          Object.keys(subsCopy).forEach(subId => {
+            const sub = subsCopy[subId];
+            if (sub) {
+              // Check if this event matches this subscription's filters
+              const matchesFilters = sub.filters.some((filter: any) => {
+                // Check each filter
+                return (
+                  (!filter.ids || filter.ids.includes(event.id)) &&
+                  (!filter.kinds || filter.kinds.includes(event.kind)) &&
+                  (!filter.authors || filter.authors.includes(event.pubkey)) &&
+                  // Additional filter checks as needed
+                  true
+                );
+              });
+              
+              if (matchesFilters && Array.isArray(sub.matchedEvents)) {
+                sub.matchedEvents.push(event);
+              }
+            }
+          });
+          
+          return subsCopy;
+        });
+        
+        break;
+      }
+      
+      case 'EOSE': {
+        // End of stored events
+        if (rest.length < 1) return;
+        
+        const subId = rest[0] as string;
+        
+        setSubscriptions(currentSubs => {
+          // Only update if subscription exists
+          if (!currentSubs[subId]) return currentSubs;
+          
+          return {
+            ...currentSubs,
+            [subId]: {
+              ...currentSubs[subId],
+              eose: true
+            }
+          };
+        });
+        
         break;
       }
       
       case 'NOTICE': {
         // Handle relay notices
         if (rest.length < 1) return;
-        const message = rest[0];
-        console.log(`Notice from relay ${relayUrl}:`, message);
+        const notice = rest[0] as string;
+        console.log(`Relay notice from ${relayUrl}: ${notice}`);
         break;
       }
       
-      case 'EOSE': {
-        // End of stored events
-        console.log(`End of stored events from relay ${relayUrl}`);
+      default:
+        // Unknown message type
         break;
-      }
-      
-      case 'OK': {
-        // Confirmation of event publish
-        if (rest.length < 3) return;
-        const [eventId, success, message] = rest;
-        if (success) {
-          console.log(`Event ${eventId} published successfully to ${relayUrl}`);
-        } else {
-          console.error(`Failed to publish event ${eventId} to ${relayUrl}: ${message}`);
-        }
-        break;
-      }
     }
   }, []);
   
@@ -181,121 +213,90 @@ export function NostrProvider({ children }: { children: ReactNode }) {
     }
   }, [profile]);
   
-  // Connect to relays when component mounts or when relays change
+  // Update relay connections with proper dependency management
   useEffect(() => {
+    // Skip connection process if not enabled or connected
+    if (!isConnected || !isEnabled) return;
+    
+    // Don't do anything if no relays
+    if (!relays || relays.length === 0) return;
+    
+    // Function to connect to relays
     const connectToRelays = async () => {
-      if (!isConnected || !isEnabled) return;
-      
-      // Close existing connections first
-      relayConnections.forEach((socket) => {
-        socket.close();
-      });
-      
       // Get relay URLs from profile or use defaults
       const relayUrls = relays.map(r => r.url);
       
-      // Create new connections using the fallback mechanism
-      const connections = new Map<string, WebSocket>();
-      
-      // Try to connect to at least one relay
-      const connectedRelay = await NostrUtils.getConnectedRelayWithFallback(relayUrls);
-      
-      if (connectedRelay) {
-        const relayUrl = relayUrls.find(url => 
-          connectedRelay.url.includes(url.replace('wss://', ''))
-        ) || connectedRelay.url;
+      // Connect to each relay in the list if not already connected
+      for (const url of relayUrls) {
+        // Skip if already connected
+        if (relayConnectionsRef.current.has(url) && 
+            relayConnectionsRef.current.get(url)?.readyState === WebSocket.OPEN) {
+          continue;
+        }
         
-        connections.set(relayUrl, connectedRelay);
-        
-        // Update relay status
-        setRelays(prev => prev.map(relay => 
-          relay.url === relayUrl 
-            ? { ...relay, status: 'connected' }
-            : relay
-        ));
-        
-        // Add message handler
-        connectedRelay.addEventListener('message', (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            handleRelayMessage(data, relayUrl);
-          } catch (error) {
-            console.error(`Error parsing message from relay ${relayUrl}:`, error);
-          }
-        });
-        
-        // Try connecting to other relays in the background
-        setTimeout(() => {
-          relayUrls.forEach(async (url) => {
-            // Skip already connected relay
-            if (url === relayUrl) return;
-            
+        try {
+          const socket = new WebSocket(url);
+          
+          // Store in our ref (not in state!)
+          relayConnectionsRef.current.set(url, socket);
+          
+          // Set up event handlers
+          socket.addEventListener('message', (event) => {
             try {
-              const socket = NostrUtils.connectToRelay(url);
-              
-              // Add event listeners
-              socket.addEventListener('open', () => {
-                console.log(`Connected to additional relay: ${url}`);
-                connections.set(url, socket);
-                
-                // Update relay status
-                setRelays(prev => prev.map(r => 
-                  r.url === url ? { ...r, status: 'connected' } : r
-                ));
-                
-                // Add message handler
-                socket.addEventListener('message', (event) => {
-                  try {
-                    const data = JSON.parse(event.data);
-                    handleRelayMessage(data, url);
-                  } catch (error) {
-                    console.error(`Error parsing message from relay ${url}:`, error);
-                  }
-                });
-              });
-              
-              socket.addEventListener('error', () => {
-                setRelays(prev => prev.map(r => 
-                  r.url === url ? { ...r, status: 'error' } : r
-                ));
-              });
-              
-              socket.addEventListener('close', () => {
-                setRelays(prev => prev.map(r => 
-                  r.url === url ? { ...r, status: 'disconnected' } : r
-                ));
-                connections.delete(url);
-              });
-            } catch (error) {
-              console.error(`Error connecting to relay ${url}:`, error);
-              setRelays(prev => prev.map(r => 
-                r.url === url ? { ...r, status: 'error' } : r
-              ));
+              const data = JSON.parse(event.data);
+              handleRelayMessage(data, url);
+            } catch (err) {
+              console.error(`Error parsing message from relay ${url}:`, err);
             }
           });
-        }, 1000); // Wait 1 second before trying other relays
-      } else {
-        // No relays connected, show error
-        setError('Failed to connect to any relay. Please try again later.');
+          
+          socket.addEventListener('open', () => {
+            console.log(`Connected to relay: ${url}`);
+            // Update relay status without modifying the connections array
+            setRelays(prev => prev.map(relay => 
+              relay.url === url ? { ...relay, status: 'connected' } : relay
+            ));
+          });
+          
+          socket.addEventListener('close', () => {
+            console.log(`Disconnected from relay: ${url}`);
+            // Update relay status without modifying the connections array
+            setRelays(prev => prev.map(relay => 
+              relay.url === url ? { ...relay, status: 'disconnected' } : relay
+            ));
+            // Remove from our ref (not state!)
+            relayConnectionsRef.current.delete(url);
+          });
+          
+          socket.addEventListener('error', () => {
+            // Update relay status without modifying the connections array
+            setRelays(prev => prev.map(relay => 
+              relay.url === url ? { ...relay, status: 'error' } : relay
+            ));
+          });
+        } catch (err) {
+          console.error(`Error connecting to relay ${url}:`, err);
+        }
       }
-      
-      setRelayConnections(connections);
     };
     
+    // Connect to relays
     connectToRelays();
     
-    // Cleanup function
+    // Cleanup function to close connections on unmount or relay change
     return () => {
-      // Close all relay connections
-      relayConnections.forEach((socket) => {
-        socket.close();
+      // Close all connections that are no longer in the relays list
+      relayConnectionsRef.current.forEach((socket: WebSocket, url: string) => {
+        if (!relays.some(r => r.url === url)) {
+          socket.close();
+          relayConnectionsRef.current.delete(url);
+        }
       });
-      setRelayConnections(new Map());
     };
-  }, [isConnected, isEnabled, relays, handleRelayMessage, relayConnections]);
+  }, [isConnected, isEnabled, relays, handleRelayMessage]);
   
-  // Connect to a Nostr extension
-  const connectExtension = async (): Promise<boolean> => {
+  // Memoize the connectExtension function
+  const connectExtension = useCallback(async (): Promise<boolean> => {
     if (!NostrUtils.hasNostrExtension()) {
       setError('No Nostr extension found. Please install one like Alby or nos2x.');
       return false;
@@ -349,8 +350,9 @@ export function NostrProvider({ children }: { children: ReactNode }) {
     } finally {
       setConnecting(false);
     }
-  };
+  }, [profile, updateProfile]);
   
+  // Memoize the disconnectNostr function
   // Disconnect from Nostr
   const disconnectNostr = () => {
     setPubkey(null);
@@ -358,10 +360,10 @@ export function NostrProvider({ children }: { children: ReactNode }) {
     setIsConnected(false);
     
     // Close all relay connections
-    relayConnections.forEach((socket) => {
+    relayConnectionsRef.current.forEach((socket: WebSocket) => {
       socket.close();
     });
-    setRelayConnections(new Map());
+    relayConnectionsRef.current.clear();
     
     // Update relays status
     setRelays(
@@ -465,19 +467,11 @@ export function NostrProvider({ children }: { children: ReactNode }) {
       
       socket.addEventListener('close', () => {
         setRelays(prev => prev.map(r => r.url === url ? { ...r, status: 'disconnected' } : r));
-        setRelayConnections(prev => {
-          const next = new Map(prev);
-          next.delete(url);
-          return next;
-        });
+        relayConnectionsRef.current.delete(url);
       });
       
-      // Store the connection
-      setRelayConnections(prev => {
-        const next = new Map(prev);
-        next.set(url, socket);
-        return next;
-      });
+      // Store the connection in ref
+      relayConnectionsRef.current.set(url, socket);
       
       return true;
     } catch (err) {
@@ -489,14 +483,10 @@ export function NostrProvider({ children }: { children: ReactNode }) {
   
   // Disconnect from a relay
   const disconnectRelay = (url: string) => {
-    const socket = relayConnections.get(url);
+    const socket = relayConnectionsRef.current.get(url);
     if (socket) {
       socket.close();
-      setRelayConnections(prev => {
-        const next = new Map(prev);
-        next.delete(url);
-        return next;
-      });
+      relayConnectionsRef.current.delete(url);
       setRelays(prev => prev.map(r => r.url === url ? { ...r, status: 'disconnected' } : r));
     }
   };
@@ -562,7 +552,7 @@ export function NostrProvider({ children }: { children: ReactNode }) {
     let published = false;
     
     // Check that we have at least one connected relay
-    const connectedRelays = [...relayConnections.values()].filter(
+    const connectedRelays = Array.from(relayConnectionsRef.current.values()).filter(
       socket => socket.readyState === WebSocket.OPEN
     );
     
@@ -581,7 +571,7 @@ export function NostrProvider({ children }: { children: ReactNode }) {
     }
     
     // Publish to all connected relays
-    relayConnections.forEach((socket, url) => {
+    relayConnectionsRef.current.forEach((socket: WebSocket, url: string) => {
       if (socket.readyState === WebSocket.OPEN) {
         try {
           NostrUtils.publishEvent(socket, event);

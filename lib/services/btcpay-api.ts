@@ -45,46 +45,105 @@ export async function createBTCPayInvoice(
   const host = process.env.BTCPAY_HOST || 'https://btc.gdyup.xyz';
 
   if (!apiKey) {
+    console.error('BTCPay API key is missing from environment variables');
     throw new Error('BTCPay API key is required');
   }
 
+  console.log(`BTCPay: Creating invoice on host ${host} for order ${invoiceData.orderId}`);
+  
   try {
+    // Validate required fields
+    if (!invoiceData.price || isNaN(invoiceData.price)) {
+      throw new Error(`Invalid price: ${invoiceData.price}`);
+    }
+    
+    if (!invoiceData.orderId) {
+      throw new Error('Order ID is required');
+    }
+    
+    // Prepare request body with defaults for better reliability
+    const requestBody = {
+      amount: invoiceData.price,
+      currency: invoiceData.currency || 'USD',
+      metadata: {
+        orderId: invoiceData.orderId,
+        itemDesc: invoiceData.itemDesc || `Flight share payment ${invoiceData.orderId}`,
+        buyerEmail: invoiceData.buyerEmail,
+        redirectURL: invoiceData.redirectURL,
+        redirectAutomatically: invoiceData.redirectAutomatically ?? true,
+      },
+      checkout: {
+        speedPolicy: "HighSpeed", // Prefer Lightning
+        paymentMethods: ["BTC", "BTC-LightningNetwork"],
+        expirationMinutes: Math.floor((invoiceData.expirationTime || 900) / 60), // Default 15 minutes
+        redirectURL: invoiceData.redirectURL || `${process.env.NEXT_PUBLIC_APP_URL || 'https://gdyup.xyz'}/gdyup/payment/success`,
+        redirectAutomatically: invoiceData.redirectAutomatically ?? true,
+      }
+    };
+    
+    console.log('BTCPay: Sending request with data:', JSON.stringify(requestBody, null, 2));
+
+    // Make the API request with improved error handling
     const response = await fetch(`${host}/api/v1/stores/current/invoices`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `token ${apiKey}`,
       },
-      body: JSON.stringify({
-        amount: invoiceData.price,
-        currency: invoiceData.currency || 'USD',
-        metadata: {
-          orderId: invoiceData.orderId,
-          itemDesc: invoiceData.itemDesc,
-          buyerEmail: invoiceData.buyerEmail,
-          redirectURL: invoiceData.redirectURL,
-          redirectAutomatically: invoiceData.redirectAutomatically,
-        },
-        checkout: {
-          speedPolicy: "HighSpeed", // Prefer Lightning
-          paymentMethods: ["BTC", "BTC-LightningNetwork"],
-          expirationMinutes: Math.floor((invoiceData.expirationTime || 900) / 60), // Default 15 minutes
-          redirectURL: invoiceData.redirectURL,
-          redirectAutomatically: invoiceData.redirectAutomatically || true,
-        }
-      }),
+      body: JSON.stringify(requestBody),
     });
 
+    // Get response data or error text for better debugging
+    let responseText;
+    try {
+      responseText = await response.text();
+    } catch (e) {
+      responseText = 'Could not read response body';
+    }
+    
+    // Handle errors with more detailed information
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error creating BTCPay invoice:', errorData);
+      console.error(`BTCPay API error (${response.status}): ${responseText}`);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(responseText);
+      } catch (e) {
+        // If not JSON, use raw text
+        errorData = { error: responseText };
+      }
+      
+      // Throw a detailed error
       throw new Error(`BTCPay API error: ${response.status} - ${JSON.stringify(errorData)}`);
     }
 
-    const data = await response.json();
+    // Parse the successful response
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Error parsing BTCPay response:', e);
+      throw new Error(`Invalid BTCPay response format: ${responseText}`);
+    }
+    
+    console.log(`BTCPay: Successfully created invoice ${data.id} for order ${invoiceData.orderId}`);
+    
+    // Validate the response has the expected fields
+    if (!data.id || !data.checkoutLink) {
+      console.error('BTCPay response missing required fields:', data);
+      throw new Error('Invalid BTCPay response: missing required fields');
+    }
+    
     return data;
   } catch (error) {
     console.error('Error creating BTCPay invoice:', error);
+    
+    // If we have some network level error (e.g. connection refused), provide more context
+    if (error instanceof Error && error.message.includes('fetch failed')) {
+      console.error(`BTCPay server at ${host} may be unreachable or misconfigured`);
+      throw new Error(`BTCPay server unreachable: ${error.message}`);
+    }
+    
     throw error;
   }
 }

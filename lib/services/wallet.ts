@@ -42,7 +42,7 @@ export async function generateGoogleWalletPass(
   try {
     // Generate a signed URL that would validate the pass
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+      (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
     const googleWalletUrl = `${baseUrl}/api/flights/tickets/${ticket.id}/google-wallet?code=${ticket.ticket_code}`;
     
     // Update the ticket with the Google Wallet URL
