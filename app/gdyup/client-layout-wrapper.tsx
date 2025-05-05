@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useRef } from 'react';
 import GdyupHeader from './components/GdyupHeader';
 import { useAuth } from '@/lib/auth-provider';
 import { OnboardingMiddleware } from './components/onboarding/onboarding-middleware';
@@ -11,6 +11,8 @@ export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
   const [theme, setTheme] = useState<string>('default');
+  const initialized = useRef(false);
+  const currentThemeRef = useRef<string>('default');
   
   // Console log the auth state for debugging
   useEffect(() => {
@@ -22,34 +24,52 @@ export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
     }
   }, [user, authLoading]);
 
-  // Get current theme from localStorage - simplified since ThemeManager handles application
+  // Get current theme from localStorage once
   useEffect(() => {
-    try {
-      // Just get the current theme for className use below
-      const storedTheme = localStorage.getItem('gdyup-theme') || 'default';
-      setTheme(storedTheme);
-      
-      // Listen for theme changes from ThemeManager
-      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'gdyup-theme') {
-          const newTheme = e.newValue || 'default';
+    // Only run once on mount
+    if (initialized.current) return;
+    initialized.current = true;
+    
+    // Get the initial theme from class already applied by ThemeManager
+    // or fall back to localStorage
+    const themeClass = Array.from(document.documentElement.classList)
+      .find(cls => cls.startsWith('gdyup-theme-'));
+    
+    let initialTheme = 'default';
+    if (themeClass) {
+      initialTheme = themeClass.replace('gdyup-theme-', '');
+    } else {
+      try {
+        const storedTheme = localStorage.getItem('gdyup-theme');
+        if (storedTheme) initialTheme = storedTheme;
+      } catch (error) {
+        console.error('Theme state error:', error);
+      }
+    }
+    
+    currentThemeRef.current = initialTheme;
+    setTheme(initialTheme);
+    
+    // Listen for storage events from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'gdyup-theme') {
+        const newTheme = e.newValue || 'default';
+        // Only update if the theme is different from our current ref
+        if (newTheme !== currentThemeRef.current) {
+          currentThemeRef.current = newTheme;
           setTheme(newTheme);
         }
-      };
-      
-      window.addEventListener('storage', handleStorageChange);
-      
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-      };
-    } catch (error) {
-      console.error('Theme state error:', error);
-      // Fallback to default theme on error
-      setTheme('default');
-    }
-  }, []);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []); // Empty dependency array - only run once
 
-  // Add mobile detection
+  // Add mobile detection - no theme management here
   useEffect(() => {
     // Detect if the user is on a mobile device
     const checkMobile = () => {

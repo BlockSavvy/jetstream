@@ -147,18 +147,6 @@ function JetShareOfferContent() {
           </div>
         )}
         
-        {/* Show debug info in development */}
-        {process.env.NODE_ENV === 'development' && !isLoadingAirports && (
-          <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-2 mb-4 text-xs text-gray-400">
-            <span className="px-1.5 py-0.5 bg-blue-900/50 text-blue-300 rounded-md border border-blue-700/30 mr-2">DEV</span>
-            {airports.length > 0 ? (
-              <span>Using {airports.length} real airports from database</span>
-            ) : (
-              <span className="text-amber-400">No airport data available from database - using fallbacks</span>
-            )}
-          </div>
-        )}
-        
         <JetShareOfferForm 
           airportsList={airports} 
           editOfferId={editId} 

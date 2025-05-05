@@ -37,74 +37,43 @@ export const viewport: Viewport = {
 export default function GdyupLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      {/* Add enhanced theme initialization script */}
+      {/* Minimal theme initialization script - critical for first paint */}
       <Script id="theme-init" strategy="beforeInteractive">
         {`
           (function() {
+            // Skip if already initialized to prevent duplicate calls
+            if (window.gdyupThemeInitialized) return;
+            
             try {
-              // Get stored theme or default to 'default'
-              const storedTheme = localStorage.getItem('gdyup-theme') || 'default';
+              window.gdyupThemeInitialized = true;
               
-              // Clean up any existing theme classes
-              document.documentElement.classList.remove(
-                'gdyup-theme-default', 
-                'gdyup-theme-blue', 
-                'gdyup-theme-pink'
-              );
-              
-              // Add the theme class to document root
-              if (['default', 'blue', 'pink'].includes(storedTheme)) {
-                document.documentElement.classList.add('gdyup-theme-' + storedTheme);
-                console.log('Theme initialized to:', storedTheme);
-              } else {
-                // Fallback to default theme
-                document.documentElement.classList.add('gdyup-theme-default');
-                console.log('Theme fallback to default');
+              // Get stored theme or use default
+              let theme = 'default';
+              try {
+                const stored = localStorage.getItem('gdyup-theme');
+                if (stored && ['default', 'blue', 'pink'].includes(stored)) {
+                  theme = stored;
+                }
+              } catch (e) {
+                console.warn('Could not read theme from storage');
               }
               
-              // Add extra protection - set timeout to check theme class
-              setTimeout(function() {
-                const hasThemeClass = Array.from(document.documentElement.classList).some(
-                  cls => cls.startsWith('gdyup-theme-')
-                );
-                
-                if (!hasThemeClass) {
-                  // Force default theme class if missing
-                  document.documentElement.classList.add('gdyup-theme-default');
-                  console.log('Theme class missing, applied default');
-                }
-              }, 100);
+              // Apply theme class - only once at initial load
+              document.documentElement.classList.remove('gdyup-theme-default', 'gdyup-theme-blue', 'gdyup-theme-pink');
+              document.documentElement.classList.add('gdyup-theme-' + theme);
               
-              // Add event listener for storage changes
-              window.addEventListener('storage', function(e) {
-                if (e.key === 'gdyup-theme') {
-                  const newTheme = e.newValue || 'default';
-                  
-                  // Clean up theme classes
-                  document.documentElement.classList.remove(
-                    'gdyup-theme-default', 
-                    'gdyup-theme-blue', 
-                    'gdyup-theme-pink'
-                  );
-                  
-                  // Add appropriate theme class
-                  if (['default', 'blue', 'pink'].includes(newTheme)) {
-                    document.documentElement.classList.add('gdyup-theme-' + newTheme);
-                  } else {
-                    document.documentElement.classList.add('gdyup-theme-default');
-                  }
-                }
-              });
+              console.log('Theme initialized to:', theme);
             } catch (e) {
-              console.warn('Theme init warning:', e);
-              // Ensure default theme is applied on error
+              console.warn('Theme init failed:', e);
               document.documentElement.classList.add('gdyup-theme-default');
             }
           })();
         `}
       </Script>
       
+      {/* ThemeManager handles theme after client-side hydration */}
       <ThemeManager />
+      
       <ClientLayoutWrapper>
         {children}
       </ClientLayoutWrapper>

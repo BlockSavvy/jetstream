@@ -5,6 +5,17 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Popular airports to fall back to when API fails
+const POPULAR_AIRPORTS = [
+  { code: "JFK", name: "John F. Kennedy International Airport", city: "New York", country: "USA", is_private: false },
+  { code: "LAX", name: "Los Angeles International Airport", city: "Los Angeles", country: "USA", is_private: false },
+  { code: "MIA", name: "Miami International Airport", city: "Miami", country: "USA", is_private: false },
+  { code: "ORD", name: "O'Hare International Airport", city: "Chicago", country: "USA", is_private: false },
+  { code: "SFO", name: "San Francisco International Airport", city: "San Francisco", country: "USA", is_private: false },
+  { code: "LHR", name: "Heathrow Airport", city: "London", country: "UK", is_private: false },
+  { code: "CDG", name: "Charles de Gaulle Airport", city: "Paris", country: "France", is_private: false }
+];
+
 // Define Airport interface directly in this file to avoid import issues
 export interface Airport {
   code: string;
@@ -156,8 +167,25 @@ export default function LocationAutocompleteClient({
           
           filtered = [...codeMatches, ...startsWithMatches, ...containsMatches];
         } 
-        // Only use popularLocations as fallback if no airports from database or filtered results are empty
-        if ((!airports || airports.length === 0 || filtered.length === 0) && popularLocations.length > 0) {
+        
+        // If no database airports available or filtered results are empty, try POPULAR_AIRPORTS
+        if ((!airports || airports.length === 0 || filtered.length === 0) && POPULAR_AIRPORTS.length > 0) {
+          console.log(`LocationAutocomplete: Using POPULAR_AIRPORTS fallback for search "${searchValue}"`);
+          
+          const searchLower = searchValue.toLowerCase();
+          
+          filtered = POPULAR_AIRPORTS.filter(airport => 
+            airport.code.toLowerCase().includes(searchLower) ||
+            airport.city.toLowerCase().includes(searchLower) ||
+            airport.name.toLowerCase().includes(searchLower) ||
+            airport.country.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // If still no results, use popularLocations prop as the last fallback
+        if (filtered.length === 0 && popularLocations.length > 0) {
+          console.log(`LocationAutocomplete: Using popularLocations fallback for search "${searchValue}"`);
+          
           filtered = popularLocations
             .filter(location => location.toLowerCase().includes(searchValue.toLowerCase()))
             .map(location => {
@@ -181,6 +209,7 @@ export default function LocationAutocompleteClient({
             });
         }
         
+        // Limit results to 15 for performance
         filtered = filtered.slice(0, 15);
         const formatted = filtered.map(formatAirportDisplay);
         
@@ -267,6 +296,12 @@ export default function LocationAutocompleteClient({
       }
     }
     
+    // Use our predefined POPULAR_AIRPORTS if available airports aren't available
+    if (POPULAR_AIRPORTS && POPULAR_AIRPORTS.length > 0) {
+      return POPULAR_AIRPORTS.slice(0, 6);
+    }
+    
+    // Fallback to the popularLocations prop as a last resort
     return popularLocations.slice(0, 6).map(location => {
       const match = location.match(/^(.*)\s+\(([A-Z]{3,4})\)$/);
       if (match) {
@@ -286,7 +321,7 @@ export default function LocationAutocompleteClient({
         is_private: false
       };
     });
-  }, [airports, popularLocations]);
+  }, [airports, popularLocations, POPULAR_AIRPORTS]);
 
   // Initial search on mount if needed
   useEffect(() => {
@@ -297,22 +332,38 @@ export default function LocationAutocompleteClient({
     }
   }, []);
 
+  // Add a more prominent debug component
+  const LocationDebugInfo = ({ airports, search, results }: { 
+    airports: Airport[], 
+    search: string,
+    results: Airport[]
+  }) => {
+    if (process.env.NODE_ENV !== 'development') {
+      return null; // Only show in dev mode
+    }
+    
+    return (
+      <div className="absolute -top-10 left-0 right-0 bg-black/80 text-xs text-gray-400 rounded p-1 border border-gray-700 z-30">
+        <div className="flex flex-wrap gap-1 justify-between">
+          <span>DB: {airports.length > 0 ? 
+            <span className="text-green-400">✓ {airports.length} airports</span> : 
+            <span className="text-amber-500">✗ No database connection</span>}
+          </span>
+          {search && <span>Query: "{search}" → {results.length} results</span>}
+          {results.length > 0 && <span className="text-xs text-gray-500 truncate">{results[0].city} ({results[0].code}), ...</span>}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={cn("relative w-full", className)}>
       {label && (
         <label className="block text-sm font-medium text-white mb-1.5 ml-1">{label}</label>
       )}
       
-      {/* Debug info in development mode */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="absolute -top-6 right-0 text-[10px] text-gray-500 z-10">
-          {airports.length > 0 ? (
-            <span>Using {airports.length} airports</span>
-          ) : (
-            <span className="text-amber-500">No airport data</span>
-          )}
-        </div>
-      )}
+      {/* New enhanced debug information */}
+      <LocationDebugInfo airports={airports} search={value} results={results} />
       
       <div 
         className={cn(

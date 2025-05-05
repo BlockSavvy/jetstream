@@ -1,271 +1,232 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Map, Plane, Loader2, MapPin } from 'lucide-react';
-import { extractAirportCode, getAirportImage } from '@/lib/utils/airport-images';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
+import { FaPlaneDeparture, FaPlaneArrival } from 'react-icons/fa';
+import { RiFlightTakeoffLine } from 'react-icons/ri';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { cn } from '@/lib/utils';
 
-interface Airport {
-  code: string;
-  name: string;
-  city: string;
-  country: string;
-  image_url?: string;
-  is_private?: boolean;
+// Simple airport coordinates interface
+interface AirportCoordinates {
+  lat: number;
+  lng: number;
 }
 
 interface EnhancedAirportMapProps {
-  departure?: string;
-  arrival?: string;
+  departure: string;
+  arrival: string;
+  departureCoordinates?: AirportCoordinates;
+  arrivalCoordinates?: AirportCoordinates;
   className?: string;
-  compact?: boolean;
-  hideBackground?: boolean;
-  animationDuration?: number;
+  size?: 'sm' | 'md' | 'lg';
+  showLabels?: boolean;
+  showAnimation?: boolean;
 }
 
+/**
+ * Enhanced Airport Map Component - Version 2
+ * Visualizes flight routes between airports, with optional animations
+ * Supports all three GDY·UP themes
+ */
 export default function EnhancedAirportMap({
   departure,
   arrival,
-  className = '',
-  compact = false,
-  hideBackground = false,
-  animationDuration = 5
+  departureCoordinates,
+  arrivalCoordinates,
+  className,
+  size = 'md',
+  showLabels = true,
+  showAnimation = true,
 }: EnhancedAirportMapProps) {
-  const [departureCode, setDepartureCode] = useState<string | null>(null);
-  const [arrivalCode, setArrivalCode] = useState<string | null>(null);
-  const [departureAirport, setDepartureAirport] = useState<Airport | null>(null);
-  const [arrivalAirport, setArrivalAirport] = useState<Airport | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFetching, setIsFetching] = useState(false);
-  const [imageError, setImageError] = useState<Record<string, boolean>>({});
-  const [successfullyLoaded, setSuccessfullyLoaded] = useState<Record<string, boolean>>({});
-
-  // Extract airport codes from departure/arrival strings
-  useEffect(() => {
-    if (departure) {
-      const extractedCode = extractAirportCode(departure);
-      setDepartureCode(extractedCode);
-    } else {
-      setDepartureCode(null);
-    }
-    
-    if (arrival) {
-      const extractedCode = extractAirportCode(arrival);
-      setArrivalCode(extractedCode);
-    } else {
-      setArrivalCode(null);
-    }
-  }, [departure, arrival]);
-
-  // Fetch airport data when codes change
-  useEffect(() => {
-    const fetchAirportData = async () => {
-      // Don't fetch if neither airport is provided
-      if (!departureCode && !arrivalCode) {
-        setIsLoading(false);
-        return;
-      }
-      
-      setIsFetching(true);
-      
-      try {
-        // Build a query to fetch both airports in one request if possible
-        const codes = [];
-        if (departureCode) codes.push(departureCode);
-        if (arrivalCode && arrivalCode !== departureCode) codes.push(arrivalCode);
-        
-        const query = codes.join(',');
-        const timestamp = Date.now(); // Prevent caching
-        
-        const response = await fetch(`/api/airports?codes=${query}&t=${timestamp}`, {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Airport API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          // Find the departure and arrival airports in the response
-          const depAirport = departureCode 
-            ? data.find((a: Airport) => a.code === departureCode) 
-            : null;
-          
-          const arrAirport = arrivalCode 
-            ? data.find((a: Airport) => a.code === arrivalCode) 
-            : null;
-          
-          // Update state if we found the airports
-          if (depAirport) setDepartureAirport(depAirport);
-          if (arrAirport) setArrivalAirport(arrAirport);
-        }
-      } catch (error) {
-        console.error('Error fetching airport data:', error);
-      } finally {
-        setIsFetching(false);
-        setIsLoading(false);
-      }
-    };
-    
-    // Only fetch if we have at least one code
-    if (departureCode || arrivalCode) {
-      fetchAirportData();
-    } else {
-      setIsLoading(false);
-    }
-  }, [departureCode, arrivalCode]);
-
-  // Helper to get image path for an airport
-  const getAirportImagePath = (airport: Airport | null, code: string | null) => {
-    if (!airport || !code) {
-      return '/images/airports/placeholder_airport_map.png';
-    }
-    
-    // Set of airport codes we know have image files
-    const availableAirportImages = new Set(['KJFK', 'KFLL']);
-    
-    // Check if this airport code has an image file
-    if (availableAirportImages.has(code.toUpperCase())) {
-      return `/images/airports/${code.toLowerCase()}.png`;
-    }
-    
-    // In other cases, use the placeholder
-    return '/images/airports/placeholder_airport_map.png';
-  };
-
-  // Handle image loading errors
-  const handleImageError = (code: string) => {
-    // Only log once per code
-    if (!imageError[code]) {
-      console.log(`Image not found for ${code}, falling back to placeholder`);
-      setImageError(prev => ({ ...prev, [code]: true }));
-    }
-  };
-
-  // For debugging - log all state values
-  useEffect(() => {
-    console.log(`EnhancedAirportMap Component State:`, {
-      departureCode,
-      arrivalCode,
-      departureAirport,
-      arrivalAirport,
-      imageError,
-      isLoading,
-      isFetching,
-      hasDeparture: Boolean(departureCode),
-      hasArrival: Boolean(arrivalCode),
-      showBothAirports: compact ? false : Boolean(departureCode && arrivalCode)
-    });
-    
-    if (departureCode) {
-      const path = getAirportImagePath(departureAirport, departureCode);
-      console.log(`Departure image path: ${path}`);
-    }
-    if (arrivalCode) {
-      const path = getAirportImagePath(arrivalAirport, arrivalCode);
-      console.log(`Arrival image path: ${path}`);
-    }
-  }, [departureCode, arrivalCode, departureAirport, arrivalAirport, imageError, isLoading, isFetching, compact]);
-
-  // Get all airport data and image information
-  const departureImage = getAirportImagePath(departureAirport, departureCode);
-  const arrivalImage = getAirportImagePath(arrivalAirport, arrivalCode);
-  const hasDeparture = Boolean(departureCode);
-  const hasArrival = Boolean(arrivalCode);
-  const hasBoth = hasDeparture && hasArrival;
+  const { theme, getThemeClasses } = useGdyupTheme();
+  const [isLoaded, setIsLoaded] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const planeControls = useAnimationControls();
   
-  // Determine if we're showing one or two airports
-  const showBothAirports = compact ? false : hasBoth;
-
-  // Debug log for image paths that will be rendered
+  // Extract airport codes for display
+  const extractAirportCode = (airport: string): string => {
+    // Match 3-letter code in parentheses e.g. "New York (JFK)"
+    const match = airport.match(/\(([A-Z]{3})\)/);
+    return match ? match[1] : airport.slice(0, 3);
+  };
+  
+  const departureCode = extractAirportCode(departure);
+  const arrivalCode = extractAirportCode(arrival);
+  
+  // Animate the plane along the route
   useEffect(() => {
-    console.log('FINAL IMAGE PATHS:', {
-      departureCode,
-      arrivalCode,
-      departureImage: departureImage || 'Using fallback color',
-      arrivalImage: arrivalImage || 'Using fallback color',
-      showBothAirports
-    });
-  }, [departureCode, arrivalCode, departureImage, arrivalImage, showBothAirports]);
-
+    if (showAnimation && isLoaded) {
+      const animatePlane = async () => {
+        await planeControls.start({
+          pathOffset: 1,
+          transition: { duration: 3, ease: "easeInOut", repeat: Infinity, repeatDelay: 1 }
+        });
+      };
+      
+      animatePlane();
+    }
+  }, [planeControls, showAnimation, isLoaded]);
+  
+  // Set loaded state after component mounts
+  useEffect(() => {
+    setIsLoaded(true);
+  }, []);
+  
+  // Determine size class
+  const sizeClass = {
+    sm: "h-32",
+    md: "h-48",
+    lg: "h-64"
+  }[size];
+  
   return (
-    <div className={cn("w-full relative overflow-hidden rounded-lg", className)} style={{ minHeight: compact ? '100px' : '140px' }}>
-      {departureCode && arrivalCode ? (
-        <>
-          {/* Route map visualization */}
-          <div className="gdyup-map-overlay">
-            <div className="gdyup-map-inner">
-              {/* World map backdrop */}
-              <Image
-                src="/images/airports/world_map_dark.jpg"
-                alt="World Map"
-                fill
-                className="gdyup-map-image"
-                unoptimized={true}
-              />
+    <div 
+      ref={mapContainerRef}
+      className={cn(
+        getThemeClasses({
+          base: `relative overflow-hidden rounded-lg border shadow-inner ${sizeClass}`,
+          default: "bg-gdyup-accent/30 border-gdyup-border/50",
+          blue: "bg-blue-900/30 border-blue-700/50",
+          pink: "bg-pink-900/30 border-pink-700/50"
+        }),
+        className
+      )}
+    >
+      {/* World map backdrop with theme-specific styling */}
+      <div className={getThemeClasses({
+        base: "absolute inset-0 opacity-40 bg-cover bg-center",
+        default: "bg-[url('/images/world-map-dark.png')]",
+        blue: "bg-[url('/images/world-map-blue.png')]",
+        pink: "bg-[url('/images/world-map-pink.png')]"
+      })} />
+      
+      {/* Route visualization */}
+      <div className="absolute inset-0 flex items-center justify-center p-6">
+        <div className="relative w-full flex items-center justify-between">
+          {/* Departure airport */}
+          <div className="flex flex-col items-center">
+            {showLabels && (
+              <div className={getThemeClasses({
+                base: "text-xs uppercase font-semibold mb-1",
+                default: "text-white/80",
+                blue: "text-blue-200/80",
+                pink: "text-pink-200/80"
+              })}>
+                From
+              </div>
+            )}
+            <div className={getThemeClasses({
+              base: "flex items-center",
+              default: "",
+              blue: "",
+              pink: ""
+            })}>
+              <FaPlaneDeparture className={getThemeClasses({
+                base: "h-4 w-4 mr-1",
+                default: "text-white",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })} />
+              <div className={getThemeClasses({
+                base: "text-lg font-bold",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}>
+                {departureCode}
+              </div>
             </div>
           </div>
-        </>
-      ) : departureCode ? (
-        <>
-          {/* Single location - Departure airport */}
-          <div className="gdyup-map-overlay">
-            <div className="gdyup-map-inner">
-              {departureImage ? (
-                <Image
-                  src={imageError[departureCode] ? '/images/airports/placeholder_airport_map.png' : departureImage}
-                  alt={`${departureCode} Airport`}
-                  fill
-                  className="gdyup-map-image"
-                  unoptimized={true}
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                  <div className="flex flex-col items-center">
-                    <MapPin className="h-8 w-8 mb-2 text-gray-400" />
-                    <span className="text-gray-300 text-sm">{departureCode}</span>
-                  </div>
-                </div>
-              )}
+          
+          {/* Flight path */}
+          <div className="flex-1 mx-4 relative">
+            <motion.div 
+              className={getThemeClasses({
+                base: "h-0.5 w-full absolute top-1/2 transform -translate-y-1/2",
+                default: "bg-white",
+                blue: "bg-blue-300",
+                pink: "text-pink-300"
+              })}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.8 }}
+            />
+            
+            {showAnimation && (
+              <motion.div
+                className="absolute top-1/2 transform -translate-y-1/2"
+                style={{ left: 0 }}
+                animate={planeControls}
+                initial={{ pathOffset: 0 }}
+                custom={1}
+              >
+                <motion.div
+                  className="relative"
+                  initial={{ rotate: 0 }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
+                >
+                  <RiFlightTakeoffLine className={getThemeClasses({
+                    base: "h-6 w-6",
+                    default: "text-white",
+                    blue: "text-blue-300",
+                    pink: "text-pink-300"
+                  })} />
+                </motion.div>
+              </motion.div>
+            )}
+          </div>
+          
+          {/* Arrival airport */}
+          <div className="flex flex-col items-center">
+            {showLabels && (
+              <div className={getThemeClasses({
+                base: "text-xs uppercase font-semibold mb-1",
+                default: "text-white/80",
+                blue: "text-blue-200/80",
+                pink: "text-pink-200/80"
+              })}>
+                To
+              </div>
+            )}
+            <div className={getThemeClasses({
+              base: "flex items-center",
+              default: "",
+              blue: "",
+              pink: ""
+            })}>
+              <div className={getThemeClasses({
+                base: "text-lg font-bold",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}>
+                {arrivalCode}
+              </div>
+              <FaPlaneArrival className={getThemeClasses({
+                base: "h-4 w-4 ml-1",
+                default: "text-white",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })} />
             </div>
           </div>
-        </>
-      ) : arrivalCode ? (
-        <>
-          {/* Single location - Arrival airport */}
-          <div className="gdyup-map-overlay">
-            <div className="gdyup-map-inner">
-              {arrivalImage ? (
-                <Image
-                  src={imageError[arrivalCode] ? '/images/airports/placeholder_airport_map.png' : arrivalImage}
-                  alt={`${arrivalCode} Airport`}
-                  fill
-                  className="gdyup-map-image"
-                  unoptimized={true}
-                />
-              ) : (
-                <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
-                  <div className="flex flex-col items-center">
-                    <MapPin className="h-8 w-8 mb-2 text-gray-400" />
-                    <span className="text-gray-300 text-sm">{arrivalCode}</span>
-                  </div>
-                </div>
-              )}
-            </div>
+        </div>
+      </div>
+      
+      {/* Optional flight details overlay */}
+      {size === 'lg' && (
+        <div className={getThemeClasses({
+          base: "absolute bottom-0 left-0 right-0 p-2 text-xs",
+          default: "bg-black/50 text-white/70",
+          blue: "bg-blue-950/50 text-blue-200/70",
+          pink: "bg-pink-950/50 text-pink-200/70"
+        })}>
+          <div className="flex justify-between">
+            <span>Distance: ~1,200 miles</span>
+            <span>Est. flight time: 2h 45m</span>
           </div>
-        </>
-      ) : (
-        // Placeholder when no airport is selected
-        <div className="flex flex-col items-center justify-center h-full bg-gray-800/40 py-3 gdyup-map-container">
-          <MapPin className="h-8 w-8 mb-2 text-gray-400" />
-          <p className="text-sm text-gray-300">Select airports to see the route</p>
         </div>
       )}
     </div>
