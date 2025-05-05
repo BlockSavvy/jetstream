@@ -82,14 +82,18 @@ WHERE "payment_status" IS NULL;
 
 Update your GDY·UP application environment variables:
 
+```
 BTCPAY_API_KEY=your_api_key_here
 BTCPAY_STORE_ID=your_store_id_here
-BTCPAY_SERVER_URL=<https://your-btcpay-server-domain.com>
+BTCPAY_SERVER_URL=https://your-btcpay-server-domain.com
 BTCPAY_WEBHOOK_SECRET=your_webhook_secret_here
+```
 
 For development environments, you can use:
 
+```
 BTCPAY_DEV_MODE=true
+```
 
 This will enable the development simulation when the real BTCPay server is unavailable.
 
