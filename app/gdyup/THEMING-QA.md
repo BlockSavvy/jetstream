@@ -74,7 +74,7 @@ Ensured high contrast ratios across all themes:
    - Buttons: Black text on lime (contrast ratio: 13.2:1)
 
 2. **Luxury Black**
-   - Primary: #F25C05 on black background (contrast ratio: 7.1:1) 
+   - Primary: #F25C05 on black background (contrast ratio: 7.1:1)
    - Text: White on dark backgrounds (contrast ratio: 16.8:1)
    - Carbon fiber texture added for depth and visual interest
 
@@ -116,4 +116,4 @@ Ensured high contrast ratios across all themes:
 3. **Accessibility Enhancements**
    - Add ARIA theme announcements
    - Consider high-contrast specific theme mode
-   - Add keyboard shortcuts for theme switching 
+   - Add keyboard shortcuts for theme switching

@@ -10,6 +10,11 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
  * Uses service role key for server-side operations that require full database access
  */
 export const createClient = async () => {
+  // Log app URL from environment for debugging
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    console.log('🔐 Initializing Supabase client with app URL:', process.env.NEXT_PUBLIC_APP_URL);
+  }
+  
   // DEV MODE: Return mock client with admin capabilities
   if (process.env.NEXT_PUBLIC_AUTH_DEV_MODE === 'true') {
     console.log('DEV MODE: Returning mock admin client');
@@ -143,27 +148,65 @@ export const createClient = async () => {
     } as any;
   }
 
-  // Always use the service role key for admin-level access
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase URL or service role key');
-  }
-  
-  // Create the admin client directly with service role
-  const supabase = createSupabaseClient(
-    supabaseUrl, 
-    supabaseServiceKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
+  try {
+    // Get the environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    // Log detailed debugging info for missing credentials
+    if (!supabaseUrl) {
+      console.error('ERROR: Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
     }
-  );
-  
-  return supabase;
+    
+    if (!supabaseServiceKey) {
+      console.error('ERROR: Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
+      console.error('Attempting to use anonymous key as fallback...');
+    }
+    
+    // Validate that we have at least the URL and one type of key
+    if (!supabaseUrl) {
+      throw new Error('Missing Supabase URL');
+    }
+    
+    if (!supabaseServiceKey && !supabaseAnonKey) {
+      throw new Error('Missing both Supabase service role key and anon key');
+    }
+    
+    // Choose the appropriate key, with fallback to anon key if service key is missing
+    const keyToUse = supabaseServiceKey || supabaseAnonKey;
+    const keyType = supabaseServiceKey ? 'service role' : 'anonymous';
+    
+    console.log(`Creating Supabase client with ${keyType} key`);
+    
+    // Create the client with appropriate options
+    const supabase = createSupabaseClient(
+      supabaseUrl, 
+      keyToUse as string,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        },
+        global: {
+          fetch: async (url, options) => {
+            try {
+              return await fetch(url, options);
+            } catch (error) {
+              console.error(`Supabase fetch error for URL ${url}:`, error);
+              // Re-throw for proper error handling upstream
+              throw error;
+            }
+          }
+        }
+      }
+    );
+    
+    return supabase;
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error);
+    throw error;
+  }
 };
 
 /**

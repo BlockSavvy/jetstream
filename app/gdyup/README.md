@@ -1,12 +1,20 @@
-# JetShare Module
+# GDYUP Mobile App (JetStream Platform)
 
-JetShare is a module integrated into the JetStream platform that allows users to share private jet flights, reducing costs by finding co-passengers.
+GDYUP is a mobile-first app within the JetStream platform ecosystem that allows users to share private jet flights, reducing costs by finding co-passengers. It is the rebrand of the original JetShare module with enhanced functionality.
+
+## Features
+
+- Mobile-first PWA design optimized for phones and tablets
+- Bitcoin and Lightning Network payment integration via BTCPay Server
+- Decentralized identity with Nostr protocol
+- Modern UI with centralized CSS and theme management
+- Complete flow from offer creation to boarding pass
 
 ## Setup Instructions
 
 ### 1. Database Setup
 
-JetShare requires two main tables and some utility functions for diagnostics:
+GDYUP requires two main tables and utility functions for the flight sharing system:
 
 ```sql
 -- Run these in the Supabase SQL Editor
@@ -72,9 +80,22 @@ CREATE POLICY "jetshare_offers_update_policy" ON jetshare_offers
 Ensure these environment variables are set:
 
 ```env
+# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# App Configuration
+NEXT_PUBLIC_APP_URL=https://gdyup.xyz
+
+# BTCPay Server Configuration
+BTCPAY_HOST=https://btc.gdyup.xyz
+BTCPAY_API_KEY=your-btcpay-api-key
+BTCPAY_WEBHOOK_SECRET=your-webhook-secret
+
+# Payment Processing
+STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
 ```
 
 ### 3. Running the Application
@@ -83,7 +104,26 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 npm run dev
 ```
 
-Access JetShare at: <http://localhost:3000/jetshare>
+Access GDYUP at: <https://gdyup.xyz>
+
+## Complete User Flow
+
+1. **Airport Search & Offer Creation**:
+   - Airport search autocompletes after 2 letters
+   - Users create flight share offers with details and pricing
+
+2. **Listing & Acceptance**:
+   - Offers listed in marketplace for others to view
+   - User can accept an offer and proceed to payment
+
+3. **Payment Options**:
+   - Credit Card via Stripe
+   - Bitcoin via BTCPay Server (on-chain and Lightning Network)
+   - "Pay Later" option (1-hour hold)
+
+4. **Post-Payment Process**:
+   - Automated generation of boarding pass
+   - Access to flight details and communications
 
 ## Debugging & Troubleshooting
 
@@ -164,85 +204,33 @@ WHERE user_id NOT IN (SELECT id FROM profiles);
 ### File Structure
 
 ```
-/app/jetshare
-  /components - UI components
+/app/gdyup
+  /components - UI components for the mobile app
+  /pages - Main application pages
+  /payment - Payment flow components
+  /styles - CSS and theme files
   /utils - Utility functions
-  /api - API endpoints
-  /debug - Debug UI
 ```
 
 ### API Endpoints
 
-- `/api/jetshare/getOffers` - Get flight share offers with filtering
-- `/api/jetshare/createOffer` - Create a new flight share offer
-- `/api/jetshare/acceptOffer` - Accept a flight share offer
-- `/api/jetshare/processPayment` - Process payment for an accepted offer
-- `/api/jetshare/debug` - Get debug information
-- `/api/jetshare/fixConstraints` - Fix database constraints
+The app uses both dedicated GDYUP endpoints and some legacy JetShare endpoints:
+
+- `/api/jetshare/getOffers` - Get flight share offers
+- `/api/jetshare/createOffer` - Create a new offer
+- `/api/jetshare/acceptOffer` - Accept an offer
+- `/api/jetshare/process-payment` - Process payment
+- `/api/gdyup/airports` - Airport search with autocomplete
+- `/api/gdyup/tickets` - Boarding pass generation
 
 ### Key Components
 
-- `JetShareListingsContent` - Displays flight share listings
+- `LocationAutocompleteClient` - Airport search with autocomplete after 2 letters
 - `OfferCreationForm` - Form for creating flight share offers
-- `JetShareDashboard` - User dashboard for managing offers and bookings
+- `JetSharePaymentForm` - Payment processing with multiple options
+- `BoardingPassView` - Display digital boarding pass
 
-## Additional Resources
-
-- Database Schema: See SQL setup above
-- Supabase Documentation: [https://supabase.com/docs](https://supabase.com/docs)
-- Next.js Documentation: [https://nextjs.org/docs](https://nextjs.org/docs)
-
-# JetShare Dashboard Module
-
-## Error Handling and Resilience Strategy
-
-The JetShare dashboard is designed to be highly resilient to various failure modes, using the following strategies:
-
-### Client-Side Component
-
-1. **Multiple Authentication Sources**:
-   - Uses session, localStorage, and auth context as fallbacks to find the user ID
-   - Continues to function if any single auth method fails
-
-2. **Graceful Data Handling**:
-   - Implements timeouts to prevent endless loading states
-   - Individual API failures do not crash the entire dashboard
-   - Shows empty states with helpful messages when data cannot be loaded
-
-3. **Defensive Rendering**:
-   - Validates all data before rendering components
-   - Provides fallbacks for missing or malformed data
-   - Prevents crashes from unexpected API response formats
-
-### API Routes
-
-1. **Direct Database Access**:
-   - Uses Supabase service role for authentication-independent data access
-   - Bypasses session validation to avoid "Auth session missing" errors
-
-2. **Explicit Error Handling**:
-   - Provides detailed error messages for debugging
-   - Returns clean error responses to the client
-   - Logs issues with context for troubleshooting
-
-3. **Safe Query Construction**:
-   - Uses simplified queries without complex joins to reduce points of failure
-   - Ensures minimal dependencies on related data structures
-
-## Common Issues and Fixes
-
-1. **Auth Session Missing**: Fixed by using direct service role access in API routes
-2. **Cannot Read Properties of Undefined**: Fixed by adding null checks and safe property access
-3. **Empty Data States**: Fixed by providing default values and arrays
-4. **Server Error (500)**: Fixed by improving error handling in API routes
-
-## Future Improvements
-
-- Implement local data caching for offline or error recovery
-- Add retry logic for failed API requests
-- Consider server-side rendering for initial data fetch
-
-# GDYUP App Styling Guide
+## GDYUP App Styling Guide
 
 ## Overview
 

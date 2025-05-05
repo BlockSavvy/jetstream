@@ -1,6 +1,32 @@
 {
-  "extends": "next/core-web-vitals",
-  "rules": {
-    "react/no-unescaped-entities": "off"
+    "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended", "plugin:react-hooks/recommended"],
+    "plugins": ["@typescript-eslint", "filenames", "tailwindcss", "simple-import-sort"],
+    "rules": {
+      "react/no-unescaped-entities": "off",
+  
+      // 🧱 Enforce filename conventions
+      "filenames/match-regex": [2, "^[a-zA-Z0-9]+(\\.(ui|container))?$", true],
+  
+      // 🎨 Warn against hardcoded styles (enforce Tailwind + theme hook)
+      "no-inline-styles": 0,
+      "tailwindcss/classnames-order": "warn",
+      "tailwindcss/no-custom-classname": "off",
+  
+      // 📦 Sort imports consistently
+      "simple-import-sort/imports": "warn",
+      "simple-import-sort/exports": "warn",
+  
+      // 🧠 TypeScript
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+    },
+    "settings": {
+      "tailwindcss": {
+        "callees": ["classnames", "clsx"],
+        "config": "tailwind.config.js",
+        "cssFiles": ["**/*.css", "**/*.scss"],
+        "removeDuplicates": true
+      }
+    }
   }
-}
+  
