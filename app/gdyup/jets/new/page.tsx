@@ -108,14 +108,14 @@ function NewJetContent() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
+          <Button
+            variant="ghost"
           onClick={() => router.back()} 
           className="mr-4"
-        >
+          >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
-        </Button>
+          </Button>
         <h1 className="text-2xl font-bold">Add New Jet</h1>
       </div>
       
@@ -123,7 +123,7 @@ function NewJetContent() {
         <div className="md:col-span-1">
           <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
             <img 
-              src={jetImagePath} 
+              src={jetImagePath}
               alt="Default jet" 
               className="w-full h-auto object-cover"
             />
@@ -177,7 +177,7 @@ function NewJetContent() {
                     )}
                   />
                 </div>
-                
+                  
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
@@ -206,7 +206,7 @@ function NewJetContent() {
                       </FormItem>
                     )}
                   />
-                  
+                
                   <FormField
                     control={form.control}
                     name="capacity"
@@ -221,20 +221,20 @@ function NewJetContent() {
                     )}
                   />
                 </div>
-                
-                <FormField
-                  control={form.control}
-                  name="home_base_airport"
-                  render={({ field }) => (
-                    <FormItem>
+                  
+                  <FormField
+                    control={form.control}
+                    name="home_base_airport"
+                    render={({ field }) => (
+                      <FormItem>
                       <FormLabel>Home Base Airport</FormLabel>
-                      <FormControl>
+                        <FormControl>
                         <Input placeholder="e.g. KTEB (Teterboro)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField

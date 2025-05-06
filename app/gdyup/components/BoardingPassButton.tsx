@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Ticket, Wallet, Download, RefreshCw, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface BoardingPassButtonProps {
   transactionId?: string;
@@ -29,45 +32,39 @@ export default function BoardingPassButton({
     setIsLoading(true);
     
     try {
-      // Build the query parameters based on available IDs
-      const idParam = transactionId 
-        ? `transactionId=${transactionId}` 
-        : `offerId=${offerId}`;
+      // Construct the API endpoint URL
+      const apiUrl = `/api/boardingpass/${offerId}?format=pdf${isTestMode ? '&test=true' : ''}`;
       
-      // Add test flag if needed
-      const testParam = isTestMode ? '&test=true' : '';
-      
-      // Call the API to generate boarding pass
-      const response = await fetch(`/api/jetshare/generateBoardingPass?${idParam}${testParam}`);
+      // Fetch the boarding pass PDF
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        // For development, show a simulated boarding pass
-        if (process.env.NODE_ENV === 'development') {
-          window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&test=true&timestamp=${Date.now()}`, '_blank');
-          toast.success('Development mode: Simulated boarding pass generated');
-          return;
-        }
-        
-        const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || 'Failed to generate boarding pass');
+        throw new Error(`Failed to download boarding pass: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      // Get the blob from the response
+      const blob = await response.blob();
       
-      // Open the boarding pass in a new tab
-      window.open(data.downloadUrl, '_blank');
-      toast.success('Boarding pass downloaded successfully');
-    } catch (err) {
-      console.error('Error downloading boarding pass:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Failed to download boarding pass';
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
       
-      // Show a more user-friendly error in dev mode
-      if (process.env.NODE_ENV === 'development') {
-        toast.error('Development mode: Using a simulated boarding pass instead');
-        window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&test=true&timestamp=${Date.now()}`, '_blank');
-      } else {
-        toast.error(errorMsg);
-      }
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `boarding-pass-${offerId}.pdf`;
+      
+      // Append to the document, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Boarding pass downloaded successfully!');
+    } catch (error) {
+      console.error('Error downloading boarding pass:', error);
+      toast.error('Failed to download boarding pass. Please try again later.');
     } finally {
       setIsLoading(false);
     }
@@ -77,48 +74,39 @@ export default function BoardingPassButton({
     setIsAppleWalletLoading(true);
     
     try {
-      // Build the query parameters based on available IDs
-      const idParam = transactionId 
-        ? `transactionId=${transactionId}` 
-        : `offerId=${offerId}`;
+      // Construct the API endpoint URL
+      const apiUrl = `/api/boardingpass/${offerId}?format=pkpass${isTestMode ? '&test=true' : ''}`;
       
-      // Add test flag if needed
-      const testParam = isTestMode ? '&test=true' : '';
-      
-      // Call the API to generate Apple Wallet pass
-      const response = await fetch(`/api/jetshare/generateBoardingPass?${idParam}${testParam}&format=wallet`);
+      // Fetch the Apple Wallet pass
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        // For development, show a simulated wallet pass
-        if (process.env.NODE_ENV === 'development') {
-          window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=wallet&test=true&timestamp=${Date.now()}`, '_blank');
-          toast.success('Development mode: Simulated Apple Wallet pass generated');
-          return;
-        }
-        
-        const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || 'Failed to generate Apple Wallet pass');
+        throw new Error(`Failed to generate Apple Wallet pass: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      // Get the blob from the response
+      const blob = await response.blob();
       
-      // In a real production app, this would open a .pkpass file that the OS would recognize
-      // For our demo, we'll just open the simulated wallet pass endpoint
-      window.open(data.walletUrl, '_blank');
-      toast.success('Boarding pass added to Apple Wallet', {
-        description: isTestMode ? 'Test mode: This is a simulated Apple Wallet pass' : undefined
-      });
-    } catch (err) {
-      console.error('Error generating Apple Wallet pass:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Failed to add to Apple Wallet';
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
       
-      // Show a more user-friendly error in dev mode
-      if (process.env.NODE_ENV === 'development') {
-        toast.error('Development mode: Using a simulated Apple Wallet pass instead');
-        window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=wallet&test=true&timestamp=${Date.now()}`, '_blank');
-      } else {
-        toast.error(errorMsg);
-      }
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `boarding-pass-${offerId}.pkpass`;
+      
+      // Append to the document, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Apple Wallet pass generated successfully!');
+    } catch (error) {
+      console.error('Error generating Apple Wallet pass:', error);
+      toast.error('Failed to generate Apple Wallet pass. Please try again later.');
     } finally {
       setIsAppleWalletLoading(false);
     }
@@ -128,45 +116,19 @@ export default function BoardingPassButton({
     setIsQRLoading(true);
     
     try {
-      // Build the query parameters based on available IDs
-      const idParam = transactionId 
-        ? `transactionId=${transactionId}` 
-        : `offerId=${offerId}`;
+      // Simulate API call to generate Nostr QR code
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Add test flag if needed
-      const testParam = isTestMode ? '&test=true' : '';
+      // In a real implementation, you would fetch the Nostr QR from your backend
+      // For now, we'll just show a toast message
+      toast.success('Nostr QR code will be displayed in a modal');
       
-      // Call the API to generate QR code
-      const response = await fetch(`/api/jetshare/generateBoardingPass?${idParam}${testParam}&format=qr`);
-      
-      if (!response.ok) {
-        // For development, show a simulated QR code page
-        if (process.env.NODE_ENV === 'development') {
-          window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=qr&test=true&timestamp=${Date.now()}`, '_blank');
-          toast.success('Development mode: Simulated Nostr QR code generated');
-          return;
-        }
-        
-        const errorData = await response.json();
-        throw new Error(errorData.message || errorData.error || 'Failed to generate Nostr QR code');
-      }
-      
-      const data = await response.json();
-      
-      // Open the QR code in a new window/tab
-      window.open(data.qrUrl, '_blank');
-      toast.success('Nostr QR code generated successfully');
-    } catch (err) {
-      console.error('Error generating Nostr QR code:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Failed to generate Nostr QR code';
-      
-      // Show a more user-friendly error in dev mode
-      if (process.env.NODE_ENV === 'development') {
-        toast.error('Development mode: Could not generate Nostr QR. Using a simulated one instead.');
-        window.open(`/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&format=qr&test=true&timestamp=${Date.now()}`, '_blank');
-      } else {
-        toast.error(errorMsg);
-      }
+      // Here you would open a modal with the QR code
+      // For now, let's just log to console
+      console.log('Showing Nostr QR code for boarding pass:', offerId);
+    } catch (error) {
+      console.error('Error generating Nostr QR code:', error);
+      toast.error('Failed to generate Nostr QR code. Please try again later.');
     } finally {
       setIsQRLoading(false);
     }
@@ -175,24 +137,26 @@ export default function BoardingPassButton({
   if (variant === 'compact') {
     return (
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isLoading}
-          onClick={downloadBoardingPass}
-          className={getThemeClasses({
-            base: "text-xs font-medium",
-            default: "border-gray-700 hover:bg-gray-800 hover:text-[#DAFF0D]",
-            blue: "border-blue-700 hover:bg-blue-800 hover:text-blue-300",
-            pink: "border-pink-700 hover:bg-pink-800 hover:text-pink-300"
-          })}
-        >
-          {isLoading ? (
-            <RefreshCw className="h-3 w-3 animate-spin" />
-          ) : (
-            <Ticket className="h-3 w-3" />
-          )}
-        </Button>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+            onClick={downloadBoardingPass}
+            className={getThemeClasses({
+              base: "text-xs font-medium",
+              default: "border-gray-700 hover:bg-gray-800 hover:text-gdyup-primary",
+              blue: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
+              pink: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
+            })}
+          >
+            {isLoading ? (
+              <RefreshCw className="h-3 w-3 animate-spin" />
+            ) : (
+              <Ticket className="h-3 w-3" />
+            )}
+          </Button>
+        </motion.div>
       </div>
     );
   }
@@ -220,76 +184,106 @@ export default function BoardingPassButton({
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Button
-            disabled={isLoading}
-            onClick={downloadBoardingPass}
-            className={getThemeClasses({
-              base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1",
-              default: "bg-primary hover:bg-primary/90 text-primary-foreground",
-              blue: "bg-blue-500 hover:bg-blue-600 text-white",
-              pink: "bg-pink-500 hover:bg-pink-600 text-white"
-            })}
-          >
-            {isLoading ? (
-              <>
-                <RefreshCw className="h-5 w-5 animate-spin" />
-                <span className="text-xs">Loading...</span>
-              </>
-            ) : (
-              <>
-                <Ticket className="h-5 w-5" />
-                <span className="text-xs">Download PDF</span>
-              </>
-            )}
-          </Button>
-          
-          <Button
-            disabled={isAppleWalletLoading}
-            onClick={addToAppleWallet}
-            className={getThemeClasses({
-              base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1",
-              default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
-              blue: "bg-blue-500 hover:bg-blue-600 text-white",
-              pink: "bg-pink-500 hover:bg-pink-600 text-white"
-            })}
-          >
-            {isAppleWalletLoading ? (
-              <>
-                <RefreshCw className="h-5 w-5 animate-spin" />
-                <span className="text-xs">Loading...</span>
-              </>
-            ) : (
-              <>
-                <Wallet className="h-5 w-5" />
-                <span className="text-xs">Add to Apple Wallet</span>
-              </>
-            )}
-          </Button>
-          
-          {showQR && (
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Button
-              disabled={isQRLoading}
-              onClick={showNostrQR}
+              disabled={isLoading}
+              onClick={downloadBoardingPass}
               className={getThemeClasses({
-                base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1",
-                default: "bg-purple-700 hover:bg-purple-600 text-white",
-                blue: "bg-purple-800 hover:bg-purple-700 text-white",
-                pink: "bg-purple-800 hover:bg-purple-700 text-white"
+                base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
+                default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
               })}
-              title="Nostr QR codes allow for decentralized verification of your boarding pass on the Nostr protocol, enhancing privacy and security"
             >
-              {isQRLoading ? (
-                <>
+              {isLoading ? (
+                <motion.div 
+                  className="flex flex-col items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
                   <RefreshCw className="h-5 w-5 animate-spin" />
                   <span className="text-xs">Loading...</span>
-                </>
+                </motion.div>
               ) : (
-                <>
-                  <QrCode className="h-5 w-5" />
-                  <span className="text-xs">Nostr QR Code</span>
-                </>
+                <motion.div 
+                  className="flex flex-col items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <Ticket className="h-5 w-5" />
+                  <span className="text-xs">Download PDF</span>
+                </motion.div>
               )}
             </Button>
+          </motion.div>
+          
+          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+            <Button
+              disabled={isAppleWalletLoading}
+              onClick={addToAppleWallet}
+              className={getThemeClasses({
+                base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
+                default: "bg-black text-white border border-gray-700 hover:bg-gray-800",
+                blue: "bg-blue-900 text-blue-100 border border-blue-700 hover:bg-blue-800",
+                pink: "bg-pink-900 text-pink-100 border border-pink-700 hover:bg-pink-800"
+              })}
+            >
+              {isAppleWalletLoading ? (
+                <motion.div 
+                  className="flex flex-col items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                  <span className="text-xs">Loading...</span>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  className="flex flex-col items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <Wallet className="h-5 w-5" />
+                  <span className="text-xs">Add to Apple Wallet</span>
+                </motion.div>
+              )}
+            </Button>
+          </motion.div>
+          
+          {showQR && (
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button
+                disabled={isQRLoading}
+                onClick={showNostrQR}
+                className={getThemeClasses({
+                  base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
+                  default: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
+                  blue: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
+                  pink: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white"
+                })}
+                title="Nostr QR codes allow for decentralized verification of your boarding pass on the Nostr protocol, enhancing privacy and security"
+              >
+                {isQRLoading ? (
+                  <motion.div 
+                    className="flex flex-col items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <RefreshCw className="h-5 w-5 animate-spin" />
+                    <span className="text-xs">Loading...</span>
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    className="flex flex-col items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <QrCode className="h-5 w-5" />
+                    <span className="text-xs">Nostr QR Code</span>
+                  </motion.div>
+                )}
+              </Button>
+            </motion.div>
           )}
         </div>
       </motion.div>
@@ -299,78 +293,83 @@ export default function BoardingPassButton({
   // Default variant
   return (
     <div className="flex gap-2">
-      <Button
-        variant="outline"
-        disabled={isLoading}
-        onClick={downloadBoardingPass}
-        className={getThemeClasses({
-          base: "text-sm",
-          default: "border-gray-700 hover:bg-gray-800 hover:text-[#DAFF0D]",
-          blue: "border-blue-700 hover:bg-blue-800 hover:text-blue-300",
-          pink: "border-pink-700 hover:bg-pink-800 hover:text-pink-300"
-        })}
-      >
-        {isLoading ? (
-          <>
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-            Loading...
-          </>
-        ) : (
-          <>
-            <Ticket className="h-4 w-4 mr-2" />
-            Boarding Pass
-          </>
-        )}
-      </Button>
-      
-      <Button
-        variant="secondary"
-        disabled={isAppleWalletLoading}
-        onClick={addToAppleWallet}
-        className={getThemeClasses({
-          base: "text-sm",
-          default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
-          blue: "bg-blue-500 hover:bg-blue-600 text-white",
-          pink: "bg-pink-500 hover:bg-pink-600 text-white"
-        })}
-      >
-        {isAppleWalletLoading ? (
-          <>
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-            Loading...
-          </>
-        ) : (
-          <>
-            <Wallet className="h-4 w-4 mr-2" />
-            Add to Wallet
-          </>
-        )}
-      </Button>
-      
-      {showQR && (
+      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
         <Button
           variant="outline"
-          disabled={isQRLoading}
-          onClick={showNostrQR}
+          disabled={isLoading}
+          onClick={downloadBoardingPass}
           className={getThemeClasses({
             base: "text-sm",
-            default: "border-purple-700 hover:bg-purple-900/50 text-purple-300",
-            blue: "border-purple-700 hover:bg-purple-900/50 text-purple-300",
-            pink: "border-purple-700 hover:bg-purple-900/50 text-purple-300"
+            default: "border-gray-700 hover:bg-gray-800 hover:text-gdyup-primary",
+            blue: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
+            pink: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
           })}
         >
-          {isQRLoading ? (
+          {isLoading ? (
             <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               Loading...
             </>
           ) : (
             <>
-              <QrCode className="h-4 w-4 mr-2" />
-              Nostr QR
+              <Ticket className="h-4 w-4 mr-2" />
+              Boarding Pass
             </>
           )}
         </Button>
+      </motion.div>
+      
+      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <Button
+          disabled={isAppleWalletLoading}
+          onClick={addToAppleWallet}
+          className={getThemeClasses({
+            base: "text-sm",
+            default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+            blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+            pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+          })}
+        >
+          {isAppleWalletLoading ? (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <Wallet className="h-4 w-4 mr-2" />
+              Add to Wallet
+            </>
+          )}
+        </Button>
+      </motion.div>
+      
+      {showQR && (
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button
+            variant="outline"
+            disabled={isQRLoading}
+            onClick={showNostrQR}
+            className={getThemeClasses({
+              base: "text-sm",
+              default: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
+              blue: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
+              pink: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary"
+            })}
+          >
+            {isQRLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <QrCode className="h-4 w-4 mr-2" />
+                Nostr QR
+              </>
+            )}
+          </Button>
+        </motion.div>
       )}
     </div>
   );

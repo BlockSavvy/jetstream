@@ -109,12 +109,12 @@ function JetShareOfferContent() {
       </div>
     );
   }
-  
+
   return (
-    <JetShareOfferForm 
-      airportsList={airports}
-      editOfferId={editId} 
-    />
+        <JetShareOfferForm 
+          airportsList={airports} 
+          editOfferId={editId} 
+        />
   );
 }
 

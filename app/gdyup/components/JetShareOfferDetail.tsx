@@ -508,7 +508,7 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
           )}
         </CardFooter>
       </Card>
-
+      
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent className={getThemeClasses({
           base: "border",
@@ -539,8 +539,8 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
               blue: "bg-blue-900 text-blue-50 hover:bg-blue-800 border-blue-800",
               pink: "bg-pink-900 text-pink-50 hover:bg-pink-800 border-pink-800"
             })}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteOffer} 
+            <AlertDialogAction
+              onClick={handleDeleteOffer}
               disabled={isDeleting}
               className={getThemeClasses({
                 base: "",

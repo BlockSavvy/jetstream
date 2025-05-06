@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useNostr } from '../contexts/NostrContext';
+import { useAuth } from '@/components/auth-provider';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -30,12 +31,14 @@ import {
   Radio, 
   Lock, 
   Settings, 
-  User
+  User,
+  LogIn
 } from 'lucide-react';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { cn } from '@/lib/utils';
 import NostrIdentityVerifier from './NostrIdentityVerifier';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function NostrConnectionStatus() {
   const { 
@@ -50,6 +53,8 @@ export default function NostrConnectionStatus() {
     disconnect,
     updateSettings
   } = useNostr();
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   
   const [showSettings, setShowSettings] = useState(false);
   const [showIdentityVerifier, setShowIdentityVerifier] = useState(false);
@@ -57,6 +62,12 @@ export default function NostrConnectionStatus() {
   
   // Handle connection toggle
   const handleConnectionToggle = async () => {
+    if (!user) {
+      toast.error('You must be logged in to use Nostr features');
+      router.push('/gdyup/auth/login?returnUrl=/gdyup/settings/nostr');
+      return;
+    }
+    
     if (!hasNip05) {
       setShowIdentityVerifier(true);
       return;
@@ -77,6 +88,12 @@ export default function NostrConnectionStatus() {
   
   // Handle settings toggle
   const handleSettingToggle = async (setting: keyof typeof settings, value: boolean) => {
+    if (!user) {
+      toast.error('You must be logged in to change Nostr settings');
+      router.push('/gdyup/auth/login?returnUrl=/gdyup/settings/nostr');
+      return;
+    }
+    
     const updatedSettings = { ...settings, [setting]: value };
     const success = await updateSettings({ [setting]: value });
     
@@ -87,8 +104,8 @@ export default function NostrConnectionStatus() {
     }
   };
   
-  // If not initialized, show loading state
-  if (!isInitialized) {
+  // If auth is loading or Nostr is not initialized, show loading state
+  if (authLoading || !isInitialized) {
     return (
       <Button 
         variant="ghost" 
@@ -103,6 +120,26 @@ export default function NostrConnectionStatus() {
       >
         <Radio className="h-3 w-3 animate-pulse" />
         <span className="text-xs">Nostr</span>
+      </Button>
+    );
+  }
+  
+  // If user is not logged in, show login prompt
+  if (!user) {
+    return (
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => router.push('/gdyup/auth/login?returnUrl=/gdyup/settings/nostr')}
+        className={getThemeClasses({
+          base: "gap-2 h-7",
+          default: "text-gray-500 hover:text-gray-900",
+          blue: "text-blue-300 hover:text-blue-100",
+          pink: "text-pink-300 hover:text-pink-100"
+        })}
+      >
+        <LogIn className="h-3 w-3" />
+        <span className="text-xs">Login for Nostr</span>
       </Button>
     );
   }
@@ -267,8 +304,8 @@ export default function NostrConnectionStatus() {
       {/* Nostr Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className={getThemeClasses({
-          base: "border",
-          default: "bg-white border-gray-200",
+          base: "max-w-md",
+          default: "bg-white",
           blue: "bg-blue-950 border-blue-900 text-blue-50",
           pink: "bg-pink-950 border-pink-900 text-pink-50"
         })}>
@@ -287,7 +324,7 @@ export default function NostrConnectionStatus() {
               blue: "text-blue-300",
               pink: "text-pink-300"
             })}>
-              Configure your Nostr integration with GDY·UP
+              Configure your Nostr integration preferences
             </DialogDescription>
           </DialogHeader>
           
@@ -357,7 +394,7 @@ export default function NostrConnectionStatus() {
                     blue: "text-blue-300",
                     pink: "text-pink-300"
                   })}>
-                    Allow sending and receiving Lightning Network tips
+                    Allow sending and receiving Bitcoin zaps
                   </div>
                 </div>
               </div>
@@ -509,9 +546,9 @@ export default function NostrConnectionStatus() {
                   "h-5 w-5 mt-0.5",
                   getThemeClasses({
                     base: "",
-                    default: "text-gray-500",
-                    blue: "text-gray-400",
-                    pink: "text-gray-400"
+                    default: "text-blue-500",
+                    blue: "text-blue-400",
+                    pink: "text-pink-400"
                   })
                 )} />
                 <div className="space-y-0.5">
@@ -529,7 +566,7 @@ export default function NostrConnectionStatus() {
                     blue: "text-blue-300",
                     pink: "text-pink-300"
                   })}>
-                    Automatically connect to Nostr when launching GDY·UP
+                    Automatically connect to relays when enabled
                   </div>
                 </div>
               </div>
@@ -549,36 +586,45 @@ export default function NostrConnectionStatus() {
           
           <DialogFooter>
             <Button 
-              variant="outline" 
               onClick={() => setShowSettings(false)}
-              className={getThemedButtonClasses("outline")}
+              className={getThemedButtonClasses("primary")}
             >
-              Close
+              Done
             </Button>
-            {!hasNip05 && (
-              <Button 
-                onClick={() => {
-                  setShowSettings(false);
-                  setShowIdentityVerifier(true);
-                }}
-                className={getThemedButtonClasses("primary")}
-              >
-                Verify Identity
-              </Button>
-            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
-      {/* NIP-05 Identity Verification Dialog */}
+      {/* Nostr Identity Verifier Dialog */}
       <Dialog open={showIdentityVerifier} onOpenChange={setShowIdentityVerifier}>
         <DialogContent className={getThemeClasses({
-          base: "max-w-md border",
-          default: "bg-white border-gray-200",
+          base: "max-w-md",
+          default: "bg-white",
           blue: "bg-blue-950 border-blue-900 text-blue-50",
           pink: "bg-pink-950 border-pink-900 text-pink-50"
         })}>
-          <NostrIdentityVerifier />
+          <DialogHeader>
+            <DialogTitle className={getThemeClasses({
+              base: "",
+              default: "text-gray-900",
+              blue: "text-blue-50",
+              pink: "text-pink-50"
+            })}>
+              Verify Nostr Identity
+            </DialogTitle>
+            <DialogDescription className={getThemeClasses({
+              base: "",
+              default: "text-gray-500",
+              blue: "text-blue-300",
+              pink: "text-pink-300"
+            })}>
+              Set up your Nostr identity to enable all features
+            </DialogDescription>
+          </DialogHeader>
+          
+          <NostrIdentityVerifier 
+            onComplete={() => setShowIdentityVerifier(false)} 
+          />
         </DialogContent>
       </Dialog>
     </>

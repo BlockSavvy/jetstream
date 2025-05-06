@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { JetShareOfferWithUser } from '@/types/jetshare';
 import { User } from '@supabase/supabase-js';
 import { format } from 'date-fns';
-import { ArrowLeft, Loader2, CreditCard, Bitcoin, CheckCircle, ArrowRight, Plane, Copy, QrCode, AlertCircle, Calendar, DollarSign, Info, Timer, Clock, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Bitcoin, CheckCircle, ArrowRight, Plane, Copy, QrCode, AlertCircle, Calendar, DollarSign, Info, Timer, Clock, Zap, Ticket } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroupItem } from '@/components/ui/radio-group';
@@ -21,6 +21,7 @@ import { createClient } from '@/lib/supabase';
 import { useAuth } from '@/components/auth-provider';
 import { RadioGroup } from "@/components/ui/radio-group";
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Add a comment near the top indicating future Stripe integration
 // Note: This form uses a simplified test environment.
@@ -414,21 +415,21 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
       }
       
       // Regular redirect handled with brief delay to ensure storage is set
-      try {
-        // Store some data for session persistence
-        localStorage.setItem('payment_complete', 'true');
-        localStorage.setItem('gdyup_last_action', 'payment_complete');
-        localStorage.setItem('current_payment_offer_id', offer.id);
-        
+        try {
+          // Store some data for session persistence
+            localStorage.setItem('payment_complete', 'true');
+            localStorage.setItem('gdyup_last_action', 'payment_complete');
+            localStorage.setItem('current_payment_offer_id', offer.id);
+            
         // Always use direct navigation for better reliability
-        const successUrl = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
+            const successUrl = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
         console.log('Redirecting to success URL:', successUrl);
-        window.location.href = successUrl;
-      } catch (redirectError) {
+              window.location.href = successUrl;
+        } catch (redirectError) {
         console.error('Redirect/storage error, using fallback navigation:', redirectError);
-        // Use direct browser navigation as ultimate fallback
+          // Use direct browser navigation as ultimate fallback
         window.location.href = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
-      }
+        }
       
     } catch (error) {
       console.error('Error processing payment:', error);
@@ -725,664 +726,1293 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
     const hasFallback = Boolean(localStorage.getItem('btcpay_dev_fallback_url'));
     
     return (
-      <div className={getThemeClasses({
-        base: "space-y-6 p-4 rounded-lg border",
-        default: "bg-black/20 border-gray-800",
-        blue: "bg-blue-950/20 border-blue-900",
-        pink: "bg-pink-950/20 border-pink-900"
-      })}>
-        <div className="text-center space-y-2">
-          <Bitcoin className={getThemeClasses({
-            base: "h-8 w-8 mx-auto",
-            default: "text-amber-500",
-            blue: "text-amber-400",
-            pink: "text-amber-300"
-          })} />
+      <motion.div 
+        className={getThemeClasses({
+          base: "space-y-6 p-6 rounded-lg border transition-colors",
+          default: "bg-black/20 border-gray-800",
+          blue: "bg-blue-950/20 border-blue-900",
+          pink: "bg-pink-950/20 border-pink-900"
+        })}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-center space-y-3">
+          <motion.div 
+            className={getThemeClasses({
+              base: "inline-flex items-center justify-center w-16 h-16 rounded-full mb-2",
+              default: "bg-gdyup-primary/10",
+              blue: "bg-gdyup-primary/10",
+              pink: "bg-gdyup-primary/10"
+            })}
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            <Bitcoin className={getThemeClasses({
+              base: "h-8 w-8",
+              default: "text-gdyup-primary",
+              blue: "text-gdyup-primary",
+              pink: "text-gdyup-primary"
+            })} />
+          </motion.div>
           
           <h3 className={getThemeClasses({
-            base: "text-lg font-semibold",
+            base: "text-xl font-bold",
             default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
+            blue: "text-blue-50",
+            pink: "text-pink-50"
           })}>Pay with Bitcoin</h3>
           
           <p className={getThemeClasses({
             base: "text-sm",
-            default: "text-gray-300",
-            blue: "text-blue-200",
-            pink: "text-pink-200"
+            default: "text-gray-400",
+            blue: "text-blue-300",
+            pink: "text-pink-300"
           })}>
-            Secure and private Bitcoin payments
+            Secure, private, and borderless payments
           </p>
         </div>
         
-        <div className="grid gap-2">
-          <div className="flex items-start">
-            <Zap className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+        <div className={getThemeClasses({
+          base: "grid gap-4 p-4 rounded-lg border",
+          default: "bg-black/30 border-gray-800",
+          blue: "bg-blue-900/30 border-blue-800",
+          pink: "bg-pink-900/30 border-pink-800"
+        })}>
+          <div className="flex items-start space-x-3">
+            <Zap className={getThemeClasses({
+              base: "h-5 w-5 mt-0.5 flex-shrink-0",
+              default: "text-gdyup-primary",
+              blue: "text-gdyup-primary",
+              pink: "text-gdyup-primary"
+            })} />
             <div>
-              <span className="font-medium">Lightning: </span>
-              <span>Instant payment option available</span>
+              <span className="font-semibold">Lightning Network</span>
+              <p className="text-sm opacity-80">Instant payments with minimal fees</p>
             </div>
           </div>
-          <div className="flex items-start">
-            <CheckCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+          
+          <div className="flex items-start space-x-3">
+            <CheckCircle className={getThemeClasses({
+              base: "h-5 w-5 mt-0.5 flex-shrink-0",
+              default: "text-gdyup-primary",
+              blue: "text-gdyup-primary",
+              pink: "text-gdyup-primary"
+            })} />
             <div>
-              <span className="font-medium">Confirmation: </span>
-              <span>1-2 confirmations required</span>
+              <span className="font-semibold">On-Chain Security</span>
+              <p className="text-sm opacity-80">1-2 confirmations for settlement</p>
             </div>
           </div>
-          <div className="flex items-start">
-            <Plane className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-amber-500" />
+          
+          <div className="flex items-start space-x-3">
+            <Plane className={getThemeClasses({
+              base: "h-5 w-5 mt-0.5 flex-shrink-0",
+              default: "text-gdyup-primary",
+              blue: "text-gdyup-primary",
+              pink: "text-gdyup-primary"
+            })} />
             <div>
-              <span className="font-medium">Ticket Issuance: </span>
-              <span>Immediate upon payment confirmation</span>
+              <span className="font-semibold">Instant Boarding Pass</span>
+              <p className="text-sm opacity-80">Generated immediately after confirmation</p>
             </div>
           </div>
         </div>
         
-        {/* Main Bitcoin Payment Button */}
-        <Button
-          type="button"
-          onClick={handleCryptoPayment}
-          disabled={isProcessing}
+        {/* Amount Display */}
+        <motion.div 
           className={getThemeClasses({
-            base: "w-full py-6 text-base font-medium relative",
-            default: "bg-primary hover:bg-primary/90 text-primary-foreground",
-            blue: "bg-blue-500 hover:bg-blue-600 text-white",
-            pink: "bg-pink-500 hover:bg-pink-600 text-white"
+            base: "p-4 rounded-lg border text-center",
+            default: "bg-black/30 border-gray-800",
+            blue: "bg-blue-900/30 border-blue-800",
+            pink: "bg-pink-900/30 border-pink-800"
           })}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
         >
-          {isProcessing ? (
-            <>
-              <Loader2 className="h-5 w-5 mr-2 animate-spin inline-block" />
-              <span>Processing...</span>
-            </>
-          ) : (
-            <>
-              <Bitcoin className="h-5 w-5 mr-2 inline-block" />
-              <span className="font-bold">Pay with Bitcoin</span>
-            </>
-          )}
-        </Button>
+          <div className="text-sm opacity-80 mb-1">Amount Due</div>
+          <div className="text-2xl font-bold font-mono">
+            {formatCurrency(offer.total_flight_cost, 'USD')}
+          </div>
+          <div className="text-sm opacity-60 mt-1">≈ {(offer.total_flight_cost / 68452).toFixed(8)} BTC</div>
+        </motion.div>
         
-        {/* Development fallback button */}
-        {isDevMode && error && error.includes('unavailable') && (
+        {/* Main Bitcoin Payment Button */}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
           <Button
             type="button"
-            onClick={handleDevSimulation}
-            className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={handleCryptoPayment}
+            disabled={isProcessing}
+            className={getThemeClasses({
+              base: "w-full py-6 text-base font-bold relative transition-all duration-200",
+              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+            })}
           >
-            <Info className="h-4 w-4 mr-2" />
-            Use Development Simulation
+            {isProcessing ? (
+              <motion.div
+                className="flex items-center justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <Loader2 className="h-6 w-6 mr-2 animate-spin inline-block" />
+                <span>Initializing Payment...</span>
+              </motion.div>
+            ) : (
+              <motion.div
+                className="flex items-center justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <Bitcoin className="h-6 w-6 mr-2 inline-block" />
+                <span>Continue to Payment</span>
+              </motion.div>
+            )}
           </Button>
+        </motion.div>
+        
+        {/* Development Mode UI */}
+        {isDevMode && error && error.includes('unavailable') && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Button
+              type="button"
+              onClick={handleDevSimulation}
+              className={getThemeClasses({
+                base: "w-full mt-2",
+                default: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
+                blue: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
+                pink: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white"
+              })}
+            >
+              <Info className="h-4 w-4 mr-2" />
+              Use Development Simulation
+            </Button>
+          </motion.div>
         )}
         
-        <p className={getThemeClasses({
-          base: "text-xs text-center",
-          default: "text-white/60",
-          blue: "text-blue-100/60",
-          pink: "text-pink-100/60"
-        })}>
-          Powered by self-custodial BTC Pay Server
-        </p>
+        {/* Error Display */}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              className={getThemeClasses({
+                base: "p-4 rounded-lg border space-y-2",
+                default: "bg-red-950/30 border-red-900",
+                blue: "bg-red-950/20 border-red-800",
+                pink: "bg-red-950/20 border-red-800"
+              })}
+              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center space-x-2 text-red-400">
+                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                <p className="font-medium">Payment Error</p>
+              </div>
+              <p className="text-sm text-red-300">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
-        {error && (
-          <div className="mt-4 p-3 rounded-md bg-red-900/30 border border-red-800">
-            <p className="text-sm text-red-200 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
-              {error}
-            </p>
-          </div>
-        )}
-      </div>
+        <div className="text-center">
+          <p className={getThemeClasses({
+            base: "text-xs",
+            default: "text-gray-500",
+            blue: "text-blue-400",
+            pink: "text-pink-400"
+          })}>
+            Powered by self-custodial BTCPay Server
+          </p>
+        </div>
+      </motion.div>
     );
   };
   
   // Function to render the payment method selection with enhanced UI
   const renderPaymentMethodSelection = () => {
     return (
-      <div className="space-y-6">
-        <div className={getThemeClasses({
-          base: "p-4 rounded-lg border mb-6",
-          default: "bg-black/20 border-gray-800 text-white/90",
-          blue: "bg-blue-950/20 border-blue-900 text-blue-100/90",
-          pink: "bg-pink-950/20 border-pink-900 text-pink-100/90"
-        })}>
-          <h3 className="font-medium mb-2">Choose Payment Method</h3>
-          <p className="text-sm opacity-80">
-            Pay securely using your preferred payment method. All transactions are encrypted.
-          </p>
-        </div>
+      <motion.div 
+        className="space-y-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-lg font-semibold mb-4">Select Payment Method</div>
         
-        <RadioGroup 
-          value={paymentMethod} 
-          onValueChange={handlePaymentMethodChange}
-          className="space-y-4"
-        >
-          <div className={getThemeClasses({
-            base: "flex items-center p-4 rounded-lg border transition-colors cursor-pointer",
-            default: paymentMethod === 'card' ? "bg-gray-800/80 border-gray-700" : "bg-black/20 border-gray-800",
-            blue: paymentMethod === 'card' ? "bg-blue-900/80 border-blue-800" : "bg-blue-950/20 border-blue-900",
-            pink: paymentMethod === 'card' ? "bg-pink-900/80 border-pink-800" : "bg-pink-950/20 border-pink-900"
-          })}>
-            <RadioGroupItem value="card" id="card" className="mr-3" />
-            <Label 
-              htmlFor="card" 
-              className={getThemeClasses({
-                base: "flex-grow cursor-pointer flex items-center",
-                default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
-              })}
-            >
-              <CreditCard className="h-5 w-5 mr-3" />
-              <div>
-                <div className="font-medium">Credit / Debit Card</div>
-                <div className="text-sm opacity-70">Pay with your existing card (VISA, Mastercard, etc.)</div>
-              </div>
-            </Label>
-          </div>
-          
-          <div className={getThemeClasses({
-            base: "flex items-center p-4 rounded-lg border transition-colors cursor-pointer",
-            default: paymentMethod === 'btc' ? "bg-gray-800/80 border-gray-700" : "bg-black/20 border-gray-800",
-            blue: paymentMethod === 'btc' ? "bg-blue-900/80 border-blue-800" : "bg-blue-950/20 border-blue-900",
-            pink: paymentMethod === 'btc' ? "bg-pink-900/80 border-pink-800" : "bg-pink-950/20 border-pink-900"
-          })}>
-            <RadioGroupItem value="btc" id="btc" className="mr-3" />
-            <Label 
-              htmlFor="btc" 
-              className={getThemeClasses({
-                base: "flex-grow cursor-pointer flex items-center",
-                default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
-              })}
-            >
-              <Bitcoin className={getThemeClasses({
-                base: "h-5 w-5 mr-3",
-                default: "text-amber-500",
-                blue: "text-amber-400",
-                pink: "text-amber-300"
-              })} />
-              <div>
-                <div className="font-medium">Bitcoin</div>
-                <div className="text-sm opacity-70">Pay with BTC - secure, private, and borderless</div>
-              </div>
-            </Label>
-          </div>
-        </RadioGroup>
-        
-        <div className="pt-6">
-          <Button
-            type="button"
-            onClick={() => {
-              paymentMethod === 'card' ? goToDetailsStep() : handleCryptoPayment();
-            }}
-            disabled={isProcessing}
-            style={paymentMethod === 'btc' ? { backgroundColor: '#F59E0B', color: 'black' } : undefined}
-            className={`w-full py-6 text-base font-medium ${
-              paymentMethod === 'btc' 
-                ? 'hover:bg-amber-600' 
-                : getThemeClasses({
-                    base: "",
-                    default: "bg-green-500 hover:bg-green-600 text-white",
-                    blue: "bg-green-500 hover:bg-green-600 text-white",
-                    pink: "bg-green-500 hover:bg-green-600 text-white"
-                  })
-            }`}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div 
+            whileHover={{ scale: 1.03 }} 
+            whileTap={{ scale: 0.97 }}
           >
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : paymentMethod === 'card' ? (
-              <>
-                <CreditCard className="h-5 w-5 mr-2" />
-                Continue to Card Details
-              </>
-            ) : (
-              <>
-                <Bitcoin className="h-5 w-5 mr-2" />
-                <span className="font-bold">Pay with Bitcoin</span>
-              </>
-            )}
-          </Button>
+            <div
+              onClick={() => setPaymentMethod('card')}
+              className={cn(
+                "p-4 rounded-lg border cursor-pointer transition-all",
+                getThemeClasses({
+                  base: "relative",
+                  default: paymentMethod === 'card' 
+                    ? "border-gdyup-primary bg-black/30" 
+                    : "border-gray-700 bg-black/20 hover:border-gray-600",
+                  blue: paymentMethod === 'card' 
+                    ? "border-gdyup-primary bg-blue-950/30" 
+                    : "border-blue-800 bg-blue-950/20 hover:border-blue-700",
+                  pink: paymentMethod === 'card' 
+                    ? "border-gdyup-primary bg-pink-950/30" 
+                    : "border-pink-800 bg-pink-950/20 hover:border-pink-700"
+                })
+              )}
+            >
+              <div className="flex items-center">
+                <div className="mr-3">
+                  <CreditCard className={cn(
+                    "h-6 w-6",
+                    getThemeClasses({
+                      base: "",
+                      default: "text-white",
+                      blue: "text-blue-300",
+                      pink: "text-pink-300"
+                    })
+                  )} />
+                </div>
+                <div>
+                  <div className="font-medium">Credit Card</div>
+                  <div className={getThemeClasses({
+                    base: "text-sm",
+                    default: "text-gray-400",
+                    blue: "text-blue-400",
+                    pink: "text-pink-400"
+                  })}>
+                    Visa, Mastercard, Amex
+                  </div>
+                </div>
+                {paymentMethod === 'card' && (
+                  <motion.div 
+                    className="absolute right-4"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  >
+                    <CheckCircle className={getThemeClasses({
+                      base: "h-5 w-5",
+                      default: "text-gdyup-primary",
+                      blue: "text-gdyup-primary",
+                      pink: "text-gdyup-primary"
+                    })} />
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.div 
+            whileHover={{ scale: 1.03 }} 
+            whileTap={{ scale: 0.97 }}
+          >
+            <div
+              onClick={() => setPaymentMethod('btc')}
+              className={cn(
+                "p-4 rounded-lg border cursor-pointer transition-all",
+                getThemeClasses({
+                  base: "relative",
+                  default: paymentMethod === 'btc' 
+                    ? "border-gdyup-primary bg-black/30" 
+                    : "border-gray-700 bg-black/20 hover:border-gray-600",
+                  blue: paymentMethod === 'btc' 
+                    ? "border-gdyup-primary bg-blue-950/30" 
+                    : "border-blue-800 bg-blue-950/20 hover:border-blue-700",
+                  pink: paymentMethod === 'btc' 
+                    ? "border-gdyup-primary bg-pink-950/30" 
+                    : "border-pink-800 bg-pink-950/20 hover:border-pink-700"
+                })
+              )}
+            >
+              <div className="flex items-center">
+                <div className="mr-3">
+                  <Bitcoin className={cn(
+                    "h-6 w-6",
+                    getThemeClasses({
+                      base: "",
+                      default: "text-orange-500",
+                      blue: "text-orange-500",
+                      pink: "text-orange-500"
+                    })
+                  )} />
+                </div>
+                <div>
+                  <div className="font-medium">Bitcoin</div>
+                  <div className={getThemeClasses({
+                    base: "text-sm",
+                    default: "text-gray-400",
+                    blue: "text-blue-400",
+                    pink: "text-pink-400"
+                  })}>
+                    Pay with BTC
+                  </div>
+                </div>
+                {paymentMethod === 'btc' && (
+                  <motion.div 
+                    className="absolute right-4"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  >
+                    <CheckCircle className={getThemeClasses({
+                      base: "h-5 w-5",
+                      default: "text-gdyup-primary",
+                      blue: "text-gdyup-primary",
+                      pink: "text-gdyup-primary"
+                    })} />
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </motion.div>
         </div>
         
-        {showPayLater && (
-          <div className="pt-2">
+        <div className="flex justify-end mt-6">
+          <motion.div 
+            whileHover={{ scale: 1.03 }} 
+            whileTap={{ scale: 0.97 }}
+          >
             <Button
-              type="button"
-              variant="ghost"
-              onClick={handlePayLater}
-              disabled={isProcessing}
-              className={getThemeClasses({
-                base: "w-full text-sm font-normal",
-                default: "text-gray-400 hover:text-white hover:bg-gray-800/50",
-                blue: "text-blue-400 hover:text-blue-200 hover:bg-blue-900/50",
-                pink: "text-pink-400 hover:text-pink-200 hover:bg-pink-900/50"
-              })}
+              onClick={() => setCurrentStep('details')}
+              className={cn(
+                "rounded-md font-medium transition-colors",
+                getThemeClasses({
+                  base: "",
+                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  blue: "bg-blue-500 hover:bg-blue-600 text-white",
+                  pink: "bg-pink-500 hover:bg-pink-600 text-white"
+                })
+              )}
             >
-              Pay Later
+              Continue
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  };
+  
+  // Function to render the card details form UI
+  const renderCardDetailsForm = () => {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Card className={getThemeClasses({
+          base: "w-full max-w-md mx-auto border shadow-lg",
+          default: "bg-gray-900/90 border-gray-800",
+          blue: "bg-blue-950/90 border-blue-900",
+          pink: "bg-pink-950/90 border-pink-900"
+        })}>
+          <CardHeader className="pb-0">
+            <motion.div
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              <CardTitle className={getThemeClasses({
+                base: "",
+                default: "text-white",
+                blue: "text-blue-50",
+                pink: "text-pink-50"
+              })}>
+                Complete Your Booking
+                {process.env.NODE_ENV === 'development' && (
+                  <span className={getThemeClasses({
+                    base: "ml-2 text-sm font-normal",
+                    default: "text-blue-500",
+                    blue: "text-blue-400",
+                    pink: "text-pink-400"
+                  })}>
+                    (Test Mode)
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription className={getThemeClasses({
+                base: "",
+                default: "text-gray-400",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>
+                Pay your share and secure your seat
+                {process.env.NODE_ENV === 'development' && (
+                  <motion.div 
+                    className={getThemeClasses({
+                      base: "mt-1 text-xs p-1 rounded-sm",
+                      default: "bg-blue-950 text-blue-300 border border-blue-800",
+                      blue: "bg-blue-950 text-blue-300 border border-blue-800",
+                      pink: "bg-pink-950 text-pink-300 border border-pink-800"
+                    })}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Use card: 4242 4242 4242 4242 | Any future date | Any 3-digit CVC
+                  </motion.div>
+                )}
+              </CardDescription>
+            </motion.div>
+          </CardHeader>
+          <Button 
+            variant="ghost" 
+            className={getThemeClasses({
+              base: "p-0 ml-6 mb-2",
+              default: "text-white hover:text-gdyup-primary hover:bg-transparent",
+              blue: "text-blue-100 hover:text-gdyup-primary hover:bg-transparent",
+              pink: "text-pink-100 hover:text-gdyup-primary hover:bg-transparent"
+            })}
+            onClick={() => setCurrentStep('method')}
+            disabled={isProcessing}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <CardContent>
+            <motion.form 
+              className="space-y-4" 
+              id="payment-form" 
+              onSubmit={handleSubmit}
+              autoComplete="on"
+              data-testid="payment-form"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              {/* Test mode message */}
+              {process.env.NODE_ENV === 'development' && (
+                <motion.div 
+                  className={getThemeClasses({
+                    base: "rounded-md p-4 mb-4",
+                    default: "bg-blue-950/50 border border-blue-800",
+                    blue: "bg-blue-950/50 border border-blue-800",
+                    pink: "bg-pink-950/50 border border-pink-800"
+                  })}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <Info className={getThemeClasses({
+                        base: "h-5 w-5",
+                        default: "text-blue-400",
+                        blue: "text-blue-400",
+                        pink: "text-pink-400"
+                      })} aria-hidden="true" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className={getThemeClasses({
+                        base: "text-sm font-medium",
+                        default: "text-blue-300",
+                        blue: "text-blue-300",
+                        pink: "text-pink-300"
+                      })}>Test Mode Active</h3>
+                      <div className="mt-2 text-sm">
+                        <p className={getThemeClasses({
+                          base: "",
+                          default: "text-blue-400",
+                          blue: "text-blue-400",
+                          pink: "text-pink-400"
+                        })}>Using test payment cards. Any card details will work in test mode.</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              
+              {savedPaymentMethods.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="use-saved-method" 
+                      checked={useSavedMethod}
+                      onCheckedChange={setUseSavedMethod}
+                      autoFocus // Auto-focus this switch for better keyboard navigation
+                    />
+                    <Label htmlFor="use-saved-method" className={getThemeClasses({
+                      base: "",
+                      default: "text-white",
+                      blue: "text-blue-50",
+                      pink: "text-pink-50"
+                    })}>Use a saved card</Label>
+                  </div>
+                  
+                  {useSavedMethod && (
+                    <RadioGroup 
+                      value={selectedSavedMethodId || ''} 
+                      onValueChange={setSelectedSavedMethodId}
+                      className="mt-2 space-y-3"
+                    >
+                      {savedPaymentMethods.map((method) => (
+                        <motion.div 
+                          key={method.id} 
+                          className={getThemeClasses({
+                            base: "flex items-center space-x-2 p-2 rounded-md",
+                            default: "hover:bg-gray-800/50",
+                            blue: "hover:bg-blue-900/50",
+                            pink: "hover:bg-pink-900/50"
+                          })}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                        >
+                          <RadioGroupItem value={method.id} id={method.id} />
+                          <Label htmlFor={method.id} className={getThemeClasses({
+                            base: "flex items-center cursor-pointer",
+                            default: "text-white",
+                            blue: "text-blue-50",
+                            pink: "text-pink-50"
+                          })}>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
+                          </Label>
+                        </motion.div>
+                      ))}
+                    </RadioGroup>
+                  )}
+                </div>
+              )}
+              
+              {(!useSavedMethod || savedPaymentMethods.length === 0) && (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="cardNumber" className={getThemeClasses({
+                      base: "",
+                      default: "text-white",
+                      blue: "text-blue-50",
+                      pink: "text-pink-50"
+                    })}>Card Number</Label>
+                    <UIInput
+                      id="cardNumber"
+                      name="cardNumber"
+                      value={cardDetails.cardNumber}
+                      onChange={handleCardDetailsChange}
+                      placeholder="4242 4242 4242 4242" 
+                      autoComplete="cc-number"
+                      data-testid="card-number-input"
+                      className={cn("font-mono", getThemeClasses({
+                        base: "",
+                        default: "bg-gray-800 border-gray-700 text-white",
+                        blue: "bg-blue-900 border-blue-800 text-blue-50",
+                        pink: "bg-pink-900 border-pink-800 text-pink-50"
+                      }))}
+                      autoFocus={savedPaymentMethods.length === 0}
+                      onClick={() => process.env.NODE_ENV === 'development' && !cardDetails.cardNumber && insertTestCardData()}
+                    />
+                    {process.env.NODE_ENV === 'development' && !cardDetails.cardNumber && (
+                      <motion.div 
+                        className="mt-1"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <Button 
+                          type="button" 
+                          size="sm" 
+                          variant="outline" 
+                          className={cn("text-xs h-6 py-0 px-2", getThemeClasses({
+                            base: "",
+                            default: "border-gray-700 text-gray-300 hover:bg-gray-800",
+                            blue: "border-blue-700 text-blue-300 hover:bg-blue-900",
+                            pink: "border-pink-700 text-pink-300 hover:bg-pink-900"
+                          }))}
+                          onClick={insertTestCardData}
+                        >
+                          Insert Test Data
+                        </Button>
+                      </motion.div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="cardName" className={getThemeClasses({
+                      base: "",
+                      default: "text-white",
+                      blue: "text-blue-50",
+                      pink: "text-pink-50"
+                    })}>Name on Card</Label>
+                    <UIInput
+                      id="cardName"
+                      name="cardName"
+                      value={cardDetails.cardName}
+                      onChange={handleCardDetailsChange}
+                      placeholder="John Doe"
+                      autoComplete="cc-name"
+                      data-testid="card-name-input"
+                      className={getThemeClasses({
+                        base: "",
+                        default: "bg-gray-800 border-gray-700 text-white",
+                        blue: "bg-blue-900 border-blue-800 text-blue-50",
+                        pink: "bg-pink-900 border-pink-800 text-pink-50"
+                      })}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="expiry" className={getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-blue-50",
+                        pink: "text-pink-50"
+                      })}>Expiry Date</Label>
+                      <UIInput
+                        id="expiry"
+                        name="expiry"
+                        value={cardDetails.expiry}
+                        onChange={handleCardDetailsChange}
+                        placeholder="MM/YY"
+                        autoComplete="cc-exp"
+                        data-testid="card-expiry-input"
+                        className={cn("font-mono", getThemeClasses({
+                          base: "",
+                          default: "bg-gray-800 border-gray-700 text-white",
+                          blue: "bg-blue-900 border-blue-800 text-blue-50",
+                          pink: "bg-pink-900 border-pink-800 text-pink-50"
+                        }))}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="cvc" className={getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-blue-50",
+                        pink: "text-pink-50"
+                      })}>CVC</Label>
+                      <UIInput
+                        id="cvc"
+                        name="cvc"
+                        value={cardDetails.cvc}
+                        onChange={handleCardDetailsChange}
+                        placeholder="123"
+                        autoComplete="cc-csc"
+                        data-testid="card-cvc-input"
+                        className={cn("font-mono", getThemeClasses({
+                          base: "",
+                          default: "bg-gray-800 border-gray-700 text-white",
+                          blue: "bg-blue-900 border-blue-800 text-blue-50",
+                          pink: "bg-pink-900 border-pink-800 text-pink-50"
+                        }))}
+                        inputMode="numeric"
+                        maxLength={4}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox 
+                      id="save-card" 
+                      checked={saveThisCard}
+                      onCheckedChange={(checked) => 
+                        setSaveThisCard(checked === true)
+                      }
+                    />
+                    <Label htmlFor="save-card" className={getThemeClasses({
+                      base: "text-sm",
+                      default: "text-gray-300",
+                      blue: "text-blue-200",
+                      pink: "text-pink-200"
+                    })}>
+                      Save this card for future payments
+                    </Label>
+                  </div>
+                </div>
+              )}
+              
+              {/* Pay Later option - only show in card details view */}
+              {showPayLater && !isProcessing && (
+                <motion.div 
+                  className={cn("mt-6 pt-4 border-t", getThemeClasses({
+                    base: "",
+                    default: "border-gray-800",
+                    blue: "border-blue-900",
+                    pink: "border-pink-900"
+                  }))}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Clock className={getThemeClasses({
+                        base: "h-4 w-4",
+                        default: "text-gray-500",
+                        blue: "text-blue-400",
+                        pink: "text-pink-400"
+                      })} />
+                      <p className={getThemeClasses({
+                        base: "text-sm font-medium",
+                        default: "text-white",
+                        blue: "text-blue-50",
+                        pink: "text-pink-50"
+                      })}>Pay later (1 hour hold)</p>
+                    </div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handlePayLater}
+                        disabled={isProcessing}
+                        className={getThemeClasses({
+                          base: "",
+                          default: "border-gray-700 hover:bg-gray-800",
+                          blue: "border-blue-700 hover:bg-blue-900",
+                          pink: "border-pink-700 hover:bg-pink-900"
+                        })}
+                      >
+                        Hold My Seat
+                      </Button>
+                    </motion.div>
+                  </div>
+                  <p className={getThemeClasses({
+                    base: "text-xs mt-1",
+                    default: "text-gray-500",
+                    blue: "text-blue-400",
+                    pink: "text-pink-400"
+                  })}>
+                    Locks your seat for 1 hour. You must complete payment before expiration.
+                  </p>
+                </motion.div>
+              )}
+            </motion.form>
+          </CardContent>
+          <CardFooter className="flex justify-center pt-2">
+            <motion.div 
+              className="w-full"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button 
+                type="submit"
+                form="payment-form"
+                className={cn("w-full py-6 text-base font-medium", getThemeClasses({
+                  base: "",
+                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                }))}
+                disabled={isProcessing}
+                data-testid="complete-payment-button"
+              >
+                {isProcessing ? (
+                  <motion.div 
+                    className="flex items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <Loader2 className="mr-2 h-4 animate-spin" />
+                    Processing...
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    className="flex items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    Complete Payment
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </motion.div>
+                )}
+              </Button>
+            </motion.div>
+          </CardFooter>
+        </Card>
+      </motion.div>
+    );
+  };
+  
+  // Function to render the processing step UI
+  const renderProcessingStep = () => {
+    return (
+      <motion.div 
+        className="flex flex-col items-center justify-center py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Loader2 className={cn(
+            "h-12 w-12 animate-spin mb-4",
+            getThemeClasses({
+              base: "",
+              default: "text-gdyup-primary",
+              blue: "text-gdyup-primary",
+              pink: "text-gdyup-primary"
+            })
+          )} />
+        </motion.div>
+        
+        <motion.h3 
+          className="text-xl font-semibold mb-2"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          Processing Your Payment
+        </motion.h3>
+        
+        <motion.p 
+          className={cn(
+            "text-center max-w-md",
+            getThemeClasses({
+              base: "",
+              default: "text-gray-400",
+              blue: "text-blue-300",
+              pink: "text-pink-300"
+            })
+          )}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
+          {paymentMethod === 'btc' 
+            ? "Please wait while we prepare your Bitcoin payment..." 
+            : "Please wait while we process your payment..."}
+        </motion.p>
+        
+        <motion.div 
+          className="mt-8 w-full max-w-md"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ delay: 0.4, duration: 0.8, ease: "easeInOut" }}
+        >
+          <div className={cn(
+            "h-1 rounded-full",
+            getThemeClasses({
+              base: "",
+              default: "bg-gdyup-primary",
+              blue: "bg-gdyup-primary",
+              pink: "bg-gdyup-primary"
+            })
+          )}>
+            <motion.div 
+              className="h-full w-full bg-gdyup-primary rounded-full"
+              animate={{ 
+                x: ["0%", "100%", "0%"],
+                scaleX: [0.1, 0.5, 0.1]
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 1.5,
+                ease: "easeInOut"
+              }}
+            />
           </div>
-        )}
-      </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+        
+  // Function to render the auth error UI
+  const renderAuthError = () => {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <CardContent className="flex flex-col items-center py-6">
+          <motion.div 
+            className={getThemeClasses({
+              base: "rounded-full p-3 mb-4",
+              default: "bg-red-950/30 text-red-500",
+              blue: "bg-red-950/20 text-red-400",
+              pink: "bg-red-950/20 text-red-400"
+            })}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            <AlertCircle className="h-12 w-12" />
+          </motion.div>
+          <motion.p 
+            className={cn("text-center font-medium text-lg mb-2", getThemeClasses({
+              base: "",
+              default: "text-white",
+              blue: "text-blue-50",
+              pink: "text-pink-50"
+            }))}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+          >
+            Your session has expired
+          </motion.p>
+          <motion.p 
+            className={cn("text-center mb-6", getThemeClasses({
+              base: "",
+              default: "text-gray-400",
+              blue: "text-blue-300",
+              pink: "text-pink-300"
+            }))}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            {error || 'Please sign in again to complete your payment.'}
+          </motion.p>
+          <motion.div 
+            className="flex flex-col gap-3 w-full max-w-xs"
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button 
+                onClick={async () => {
+                  // Try to refresh the session before redirecting
+                  try {
+                    const supabase = createClient();
+                    const { data, error } = await supabase.auth.refreshSession();
+                    
+                    if (!error && data.session) {
+                      // Session refreshed successfully
+                      console.log('Payment Form: Session refreshed successfully');
+                      toast.success('Session restored');
+                      
+                      // Update auth state
+                      try {
+                        localStorage.setItem('jetstream_user_id', data.session.user.id);
+                        localStorage.setItem('jetstream_user_email', data.session.user.email || '');
+                      } catch (e) {
+                        console.warn('Failed to update auth state:', e);
+                      }
+                      
+                      // Return to payment details
+                      setCurrentStep('details');
+                      return;
+                    }
+                    
+                    // If refresh failed, redirect to login
+                    console.log('Payment Form: Session refresh failed, redirecting to login');
+                  } catch (e) {
+                    console.error('Error refreshing session:', e);
+                  }
+                  
+                  // Preserve the offer ID for recovery
+                  try {
+                    sessionStorage.setItem('pending_payment_id', offer.id);
+                    localStorage.setItem('current_payment_offer_id', offer.id);
+                  } catch (e) {
+                    console.warn('Failed to store offer ID for login redirect:', e);
+                  }
+                  
+                  // Redirect to login with return URL
+                  window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
+                }}
+                className={getThemeClasses({
+                  base: "",
+                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                })}
+                autoFocus
+              >
+                Try to Restore Session
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  // Preserve the offer ID for recovery
+                  try {
+                    sessionStorage.setItem('pending_payment_id', offer.id);
+                    localStorage.setItem('current_payment_offer_id', offer.id);
+                  } catch (e) {
+                    console.warn('Failed to store offer ID for login redirect:', e);
+                  }
+                  
+                  // Redirect to login with return URL
+                  window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
+                }}
+                className={getThemeClasses({
+                  base: "",
+                  default: "border-gray-700 text-white hover:bg-gray-800",
+                  blue: "border-blue-700 text-blue-100 hover:bg-blue-900",
+                  pink: "border-pink-700 text-pink-100 hover:bg-pink-900"
+                })}
+              >
+                Sign In Again
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button 
+                variant="ghost"
+                onClick={() => setCurrentStep('details')}
+                className={getThemeClasses({
+                  base: "",
+                  default: "text-gray-400 hover:text-white hover:bg-gray-800/50",
+                  blue: "text-blue-400 hover:text-blue-200 hover:bg-blue-900/50",
+                  pink: "text-pink-400 hover:text-pink-200 hover:bg-pink-900/50"
+                })}
+              >
+                Try Again Without Signing In
+              </Button>
+            </motion.div>
+          </motion.div>
+        </CardContent>
+      </motion.div>
     );
   };
   
   // Function to render the confirmation step UI
   const renderConfirmationStep = () => {
-        return (
-          <Card className="w-full max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle>Confirm Flight Share</CardTitle>
-              <CardDescription>
-                Review the flight details before proceeding to payment
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+    return (
+      <motion.div 
+        className="space-y-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="flex flex-col items-center justify-center py-4">
+          {isSuccess ? (
+            <motion.div 
+              className="text-center"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
+              <div className="inline-flex items-center justify-center rounded-full p-2 mb-4">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 500, damping: 30 }}
+                >
+                  <CheckCircle className={cn(
+                    "h-12 w-12",
+                    getThemeClasses({
+                      base: "",
+                      default: "text-green-500",
+                      blue: "text-green-400",
+                      pink: "text-green-400"
+                    })
+                  )} />
+                </motion.div>
+              </div>
+              
+              <motion.h3 
+                className="text-xl font-semibold mb-2"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+              >
+                Payment Successful!
+              </motion.h3>
+              
+              <motion.p 
+                className={getThemeClasses({
+                  base: "text-center max-w-md mb-6",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                Your payment has been processed successfully. You can now view your boarding pass.
+              </motion.p>
+              
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+              >
+                <Button 
+                  onClick={() => window.location.href = `/gdyup/boardingpass/${offer.id}`}
+                  className={cn(
+                    "px-6 rounded-md font-medium transition-colors",
+                    getThemeClasses({
+                      base: "",
+                      default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                      blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                      pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                    })
+                  )}
+                >
+                  <Ticket className="mr-2 h-4 w-4" />
+                  View Boarding Pass
+                </Button>
+              </motion.div>
+            </motion.div>
+          ) : (
+            <div>
               <div className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-3">
-                  <div>
-                    <span className="text-sm text-muted-foreground">From</span>
-                    <p className="font-medium text-lg">{offer.departure_location}</p>
-                  </div>
-                  <Plane className="h-5 w-5 mx-4 transform rotate-90" />
-                  <div className="text-right">
-                    <span className="text-sm text-muted-foreground">To</span>
-                    <p className="font-medium text-lg">{offer.arrival_location}</p>
+                <div className="text-lg font-semibold mb-2">Confirm Your Payment</div>
+                
+                <div className={cn(
+                  "rounded-lg border p-4",
+                  getThemeClasses({
+                    base: "",
+                    default: "bg-black/20 border-gray-800",
+                    blue: "bg-blue-950/20 border-blue-800",
+                    pink: "bg-pink-950/20 border-pink-800"
+                  })
+                )}>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className={getThemeClasses({
+                        base: "",
+                        default: "text-gray-400",
+                        blue: "text-blue-300",
+                        pink: "text-pink-300"
+                      })}>Amount</span>
+                      <span className="font-medium">${paymentSummary.amount.toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span className={getThemeClasses({
+                        base: "",
+                        default: "text-gray-400",
+                        blue: "text-blue-300",
+                        pink: "text-pink-300"
+                      })}>Handling Fee</span>
+                      <span className="font-medium">${paymentSummary.handlingFee.toLocaleString()}</span>
+                    </div>
+                    
+                    <div className={getThemeClasses({
+                      base: "border-t my-2",
+                      default: "border-gray-700",
+                      blue: "border-blue-700",
+                      pink: "border-pink-700"
+                    })}></div>
+                    
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Total</span>
+                      <span className={cn(
+                        "font-semibold",
+                        getThemeClasses({
+                          base: "",
+                          default: "text-gdyup-primary",
+                          blue: "text-gdyup-primary",
+                          pink: "text-gdyup-primary"
+                        })
+                      )}>${paymentSummary.total.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Flight Date</span>
-                    </div>
-                    <p className="font-medium">{format(new Date(offer.flight_date), 'MMMM d, yyyy')}</p>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center">
-                      <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Your Share Cost</span>
-                    </div>
-                    <p className="font-medium">${offer.requested_share_amount.toLocaleString()}</p>
-                  </div>
-                </div>
-                
-                {/* Aircraft model info if available */}
-                {offer.aircraft_model && (
-                  <div>
-                    <div className="flex items-center">
-                      <Plane className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Aircraft</span>
-                    </div>
-                    <p className="font-medium">{offer.aircraft_model}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => setCurrentStep('method')}
-              >
-                Continue to Payment
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-  };
-  
-  // Function to render the card details form UI
-  const renderCardDetailsForm = () => {
-          return (
-            <Card className="w-full max-w-md mx-auto">
-              <CardHeader className="pb-0">
-                <CardTitle>
-                  Complete Your Booking
-                  {process.env.NODE_ENV === 'development' && (
-                    <span className="ml-2 text-sm font-normal text-blue-500">
-                      (Test Mode)
-                    </span>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  Pay your share and secure your seat
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-1 text-xs p-1 bg-blue-50 rounded-sm text-blue-700">
-                      Use card: 4242 4242 4242 4242 | Any future date | Any 3-digit CVC
-                    </div>
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <Button 
-                variant="ghost" 
-                className="p-0 ml-6 mb-2" 
-                onClick={() => setCurrentStep('method')}
-                disabled={isProcessing}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <CardContent>
-                <form 
-                  className="space-y-4" 
-                  id="payment-form" 
-                  onSubmit={handleSubmit}
-                  autoComplete="on"
-                  data-testid="payment-form"
-                >
-                  {/* Test mode message */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="rounded-md bg-blue-50 p-4 mb-4">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <Info className="h-5 w-5 text-blue-400" aria-hidden="true" />
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-blue-800">Test Mode Active</h3>
-                          <div className="mt-2 text-sm text-blue-700">
-                            <p>Using test payment cards. Any card details will work in test mode.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {savedPaymentMethods.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-2">
-                        <Switch 
-                          id="use-saved-method" 
-                          checked={useSavedMethod}
-                          onCheckedChange={setUseSavedMethod}
-                          autoFocus // Auto-focus this switch for better keyboard navigation
-                        />
-                        <Label htmlFor="use-saved-method">Use a saved card</Label>
-                      </div>
-                      
-                      {useSavedMethod && (
-                        <RadioGroup 
-                          value={selectedSavedMethodId || ''} 
-                          onValueChange={setSelectedSavedMethodId}
-                          className="mt-2 space-y-3"
-                        >
-                          {savedPaymentMethods.map((method) => (
-                            <div key={method.id} className="flex items-center space-x-2">
-                              <RadioGroupItem value={method.id} id={method.id} />
-                              <Label htmlFor={method.id} className="flex items-center">
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
+                <div className="flex flex-col space-y-3 mt-6">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isProcessing}
+                      className={cn(
+                        "w-full rounded-md font-medium transition-colors",
+                        getThemeClasses({
+                          base: "",
+                          default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                          blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                          pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                        })
                       )}
-                    </div>
-                  )}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          {paymentMethod === 'btc' ? (
+                            <>
+                              <Bitcoin className="mr-2 h-4 w-4" />
+                              Pay with Bitcoin
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="mr-2 h-4 w-4" />
+                              Pay Now
+                            </>
+                          )}
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
                   
-                  {(!useSavedMethod || savedPaymentMethods.length === 0) && (
-                    <div className="space-y-4">
-                      <div className="space-y-1">
-                        <Label htmlFor="cardNumber">Card Number</Label>
-                        <UIInput
-                          id="cardNumber"
-                          name="cardNumber"
-                          value={cardDetails.cardNumber}
-                          onChange={handleCardDetailsChange}
-                          placeholder="4242 4242 4242 4242" 
-                          autoComplete="cc-number"
-                          data-testid="card-number-input"
-                          className="font-mono"
-                          autoFocus={savedPaymentMethods.length === 0}
-                          onClick={() => process.env.NODE_ENV === 'development' && !cardDetails.cardNumber && insertTestCardData()}
-                        />
-                        {process.env.NODE_ENV === 'development' && !cardDetails.cardNumber && (
-                          <div className="mt-1">
-                            <Button 
-                              type="button" 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-xs h-6 py-0 px-2"
-                              onClick={insertTestCardData}
-                            >
-                              Insert Test Data
-                            </Button>
-                          </div>
+                  {showPayLater && (
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }} 
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={handlePayLater}
+                        disabled={isProcessing}
+                        variant="outline"
+                        className={cn(
+                          "w-full",
+                          getThemeClasses({
+                            base: "",
+                            default: "border-gray-700 text-gray-300 hover:bg-gray-800",
+                            blue: "border-blue-700 text-blue-300 hover:bg-blue-900/50",
+                            pink: "border-pink-700 text-pink-300 hover:bg-pink-900/50"
+                          })
                         )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="cardName">Name on Card</Label>
-                        <UIInput
-                          id="cardName"
-                          name="cardName"
-                          value={cardDetails.cardName}
-                          onChange={handleCardDetailsChange}
-                          placeholder="John Doe"
-                          autoComplete="cc-name"
-                          data-testid="card-name-input"
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="expiry">Expiry Date</Label>
-                          <UIInput
-                            id="expiry"
-                            name="expiry"
-                            value={cardDetails.expiry}
-                            onChange={handleCardDetailsChange}
-                            placeholder="MM/YY"
-                            autoComplete="cc-exp"
-                            data-testid="card-expiry-input"
-                            className="font-mono"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="cvc">CVC</Label>
-                          <UIInput
-                            id="cvc"
-                            name="cvc"
-                            value={cardDetails.cvc}
-                            onChange={handleCardDetailsChange}
-                            placeholder="123"
-                            autoComplete="cc-csc"
-                            data-testid="card-cvc-input"
-                            className="font-mono"
-                            inputMode="numeric"
-                            maxLength={4}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2 pt-2">
-                        <Checkbox 
-                          id="save-card" 
-                          checked={saveThisCard}
-                          onCheckedChange={(checked) => 
-                            setSaveThisCard(checked === true)
-                          }
-                        />
-                        <Label htmlFor="save-card" className="text-sm">
-                          Save this card for future payments
-                        </Label>
-                      </div>
-                    </div>
+                      >
+                        Pay Later
+                      </Button>
+                    </motion.div>
                   )}
                   
-                  {/* Pay Later option - only show in card details view */}
-                  {showPayLater && !isProcessing && (
-                    <div className="mt-6 pt-4 border-t">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <p className="text-sm font-medium">Pay later (1 hour hold)</p>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={handlePayLater}
-                          disabled={isProcessing}
-                        >
-                          Hold My Seat
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Locks your seat for 1 hour. You must complete payment before expiration.
-                      </p>
-                    </div>
-                  )}
-                </form>
-              </CardContent>
-              <CardFooter className="flex justify-center pt-2">
-                <Button 
-                  type="submit"
-                  form="payment-form"
-                  className="w-full py-6 text-base font-medium"
-                  disabled={isProcessing}
-                  data-testid="complete-payment-button"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      Complete Payment
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-  };
-  
-  // Function to render the processing step UI
-  const renderProcessingStep = () => {
-        return (
-          <div className="space-y-6">
-            <CardHeader>
-              <CardTitle className="text-center">Processing Payment</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center py-10">
-              <Loader2 className="h-16 w-16 text-amber-500 animate-spin mb-4" />
-              <p className="text-center text-muted-foreground">
-                Please wait while we process your payment...
-              </p>
-            </CardContent>
-          </div>
-        );
-  };
-        
-  // Function to render the auth error UI
-  const renderAuthError = () => {
-        return (
-          <div>
-            <CardContent className="flex flex-col items-center py-6">
-              <div className="rounded-full bg-red-50 p-3 mb-4">
-                <AlertCircle className="h-12 w-12 text-red-600 dark:text-red-500" />
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Button
+                      onClick={() => setCurrentStep('method')}
+                      disabled={isProcessing}
+                      variant="ghost"
+                      className={cn(
+                        "w-full",
+                        getThemeClasses({
+                          base: "",
+                          default: "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50",
+                          blue: "text-blue-400 hover:text-blue-300 hover:bg-blue-900/30",
+                          pink: "text-pink-400 hover:text-pink-300 hover:bg-pink-900/30"
+                        })
+                      )}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Change Payment Method
+                    </Button>
+                  </motion.div>
+                </div>
               </div>
-              <p className="text-center font-medium text-lg mb-2">
-                Your session has expired
-              </p>
-              <p className="text-center text-muted-foreground mb-6">
-                {error || 'Please sign in again to complete your payment.'}
-              </p>
-              <div className="flex flex-col gap-3 w-full max-w-xs">
-                <Button 
-                  onClick={async () => {
-                    // Try to refresh the session before redirecting
-                    try {
-                      const supabase = createClient();
-                      const { data, error } = await supabase.auth.refreshSession();
-                      
-                      if (!error && data.session) {
-                        // Session refreshed successfully
-                        console.log('Payment Form: Session refreshed successfully');
-                        toast.success('Session restored');
-                        
-                        // Update auth state
-                        try {
-                          localStorage.setItem('jetstream_user_id', data.session.user.id);
-                          localStorage.setItem('jetstream_user_email', data.session.user.email || '');
-                        } catch (e) {
-                          console.warn('Failed to update auth state:', e);
-                        }
-                        
-                        // Return to payment details
-                        setCurrentStep('details');
-                        return;
-                      }
-                      
-                      // If refresh failed, redirect to login
-                      console.log('Payment Form: Session refresh failed, redirecting to login');
-                    } catch (e) {
-                      console.error('Error refreshing session:', e);
-                    }
-                    
-                    // Preserve the offer ID for recovery
-                    try {
-                      sessionStorage.setItem('pending_payment_id', offer.id);
-                      localStorage.setItem('current_payment_offer_id', offer.id);
-                    } catch (e) {
-                      console.warn('Failed to store offer ID for login redirect:', e);
-                    }
-                    
-                    // Redirect to login with return URL
-                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
-                  }}
-                  autoFocus
-                >
-                  Try to Restore Session
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    // Preserve the offer ID for recovery
-                    try {
-                      sessionStorage.setItem('pending_payment_id', offer.id);
-                      localStorage.setItem('current_payment_offer_id', offer.id);
-                    } catch (e) {
-                      console.warn('Failed to store offer ID for login redirect:', e);
-                    }
-                    
-                    // Redirect to login with return URL
-                    window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
-                  }}
-                >
-                  Sign In Again
-                </Button>
-                <Button 
-                  variant="ghost"
-                  onClick={() => setCurrentStep('details')}
-                >
-                  Try Again Without Signing In
-                </Button>
-              </div>
-            </CardContent>
-          </div>
-        );
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
   };
   
   return (
     <div className="w-full max-w-md mx-auto">
-      {renderCurrentStep()}
+      <AnimatePresence mode="wait">
+        {renderCurrentStep()}
+      </AnimatePresence>
     </div>
   );
 } 

@@ -33,7 +33,7 @@ export default function LoginPage() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           }>
-            <LoginForm />
+          <LoginForm />
           </Suspense>
         </div>
       </div>

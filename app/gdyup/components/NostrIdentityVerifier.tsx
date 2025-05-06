@@ -12,7 +12,11 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function NostrIdentityVerifier() {
+interface NostrIdentityVerifierProps {
+  onComplete?: () => void;
+}
+
+export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerifierProps) {
   const [nip05, setNip05] = useState<string>('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'success' | 'error'>('none');
@@ -76,6 +80,13 @@ export default function NostrIdentityVerifier() {
       
       setVerificationStatus('success');
       toast.success('NIP-05 identity verified successfully!');
+      
+      // Call the onComplete callback if provided
+      if (onComplete) {
+        setTimeout(() => {
+          onComplete();
+        }, 1500); // Give the user time to see the success message
+      }
     } catch (error) {
       console.error('Error verifying NIP-05:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to verify NIP-05 identity');

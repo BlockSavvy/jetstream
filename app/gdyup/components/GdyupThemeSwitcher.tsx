@@ -40,7 +40,7 @@ export default function GdyupThemeSwitcher({ showLabels = true }: GdyupThemeSwit
         return 'bg-gradient-to-r from-gray-200 to-gray-300';
     }
   };
-  
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -70,7 +70,7 @@ export default function GdyupThemeSwitcher({ showLabels = true }: GdyupThemeSwit
           blue: "bg-blue-950 border-blue-900 text-blue-50",
           pink: "bg-pink-950 border-pink-900 text-pink-50"
         })}
-      >
+              >
         <DropdownMenuRadioGroup value={theme} onValueChange={(value) => changeTheme(value as 'default' | 'blue' | 'pink')}>
           {themes.map((t) => (
             <DropdownMenuRadioItem 
@@ -93,7 +93,7 @@ export default function GdyupThemeSwitcher({ showLabels = true }: GdyupThemeSwit
                 )}></div>
                 <span>{t.name}</span>
               </div>
-              
+
               {theme === t.id && (
                 <Check className={cn(
                   "h-3.5 w-3.5 ml-auto",
@@ -106,7 +106,7 @@ export default function GdyupThemeSwitcher({ showLabels = true }: GdyupThemeSwit
                 )} />
               )}
             </DropdownMenuRadioItem>
-          ))}
+        ))}
         </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>

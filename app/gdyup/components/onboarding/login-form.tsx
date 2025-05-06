@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -24,7 +24,8 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 })
 
-export function LoginForm() {
+// Extract the core login form functionality to a separate component
+function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false)
   const { signIn } = useAuth()
   const router = useRouter()
@@ -157,4 +158,17 @@ export function LoginForm() {
       </div>
     </div>
   )
+}
+
+// Main export with Suspense boundary
+export function LoginForm() {
+  return (
+    <Suspense fallback={
+      <div className="w-full flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
+  );
 } 

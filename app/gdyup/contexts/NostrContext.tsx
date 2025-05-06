@@ -104,6 +104,14 @@ export function NostrProvider({ children }: NostrProviderProps) {
       try {
         const response = await fetch('/api/nostr/relay');
         
+        if (response.status === 401) {
+          // Authentication error - this is expected if user isn't logged in or session expired
+          // Just initialize with default values without showing an error
+          console.log('Nostr: User not authenticated, using default settings');
+          setIsInitialized(true);
+          return;
+        }
+        
         if (!response.ok) {
           throw new Error(`Failed to fetch Nostr settings: ${response.statusText}`);
         }
@@ -132,7 +140,10 @@ export function NostrProvider({ children }: NostrProviderProps) {
         setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing Nostr:', error);
-        toast.error('Failed to initialize Nostr. Some features may not work correctly.');
+        // Only show error toast for non-authentication errors to avoid spamming users
+        if (error instanceof Error && !error.message.includes('Unauthorized')) {
+          toast.error('Failed to initialize Nostr. Some features may not work correctly.');
+        }
         setIsInitialized(true); // Mark as initialized anyway to prevent infinite retries
       }
     };

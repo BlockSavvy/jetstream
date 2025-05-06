@@ -214,8 +214,8 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
         `)
         .eq('id', offerId)
         .single();
-        
-      if (error) {
+            
+            if (error) {
         throw error;
       }
       
@@ -650,14 +650,14 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
                       )}
                     >
                       View Boarding Pass
-                    </Button>
+              </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
     </motion.div>
   );
 } 

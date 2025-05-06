@@ -79,7 +79,7 @@ export default function GdyupLayout({ children }: { children: ReactNode }) {
           <NostrProvider>
             <GdyupHeader />
             <main className="flex-grow">
-              {children}
+        {children}
             </main>
             <footer className="py-6 px-4 text-center text-xs text-gray-500 dark:text-gray-400">
               <p>© 2023 GDY·UP. All rights reserved.</p>

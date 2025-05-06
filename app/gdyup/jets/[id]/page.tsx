@@ -225,7 +225,7 @@ function JetDetailContent() {
               Return to Jets
             </Button>
           </CardFooter>
-        </Card>
+          </Card>
       </div>
     );
   }
@@ -260,22 +260,22 @@ function JetDetailContent() {
               Return to Jets
             </Button>
           </CardFooter>
-        </Card>
+          </Card>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
+        <div className="flex items-center mb-6">
+          <Button
+            variant="ghost"
           onClick={() => router.back()} 
           className="mr-4"
-        >
+          >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
-        </Button>
+          </Button>
         <h1 className={getThemeClasses({
           base: "text-2xl font-bold",
           default: "text-gray-900",
@@ -338,9 +338,9 @@ function JetDetailContent() {
                 })}>
                   {jet.capacity} passengers
                 </p>
-              </div>
-            </div>
-            
+          </div>
+        </div>
+        
             <div className="space-y-4">
               <div>
                 <h3 className={getThemeClasses({
@@ -357,8 +357,8 @@ function JetDetailContent() {
                 })}>
                   {jet.home_base_airport}
                 </p>
-              </div>
-              
+          </div>
+          
               <div>
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
@@ -376,7 +376,7 @@ function JetDetailContent() {
                 </p>
               </div>
             </div>
-            
+          
             <div className="space-y-4">
               <div>
                 <h3 className={getThemeClasses({
@@ -438,12 +438,12 @@ function JetDetailContent() {
               })}>
                 {jet.notes}
               </p>
-            </div>
-          )}
-        </CardContent>
+              </div>
+            )}
+          </CardContent>
         <CardFooter className="flex justify-end gap-3">
-          <Button 
-            variant="outline"
+              <Button
+                variant="outline"
             onClick={() => router.push(`/gdyup/jets/edit/${jetId}`)}
           >
             Edit Jet
@@ -452,9 +452,9 @@ function JetDetailContent() {
             onClick={() => router.push(`/gdyup/offer/new?jet=${jetId}`)}
           >
             Create Flight Share
-          </Button>
-        </CardFooter>
-      </Card>
+              </Button>
+          </CardFooter>
+        </Card>
     </div>
   );
 }

@@ -58,7 +58,7 @@ function MessagesContent() {
             {offerId 
               ? `Messages for offer ${offerId} will appear here.` 
               : "Select a flight to view messages."}
-          </p>
+            </p>
         </CardContent>
       </Card>
     </div>

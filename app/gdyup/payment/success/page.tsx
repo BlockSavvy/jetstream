@@ -4,12 +4,13 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2, ArrowRight, BookOpen, MessageSquare, Ticket } from 'lucide-react';
+import { CheckCircle, Loader2, ArrowRight, BookOpen, MessageSquare, Ticket, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { useAuth } from '@/components/auth-provider';
 import { useGdyupTheme } from '../../hooks/useGdyupTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 import BoardingPassButton from '../../components/BoardingPassButton';
+import { cn } from '@/lib/utils';
 
 // Extract the component that uses searchParams
 function PaymentSuccessContent() {
@@ -23,22 +24,22 @@ function PaymentSuccessContent() {
   
   useEffect(() => {
     const verifyPayment = async () => {
-      setIsLoading(true);
+        setIsLoading(true);
       setError(null);
-      
+        
       // Get the offer ID from query parameters or localStorage
       const offerId = searchParams?.get('offer_id') || localStorage.getItem('current_payment_offer_id');
       
       // Check if we have payment evidence
       const hasPaymentCompleteFlagInStorage = localStorage.getItem('payment_complete') === 'true';
       const isTestMode = searchParams?.get('test') === 'true';
-      
-      if (!offerId) {
+        
+        if (!offerId) {
         setError('Unable to locate offer details. Please check your dashboard for your booking details.');
-        setIsLoading(false);
-        return;
-      }
-      
+          setIsLoading(false);
+          return;
+        }
+        
       try {
         // Fetch offer details
         const supabase = createClient();
@@ -52,7 +53,7 @@ function PaymentSuccessContent() {
           `)
           .eq('id', offerId)
           .single();
-        
+          
         if (offerError || !offer) {
           console.error('Error fetching offer details:', offerError);
           setError('Unable to fetch offer details. Please check your dashboard for your booking status.');
@@ -99,7 +100,7 @@ function PaymentSuccessContent() {
         // Final fallback - if we have paymentStatus from bookings
         if (paymentStatus?.payment_status === 'paid' || 
             paymentStatus?.payment_status === 'completed') {
-          setIsLoading(false);
+        setIsLoading(false);
           return;
         }
         
@@ -137,80 +138,170 @@ function PaymentSuccessContent() {
   
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className={getThemeClasses({
-          base: "border shadow-md",
-          default: "bg-gray-900/90 border-gray-800",
-          blue: "bg-blue-950/90 border-blue-900",
-          pink: "bg-pink-950/90 border-pink-900"
-        })}>
-          <CardHeader>
-            <CardTitle className={getThemeClasses({
-              base: "text-center",
-              default: "text-white",
-              blue: "text-blue-100",
-              pink: "text-pink-100"
-            })}>Verifying Payment</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <Loader2 className={getThemeClasses({
-              base: "h-12 w-12 animate-spin mb-4",
-              default: "text-amber-500",
-              blue: "text-amber-400",
-              pink: "text-amber-300"
-            })} />
-            <p className={getThemeClasses({
-              base: "text-center",
-              default: "text-gray-400",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
-              Please wait while we verify your payment...
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <motion.div 
+        className="container mx-auto px-4 py-12 max-w-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+        >
+          <Card className={getThemeClasses({
+            base: "border shadow-md",
+            default: "bg-gray-900/90 border-gray-800",
+            blue: "bg-blue-950/90 border-blue-900",
+            pink: "bg-pink-950/90 border-pink-900"
+          })}>
+            <CardHeader>
+              <CardTitle className={getThemeClasses({
+                base: "text-center",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}>Verifying Payment</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center py-8">
+              <motion.div
+                className={getThemeClasses({
+                  base: "relative h-16 w-16 mb-4",
+                  default: "text-gdyup-primary",
+                  blue: "text-gdyup-primary",
+                  pink: "text-gdyup-primary"
+                })}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                <motion.span
+                  className="absolute inset-0 flex items-center justify-center"
+                  animate={{ rotate: 360 }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    ease: "linear" 
+                  }}
+                >
+                  <Loader2 className="h-16 w-16 animate-spin" />
+                </motion.span>
+              </motion.div>
+              <motion.p 
+                className={getThemeClasses({
+                  base: "text-center",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+              >
+                Please wait while we verify your payment...
+              </motion.p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
     );
   }
   
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className={getThemeClasses({
-          base: "border shadow-md",
-          default: "bg-gray-900/90 border-gray-800",
-          blue: "bg-blue-950/90 border-blue-900",
-          pink: "bg-pink-950/90 border-pink-900"
-        })}>
-          <CardHeader>
-            <CardTitle className="text-center text-red-600">Payment Verification Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center mb-4">{error}</p>
-            <p className={getThemeClasses({
-              base: "text-center",
-              default: "text-gray-400",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
-              If you believe this is an error, please check your dashboard for the latest status.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              className={getThemeClasses({
-                base: "w-full",
-                default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
-                blue: "bg-blue-500 hover:bg-blue-600 text-white",
-                pink: "bg-pink-500 hover:bg-pink-600 text-white"
-              })} 
-              onClick={handleNavigateToDashboard}
-            >
-              Go to Dashboard
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+      <motion.div 
+        className="container mx-auto px-4 py-12 max-w-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <motion.div
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+        >
+          <Card className={getThemeClasses({
+            base: "border shadow-md",
+            default: "bg-gray-900/90 border-red-900/40",
+            blue: "bg-blue-950/90 border-red-900/40",
+            pink: "bg-pink-950/90 border-red-900/40"
+          })}>
+            <CardHeader>
+              <motion.div 
+                className="flex flex-col items-center"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <div className={getThemeClasses({
+                  base: "rounded-full p-3 mb-2",
+                  default: "bg-red-950/30 text-red-500",
+                  blue: "bg-red-950/20 text-red-400",
+                  pink: "bg-red-950/20 text-red-400"
+                })}>
+                  <AlertCircle className="h-8 w-8" />
+                </div>
+                <CardTitle className={getThemeClasses({
+                  base: "text-center",
+                  default: "text-red-500",
+                  blue: "text-red-400",
+                  pink: "text-red-400"
+                })}>Payment Verification Error</CardTitle>
+              </motion.div>
+            </CardHeader>
+            <CardContent>
+              <motion.p 
+                className={cn("text-center mb-4", getThemeClasses({
+                  base: "",
+                  default: "text-white",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                }))}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+              >
+                {error}
+              </motion.p>
+              <motion.p 
+                className={getThemeClasses({
+                  base: "text-center",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.3 }}
+              >
+                If you believe this is an error, please check your dashboard for the latest status.
+              </motion.p>
+            </CardContent>
+            <CardFooter>
+              <motion.div 
+                className="w-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.3 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Button 
+                  className={cn("w-full", getThemeClasses({
+                    base: "",
+                    default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                    blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                    pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                  }))}
+                  onClick={handleNavigateToDashboard}
+                >
+                  Go to Dashboard
+                </Button>
+              </motion.div>
+            </CardFooter>
+          </Card>
+        </motion.div>
+      </motion.div>
     );
   }
   
@@ -267,34 +358,32 @@ function PaymentSuccessContent() {
             })}>Payment Successful!</CardTitle>
           </CardHeader>
           
-          <CardContent className="text-center">
-            <p className={getThemeClasses({
-              base: "text-lg mb-6",
-              default: "text-white",
-              blue: "text-blue-100",
-              pink: "text-pink-100"
-            })}>
-              Your flight share has been confirmed.
-            </p>
-            
-            <motion.div 
+          <CardContent className="text-center space-y-6">
+            <motion.p 
               className={getThemeClasses({
-                base: "rounded-md p-4 mb-6",
-                default: "bg-black/30 border border-gray-800",
-                blue: "bg-blue-950/50 border border-blue-900",
-                pink: "bg-pink-950/50 border border-pink-900"
+                base: "text-lg",
+                default: "text-white",
+                blue: "text-blue-50",
+                pink: "text-pink-50"
               })}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <p className={getThemeClasses({
-                base: "font-medium mb-1",
-                default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
-              })}>Flight Details:</p>
-              
+              Your seat is confirmed for the flight from {offerDetails.departure_location} to {offerDetails.arrival_location}.
+            </motion.p>
+            
+            <motion.div 
+              className={getThemeClasses({
+                base: "p-4 rounded-lg border",
+                default: "bg-gray-800/50 border-gray-700",
+                blue: "bg-blue-900/50 border-blue-800",
+                pink: "bg-pink-900/50 border-pink-800"
+              })}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+            >
               <div className="flex justify-between items-center mb-2">
                 <div className={getThemeClasses({
                   base: "flex items-center",
@@ -355,46 +444,70 @@ function PaymentSuccessContent() {
                 />
               </motion.div>
             </AnimatePresence>
-            
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
-                className={getThemeClasses({
-                  base: "flex items-center justify-center",
-                  default: "border-gray-700 hover:bg-gray-800",
-                  blue: "border-blue-700 hover:bg-blue-800",
-                  pink: "border-pink-700 hover:bg-pink-800"
-                })}
-                onClick={handleNavigateToMessages}
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Message Jet Owner
-              </Button>
-              
-              <Button 
-                className={getThemeClasses({
-                  base: "flex items-center justify-center",
-                  default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
-                  blue: "bg-blue-500 hover:bg-blue-600 text-white",
-                  pink: "bg-pink-500 hover:bg-pink-600 text-white"
-                })}
-                onClick={handleNavigateToDashboard}
-              >
-                Go to Dashboard
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
           </CardContent>
+          
+          <CardFooter className="flex flex-col space-y-3 pt-2">
+            <motion.div 
+              className="w-full"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.3 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button 
+                onClick={handleNavigateToSeating}
+                className={cn("w-full", getThemeClasses({
+                  base: "",
+                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                }))}
+              >
+                <Ticket className="h-4 w-4 mr-2" />
+                View Boarding Pass
+              </Button>
+            </motion.div>
+            
+            <motion.div 
+              className="grid grid-cols-2 gap-3 w-full"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.3 }}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  variant="outline"
+                  onClick={handleNavigateToMessages}
+                  className={cn("w-full", getThemeClasses({
+                    base: "",
+                    default: "border-gray-700 hover:bg-gray-800 text-white",
+                    blue: "border-blue-700 hover:bg-blue-900 text-blue-100",
+                    pink: "border-pink-700 hover:bg-pink-900 text-pink-100"
+                  }))}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Messages
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button 
+                  variant="outline"
+                  onClick={handleNavigateToDashboard}
+                  className={cn("w-full", getThemeClasses({
+                    base: "",
+                    default: "border-gray-700 hover:bg-gray-800 text-white",
+                    blue: "border-blue-700 hover:bg-blue-900 text-blue-100",
+                    pink: "border-pink-700 hover:bg-pink-900 text-pink-100"
+                  }))}
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
+              </motion.div>
+            </motion.div>
+          </CardFooter>
         </Card>
-        
-        <p className={getThemeClasses({
-          base: "text-center text-xs opacity-70",
-          default: "text-gray-400",
-          blue: "text-blue-300",
-          pink: "text-pink-300"
-        })}>
-          Transaction ID: {searchParams?.get('payment_intent_id') || searchParams?.get('invoiceId') || 'N/A'}
-        </p>
       </motion.div>
     </motion.div>
   );

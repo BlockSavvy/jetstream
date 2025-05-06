@@ -26,7 +26,8 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
-export function LoginForm() {
+// Extract the core login form functionality to a separate component
+function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [pendingPaymentOfferId, setPendingPaymentOfferId] = useState<string | null>(null)
@@ -248,12 +249,12 @@ export function LoginForm() {
       {errorMessage && (
         <Alert variant="destructive" className="mt-4 bg-red-900/40 border-red-700">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-red-200">{errorMessage}</AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
-      
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="email"
@@ -261,10 +262,14 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel className="text-gray-200">Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="youremail@example.com" type="email" autoComplete="email" {...field} 
-                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#DAFF0D] focus:ring-[#DAFF0D]/30" />
+                  <Input
+                    placeholder="you@example.com"
+                    {...field}
+                    autoComplete="email"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
                 </FormControl>
-                <FormMessage className="text-red-300" />
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -276,38 +281,67 @@ export function LoginForm() {
                 <div className="flex items-center justify-between">
                   <FormLabel className="text-gray-200">Password</FormLabel>
                   <Link
-                    href="/auth/forgot-password"
-                    className="text-sm font-medium text-[#DAFF0D] hover:text-[#B4D500]"
+                    href="/auth/reset-password"
+                    className="text-xs text-[#DAFF0D] hover:underline"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <FormControl>
-                  <Input placeholder="••••••••" type="password" autoComplete="current-password" {...field} 
-                    className="bg-gray-700 border-gray-600 text-white focus:border-[#DAFF0D] focus:ring-[#DAFF0D]/30" />
+                  <Input
+                    type="password"
+                    {...field}
+                    autoComplete="current-password"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
                 </FormControl>
-                <FormMessage className="text-red-300" />
+                <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-[#DAFF0D] hover:bg-[#B4D500] text-gray-900 font-medium" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-[#DAFF0D] text-black hover:bg-[#C8EF00] font-medium"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Signing in...
               </>
             ) : (
-              'Sign in'
+              'Sign In'
             )}
           </Button>
         </form>
       </Form>
-      <div className="text-center text-sm">
-        <span className="text-gray-400">Don't have an account?</span>{' '}
-        <Link href="/auth/register" className="font-medium text-[#DAFF0D] hover:text-[#B4D500]">
-          Sign up
-        </Link>
+
+      <div className="text-center">
+        <p className="text-gray-400 text-sm">
+          Don&apos;t have an account?{' '}
+          <Link
+            href="/auth/register"
+            className="text-[#DAFF0D] hover:underline font-medium"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
-  )
+  );
+}
+
+// Main export with Suspense boundary
+import { Suspense } from 'react'
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto w-full max-w-md flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-[#DAFF0D]" />
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
+  );
 } 
