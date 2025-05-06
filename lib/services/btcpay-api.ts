@@ -206,7 +206,7 @@ export async function updateOfferPaymentStatus(
     // First check if the offer exists
     const { data: offer, error: offerError } = await supabase
       .from('jetshare_offers')
-      .select('id, status, metadata')
+      .select('id, status')
       .eq('id', offerId)
       .single();
       
@@ -215,23 +215,14 @@ export async function updateOfferPaymentStatus(
       throw new Error(`Offer not found: ${offerId}`);
     }
     
-    // Check if payment_status column exists by introspecting the schema
     console.log(`Updating payment status for offer ${offerId} to ${status}`);
     
-    // Prepare the update data, with and without payment_status to handle both schemas
-    let updateData: Record<string, any> = {
-      updated_at: new Date().toISOString()
-    };
-    
-    // Add payment details to a JSON field that likely exists in both schemas
-    updateData.metadata = {
-      ...(offer.metadata as Record<string, any> || {}),
-      payment: {
-        status,
-        method: paymentMethod,
-        details,
-        updated_at: new Date().toISOString()
-      }
+    // Prepare the update data based on the actual schema
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+      payment_status: status,
+      payment_method: paymentMethod,
+      payment_details: details
     };
     
     // If payment is successful, update the offer status to completed
@@ -241,56 +232,15 @@ export async function updateOfferPaymentStatus(
       updateData.status = 'payment_pending';
     }
     
-    // Try to update with payment_status field - if it fails, we'll retry without it
-    try {
-      updateData.payment_status = status;
-      updateData.payment_method = paymentMethod;
-      updateData.payment_details = details;
-      
-      const { error: updateError } = await supabase
-        .from('jetshare_offers')
-        .update(updateData)
-        .eq('id', offerId);
-      
-      if (updateError) {
-        // If the error is about column not existing, retry without those columns
-        if (updateError.message?.includes('column') && updateError.message?.includes('not exist')) {
-          console.log('Schema missing payment_status columns, using metadata field instead');
-          
-          // Remove the problematic fields
-          delete updateData.payment_status;
-          delete updateData.payment_method;
-          delete updateData.payment_details;
-          
-          const { error: retryError } = await supabase
-            .from('jetshare_offers')
-            .update(updateData)
-            .eq('id', offerId);
-            
-          if (retryError) {
-            throw retryError;
-          }
-        } else {
-          throw updateError;
-        }
-      }
-    } catch (error: any) {
-      console.warn('First update attempt failed, retrying with alternative schema:', error.message);
-      
-      // Remove problematic fields for the second attempt
-      delete updateData.payment_status;
-      delete updateData.payment_method;
-      delete updateData.payment_details;
-      
-      const { error: fallbackError } = await supabase
-        .from('jetshare_offers')
-        .update(updateData)
-        .eq('id', offerId);
-        
-      if (fallbackError) {
-        console.error('Error updating offer payment info (fallback attempt):', fallbackError);
-        throw fallbackError;
-      }
+    // Update the offer with the payment information
+    const { error: updateError } = await supabase
+      .from('jetshare_offers')
+      .update(updateData)
+      .eq('id', offerId);
+    
+    if (updateError) {
+      console.error('Error updating offer payment status:', updateError);
+      throw updateError;
     }
     
     console.log(`Successfully updated payment info for offer ${offerId}`);

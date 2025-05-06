@@ -102,58 +102,72 @@ export function NostrProvider({ children }: NostrProviderProps) {
       }
       
       try {
-        const response = await fetch('/api/nostr/relay');
+        // Add a timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         
+        const response = await fetch('/api/nostr/relay', {
+          signal: controller.signal,
+          credentials: 'include' // Ensure cookies are sent
+        });
+        
+        // Clear the timeout since the request completed
+        clearTimeout(timeoutId);
+        
+        // Handle non-OK responses properly
         if (!response.ok) {
           if (response.status === 401) {
-            // Authentication error - this is expected if user isn't logged in or session expired
-            console.log('Nostr: User not authenticated, using default settings');
+            console.log('Nostr: Authentication required, using default settings');
+            // Set initialized but not enabled for unauthorized users
             setIsInitialized(true);
+            setIsEnabled(false);
+            setIsConnected(false);
+            setPubkey(null);
+            setNip05(null);
+            setRelays([]);
             return;
           }
-          throw new Error(`Failed to fetch Nostr settings: ${response.statusText}`);
+          
+          throw new Error(`Nostr API returned ${response.status}: ${response.statusText}`);
         }
         
-        // Only try to parse JSON if the response was successful
+        // Only try to parse JSON for successful responses
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          console.warn('Nostr: Unexpected content type from API', contentType);
-          setIsInitialized(true);
-          return;
+          throw new Error(`Expected JSON response but got ${contentType}`);
         }
         
         const data = await response.json();
         
-        setIsEnabled(data.nostrEnabled || false);
-        setHasNip05(data.hasNip05 || false);
-        setPubkey(data.pubkey);
-        setNip05(data.nip05);
-        setRelays(data.userRelays || []);
-        setSettings(data.settings || {
-          enabled: false,
-          broadcast_offers: true,
-          receive_messages: true,
-          enable_zaps: true,
-          private_mode: false,
-          auto_connect: true
-        });
-        
-        // Auto-connect if enabled
-        if (data.nostrEnabled && data.settings?.auto_connect && data.pubkey) {
-          await connectToRelays(data.userRelays);
+        if (data.pubkey) {
+          console.log('Nostr: Successfully initialized');
+          setIsInitialized(true);
+          setIsEnabled(true);
+          setPubkey(data.pubkey);
+          setNip05(data.nip05 || null);
+          setRelays(data.relays || []);
+          setIsConnected(true);
+        } else {
+          console.log('Nostr: Initialized but no pubkey available');
+          setIsInitialized(true);
+          setIsEnabled(false);
         }
-        
-        setIsInitialized(true);
       } catch (error) {
         console.error('Error initializing Nostr:', error);
-        // Only show error toast for non-authentication errors to avoid spamming users
-        toast.error('Failed to initialize Nostr. Some features may not work correctly.');
-        setIsInitialized(true); // Mark as initialized anyway to prevent infinite retries
+        
+        // Provide fallback for various error conditions
+        setIsInitialized(true);
+        setIsEnabled(false);
+        setIsConnected(false);
+        toast.error('Failed to initialize NOSTR', {
+          id: 'nostr-init-failed',
+          duration: 3000,
+        });
       }
     };
     
     initializeNostr();
-  }, [user]);
+  }, [user, toast]);
   
   // Connect to Nostr relays
   const connectToRelays = async (relayUrls: string[] = relays): Promise<boolean> => {

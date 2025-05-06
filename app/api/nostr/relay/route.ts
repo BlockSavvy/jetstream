@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies, headers } from 'next/headers';
 import { createClient } from '@/lib/supabase';
 
 /**
@@ -9,7 +10,8 @@ const DEFAULT_RELAYS = [
   'wss://relay.snort.social',
   'wss://relay.current.fyi',
   'wss://nos.lol',
-  'wss://relay.nostr.band'
+  'wss://relay.nostr.band',
+  'wss://nostr-pub.wellorder.net'
 ];
 
 /**
@@ -18,88 +20,126 @@ const DEFAULT_RELAYS = [
  * @param req Request
  * @returns JSON with relay configuration
  */
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
+    // Get the Supabase client with cookies from the request
+    const cookieStore = cookies();
     const supabase = createClient();
+
+    // Get the user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    // Check if user is authenticated
-    const { data: session } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.error('Session error in Nostr relay API:', sessionError);
+      return NextResponse.json(
+        { error: 'Authentication failed', code: 'auth_error' },
+        { status: 401 }
+      );
+    }
     
-    if (!session?.session?.user) {
-      return NextResponse.json({ 
-        isAuthenticated: false,
+    if (!session || !session.user) {
+      console.log('No authenticated user in Nostr relay API request');
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'not_authenticated' },
+        { status: 401 }
+      );
+    }
+    
+    const user_id = session.user.id;
+    
+    // Get user's Nostr profile if it exists
+    const { data: nostrProfile, error: nostrError } = await supabase
+      .from('user_nostr_profiles')
+      .select('pubkey, nip05, relays, settings')
+      .eq('user_id', user_id)
+      .single();
+      
+    if (nostrError && nostrError.code !== 'PGRST116') { // Not found is ok, other errors are not
+      console.error('Error fetching Nostr profile:', nostrError);
+      return NextResponse.json(
+        { error: 'Failed to fetch Nostr profile', code: 'db_error' },
+        { status: 500 }
+      );
+    }
+    
+    // If no profile exists, return sensible defaults
+    if (!nostrProfile) {
+      console.log(`No Nostr profile found for user ${user_id}`);
+      return NextResponse.json({
+        nostrEnabled: false,
+        pubkey: null,
+        nip05: null,
+        hasNip05: false,
         defaultRelays: DEFAULT_RELAYS,
         userRelays: [],
-        nostrEnabled: false
+        relays: DEFAULT_RELAYS,
+        settings: {
+          enabled: false,
+          broadcast_offers: true,
+          receive_messages: true,
+          enable_zaps: true,
+          private_mode: false,
+          auto_connect: true
+        }
       });
     }
     
-    // Get user profile and settings
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('nostr_pubkey, nip05, nostr_settings, nostr_relays')
-      .eq('user_id', session.session.user.id)
-      .single();
-    
-    // Get app settings for global relay configuration
-    const { data: appSettings } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', 'nostr_default_relays')
-      .single();
-    
-    // Parse app settings if available
-    let systemRelays = DEFAULT_RELAYS;
-    if (appSettings?.value) {
-      try {
-        const parsed = JSON.parse(appSettings.value);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          systemRelays = parsed;
+    // Parse relays from JSON or use defaults
+    let userRelays = DEFAULT_RELAYS;
+    try {
+      if (nostrProfile.relays) {
+        if (typeof nostrProfile.relays === 'string') {
+          userRelays = JSON.parse(nostrProfile.relays);
+        } else if (Array.isArray(nostrProfile.relays)) {
+          userRelays = nostrProfile.relays;
         }
-      } catch (e) {
-        console.warn('Error parsing global relay settings:', e);
       }
+    } catch (e) {
+      console.error('Error parsing relays:', e);
     }
     
-    // Use user's relays if available, otherwise use default
-    let userRelays: string[] = [];
-    if (profile?.nostr_relays) {
-      try {
-        const parsed = typeof profile.nostr_relays === 'string' 
-          ? JSON.parse(profile.nostr_relays) 
-          : profile.nostr_relays;
-          
-        if (Array.isArray(parsed)) {
-          userRelays = parsed;
+    // Parse settings from JSON or use defaults
+    let settings = {
+      enabled: true,
+      broadcast_offers: true,
+      receive_messages: true,
+      enable_zaps: true,
+      private_mode: false,
+      auto_connect: true
+    };
+    
+    try {
+      if (nostrProfile.settings) {
+        if (typeof nostrProfile.settings === 'string') {
+          settings = JSON.parse(nostrProfile.settings);
+        } else if (typeof nostrProfile.settings === 'object') {
+          settings = {
+            ...settings,
+            ...nostrProfile.settings
+          };
         }
-      } catch (e) {
-        console.warn('Error parsing user relay settings:', e);
       }
+    } catch (e) {
+      console.error('Error parsing settings:', e);
     }
     
+    // Return user's Nostr profile data
     return NextResponse.json({
-      isAuthenticated: true,
-      nostrEnabled: profile?.nostr_settings?.enabled || false,
-      hasNip05: !!profile?.nip05,
-      pubkey: profile?.nostr_pubkey || null,
-      nip05: profile?.nip05 || null,
-      settings: profile?.nostr_settings || {
-        enabled: false,
-        broadcast_offers: true,
-        receive_messages: true,
-        enable_zaps: true,
-        private_mode: false,
-        auto_connect: true
-      },
-      defaultRelays: systemRelays,
-      userRelays: userRelays.length > 0 ? userRelays : systemRelays
+      nostrEnabled: !!nostrProfile.pubkey,
+      pubkey: nostrProfile.pubkey,
+      nip05: nostrProfile.nip05,
+      hasNip05: !!nostrProfile.nip05,
+      defaultRelays: DEFAULT_RELAYS,
+      userRelays,
+      relays: userRelays,
+      settings
     });
   } catch (error) {
-    console.error('Error fetching relay information:', error);
-    return NextResponse.json({ 
-      error: 'Failed to get relay information',
-      defaultRelays: DEFAULT_RELAYS
-    }, { status: 500 });
+    console.error('Unhandled error in Nostr relay API:', error);
+    return NextResponse.json(
+      { error: 'An unexpected error occurred', code: 'server_error' },
+      { status: 500 }
+    );
   }
 }
 

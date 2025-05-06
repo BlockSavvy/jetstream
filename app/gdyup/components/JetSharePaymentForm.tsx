@@ -832,11 +832,11 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          <div className="text-sm opacity-80 mb-1">Amount Due</div>
+          <div className="text-sm font-medium mb-1">Amount Due</div>
           <div className="text-2xl font-bold font-mono">
-            {formatCurrency(offer.total_flight_cost, 'USD')}
+            {formatCurrency(offer.requested_share_amount, 'USD')}
           </div>
-          <div className="text-sm opacity-60 mt-1">≈ {(offer.total_flight_cost / 68452).toFixed(8)} BTC</div>
+          <div className="text-sm mt-1">≈ {(offer.requested_share_amount / 68452).toFixed(8)} BTC</div>
         </motion.div>
         
         {/* Main Bitcoin Payment Button */}
@@ -1860,54 +1860,116 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               <div className="space-y-4">
                 <div className="text-lg font-semibold mb-2">Confirm Your Payment</div>
                 
-                <div className={cn(
-                  "rounded-lg border p-4",
-                  getThemeClasses({
-                    base: "",
-                    default: "bg-black/20 border-gray-800",
-                    blue: "bg-blue-950/20 border-blue-800",
-                    pink: "bg-pink-950/20 border-pink-800"
-                  })
-                )}>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className={getThemeClasses({
+                <div className={getThemeClasses({
+                  base: "p-4 rounded-lg border mb-4 text-left relative",
+                  default: "bg-gray-800/80 border-gray-700",
+                  blue: "bg-blue-900/80 border-blue-800",
+                  pink: "bg-pink-900/80 border-pink-800"
+                })}>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                      <p className={getThemeClasses({
+                        base: "text-xs font-medium uppercase",
+                        default: "text-gray-300",
+                        blue: "text-blue-200",
+                        pink: "text-pink-200"
+                      })}>
+                        Flight Share Amount
+                      </p>
+                      <p className={cn("text-xl font-bold", getThemeClasses({
                         base: "",
-                        default: "text-gray-400",
-                        blue: "text-blue-300",
-                        pink: "text-pink-300"
-                      })}>Amount</span>
-                      <span className="font-medium">${paymentSummary.amount.toLocaleString()}</span>
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>
+                        ${offer.requested_share_amount.toLocaleString()}
+                      </p>
                     </div>
-                    
-                    <div className="flex justify-between">
-                      <span className={getThemeClasses({
+                    <div>
+                      <p className={getThemeClasses({
+                        base: "text-xs font-medium uppercase",
+                        default: "text-gray-300",
+                        blue: "text-blue-200",
+                        pink: "text-pink-200"
+                      })}>
+                        Total Flight Cost
+                      </p>
+                      <p className={cn("text-xl", getThemeClasses({
                         base: "",
-                        default: "text-gray-400",
-                        blue: "text-blue-300",
-                        pink: "text-pink-300"
-                      })}>Handling Fee</span>
-                      <span className="font-medium">${paymentSummary.handlingFee.toLocaleString()}</span>
+                        default: "text-gray-300",
+                        blue: "text-blue-200",
+                        pink: "text-pink-200"
+                      }))}>
+                        ${offer.total_flight_cost.toLocaleString()}
+                      </p>
                     </div>
-                    
-                    <div className={getThemeClasses({
-                      base: "border-t my-2",
-                      default: "border-gray-700",
-                      blue: "border-blue-700",
-                      pink: "border-pink-700"
-                    })}></div>
-                    
-                    <div className="flex justify-between">
-                      <span className="font-semibold">Total</span>
-                      <span className={cn(
-                        "font-semibold",
-                        getThemeClasses({
-                          base: "",
-                          default: "text-gdyup-primary",
-                          blue: "text-gdyup-primary",
-                          pink: "text-gdyup-primary"
-                        })
-                      )}>${paymentSummary.total.toLocaleString()}</span>
+                  </div>
+
+                  <div className={getThemeClasses({
+                    base: "text-center p-3 rounded-lg",
+                    default: "bg-gray-900/70",
+                    blue: "bg-blue-950/70",
+                    pink: "bg-pink-950/70"
+                  })}>
+                    <p className={getThemeClasses({
+                      base: "text-xs uppercase mb-1 font-medium",
+                      default: "text-gray-300",
+                      blue: "text-blue-200",
+                      pink: "text-pink-200"
+                    })}>
+                      Payment Summary
+                    </p>
+                    <div className="grid grid-cols-2 gap-1 text-sm mb-2">
+                      <div className={cn("text-left font-medium", getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>Share Amount:</div>
+                      <div className={cn("text-right", getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>
+                        ${offer.requested_share_amount.toLocaleString()}
+                      </div>
+                      
+                      <div className={cn("text-left font-medium", getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>Handling Fee:</div>
+                      <div className={cn("text-right", getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>
+                        ${(offer.requested_share_amount * 0.075).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className={cn("border-t border-opacity-20 pt-2 mt-2 grid grid-cols-2", getThemeClasses({
+                      base: "",
+                      default: "border-gray-600",
+                      blue: "border-blue-600",
+                      pink: "border-pink-600"
+                    }))}>
+                      <div className={cn("text-left font-semibold", getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>Total:</div>
+                      <div className={cn("text-right font-semibold", getThemeClasses({
+                        base: "",
+                        default: "text-white",
+                        blue: "text-white",
+                        pink: "text-white"
+                      }))}>
+                        ${(offer.requested_share_amount * 1.075).toLocaleString()}
+                      </div>
                     </div>
                   </div>
                 </div>
