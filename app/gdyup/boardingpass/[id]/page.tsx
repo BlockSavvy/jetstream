@@ -1,18 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase';
-import { useAuth } from '@/components/auth-provider';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plane, Calendar, AlertCircle, Download, ArrowLeft, QrCode, MapPin, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { Loader2, Plane, ArrowLeft, QrCode, Ticket, Wallet, Download, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGdyupTheme } from '../../hooks/useGdyupTheme';
-import { motion, AnimatePresence } from 'framer-motion';
-import BoardingPassButton from '../../components/BoardingPassButton';
 import Image from 'next/image';
+import { useAuth } from '@/components/auth-provider';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useGdyupTheme } from '@/app/gdyup/hooks/useGdyupTheme';
+import BoardingPassButton from '@/app/gdyup/components/BoardingPassButton';
+import NostrVerificationBadge from '@/app/gdyup/components/NostrVerificationBadge';
+import TicketCheckIn from '@/app/gdyup/components/TicketCheckIn';
+import NostrZapButton from '@/app/gdyup/components/NostrZapButton';
+import NostrRelayStatus from '@/app/gdyup/components/NostrRelayStatus';
+import NostrCommunityChat from '@/app/gdyup/components/NostrCommunityChat';
+import { cn } from '@/lib/utils';
 
 interface BoardingPassPageProps {
   params: {
@@ -32,157 +37,165 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   const [showNostrInfo, setShowNostrInfo] = useState(false);
   const [isWalletProcessing, setIsWalletProcessing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [checkInStatus, setCheckInStatus] = useState<'pending' | 'available' | 'completed' | 'expired'>('pending');
+  const [totalZaps, setTotalZaps] = useState(0);
+  const [totalZapAmount, setTotalZapAmount] = useState(0);
   
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       
       try {
-        // Ensure we have an ID
-        if (!params || !params.id) {
-          setError('Missing boarding pass ID');
-          setIsLoading(false);
-          return;
+        // Fetch boarding pass data
+        const response = await fetch(`/api/boardingpass/${params.id}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to load boarding pass');
         }
         
-        // Check user auth - for guest access in demo mode
-        if (!user) {
-          console.log('No authenticated user detected, checking for local offer data');
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        setOfferData(data.offer);
+        setBoardingPassData(data.boarding_pass);
+        
+        // Determine check-in status based on flight date
+        if (data.offer && data.offer.flight_date) {
+          const flightDate = new Date(data.offer.flight_date);
+          const now = new Date();
+          const threeDaysBeforeFlight = new Date(flightDate);
+          threeDaysBeforeFlight.setDate(flightDate.getDate() - 3);
           
-          // Check localStorage for offer ID match or current_payment_offer_id
-          const storedOfferId = localStorage.getItem('current_payment_offer_id');
-          
-          if (storedOfferId === params.id) {
-            console.log('Local offer data matches route ID, allowing limited access');
-            // Continue with limited view using ID from params
+          if (now > flightDate) {
+            setCheckInStatus('expired');
+          } else if (now >= threeDaysBeforeFlight) {
+            setCheckInStatus('available');
           } else {
-            console.log('No matching offer data, redirecting to login');
-            // Store return URL for post-login redirect
-            localStorage.setItem('auth_redirect', `/gdyup/boardingpass/${params.id}`);
-            
-            // Use window.location for more reliable redirect
-            window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/boardingpass/${params.id}`)}`;
-            return;
+            setCheckInStatus('pending');
           }
         }
-        
-        const supabase = createClient();
-        
-        // First fetch the offer
-        const { data: offer, error: offerError } = await supabase
-          .from('jetshare_offers')
-          .select(`
-            *,
-            creator:creator_id (*),
-            matched_user:matched_user_id (*)
-          `)
-          .eq('id', params.id)
-          .single();
-          
-        if (offerError || !offer) {
-          console.error('Error fetching offer:', offerError || 'Offer not found');
-          throw new Error('Boarding pass not found. The flight may not exist or you may not have access.');
-        }
-        
-        // Check if the user has access to this offer - skip in demo/guest mode
-        if (user && offer.creator_id !== user.id && offer.matched_user_id !== user.id) {
-          console.error('Access denied: User does not have access to this boarding pass');
-          throw new Error('You do not have access to this boarding pass');
-        }
-        
-        // Check if the offer is paid
-        const isPaid = offer.status === 'completed' || 
-                      offer.status === 'paid' || 
-                      offer.payment_status === 'paid' ||
-                      localStorage.getItem('payment_complete') === 'true';
-                      
-        if (!isPaid) {
-          console.error('Boarding pass unavailable: Payment required');
-          throw new Error('Booking is not complete - payment required');
-        }
-        
-        setOfferData(offer);
-        
-        // Check if there's a boarding pass already
-        const { data: boardingPass, error: boardingPassError } = await supabase
-          .from('jetshare_tickets')
-          .select('*')
-          .eq('offer_id', params.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (boardingPass && boardingPass.length > 0) {
-          setBoardingPassData(boardingPass[0]);
-        } else {
-          // Generate a boarding pass
-          // In a real app, this would be a more complex process with seat assignment
-          const seatNumber = user && user.id === offer.creator_id ? '1A' : '1B';
-          const ticketCode = `GDY-${Math.floor(1000 + Math.random() * 9000)}`;
-          
-          // When creating a new boarding pass without a user, use demo data
-          const passengerName = user 
-            ? (user.user_metadata?.full_name || user.email || 'GDY·UP Traveler')
-            : 'GDY·UP Guest';
-          
-          const userId = user ? user.id : 'guest-user';
-          
-          const newBoardingPass = {
-            offer_id: params.id,
-            user_id: userId,
-            passenger_name: passengerName,
-            ticket_code: ticketCode,
-            seat_number: seatNumber,
-            boarding_time: new Date(offer.flight_date).toISOString(),
-            gate: `A${Math.floor(1 + Math.random() * 20)}`,
-            status: 'active',
-            created_at: new Date().toISOString(),
-            metadata: {
-              departure_location: offer.departure_location,
-              arrival_location: offer.arrival_location,
-              flight_date: offer.flight_date,
-              aircraft_model: offer.aircraft_model
-            }
-          };
-          
-          // Only insert into database if signed in
-          if (user) {
-            try {
-              const { data: insertedPass, error: insertError } = await supabase
-                .from('jetshare_tickets')
-                .insert([newBoardingPass])
-                .select()
-                .single();
-                
-              if (insertError) {
-                console.error('Error creating boarding pass:', insertError);
-                // Continue with the data we have
-              } else if (insertedPass) {
-                setBoardingPassData(insertedPass);
-                return;
-              }
-            } catch (dbError) {
-              console.error('Database error creating boarding pass:', dbError);
-              // Fall through to use local data
-            }
-          }
-          
-          // Use the local data as fallback
-          setBoardingPassData(newBoardingPass);
-        }
-        
-      } catch (error) {
-        console.error('Error loading boarding pass:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load boarding pass');
+      } catch (err) {
+        console.error('Error fetching boarding pass:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchData();
-  }, [params, router, user]);
+  }, [params.id]);
   
   const handleGoBack = () => {
     router.push('/gdyup/dashboard');
+  };
+  
+  const getQrCodeUrl = () => {
+    // In a real implementation, these would be different URLs
+    if (qrType === 'nostr') {
+      return `/api/boardingpass/${params.id}/qr?type=nostr&t=${Date.now()}`;
+    }
+    return `/api/boardingpass/${params.id}/qr?t=${Date.now()}`;
+  };
+  
+  const handleSaveToFiles = async () => {
+    setIsDownloading(true);
+    
+    try {
+      // Fetch the boarding pass PDF
+      const response = await fetch(`/api/boardingpass/${params.id}?format=pdf`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `boarding-pass-${params.id}.pdf`;
+      
+      // Append to the document, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Boarding pass saved successfully!');
+    } catch (error) {
+      console.error('Error saving boarding pass:', error);
+      toast.error('Failed to save boarding pass');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  
+  const handleAddToWallet = async () => {
+    setIsWalletProcessing(true);
+    
+    try {
+      // Fetch the Apple Wallet pass
+      const response = await fetch(`/api/boardingpass/${params.id}?format=pkpass`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate wallet pass');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `boarding-pass-${params.id}.pkpass`;
+      
+      // Append to the document, click it, and remove it
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Added to wallet successfully!');
+    } catch (error) {
+      console.error('Error adding to wallet:', error);
+      toast.error('Failed to add to wallet');
+    } finally {
+      setIsWalletProcessing(false);
+    }
+  };
+  
+  const handleShareBoardingPass = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'GDY·UP Boarding Pass',
+        text: 'Check out my boarding pass for my upcoming private jet flight!',
+        url: window.location.href,
+      })
+      .then(() => toast.success('Boarding pass shared successfully!'))
+      .catch((error) => {
+        console.error('Error sharing:', error);
+        toast.error('Failed to share boarding pass');
+      });
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => toast.success('Boarding pass link copied to clipboard!'))
+        .catch(() => toast.error('Failed to copy link'));
+    }
   };
   
   const renderQrCodeOptions = () => {
@@ -194,9 +207,9 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
           onClick={() => setQrType('standard')}
           className={getThemeClasses({
             base: "text-xs py-1 h-8",
-            default: qrType === 'standard' ? 'bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/90' : 'text-white',
-            blue: qrType === 'standard' ? 'bg-[#F25C05] text-white hover:bg-[#F25C05]/90' : 'text-blue-100',
-            pink: qrType === 'standard' ? 'bg-[#F7931A] text-white hover:bg-[#F7931A]/90' : 'text-pink-100'
+            default: qrType === 'standard' ? 'bg-gdyup-primary text-black hover:bg-gdyup-primary/90' : 'text-white',
+            blue: qrType === 'standard' ? 'bg-gdyup-primary text-white hover:bg-gdyup-primary/90' : 'text-blue-100',
+            pink: qrType === 'standard' ? 'bg-gdyup-primary text-white hover:bg-gdyup-primary/90' : 'text-pink-100'
           })}
         >
           Standard QR
@@ -210,9 +223,9 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
           }}
           className={getThemeClasses({
             base: "text-xs py-1 h-8",
-            default: qrType === 'nostr' ? 'bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/90' : 'text-white',
-            blue: qrType === 'nostr' ? 'bg-[#F25C05] text-white hover:bg-[#F25C05]/90' : 'text-blue-100',
-            pink: qrType === 'nostr' ? 'bg-[#F7931A] text-white hover:bg-[#F7931A]/90' : 'text-pink-100'
+            default: qrType === 'nostr' ? 'bg-gdyup-secondary text-white hover:bg-gdyup-secondary/90' : 'text-white',
+            blue: qrType === 'nostr' ? 'bg-gdyup-secondary text-white hover:bg-gdyup-secondary/90' : 'text-blue-100',
+            pink: qrType === 'nostr' ? 'bg-gdyup-secondary text-white hover:bg-gdyup-secondary/90' : 'text-pink-100'
           })}
         >
           Nostr QR
@@ -221,7 +234,12 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
           variant="ghost"
           size="sm"
           onClick={() => setShowNostrInfo(!showNostrInfo)}
-          className="text-xs py-1 h-8 text-gray-400"
+          className={getThemeClasses({
+            base: "text-xs py-1 h-8",
+            default: "text-gray-400",
+            blue: "text-blue-400",
+            pink: "text-pink-400"
+          })}
         >
           ?
         </Button>
@@ -229,455 +247,310 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
     );
   };
   
-  const getQrCodeUrl = () => {
-    if (!boardingPassData) return '';
-    
-    try {
-      const qrData = JSON.stringify({
-        id: boardingPassData.id || 'no-id',
-        offer_id: params.id,
-        ticket_code: boardingPassData.ticket_code || 'NO-CODE',
-        passenger: boardingPassData.passenger_name,
-        seat: boardingPassData.seat_number,
-        flight_date: offerData.flight_date,
-        from: offerData.departure_location,
-        to: offerData.arrival_location
-      });
-      
-      // Get current theme background color for QR code
-      const bgColor = theme === 'blue' ? '18182f' : 
-                      theme === 'pink' ? '2d121e' : 
-                      '000000';
-      
-      // Return the URL with the appropriate QR code type
-      return `/api/jetshare/qrcode?data=${encodeURIComponent(qrData)}&type=${qrType}&background=${bgColor}`;
-    } catch (err) {
-      console.error('Error generating QR code data:', err);
-      return '';
-    }
-  };
-  
-  const handleAddToWallet = async () => {
-    setIsWalletProcessing(true);
-    try {
-      const response = await fetch(`/api/jetshare/generatePasskit?offer_id=${params.id}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate Apple Wallet pass');
-      }
-      
-      // Get the passkit file and download it
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `gdyup-boarding-pass-${boardingPassData?.ticket_code || 'ticket'}.pkpass`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast.success('Boarding pass added to Apple Wallet');
-    } catch (err) {
-      console.error('Error generating Apple Wallet pass:', err);
-      toast.error('Failed to add to Apple Wallet');
-    } finally {
-      setIsWalletProcessing(false);
-    }
-  };
-  
-  const handleDownloadPass = async () => {
-    setIsDownloading(true);
-    try {
-      const response = await fetch(`/api/jetshare/downloadBoardingPass?id=${params.id}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate boarding pass PDF');
-      }
-      
-      // Get the PDF file and download it
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `gdyup-boarding-pass-${boardingPassData?.ticket_code || 'ticket'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast.success('Boarding pass downloaded');
-    } catch (err) {
-      console.error('Error downloading boarding pass:', err);
-      toast.error('Failed to download boarding pass');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-  
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className={getThemeClasses({
-          base: "border shadow-md",
-          default: "bg-gray-900/90 border-gray-800",
-          blue: "bg-blue-950/90 border-blue-900",
-          pink: "bg-pink-950/90 border-pink-900"
-        })}>
-          <CardHeader>
-            <CardTitle className={getThemeClasses({
-              base: "text-center",
-              default: "text-white",
-              blue: "text-blue-100",
-              pink: "text-pink-100"
-            })}>Loading Boarding Pass...</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-center py-10">
-              <Loader2 className={getThemeClasses({
-                base: "h-12 w-12 animate-spin",
-                default: "text-amber-500",
-                blue: "text-amber-400",
-                pink: "text-amber-300"
-              })} />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center"
+        >
+          <Loader2 className={cn(
+            "h-12 w-12 animate-spin mb-4",
+            getThemeClasses({
+              base: "",
+              default: "text-gdyup-primary",
+              blue: "text-gdyup-primary",
+              pink: "text-gdyup-primary"
+            })
+          )} />
+          <p className={getThemeClasses({
+            base: "text-lg",
+            default: "text-white",
+            blue: "text-blue-100",
+            pink: "text-pink-100"
+          })}>Loading your boarding pass...</p>
+        </motion.div>
       </div>
     );
   }
   
-  if (error || !offerData) {
+  if (error) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className={getThemeClasses({
-          base: "border shadow-md",
-          default: "bg-gray-900/90 border-gray-800",
-          blue: "bg-blue-950/90 border-blue-900",
-          pink: "bg-pink-950/90 border-pink-900"
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center min-h-[50vh]"
+      >
+        <div className={getThemeClasses({
+          base: "p-4 rounded-lg border text-center max-w-md",
+          default: "bg-red-950/30 border-red-900 text-red-300",
+          blue: "bg-red-950/20 border-red-800 text-red-300",
+          pink: "bg-red-950/20 border-red-800 text-red-300"
         })}>
-          <CardHeader className="text-center">
-            <AlertCircle className={getThemeClasses({
-              base: "h-10 w-10 mx-auto mb-4",
-              default: "text-red-500",
-              blue: "text-red-400",
-              pink: "text-red-400"
-            })} />
-            <CardTitle className={getThemeClasses({
+          <p className="mb-4">{error}</p>
+          <Button 
+            onClick={handleGoBack}
+            className={getThemeClasses({
               base: "",
-              default: "text-white",
-              blue: "text-blue-100",
-              pink: "text-pink-100"
-            })}>Error Loading Boarding Pass</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={getThemeClasses({
-              base: "text-center mb-4",
-              default: "text-gray-300",
-              blue: "text-blue-200",
-              pink: "text-pink-200"
-            })}>{error}</p>
-          </CardContent>
-          <CardFooter>
-            <Button 
-              className={getThemeClasses({
-                base: "w-full",
-                default: "bg-[#DAFF0D] hover:bg-[#DAFF0D]/90 text-black",
-                blue: "bg-blue-500 hover:bg-blue-600 text-white",
-                pink: "bg-pink-500 hover:bg-pink-600 text-white"
-              })}
-              onClick={handleGoBack}
-            >
-              Return to Dashboard
-            </Button>
-          </CardFooter>
-        </Card>
+              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+            })}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Return to Dashboard
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+  
+  if (!offerData || !boardingPassData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+        <p className={getThemeClasses({
+          base: "text-lg",
+          default: "text-white",
+          blue: "text-blue-100",
+          pink: "text-pink-100"
+        })}>No boarding pass data available.</p>
+        <Button 
+          onClick={handleGoBack} 
+          className="mt-4"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Return to Dashboard
+        </Button>
       </div>
     );
   }
   
   return (
     <motion.div 
-      className="container mx-auto px-4 py-8 max-w-3xl"
+      className="container mx-auto px-4 py-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.5 }}
     >
-      <Button 
-        variant="ghost" 
-        className={getThemeClasses({
-          base: "mb-6 p-0",
-          default: "text-white hover:text-[#DAFF0D] hover:bg-transparent",
-          blue: "text-blue-100 hover:text-blue-300 hover:bg-transparent",
-          pink: "text-pink-100 hover:text-pink-300 hover:bg-transparent"
-        })}
-        onClick={handleGoBack}
+      <motion.div 
+        className="mb-6 flex items-center"
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
-      </Button>
+        <Button 
+          variant="ghost" 
+          onClick={handleGoBack}
+          className={getThemeClasses({
+            base: "mr-2",
+            default: "text-white hover:text-gdyup-primary",
+            blue: "text-blue-100 hover:text-gdyup-primary",
+            pink: "text-pink-100 hover:text-gdyup-primary"
+          })}
+        >
+          <ArrowLeft className="h-5 w-5 mr-1" />
+          Back
+        </Button>
+        <h1 className={getThemeClasses({
+          base: "text-2xl font-bold",
+          default: "text-white",
+          blue: "text-blue-100",
+          pink: "text-pink-100"
+        })}>
+          Boarding Pass
+        </h1>
+      </motion.div>
       
-      <motion.div
-        initial={{ y: 20 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
+      <motion.div 
+        className="max-w-lg mx-auto"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
       >
         <Card className={getThemeClasses({
-          base: "border-2 overflow-hidden relative",
-          default: "bg-gradient-to-b from-gray-900 to-black border-amber-600/20",
-          blue: "bg-gradient-to-b from-blue-950 to-blue-900 border-amber-500/20",
-          pink: "bg-gradient-to-b from-pink-950 to-pink-900 border-amber-500/20"
+          base: "overflow-hidden border shadow-lg",
+          default: "bg-gray-900/90 border-gray-800",
+          blue: "bg-blue-950/90 border-blue-900",
+          pink: "bg-pink-950/90 border-pink-900"
         })}>
-          <div className={getThemeClasses({
-            base: "h-1.5 w-full",
-            default: "bg-amber-500",
-            blue: "bg-amber-400",
-            pink: "bg-amber-400"
-          })}></div>
-          
-          <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full -mt-10 -mr-10 z-0"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/10 rounded-full -mb-16 -ml-16 z-0"></div>
-          
-          <CardHeader className="relative z-10 pb-2">
-            <div className="flex justify-between items-start">
+          <CardHeader className={getThemeClasses({
+            base: "relative pb-2",
+            default: "bg-black/40",
+            blue: "bg-blue-950/40",
+            pink: "bg-pink-950/40"
+          })}>
+            <div className="flex justify-between items-center">
               <div>
-                <CardTitle className={getThemeClasses({
-                  base: "text-xl font-bold",
+                <h2 className={getThemeClasses({
+                  base: "text-lg font-bold",
                   default: "text-white",
                   blue: "text-blue-100",
                   pink: "text-pink-100"
-                })}>Boarding Pass</CardTitle>
+                })}>
+                  GDY·UP
+                </h2>
                 <p className={getThemeClasses({
                   base: "text-sm",
                   default: "text-gray-400",
                   blue: "text-blue-300",
                   pink: "text-pink-300"
-                })}>GDY·UP Private Jet</p>
+                })}>
+                  Private Jet Boarding Pass
+                </p>
               </div>
-              <Plane className={getThemeClasses({
-                base: "h-8 w-8",
-                default: "text-amber-500",
-                blue: "text-amber-400",
-                pink: "text-amber-400"
-              })} />
-            </div>
-            
-            <div className="mt-4 text-center">
-              <motion.p 
-                className={getThemeClasses({
-                  base: "text-3xl font-bold tracking-wide",
-                  default: "text-amber-600",
-                  blue: "text-amber-500",
-                  pink: "text-amber-500"
-                })}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              >
-                {boardingPassData?.ticket_code || 'GDY-0000'}
-              </motion.p>
+              <div className="flex items-center gap-2">
+                <NostrRelayStatus 
+                  size="sm"
+                  isConnected={true}
+                />
+                <NostrVerificationBadge 
+                  nip05={user?.user_metadata?.nip05 || null}
+                  isVerified={true}
+                  size="sm"
+                />
+              </div>
             </div>
           </CardHeader>
           
-          <CardContent className="relative z-10 pb-0">
-            <div className="mb-6">
-              <div className="flex items-center justify-between my-6">
-                <div className="text-center">
-                  <p className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>From</p>
-                  <p className={getThemeClasses({
-                    base: "text-lg font-semibold",
-                    default: "text-white",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>{offerData.departure_location}</p>
-                </div>
-                
-                <div className="flex-1 flex items-center justify-center px-4">
-                  <div className={getThemeClasses({
-                    base: "w-full border-t border-dashed",
-                    default: "border-amber-700/50",
-                    blue: "border-amber-600/50",
-                    pink: "border-amber-600/50"
-                  })}></div>
-                  <Plane className={getThemeClasses({
-                    base: "mx-2 h-4 w-4 transform rotate-90",
-                    default: "text-amber-500",
-                    blue: "text-amber-400",
-                    pink: "text-amber-400"
-                  })} />
-                  <div className={getThemeClasses({
-                    base: "w-full border-t border-dashed",
-                    default: "border-amber-700/50",
-                    blue: "border-amber-600/50",
-                    pink: "border-amber-600/50"
-                  })}></div>
-                </div>
-                
-                <div className="text-center">
-                  <p className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>To</p>
-                  <p className={getThemeClasses({
-                    base: "text-lg font-semibold",
-                    default: "text-white",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>{offerData.arrival_location}</p>
-                </div>
-              </div>
-              
-              <div className={getThemeClasses({
-                base: "h-px my-6",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })}></div>
-              
-              <div className="grid grid-cols-2 gap-4 mb-2">
-                <div>
-                  <div className="flex items-center mb-1">
-                    <Calendar className={getThemeClasses({
-                      base: "h-4 w-4 mr-2",
-                      default: "text-amber-500",
-                      blue: "text-amber-400",
-                      pink: "text-amber-400"
-                    })} />
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
-                    })}>Date</p>
-                  </div>
-                  <p className={getThemeClasses({
-                    base: "font-medium",
-                    default: "text-white",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>{format(new Date(offerData.flight_date), 'MMM d, yyyy')}</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center mb-1">
-                    <Clock className={getThemeClasses({
-                      base: "h-4 w-4 mr-2",
-                      default: "text-amber-500",
-                      blue: "text-amber-400",
-                      pink: "text-amber-400"
-                    })} />
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
-                    })}>Departure Time</p>
-                  </div>
-                  <p className={getThemeClasses({
-                    base: "font-medium",
-                    default: "text-white",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>{format(new Date(offerData.flight_date), 'h:mm a')}</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center mb-1">
-                    <MapPin className={getThemeClasses({
-                      base: "h-4 w-4 mr-2",
-                      default: "text-amber-500",
-                      blue: "text-amber-400",
-                      pink: "text-amber-400"
-                    })} />
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
-                    })}>Gate</p>
-                  </div>
-                  <p className={getThemeClasses({
-                    base: "font-medium",
-                    default: "text-white",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>{boardingPassData?.gate || 'A1'}</p>
-                </div>
-                
-                <div>
-                  <div className="flex items-center mb-1">
-                    <MapPin className={getThemeClasses({
-                      base: "h-4 w-4 mr-2",
-                      default: "text-amber-500",
-                      blue: "text-amber-400",
-                      pink: "text-amber-400"
-                    })} />
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
-                    })}>Seat</p>
-                  </div>
-                  <p className={getThemeClasses({
-                    base: "font-medium",
-                    default: "text-white",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>{boardingPassData?.seat_number || 'TBD'}</p>
-                </div>
-              </div>
-              
-              <div className={getThemeClasses({
-                base: "h-px my-6",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })}></div>
-              
-              <div className="flex flex-col items-center">
+          <CardContent className={getThemeClasses({
+            base: "pt-6 space-y-6",
+            default: "text-white",
+            blue: "text-blue-100",
+            pink: "text-pink-100"
+          })}>
+            <div className="flex justify-between items-center">
+              <div>
                 <p className={getThemeClasses({
-                  base: "text-sm mb-1",
+                  base: "text-xs uppercase",
                   default: "text-gray-400",
                   blue: "text-blue-300",
                   pink: "text-pink-300"
-                })}>Passenger</p>
-                <p className={getThemeClasses({
-                  base: "text-lg font-bold",
-                  default: "text-white",
-                  blue: "text-blue-100",
-                  pink: "text-pink-100"
-                })}>{boardingPassData?.passenger_name || user?.user_metadata?.full_name || 'GDY·UP Traveler'}</p>
+                })}>
+                  Passenger
+                </p>
+                <p className="font-medium text-lg">
+                  {user?.user_metadata?.full_name || 'Guest User'}
+                </p>
               </div>
-              
-              <div className={getThemeClasses({
-                base: "h-px my-6",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })}></div>
-              
-              <div className="flex flex-col items-center">
-                <div className={getThemeClasses({
-                  base: "text-sm mb-1",
+              <div>
+                <p className={getThemeClasses({
+                  base: "text-xs uppercase",
                   default: "text-gray-400",
                   blue: "text-blue-300",
                   pink: "text-pink-300"
-                })}>Aircraft</div>
-                <div className={getThemeClasses({
-                  base: "text-base font-medium",
-                  default: "text-white",
-                  blue: "text-blue-100",
-                  pink: "text-pink-100"
-                })}>{offerData.aircraft_model || 'Private Jet'}</div>
+                })}>
+                  Flight Date
+                </p>
+                <p className="font-medium">
+                  {format(new Date(offerData.flight_date), 'MMM d, yyyy')}
+                </p>
               </div>
+            </div>
+            
+            <div className={getThemeClasses({
+              base: "flex items-center justify-between p-4 rounded-lg",
+              default: "bg-black/30 border border-gray-800",
+              blue: "bg-blue-950/30 border border-blue-900",
+              pink: "bg-pink-950/30 border border-pink-900"
+            })}>
+              <div className="text-center">
+                <p className={getThemeClasses({
+                  base: "text-xs uppercase",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>
+                  From
+                </p>
+                <p className="font-bold text-xl">{offerData.departure_location_code || offerData.departure_location.substring(0, 3).toUpperCase()}</p>
+                <p className="text-xs mt-1">{offerData.departure_location}</p>
+              </div>
+              
+              <div className="flex-1 flex items-center justify-center px-4">
+                <div className={getThemeClasses({
+                  base: "h-0.5 flex-1",
+                  default: "bg-gray-700",
+                  blue: "bg-blue-700",
+                  pink: "bg-pink-700"
+                })}></div>
+                <Plane className={cn(
+                  "mx-2 h-5 w-5 flex-shrink-0",
+                  getThemeClasses({
+                    base: "",
+                    default: "text-gdyup-primary",
+                    blue: "text-gdyup-primary",
+                    pink: "text-gdyup-primary"
+                  })
+                )} />
+                <div className={getThemeClasses({
+                  base: "h-0.5 flex-1",
+                  default: "bg-gray-700",
+                  blue: "bg-blue-700",
+                  pink: "bg-pink-700"
+                })}></div>
+              </div>
+              
+              <div className="text-center">
+                <p className={getThemeClasses({
+                  base: "text-xs uppercase",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>
+                  To
+                </p>
+                <p className="font-bold text-xl">{offerData.arrival_location_code || offerData.arrival_location.substring(0, 3).toUpperCase()}</p>
+                <p className="text-xs mt-1">{offerData.arrival_location}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className={getThemeClasses({
+                  base: "text-xs uppercase",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>
+                  Seat
+                </p>
+                <p className="font-medium">
+                  {boardingPassData.seat || 'Unassigned'}
+                </p>
+              </div>
+              <div>
+                <p className={getThemeClasses({
+                  base: "text-xs uppercase",
+                  default: "text-gray-400",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>
+                  Aircraft
+                </p>
+                <p className="font-medium">
+                  {offerData.aircraft_type || 'Private Jet'}
+                </p>
+              </div>
+            </div>
+            
+            <div className={getThemeClasses({
+              base: "p-3 rounded-lg text-center",
+              default: "bg-black/30 border border-gray-800",
+              blue: "bg-blue-950/30 border border-blue-900",
+              pink: "bg-pink-950/30 border border-pink-900"
+            })}>
+              <p className={getThemeClasses({
+                base: "text-xs uppercase mb-1",
+                default: "text-gray-400",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>
+                Check-in Instructions
+              </p>
+              <p className="text-sm">
+                Please arrive at the FBO terminal 30 minutes before departure. Present this boarding pass and a valid ID.
+              </p>
             </div>
             
             <motion.div
@@ -703,28 +576,35 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               
               {renderQrCodeOptions()}
               
-              {showNostrInfo && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className={getThemeClasses({
-                    base: "text-xs p-3 rounded-md mb-4 max-w-xs text-center",
-                    default: "bg-gray-800/70 text-gray-300 border border-gray-700",
-                    blue: "bg-blue-950/70 text-blue-200 border border-blue-900/50",
-                    pink: "bg-pink-950/70 text-pink-200 border border-pink-900/50"
-                  })}
-                >
-                  Nostr QR codes contain cryptographically verifiable boarding pass data that can be validated by any Nostr-compatible scanner without requiring a central server.
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {showNostrInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className={getThemeClasses({
+                      base: "text-xs p-3 rounded-md mb-4 max-w-xs text-center",
+                      default: "bg-gray-800/70 text-gray-300 border border-gray-700",
+                      blue: "bg-blue-950/70 text-blue-200 border border-blue-900/50",
+                      pink: "bg-pink-950/70 text-pink-200 border border-pink-900/50"
+                    })}
+                  >
+                    Nostr QR codes contain cryptographically verifiable boarding pass data that can be validated by any Nostr-compatible scanner without requiring a central server.
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
-              <div className={getThemeClasses({
-                base: "p-4 rounded-xl",
-                default: "bg-white",
-                blue: "bg-white",
-                pink: "bg-white"
-              })}>
+              <motion.div 
+                className={getThemeClasses({
+                  base: "p-4 rounded-xl",
+                  default: "bg-white",
+                  blue: "bg-white",
+                  pink: "bg-white"
+                })}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+              >
                 <Image
                   src={getQrCodeUrl()}
                   alt="Boarding Pass QR Code"
@@ -732,7 +612,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                   height={200}
                   className="mx-auto rounded-lg"
                 />
-              </div>
+              </motion.div>
               
               <p className={getThemeClasses({
                 base: "mt-2 text-sm",
@@ -752,6 +632,137 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 {boardingPassData.ticket_code}
               </p>
             </div>
+            
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveToFiles}
+                disabled={isDownloading}
+                className={getThemeClasses({
+                  base: "text-xs",
+                  default: "border-gray-700 hover:bg-gray-800",
+                  blue: "border-blue-700 hover:bg-blue-900",
+                  pink: "border-pink-700 hover:bg-pink-900"
+                })}
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Download className="h-3 w-3 mr-1" />
+                )}
+                Save PDF
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddToWallet}
+                disabled={isWalletProcessing}
+                className={getThemeClasses({
+                  base: "text-xs",
+                  default: "border-gray-700 hover:bg-gray-800",
+                  blue: "border-blue-700 hover:bg-blue-900",
+                  pink: "border-pink-700 hover:bg-pink-900"
+                })}
+              >
+                {isWalletProcessing ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Wallet className="h-3 w-3 mr-1" />
+                )}
+                Add to Wallet
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShareBoardingPass}
+                className={getThemeClasses({
+                  base: "text-xs",
+                  default: "border-gray-700 hover:bg-gray-800",
+                  blue: "border-blue-700 hover:bg-blue-900",
+                  pink: "border-pink-700 hover:bg-pink-900"
+                })}
+              >
+                <Share2 className="h-3 w-3 mr-1" />
+                Share
+              </Button>
+              
+              <NostrZapButton 
+                size="sm"
+                recipientNip05={user?.user_metadata?.nip05 || 'pilot@gdyup.com'}
+                amount={5000}
+                showAmount={false}
+                onSuccess={(amount) => {
+                  setTotalZaps(prev => prev + 1);
+                  setTotalZapAmount(prev => prev + amount);
+                  toast.success(`Thank you for your ${amount} sats tip to the pilot!`, {
+                    duration: 5000,
+                  });
+                }}
+              />
+            </div>
+            
+            <motion.div
+              className="mt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            >
+              <TicketCheckIn 
+                flightDate={offerData.flight_date}
+                departureLocation={offerData.departure_location}
+                checkInStatus={checkInStatus}
+                onCheckIn={async () => {
+                  try {
+                    // In a real implementation, this would call an API to check in
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    toast.success('Successfully checked in for your flight!');
+                    setCheckInStatus('completed');
+                    return true;
+                  } catch (error) {
+                    toast.error('Failed to check in. Please try again later.');
+                    return false;
+                  }
+                }}
+              />
+            </motion.div>
+            
+            {totalZaps > 0 && (
+              <motion.div
+                className={getThemeClasses({
+                  base: "mt-4 p-3 rounded-lg text-center",
+                  default: "bg-amber-900/20 border border-amber-800",
+                  blue: "bg-amber-900/20 border border-amber-800",
+                  pink: "bg-amber-900/20 border border-amber-800"
+                })}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <p className={getThemeClasses({
+                  base: "text-sm",
+                  default: "text-amber-400",
+                  blue: "text-amber-400",
+                  pink: "text-amber-400"
+                })}>
+                  <span className="font-bold">{totalZaps}</span> {totalZaps === 1 ? 'zap' : 'zaps'} sent for a total of <span className="font-bold">{totalZapAmount.toLocaleString()}</span> sats
+                </p>
+              </motion.div>
+            )}
+            
+            <motion.div
+              className="mt-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
+              <NostrCommunityChat 
+                flightId={params.id}
+                flightName={`${offerData.departure_location_code || offerData.departure_location.substring(0, 3).toUpperCase()} to ${offerData.arrival_location_code || offerData.arrival_location.substring(0, 3).toUpperCase()}`}
+                initialCollapsed={true}
+              />
+            </motion.div>
           </CardContent>
           
           <CardFooter className="relative z-10 pt-0 text-center justify-center">

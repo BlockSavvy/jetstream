@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Bitcoin, Check, Clock, Loader2, ArrowLeft } from 'lucide-react';
 import { useGdyupTheme } from '@/app/gdyup/hooks/useGdyupTheme';
 
-export default function DevBTCPaySimulator() {
+function DevBTCPaySimulatorContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const offerId = searchParams?.get('offer_id') || '';
@@ -196,5 +196,23 @@ export default function DevBTCPaySimulator() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-black text-white">
+      <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+      <span className="ml-2">Loading payment simulator...</span>
+    </div>
+  );
+}
+
+export default function DevBTCPaySimulator() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <DevBTCPaySimulatorContent />
+    </Suspense>
   );
 } 

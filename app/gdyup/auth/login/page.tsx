@@ -1,9 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import Link from 'next/link'
 import { Container } from '@/app/gdyup/components/container'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 import { LoginForm } from '@/app/gdyup/components/onboarding/login-form'
 
 export default function LoginPage() {
@@ -28,7 +28,13 @@ export default function LoginPage() {
         </div>
         
         <div className="w-full max-w-md bg-black/50 rounded-xl p-6 shadow-xl border border-gray-800">
-          <LoginForm />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          }>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
     </Container>

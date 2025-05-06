@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export default function MessagesPage() {
+// Extract the component that uses searchParams to properly handle suspense
+function MessagesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const offerId = searchParams?.get('offer');
@@ -21,52 +22,57 @@ export default function MessagesPage() {
   }, [offerId]);
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-8">
+      <Button 
+        variant="ghost" 
+        className="mb-4" 
+        onClick={() => router.back()}
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back
+      </Button>
+      
       <Card className={getThemeClasses({
-        base: "border shadow-md",
-        default: "bg-gray-900/90 border-gray-800",
-        blue: "bg-blue-950/90 border-blue-900",
-        pink: "bg-pink-950/90 border-pink-900"
+        base: "border shadow-sm",
+        default: "bg-white border-gray-200",
+        blue: "bg-blue-950/40 border-blue-900/60",
+        pink: "bg-pink-950/40 border-pink-900/60"
       })}>
-        <CardHeader className="flex flex-row items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className={getThemeClasses({
-              base: "mr-2",
-              default: "text-white hover:text-primary hover:bg-gray-800",
-              blue: "text-blue-100 hover:text-blue-200 hover:bg-blue-900/70",
-              pink: "text-pink-100 hover:text-pink-200 hover:bg-pink-900/70"
-            })}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+        <CardHeader>
           <CardTitle className={getThemeClasses({
             base: "",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
+            default: "text-gray-900",
+            blue: "text-blue-50",
+            pink: "text-pink-50"
           })}>
             Messages
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className={getThemeClasses({
-            base: "rounded-lg p-4",
-            default: "bg-gray-800/50 text-gray-300",
-            blue: "bg-blue-900/50 text-blue-300",
-            pink: "bg-pink-900/50 text-pink-300"
+          <p className={getThemeClasses({
+            base: "text-center py-8",
+            default: "text-gray-500",
+            blue: "text-blue-300",
+            pink: "text-pink-300"
           })}>
-            <p className="text-center py-4">
-              {isLoading ? "Loading messages..." : "This is a placeholder for the messaging interface."}
-            </p>
-            <p className="text-center text-sm">
-              {offerId ? `Connected to offer ID: ${offerId}` : "No offer ID provided"}
-            </p>
-          </div>
+            {offerId 
+              ? `Messages for offer ${offerId} will appear here.` 
+              : "Select a flight to view messages."}
+          </p>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <MessagesContent />
+    </Suspense>
   );
 } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,8 @@ import { useGdyupTheme } from '../../hooks/useGdyupTheme';
 import { motion, AnimatePresence } from 'framer-motion';
 import BoardingPassButton from '../../components/BoardingPassButton';
 
-export default function PaymentSuccessPage() {
+// Extract the component that uses searchParams
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -396,5 +397,28 @@ export default function PaymentSuccessPage() {
         </p>
       </motion.div>
     </motion.div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-12 max-w-md">
+        <Card className="border shadow-md bg-gray-900/90 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-center text-white">Loading Payment Details</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center">
+            <Loader2 className="h-12 w-12 animate-spin mb-4 text-amber-500" />
+            <p className="text-center text-gray-400">
+              Please wait while we load your payment details...
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 } 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Plane, Download, RefreshCw, Calendar, MapPin, Clock, Users, Edit, Share, Tag } from 'lucide-react';
+import { useState, useEffect, Suspense } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, Plane, Download, RefreshCw, Calendar, MapPin, Clock, Users, Edit, Share, Tag, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +11,9 @@ import { useAuth } from '@/components/auth-provider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { useGdyupTheme } from '../../hooks/useGdyupTheme';
+import { format } from 'date-fns';
+import { Loader2 } from 'lucide-react';
 
 interface Jet {
   id: string;
@@ -30,9 +33,12 @@ interface Jet {
   ceiling_ft?: string;
   hourly_rate?: string;
   owner_id?: string;
+  created_at: string;
+  updated_at: string;
+  notes?: string;
 }
 
-export default function JetDetailPage() {
+function JetDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -40,6 +46,8 @@ export default function JetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('details');
+  const router = useRouter();
+  const { getThemeClasses } = useGdyupTheme();
   
   const jetId = params?.id as string;
   
@@ -147,7 +155,9 @@ export default function JetDetailPage() {
             max_speed_kts: '516',
             cruise_speed_kts: '488',
             ceiling_ft: '51,000',
-            hourly_rate: '$12,500'
+            hourly_rate: '$12,500',
+            created_at: '2023-01-01T00:00:00',
+            updated_at: '2023-01-01T00:00:00'
           });
           setError(null); // Clear error for mock data
         }
@@ -178,38 +188,8 @@ export default function JetDetailPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-black min-h-screen text-white">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => navigateTo('/gdyup/jets')}
-              className="mr-4 text-white"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold">Jet Details</h1>
-          </div>
-          
-          <Card className="bg-[#0D0D0D] border-gray-800">
-            <div className="aspect-video relative">
-              <Skeleton className="w-full h-full bg-gray-800" />
-            </div>
-            <CardHeader>
-              <Skeleton className="h-8 w-3/4 bg-gray-800" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-4 w-full bg-gray-800" />
-              <Skeleton className="h-4 w-full bg-gray-800" />
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <Skeleton className="h-8 w-full bg-gray-800" />
-                <Skeleton className="h-8 w-full bg-gray-800" />
-                <Skeleton className="h-8 w-full bg-gray-800" />
-                <Skeleton className="h-8 w-full bg-gray-800" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -217,271 +197,276 @@ export default function JetDetailPage() {
   // Error state
   if (error && !jet) {
     return (
-      <div className="bg-black min-h-screen text-white">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => navigateTo('/gdyup/jets')}
-              className="mr-4 text-white"
-            >
-              <ArrowLeft className="h-5 w-5" />
+      <div className="container mx-auto px-4 py-8">
+        <Card className={getThemeClasses({
+          base: "border shadow-sm",
+          default: "bg-white border-gray-200",
+          blue: "bg-blue-950/40 border-blue-900/60",
+          pink: "bg-pink-950/40 border-pink-900/60"
+        })}>
+          <CardHeader>
+            <CardTitle className={getThemeClasses({
+              base: "text-center",
+              default: "text-gray-900",
+              blue: "text-blue-50",
+              pink: "text-pink-50"
+            })}>Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className={getThemeClasses({
+              base: "text-center",
+              default: "text-gray-500",
+              blue: "text-blue-300",
+              pink: "text-pink-300"
+            })}>{error}</p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button onClick={() => router.push('/gdyup/jets')}>
+              Return to Jets
             </Button>
-            <h1 className="text-xl font-semibold">Jet Details</h1>
-          </div>
-          
-          <Card className="bg-[#0D0D0D] border-red-800 p-6 text-center">
-            <div className="flex flex-col items-center py-8">
-              <div className="rounded-full bg-red-900/20 p-4 mb-4">
-                <Plane className="h-10 w-10 text-red-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-red-400">Error Loading Jet</h3>
-              <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                {error}
-              </p>
-              <Button
-                onClick={() => navigateTo('/gdyup/jets')}
-                className="bg-gray-800 hover:bg-gray-700 text-white"
-              >
-                Return to My Jets
-              </Button>
-            </div>
-          </Card>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
 
   if (!jet) {
     return (
-      <div className="bg-black min-h-screen text-white">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => navigateTo('/gdyup/jets')}
-              className="mr-4 text-white"
-            >
-              <ArrowLeft className="h-5 w-5" />
+      <div className="container mx-auto px-4 py-8">
+        <Card className={getThemeClasses({
+          base: "border shadow-sm",
+          default: "bg-white border-gray-200",
+          blue: "bg-blue-950/40 border-blue-900/60",
+          pink: "bg-pink-950/40 border-pink-900/60"
+        })}>
+          <CardHeader>
+            <CardTitle className={getThemeClasses({
+              base: "text-center",
+              default: "text-gray-900",
+              blue: "text-blue-50",
+              pink: "text-pink-50"
+            })}>Jet Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className={getThemeClasses({
+              base: "text-center",
+              default: "text-gray-500",
+              blue: "text-blue-300",
+              pink: "text-pink-300"
+            })}>The jet you're looking for could not be found.</p>
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Button onClick={() => router.push('/gdyup/jets')}>
+              Return to Jets
             </Button>
-            <h1 className="text-xl font-semibold">Jet Details</h1>
-          </div>
-          
-          <Card className="bg-[#0D0D0D] border-gray-800 p-6 text-center">
-            <div className="flex flex-col items-center py-8">
-              <div className="rounded-full bg-gray-900 p-4 mb-4">
-                <Plane className="h-10 w-10 text-gray-600" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Jet Not Found</h3>
-              <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                The requested jet could not be found or you don't have permission to view it.
-              </p>
-              <Button
-                onClick={() => navigateTo('/gdyup/jets')}
-                className="bg-gray-800 hover:bg-gray-700 text-white"
-              >
-                Return to My Jets
-              </Button>
-            </div>
-          </Card>
-        </div>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="bg-black min-h-screen text-white">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigateTo('/gdyup/jets')}
-            className="mr-4 text-white"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold">Jet Details</h1>
-          
-          <div className="ml-auto space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => navigateTo(`/gdyup/jets/${jet.id}/edit`)}
-              className="border-gray-700 hover:bg-gray-800"
-            >
-              <Edit className="h-4 w-4 mr-2" style={{ color: primaryColor }} />
-              Edit Jet
-            </Button>
-            <Button
-              onClick={() => navigateTo(`/gdyup/offer/new?jet=${jet.id}`)}
-              className="bg-[#DAFF0D] hover:brightness-105 text-black"
-            >
-              <Share className="h-4 w-4 mr-2" />
-              Offer a Share
-            </Button>
-          </div>
-        </div>
-        
-        <Card className="bg-[#0D0D0D] border-gray-800 overflow-hidden mb-6">
-          <div className="aspect-video relative">
-            {jet.image_url ? (
-              <Image
-                src={jet.image_url}
-                alt={`${jet.manufacturer} ${jet.model}`}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full w-full bg-gray-900">
-                <Plane className="h-16 w-16 text-gray-600" />
-              </div>
-            )}
-            <Badge className={`${getStatusColor(jet.status)} absolute top-4 right-4 text-sm px-3 py-1`}>
-              {jet.status}
-            </Badge>
-          </div>
-          
-          <CardHeader>
-            <div className="flex flex-wrap justify-between items-start gap-4">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => router.back()} 
+          className="mr-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <h1 className={getThemeClasses({
+          base: "text-2xl font-bold",
+          default: "text-gray-900",
+          blue: "text-blue-50",
+          pink: "text-pink-50"
+        })}>
+          {jet.manufacturer} {jet.model}
+        </h1>
+      </div>
+      
+      <Card className={getThemeClasses({
+        base: "border shadow-sm mb-6",
+        default: "bg-white border-gray-200",
+        blue: "bg-blue-950/40 border-blue-900/60",
+        pink: "bg-pink-950/40 border-pink-900/60"
+      })}>
+        <CardHeader>
+          <CardTitle className={getThemeClasses({
+            base: "flex items-center",
+            default: "text-gray-900",
+            blue: "text-blue-50",
+            pink: "text-pink-50"
+          })}>
+            <Plane className="h-5 w-5 mr-2" />
+            {jet.tail_number}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-4">
               <div>
-                <CardTitle className="text-2xl font-bold">
-                  {jet.manufacturer} {jet.model}
-                </CardTitle>
-                <p className="text-gray-400 flex items-center mt-1">
-                  <Tag className="h-4 w-4 mr-2" />
-                  {jet.tail_number}
+                <h3 className={getThemeClasses({
+                  base: "text-sm font-medium mb-1",
+                  default: "text-gray-500",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>Aircraft</h3>
+                <p className={getThemeClasses({
+                  base: "font-medium",
+                  default: "text-gray-900",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                })}>
+                  {jet.manufacturer} {jet.model} ({jet.year})
                 </p>
               </div>
-              <Badge variant="outline" className="bg-gray-900/80 border-gray-700 text-sm px-3 py-1">
-                {jet.category}
-              </Badge>
+              
+              <div>
+                <h3 className={getThemeClasses({
+                  base: "text-sm font-medium mb-1",
+                  default: "text-gray-500",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>Capacity</h3>
+                <p className={getThemeClasses({
+                  base: "font-medium",
+                  default: "text-gray-900",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                })}>
+                  {jet.capacity} passengers
+                </p>
+              </div>
             </div>
-          </CardHeader>
-          
-          <div className="px-6">
-            <div className="border-b border-gray-800">
-              <div className="flex space-x-4">
-                <button 
-                  className={`pb-2 px-1 font-medium text-sm relative ${activeTab === 'details' ? 'text-[#DAFF0D]' : 'text-gray-400 hover:text-white'}`}
-                  onClick={() => setActiveTab('details')}
-                >
-                  Details
-                  {activeTab === 'details' && (
-                    <span className="absolute bottom-0 left-0 w-full h-0.5" style={{ backgroundColor: primaryColor }}></span>
-                  )}
-                </button>
-                <button 
-                  className={`pb-2 px-1 font-medium text-sm relative ${activeTab === 'specifications' ? 'text-[#DAFF0D]' : 'text-gray-400 hover:text-white'}`}
-                  onClick={() => setActiveTab('specifications')}
-                >
-                  Specifications
-                  {activeTab === 'specifications' && (
-                    <span className="absolute bottom-0 left-0 w-full h-0.5" style={{ backgroundColor: primaryColor }}></span>
-                  )}
-                </button>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className={getThemeClasses({
+                  base: "text-sm font-medium mb-1",
+                  default: "text-gray-500",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>Home Base</h3>
+                <p className={getThemeClasses({
+                  base: "font-medium",
+                  default: "text-gray-900",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                })}>
+                  {jet.home_base_airport}
+                </p>
+              </div>
+              
+              <div>
+                <h3 className={getThemeClasses({
+                  base: "text-sm font-medium mb-1",
+                  default: "text-gray-500",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>Range</h3>
+                <p className={getThemeClasses({
+                  base: "font-medium",
+                  default: "text-gray-900",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                })}>
+                  {jet.range_nm || 'N/A'} nm
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h3 className={getThemeClasses({
+                  base: "text-sm font-medium mb-1",
+                  default: "text-gray-500",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>Cruise Speed</h3>
+                <p className={getThemeClasses({
+                  base: "font-medium",
+                  default: "text-gray-900",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                })}>
+                  {jet.cruise_speed_kts || 'N/A'} kts
+                </p>
+              </div>
+              
+              <div>
+                <h3 className={getThemeClasses({
+                  base: "text-sm font-medium mb-1",
+                  default: "text-gray-500",
+                  blue: "text-blue-300",
+                  pink: "text-pink-300"
+                })}>Added</h3>
+                <p className={getThemeClasses({
+                  base: "font-medium",
+                  default: "text-gray-900",
+                  blue: "text-blue-50",
+                  pink: "text-pink-50"
+                })}>
+                  {jet.created_at ? format(new Date(jet.created_at), 'MMM d, yyyy') : 'N/A'}
+                </p>
               </div>
             </div>
           </div>
           
-          <CardContent className="pt-4">
-            {activeTab === 'details' && (
-              <div className="space-y-4">
-                {jet.description && (
-                  <p className="text-gray-300">{jet.description}</p>
-                )}
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
-                  <div className="bg-gray-900/50 p-3 rounded-lg">
-                    <div className="flex items-center text-gray-400 mb-1 text-sm">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Year
-                    </div>
-                    <p className="font-medium">{jet.year}</p>
-                  </div>
-                  
-                  <div className="bg-gray-900/50 p-3 rounded-lg">
-                    <div className="flex items-center text-gray-400 mb-1 text-sm">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      Home Base
-                    </div>
-                    <p className="font-medium">{jet.home_base_airport}</p>
-                  </div>
-                  
-                  <div className="bg-gray-900/50 p-3 rounded-lg">
-                    <div className="flex items-center text-gray-400 mb-1 text-sm">
-                      <Users className="h-4 w-4 mr-2" />
-                      Capacity
-                    </div>
-                    <p className="font-medium">{jet.capacity} seats</p>
-                  </div>
-                  
-                  {jet.hourly_rate && (
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <div className="flex items-center text-gray-400 mb-1 text-sm">
-                        <Clock className="h-4 w-4 mr-2" />
-                        Hourly Rate
-                      </div>
-                      <p className="font-medium">{jet.hourly_rate}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {activeTab === 'specifications' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  {jet.range_nm && (
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <div className="text-gray-400 mb-1 text-sm">Range</div>
-                      <p className="font-medium">{jet.range_nm} NM</p>
-                    </div>
-                  )}
-                  
-                  {jet.max_speed_kts && (
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <div className="text-gray-400 mb-1 text-sm">Max Speed</div>
-                      <p className="font-medium">{jet.max_speed_kts} KTAS</p>
-                    </div>
-                  )}
-                  
-                  {jet.cruise_speed_kts && (
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <div className="text-gray-400 mb-1 text-sm">Cruise Speed</div>
-                      <p className="font-medium">{jet.cruise_speed_kts} KTAS</p>
-                    </div>
-                  )}
-                  
-                  {jet.ceiling_ft && (
-                    <div className="bg-gray-900/50 p-3 rounded-lg">
-                      <div className="text-gray-400 mb-1 text-sm">Ceiling</div>
-                      <p className="font-medium">{jet.ceiling_ft} ft</p>
-                    </div>
-                  )}
-                </div>
-                
-                {(!jet.range_nm && !jet.max_speed_kts && !jet.cruise_speed_kts && !jet.ceiling_ft) && (
-                  <div className="text-center py-6 text-gray-400">
-                    <p>Additional specifications not available</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </CardContent>
-          
-          <CardFooter className="border-t border-gray-800 pt-4">
-            <div className="w-full flex justify-center">
-              <Button
-                variant="outline"
-                onClick={() => navigateTo(`/gdyup/offer/new?jet=${jet.id}`)}
-                className="border-gray-700 hover:bg-gray-800 text-gray-300"
-              >
-                <Share className="h-4 w-4 mr-2" style={{ color: primaryColor }} />
-                Create an Offer with this Jet
-              </Button>
+          {jet.notes && (
+            <div className={getThemeClasses({
+              base: "mt-6 p-4 rounded-md",
+              default: "bg-gray-50 border border-gray-100",
+              blue: "bg-blue-900/30 border border-blue-800/30",
+              pink: "bg-pink-900/30 border border-pink-800/30"
+            })}>
+              <h3 className={getThemeClasses({
+                base: "text-sm font-medium mb-2 flex items-center",
+                default: "text-gray-700",
+                blue: "text-blue-200",
+                pink: "text-pink-200"
+              })}>
+                <Info className="h-4 w-4 mr-2" />
+                Notes
+              </h3>
+              <p className={getThemeClasses({
+                base: "text-sm",
+                default: "text-gray-600",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>
+                {jet.notes}
+              </p>
             </div>
-          </CardFooter>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex justify-end gap-3">
+          <Button 
+            variant="outline"
+            onClick={() => router.push(`/gdyup/jets/edit/${jetId}`)}
+          >
+            Edit Jet
+          </Button>
+          <Button
+            onClick={() => router.push(`/gdyup/offer/new?jet=${jetId}`)}
+          >
+            Create Flight Share
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
+  );
+}
+
+export default function JetDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <JetDetailContent />
+    </Suspense>
   );
 } 

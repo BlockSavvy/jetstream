@@ -1,29 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Plane, Save, Loader2 } from 'lucide-react';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '@/components/auth-provider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import Image from 'next/image';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useAuth } from '@/components/auth-provider';
 
-// Define form schema
+// Form schema with validation
 const formSchema = z.object({
   manufacturer: z.string().min(1, 'Manufacturer is required'),
   model: z.string().min(1, 'Model is required'),
-  year: z.string().min(1, 'Year is required'),
+  year: z.string().regex(/^\d{4}$/, 'Year must be a 4-digit number'),
   tail_number: z.string().min(1, 'Tail number is required'),
-  capacity: z.string().min(1, 'Seating capacity is required'),
-  home_base_airport: z.string().min(1, 'Home base is required'),
+  capacity: z.string().min(1, 'Capacity is required'),
+  home_base_airport: z.string().min(1, 'Home base airport is required'),
   range_nm: z.string().optional(),
   cruise_speed_kts: z.string().optional(),
   notes: z.string().optional(),
@@ -32,7 +37,8 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function NewJetPage() {
+// Component that uses searchParams
+function NewJetContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -100,66 +106,57 @@ export default function NewJetPage() {
   const jetImagePath = `/images/jets/default-jet.jpg`;
   
   return (
-    <div className="container mx-auto p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            onClick={() => router.push('/gdyup/jets/models')}
-            className="mr-2 p-0 h-10 w-10 rounded-full bg-black/30"
-          >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </Button>
-          <h1 className="text-xl font-semibold text-white">Add New Jet</h1>
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="flex items-center mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => router.back()} 
+          className="mr-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <h1 className="text-2xl font-bold">Add New Jet</h1>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Jet Image Card */}
-        <Card className="bg-gray-900 border-gray-800 overflow-hidden h-fit">
-          <div className="relative h-48 w-full bg-gray-800">
-            <Image
-              src={jetImagePath}
-              alt="Jet Preview"
-              fill
-              style={{ objectFit: 'cover' }}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-1">
+          <div className="bg-gray-100 rounded-lg overflow-hidden mb-4">
+            <img 
+              src={jetImagePath} 
+              alt="Default jet" 
+              className="w-full h-auto object-cover"
             />
           </div>
-          <CardHeader className="p-4">
-            <CardTitle className="text-white text-lg">
-              {form.watch('manufacturer')} {form.watch('model')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <p className="text-gray-400 text-sm">
-              Add your jet details to make it available for jet shares and track usage.
+          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="font-medium mb-2">Why add your jet?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Adding your jet to GDY·UP allows you to easily create flight share offers
+              and manage your aircraft details in one place.
             </p>
-          </CardContent>
-        </Card>
+            <h3 className="font-medium mb-2">Benefits:</h3>
+            <ul className="text-sm text-gray-600 list-disc pl-5 space-y-1">
+              <li>Easily create flight share offers</li>
+              <li>Track flight history</li>
+              <li>Manage maintenance records</li>
+              <li>Share with trusted co-owners</li>
+            </ul>
+          </div>
+        </div>
         
-        {/* Form Card */}
-        <Card className="bg-gray-900 border-gray-800 lg:col-span-2">
-          <CardHeader className="p-4">
-            <CardTitle className="text-white">Jet Details</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
+        <div className="md:col-span-2">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {/* Basic Jet Info */}
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="manufacturer"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Manufacturer</FormLabel>
+                        <FormLabel>Manufacturer</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., Gulfstream" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. Gulfstream" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -171,31 +168,25 @@ export default function NewJetPage() {
                     name="model"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Model</FormLabel>
+                        <FormLabel>Model</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., G650" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. G650" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="year"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Year</FormLabel>
+                        <FormLabel>Year</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., 2023" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. 2022" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -207,34 +198,9 @@ export default function NewJetPage() {
                     name="tail_number"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Tail Number</FormLabel>
+                        <FormLabel>Tail Number</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., N12345" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                {/* Additional Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="capacity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Seating Capacity</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g., 14" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. N12345" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -243,16 +209,12 @@ export default function NewJetPage() {
                   
                   <FormField
                     control={form.control}
-                    name="home_base_airport"
+                    name="capacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Home Base Airport</FormLabel>
+                        <FormLabel>Capacity</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., KJFK" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. 12" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -260,20 +222,29 @@ export default function NewJetPage() {
                   />
                 </div>
                 
-                {/* Optional Fields */}
+                <FormField
+                  control={form.control}
+                  name="home_base_airport"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Home Base Airport</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. KTEB (Teterboro)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="range_nm"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Range (nm)</FormLabel>
+                        <FormLabel>Range (NM)</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., 7000" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. 7000" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -285,60 +256,26 @@ export default function NewJetPage() {
                     name="cruise_speed_kts"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-white">Cruise Speed (kts)</FormLabel>
+                        <FormLabel>Cruise Speed (KTS)</FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="e.g., 500" 
-                            className="bg-gray-800 border-gray-700 text-white"
-                            {...field} 
-                          />
+                          <Input placeholder="e.g. 500" {...field} />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-white">Category</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                            <SelectItem value="Light Jet">Light Jet</SelectItem>
-                            <SelectItem value="Midsize Jet">Midsize Jet</SelectItem>
-                            <SelectItem value="Super-Midsize Jet">Super-Midsize Jet</SelectItem>
-                            <SelectItem value="Large Jet">Large Jet</SelectItem>
-                            <SelectItem value="Heavy Jet">Heavy Jet</SelectItem>
-                            <SelectItem value="Ultra Long Range">Ultra Long Range</SelectItem>
-                          </SelectContent>
-                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
                 
-                {/* Notes */}
                 <FormField
                   control={form.control}
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white">Notes</FormLabel>
+                      <FormLabel>Notes</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="Add any additional details about your jet" 
-                          className="bg-gray-800 border-gray-700 text-white min-h-24"
+                          placeholder="Additional information about your jet"
+                          className="min-h-[100px]" 
                           {...field} 
                         />
                       </FormControl>
@@ -347,31 +284,43 @@ export default function NewJetPage() {
                   )}
                 />
                 
-                {/* Submit Button */}
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-4">
                   <Button 
-                    type="submit" 
-                    className="bg-[#DAFF0D] hover:bg-[#E8FF4D] text-black"
-                    disabled={isSubmitting}
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => router.back()}
+                    className="mr-2"
                   >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Saving...
                       </>
                     ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Jet
-                      </>
+                      'Add Jet'
                     )}
                   </Button>
                 </div>
               </form>
             </Form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+export default function NewJetPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <NewJetContent />
+    </Suspense>
   );
 } 

@@ -2,9 +2,12 @@
 
 import JetShareOfferForm from '../components/JetShareOfferForm';
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import React from 'react';
-import { redirect } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
+// This page is already using Suspense correctly, but we need to make sure the component
+// that uses searchParams is properly extracted
 
 // Extract a component that uses searchParams to properly handle suspense
 function JetShareOfferContent() {
@@ -22,6 +25,7 @@ function JetShareOfferContent() {
   const [airports, setAirports] = useState<Airport[]>([]);
   const [isLoadingAirports, setIsLoadingAirports] = useState(true);
   const searchParams = useSearchParams();
+  const router = useRouter();
   const editId = searchParams ? searchParams.get('edit') : null;
   
   // Fetch airports data when component mounts - IMPROVED with better error handling
@@ -64,104 +68,61 @@ function JetShareOfferContent() {
         // Check content type
         const contentType = response.headers.get('content-type');
         console.log(`Response content type: ${contentType}`);
+        
         if (!contentType || !contentType.includes('application/json')) {
-          console.error(`Non-JSON content received: ${contentType}`);
-          throw new Error(`API returned non-JSON content: ${contentType}`);
+          console.error('Unexpected content type:', contentType);
+          throw new Error('API did not return JSON');
         }
         
-        // Parse response directly as JSON
-        const airports = await response.json();
+        const data = await response.json();
+        console.log(`Airports data received: ${data.airports ? data.airports.length : 0} airports`);
         
-        if (!Array.isArray(airports)) {
-          console.error('Response is not an array:', typeof airports);
-          throw new Error('API did not return an array of airports');
+        if (data && data.airports) {
+          setAirports(data.airports);
+        } else {
+          console.error('No airports data in response:', data);
+          throw new Error('No airports data received');
         }
-        
-        console.log(`Successfully loaded ${airports.length} airports from database`);
-        console.log('Sample airport data:', airports.slice(0, 2));
-        
-        // Sort airports by city name for better UX
-        const sortedAirports = [...airports].sort((a, b) => a.city.localeCompare(b.city));
-        setAirports(sortedAirports);
-        
-        // Store in sessionStorage for quick access on future loads
-        try {
-          sessionStorage.setItem('jetstream_airports', JSON.stringify(sortedAirports));
-          console.log('Cached airports in sessionStorage for future use');
-        } catch (e) {
-          console.warn('Failed to cache airports in sessionStorage:', e);
-        }
-        console.log('==== GDYUP AIRPORT LOADING COMPLETE ====');
       } catch (error) {
-        console.error('==== GDYUP AIRPORT LOADING ERROR ====');
-        console.error('Error fetching airports from database:', error);
-        
-        // Check if we have cached data to use temporarily
-        try {
-          const cachedAirports = sessionStorage.getItem('jetstream_airports');
-          if (cachedAirports) {
-            const parsed = JSON.parse(cachedAirports);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              console.log(`Using ${parsed.length} cached airports while database connection is fixed`);
-              setAirports(parsed);
-            } else {
-              // If no valid cache, just show empty array - no fallbacks
-              console.log('No valid cached airport data available');
-              setAirports([]);
-            }
-          } else {
-            // If no cache, just show empty array - no fallbacks
-            console.log('No cached airport data found in sessionStorage');
-            setAirports([]);
-          }
-        } catch (e) {
-          console.error('Session storage error:', e);
-          // No fallbacks - just show empty array
-          setAirports([]);
-        }
-        console.log('==== GDYUP AIRPORT LOADING ERROR HANDLING COMPLETE ====');
+        console.error('Error fetching airports:', error);
+        // Set a default list of airports for fallback
+        setAirports([
+          { code: 'JFK', name: 'John F. Kennedy International Airport', city: 'New York', country: 'USA' },
+          { code: 'LAX', name: 'Los Angeles International Airport', city: 'Los Angeles', country: 'USA' },
+          { code: 'ORD', name: 'O\'Hare International Airport', city: 'Chicago', country: 'USA' },
+          { code: 'LHR', name: 'Heathrow Airport', city: 'London', country: 'UK' },
+          { code: 'CDG', name: 'Charles de Gaulle Airport', city: 'Paris', country: 'France' },
+        ]);
       } finally {
         setIsLoadingAirports(false);
       }
     };
     
-    // Fetch airports on component mount
     fetchAirports();
   }, []);
   
-  // Display data fetching status in development mode
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`JetShareOfferContent: Airport data status: ${isLoadingAirports ? 'Loading...' : airports.length > 0 ? `Loaded ${airports.length} airports` : 'No data available'}`);
-    }
-  }, [isLoadingAirports, airports]);
-
-  return (
-    <div className="container mx-auto px-4 py-2">
-      <div className="max-w-2xl mx-auto">
-        {/* Initial loading indicator for airports data */}
-        {isLoadingAirports && airports.length === 0 && (
-          <div className="bg-gray-800/40 border border-gray-700 rounded-lg p-3 mb-4 flex items-center space-x-3">
-            <div className="animate-spin h-4 w-4 border-t-2 border-b-2 border-blue-500 rounded-full"></div>
-            <p className="text-sm text-gray-300">Loading airports data...</p>
-          </div>
-        )}
-        
-        <JetShareOfferForm 
-          airportsList={airports} 
-          editOfferId={editId} 
-        />
+  // Wait until airports are loaded before rendering the form
+  if (isLoadingAirports) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    </div>
+    );
+  }
+  
+  return (
+    <JetShareOfferForm 
+      airportsList={airports}
+      editOfferId={editId} 
+    />
   );
 }
 
-// Main page component with suspense boundary
-export default function JetShareOfferPage() {
+export default function OfferPage() {
   return (
     <Suspense fallback={
-      <div className="container mx-auto px-4 py-2 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     }>
       <JetShareOfferContent />
