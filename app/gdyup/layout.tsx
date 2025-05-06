@@ -7,6 +7,8 @@ import './pwa-fixes.css';
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import ThemeManager from './components/ThemeManager';
+import { NostrProvider } from './contexts/NostrContext';
+import GdyupHeader from './components/GdyupHeader';
 
 // Define PWA metadata for the GDYUP section
 export const metadata: Metadata = {
@@ -72,11 +74,19 @@ export default function GdyupLayout({ children }: { children: ReactNode }) {
       </Script>
       
       {/* ThemeManager handles theme after client-side hydration */}
-      <ThemeManager />
-      
-      <ClientLayoutWrapper>
-        {children}
-      </ClientLayoutWrapper>
+      <ThemeManager>
+        <div className="flex flex-col min-h-screen">
+          <NostrProvider>
+            <GdyupHeader />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <footer className="py-6 px-4 text-center text-xs text-gray-500 dark:text-gray-400">
+              <p>© 2023 GDY·UP. All rights reserved.</p>
+            </footer>
+          </NostrProvider>
+        </div>
+      </ThemeManager>
     </>
   );
 } 

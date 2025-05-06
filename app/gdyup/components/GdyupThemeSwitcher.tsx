@@ -1,110 +1,114 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { CheckCircle } from 'lucide-react';
-import { applyTheme, getCurrentTheme, themeInfo, GdyupTheme } from '../utils/theme-utils';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem
+} from '@/components/ui/dropdown-menu';
+import { PaintBucket, Check } from 'lucide-react';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
-export default function GdyupThemeSwitcher() {
-  const [activeTheme, setActiveTheme] = useState<GdyupTheme>('default');
-  const isInitialized = useRef(false);
-  const currentThemeRef = useRef<GdyupTheme>('default');
+interface GdyupThemeSwitcherProps {
+  showLabels?: boolean;
+}
+
+export default function GdyupThemeSwitcher({ showLabels = true }: GdyupThemeSwitcherProps) {
+  const { theme, changeTheme, isMobile, getThemeClasses } = useGdyupTheme();
+  const [open, setOpen] = useState(false);
   
-  // On mount, check localStorage for theme - only once
-  useEffect(() => {
-    if (isInitialized.current) return;
-    
-    isInitialized.current = true;
-    const theme = getCurrentTheme();
-    currentThemeRef.current = theme;
-    setActiveTheme(theme);
-    
-    // Listen for external theme changes (from other components)
-    const handleStorageEvent = (e: StorageEvent) => {
-      if (e.key === 'gdyup-theme') {
-        const newTheme = e.newValue as GdyupTheme || 'default';
-        
-        // Only update if different from what we're tracking
-        if (newTheme !== currentThemeRef.current) {
-          currentThemeRef.current = newTheme;
-          setActiveTheme(newTheme);
-        }
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageEvent);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageEvent);
-    };
-  }, []);
-
-  // Handle theme button click
-  const handleThemeClick = (theme: GdyupTheme) => {
-    // If already active, no change needed
-    if (theme === currentThemeRef.current) return;
-    
-    // Update our refs and state
-    currentThemeRef.current = theme;
-    setActiveTheme(theme);
-    
-    // Apply the theme using the utility function - this also updates localStorage
-    applyTheme(theme);
+  const themes = [
+    { id: 'default', name: 'Default', description: 'The default GDY·UP theme' },
+    { id: 'blue', name: 'Luxury Black', description: 'Premium dark blue theme' },
+    { id: 'pink', name: 'BTC Orange', description: 'Bitcoin-inspired theme' },
+  ];
+  
+  const getThemeColorClass = (themeId: string) => {
+    switch (themeId) {
+      case 'default':
+        return 'bg-gradient-to-r from-amber-400 to-lime-400';
+      case 'blue':
+        return 'bg-gradient-to-r from-blue-900 to-blue-600';
+      case 'pink':
+        return 'bg-gradient-to-r from-[#F7931A] to-amber-500';
+      default:
+        return 'bg-gradient-to-r from-gray-200 to-gray-300';
+    }
   };
-
+  
   return (
-    <div className="flex flex-col w-full">
-      <div className="flex justify-center gap-5 px-2 py-4">
-        {Object.entries(themeInfo).map(([id, theme]) => (
-          <button
-            key={id}
-            onClick={() => handleThemeClick(id as GdyupTheme)}
-            className="relative group"
-            aria-label={`${theme.name} theme`}
-          >
-            <div className={`
-              w-16 h-16 rounded-full flex items-center justify-center
-              transition-all duration-300 border-2
-              ${activeTheme === id 
-                ? `border-white shadow-[0_0_15px_${theme.glowColor}]` 
-                : 'border-gray-700 group-hover:border-gray-400'
-              }
-            `}>
-              {/* Color swatch with gradient */}
-              <div 
-                className="w-[calc(100%-4px)] h-[calc(100%-4px)] rounded-full"
-                style={{
-                  background: theme.gradient,
-                  position: 'relative'
-                }}
-              >
-                {/* Carbon fiber overlay effect for luxury black theme */}
-                {id === 'blue' && (
-                  <div 
-                    className="absolute inset-0 rounded-full opacity-30"
-                    style={{
-                      backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'12\' height=\'12\' viewBox=\'0 0 12 12\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h6v6H0V0zm6 6h6v6H6V6z\' fill=\'%23000000\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
-                      backgroundSize: '4px 4px'
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* Checkmark indicator */}
-              {activeTheme === id && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <CheckCircle className={`w-6 h-6 text-${theme.textColor} drop-shadow-md`} />
-                </div>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={cn(
+            "h-7 gap-2",
+            getThemeClasses({
+              base: "",
+              default: "text-gray-800 hover:text-black hover:bg-gray-100",
+              blue: "text-blue-100 hover:text-white hover:bg-blue-800",
+              pink: "text-pink-100 hover:text-white hover:bg-pink-800"
+            })
+          )}
+        >
+          <PaintBucket className="h-3.5 w-3.5" />
+          {showLabels && <span className="text-xs">Theme</span>}
+        </Button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent 
+        align="end"
+        className={getThemeClasses({
+          base: "w-48",
+          default: "bg-white border-gray-200",
+          blue: "bg-blue-950 border-blue-900 text-blue-50",
+          pink: "bg-pink-950 border-pink-900 text-pink-50"
+        })}
+      >
+        <DropdownMenuRadioGroup value={theme} onValueChange={(value) => changeTheme(value as 'default' | 'blue' | 'pink')}>
+          {themes.map((t) => (
+            <DropdownMenuRadioItem 
+              key={t.id} 
+              value={t.id}
+              className={cn(
+                "cursor-pointer hover:cursor-pointer flex items-center py-1.5",
+                getThemeClasses({
+                  base: "gap-2",
+                  default: "text-gray-900 focus:bg-gray-100 focus:text-gray-900",
+                  blue: "text-blue-50 focus:bg-blue-900/60 focus:text-blue-50",
+                  pink: "text-pink-50 focus:bg-pink-900/60 focus:text-pink-50"
+                })
               )}
-            </div>
-            <span className={`
-              block text-center mt-2 text-xs font-medium
-              ${activeTheme === id ? 'text-white' : 'text-gray-400 group-hover:text-white'}
-            `}>
-              {theme.name}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "h-3 w-3 rounded-full",
+                  getThemeColorClass(t.id)
+                )}></div>
+                <span>{t.name}</span>
+              </div>
+              
+              {theme === t.id && (
+                <Check className={cn(
+                  "h-3.5 w-3.5 ml-auto",
+                  getThemeClasses({
+                    base: "",
+                    default: "text-amber-500",
+                    blue: "text-blue-400",
+                    pink: "text-pink-400"
+                  })
+                )} />
+              )}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 } 
