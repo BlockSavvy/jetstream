@@ -395,7 +395,13 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
                 getThemedButtonClasses("primary"),
                 "w-full"
               )}
-              onClick={() => router.push(`/gdyup/payment/${offer.id}`)}
+              onClick={(e) => {
+                e.preventDefault();
+                // Ensure offer ID is properly formatted and add query params for tracking
+                const formattedOfferId = offer.id.replace(/-/g, '');
+                // Use direct link for more reliability
+                window.location.href = `/gdyup/payment/${offer.id}?t=${Date.now()}&from=offer_detail`;
+              }}
             >
               Accept & Pay Now
             </Button>
@@ -449,7 +455,11 @@ export default function JetShareOfferDetail({ offer, user, isCreator = false, is
                       pink: "bg-amber-600 hover:bg-amber-700 text-white"
                     })
                   )}
-                  onClick={() => router.push(`/gdyup/payment/${offer.id}`)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Use direct navigation for more reliability
+                    window.location.href = `/gdyup/payment/${offer.id}?t=${Date.now()}&from=offer_detail`;
+                  }}
                 >
                   Complete Payment
                 </Button>

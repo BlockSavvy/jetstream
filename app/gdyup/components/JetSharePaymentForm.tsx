@@ -293,9 +293,9 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         // Call the completion callback
         if (onPaymentComplete) onPaymentComplete();
         
-        // Wait briefly before redirecting
+        // Wait briefly before redirecting - use the universal success page
         setTimeout(() => {
-          router.push(`/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}&test=true`);
+          window.location.href = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}&test=true`;
         }, 1000);
         
         setIsProcessing(false);
@@ -346,7 +346,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
             
             setTimeout(() => {
               const returnUrl = errorData.action.returnUrl || `/gdyup/payment/${offer.id}`;
-              router.push(`/auth/login?returnUrl=${encodeURIComponent(returnUrl)}&t=${Date.now()}`);
+              window.location.href = `/auth/login?returnUrl=${encodeURIComponent(returnUrl)}&t=${Date.now()}`;
             }, 1500);
             if (onPaymentError) onPaymentError();
             return;
@@ -413,44 +413,22 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         return;
       }
       
-      // Regular redirect handled with brief delay
-      setTimeout(() => {
-        try {
-          // Store some data for session persistence
-          try {
-            localStorage.setItem('payment_complete', 'true');
-            localStorage.setItem('gdyup_last_action', 'payment_complete');
-            localStorage.setItem('current_payment_offer_id', offer.id);
-          } catch (e) {
-            console.warn('Failed to store payment completion flag:', e);
-          }
-          
-          // First try the router for a clean redirect
-          if (data.data?.redirect_url) {
-            console.log('Redirecting to provided URL:', data.data.redirect_url);
-            router.push(data.data.redirect_url);
-            
-            // Also use direct location change as backup
-            setTimeout(() => {
-              window.location.href = data.data.redirect_url;
-            }, 300);
-          } else {
-            const successUrl = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
-            console.log('Redirecting to default success URL:', successUrl);
-            router.push(successUrl);
-            
-            // Also use direct location change as backup
-            setTimeout(() => {
-              window.location.href = successUrl;
-            }, 300);
-          }
-        } catch (redirectError) {
-          console.error('Redirect failed, using direct location change:', redirectError);
-          // Use direct browser navigation as ultimate fallback
-          window.location.href = data.data?.redirect_url || 
-            `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
-        }
-      }, 1000);
+      // Regular redirect handled with brief delay to ensure storage is set
+      try {
+        // Store some data for session persistence
+        localStorage.setItem('payment_complete', 'true');
+        localStorage.setItem('gdyup_last_action', 'payment_complete');
+        localStorage.setItem('current_payment_offer_id', offer.id);
+        
+        // Always use direct navigation for better reliability
+        const successUrl = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
+        console.log('Redirecting to success URL:', successUrl);
+        window.location.href = successUrl;
+      } catch (redirectError) {
+        console.error('Redirect/storage error, using fallback navigation:', redirectError);
+        // Use direct browser navigation as ultimate fallback
+        window.location.href = `/gdyup/payment/success?offer_id=${offer.id}&t=${Date.now()}`;
+      }
       
     } catch (error) {
       console.error('Error processing payment:', error);
