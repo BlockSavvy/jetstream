@@ -77,6 +77,35 @@ const nextConfig = {
           source: '/assets/:path*',
           destination: '/assets/:path*',
         },
+        // Explicit rewrites for dynamic routes that need special handling
+        {
+          source: '/payment/:id',
+          destination: '/gdyup/payment/:id',
+        },
+        {
+          source: '/payment/:id/:action',
+          destination: '/gdyup/payment/:id/:action',
+        },
+        {
+          source: '/jets/:id',
+          destination: '/gdyup/jets/:id',
+        },
+        {
+          source: '/jets/:id/:action',
+          destination: '/gdyup/jets/:id/:action',
+        },
+        {
+          source: '/boardingpass/:id',
+          destination: '/gdyup/boardingpass/:id',
+        },
+        {
+          source: '/offer/:id',
+          destination: '/gdyup/offer/:id',
+        },
+        {
+          source: '/offer/edit/:id',
+          destination: '/gdyup/offer/edit/:id',
+        },
         // Redirect all other routes to GDYUP if on the proper host
         {
           source: '/:path*',

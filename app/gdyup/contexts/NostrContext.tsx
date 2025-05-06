@@ -104,16 +104,22 @@ export function NostrProvider({ children }: NostrProviderProps) {
       try {
         const response = await fetch('/api/nostr/relay');
         
-        if (response.status === 401) {
-          // Authentication error - this is expected if user isn't logged in or session expired
-          // Just initialize with default values without showing an error
-          console.log('Nostr: User not authenticated, using default settings');
-          setIsInitialized(true);
-          return;
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Authentication error - this is expected if user isn't logged in or session expired
+            console.log('Nostr: User not authenticated, using default settings');
+            setIsInitialized(true);
+            return;
+          }
+          throw new Error(`Failed to fetch Nostr settings: ${response.statusText}`);
         }
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch Nostr settings: ${response.statusText}`);
+        // Only try to parse JSON if the response was successful
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.warn('Nostr: Unexpected content type from API', contentType);
+          setIsInitialized(true);
+          return;
         }
         
         const data = await response.json();
@@ -141,9 +147,7 @@ export function NostrProvider({ children }: NostrProviderProps) {
       } catch (error) {
         console.error('Error initializing Nostr:', error);
         // Only show error toast for non-authentication errors to avoid spamming users
-        if (error instanceof Error && !error.message.includes('Unauthorized')) {
-          toast.error('Failed to initialize Nostr. Some features may not work correctly.');
-        }
+        toast.error('Failed to initialize Nostr. Some features may not work correctly.');
         setIsInitialized(true); // Mark as initialized anyway to prevent infinite retries
       }
     };
