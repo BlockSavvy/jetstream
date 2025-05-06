@@ -15,6 +15,39 @@ function DevBTCPaySimulatorContent() {
   
   const [stage, setStage] = useState<'initial' | 'processing' | 'complete'>('initial');
   const [countdown, setCountdown] = useState(5);
+  const [offerData, setOfferData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch offer data
+  useEffect(() => {
+    const fetchOfferData = async () => {
+      if (!offerId) return;
+      
+      try {
+        const response = await fetch(`/api/jetshare/getOfferById?id=${offerId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch offer data');
+        }
+        
+        const data = await response.json();
+        setOfferData(data);
+      } catch (error) {
+        console.error('Error fetching offer data:', error);
+        // Set fallback data for testing
+        setOfferData({
+          id: offerId,
+          departure_location: 'Test Departure',
+          arrival_location: 'Test Arrival',
+          requested_share_amount: 12500, // Fallback amount
+          total_flight_cost: 25000, // Fallback total
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchOfferData();
+  }, [offerId]);
   
   // Auto redirect after payment simulation completes
   useEffect(() => {
@@ -39,6 +72,25 @@ function DevBTCPaySimulatorContent() {
   const handleSimulatePayment = () => {
     setStage('processing');
     
+    // Update the offer status via API if possible
+    if (offerId) {
+      fetch(`/api/jetshare/process-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offer_id: offerId,
+          payment_method: 'btc',
+          payment_details: {
+            simulated: true,
+            invoice_id: `sim-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+          }
+        })
+      }).catch(err => 
+        console.warn('Failed to update payment status via API:', err)
+      );
+    }
+    
     // Simulate a payment process that takes a random amount of time
     const processingTime = Math.floor(Math.random() * 1000) + 1500;
     
@@ -56,6 +108,13 @@ function DevBTCPaySimulatorContent() {
       setStage('complete');
     }, processingTime);
   };
+  
+  // Calculate Bitcoin amount based on current rate - USING THE SHARE AMOUNT, NOT TOTAL FLIGHT COST
+  const btcRate = 68452; // Mock BTC/USD rate
+  const shareAmount = offerData?.requested_share_amount || 0;
+  const totalFee = shareAmount * 0.075; // 7.5% fee
+  const totalAmount = shareAmount + totalFee;
+  const btcAmount = totalAmount / btcRate;
   
   return (
     <div className={getThemeClasses({
@@ -102,7 +161,7 @@ function DevBTCPaySimulatorContent() {
           <h1 className="text-xl font-bold mb-2">BTC Pay Server Simulator</h1>
           <p className={getThemeClasses({
             base: "text-sm mb-4",
-            default: "text-gray-400",
+            default: "text-gray-300",
             blue: "text-blue-300",
             pink: "text-pink-300"
           })}>
@@ -118,29 +177,74 @@ function DevBTCPaySimulatorContent() {
             </div>
           )}
           
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
           <div className={getThemeClasses({
             base: "p-4 rounded-lg border mb-4 text-left",
             default: "bg-black border-gray-800",
             blue: "bg-blue-950 border-blue-800",
             pink: "bg-pink-950 border-pink-800",
           })}>
-            <p className="text-sm flex justify-between">
-              <span>Order ID:</span> 
+            <p className="text-sm flex justify-between mb-2 font-medium">
+              <span className={getThemeClasses({
+                base: "",
+                default: "text-gray-300",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>Order ID:</span> 
               <span className="font-mono">{offerId.substring(0, 8)}...</span>
             </p>
-            <p className="text-sm flex justify-between">
-              <span>Amount:</span> 
-              <span className="font-mono">17,283.00 USD</span>
+            <p className="text-sm flex justify-between mb-2 font-medium">
+              <span className={getThemeClasses({
+                base: "",
+                default: "text-gray-300",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>Share Amount:</span> 
+              <span className="font-mono text-white">${shareAmount.toLocaleString()}</span>
             </p>
-            <p className="text-sm flex justify-between">
-              <span>Rate:</span> 
-              <span className="font-mono">1 BTC = 68,452.00 USD</span>
+            <p className="text-sm flex justify-between mb-2 font-medium">
+              <span className={getThemeClasses({
+                base: "",
+                default: "text-gray-300",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>Fee (7.5%):</span> 
+              <span className="font-mono text-white">${totalFee.toLocaleString()}</span>
             </p>
-            <p className="text-sm flex justify-between">
-              <span>Due:</span> 
-              <span className="font-mono">0.25248 BTC</span>
+            <div className="my-2 border-t border-gray-700"></div>
+            <p className="text-sm flex justify-between mb-2 font-medium">
+              <span className={getThemeClasses({
+                base: "",
+                default: "text-gray-300",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>Total Due:</span> 
+              <span className="font-mono text-white">${totalAmount.toLocaleString()}</span>
+            </p>
+            <p className="text-sm flex justify-between mb-2 font-medium">
+              <span className={getThemeClasses({
+                base: "",
+                default: "text-gray-300",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>Rate:</span> 
+              <span className="font-mono text-white">1 BTC = ${btcRate.toLocaleString()} USD</span>
+            </p>
+            <p className="text-sm flex justify-between font-medium">
+              <span className={getThemeClasses({
+                base: "",
+                default: "text-gray-300",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>Bitcoin Amount:</span> 
+              <span className="font-mono text-white">{btcAmount.toFixed(8)} BTC</span>
             </p>
           </div>
+          )}
         </div>
         
         {stage === 'initial' && (
@@ -148,10 +252,11 @@ function DevBTCPaySimulatorContent() {
             onClick={handleSimulatePayment}
             className={getThemeClasses({
               base: "w-full py-6 font-bold",
-              default: "bg-primary hover:bg-primary/90 text-primary-foreground",
-              blue: "bg-blue-500 hover:bg-blue-600 text-white",
-              pink: "bg-pink-500 hover:bg-pink-600 text-white"
+              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
             })}
+            disabled={isLoading}
           >
             <Bitcoin className="h-5 w-5 mr-2" />
             Simulate Payment
@@ -189,7 +294,7 @@ function DevBTCPaySimulatorContent() {
           </div>
         )}
         
-        <div className="mt-6 pt-4 border-t border-gray-800">
+        <div className="mt-6 pt-4 border-t border-gray-700">
           <p className="text-xs text-center opacity-60">
             Development Environment Only - No real transactions are processed
           </p>
@@ -199,12 +304,17 @@ function DevBTCPaySimulatorContent() {
   );
 }
 
-// Loading fallback component
 function LoadingFallback() {
+  const { getThemeClasses } = useGdyupTheme();
+  
   return (
-    <div className="flex items-center justify-center min-h-screen bg-black text-white">
-      <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-      <span className="ml-2">Loading payment simulator...</span>
+    <div className={getThemeClasses({
+      base: "flex flex-col items-center justify-center min-h-screen p-4",
+      default: "bg-black text-white",
+      blue: "bg-blue-950 text-blue-50",
+      pink: "bg-pink-950 text-pink-50",
+    })}>
+      <Loader2 className="h-10 w-10 animate-spin" />
     </div>
   );
 }
