@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, ReactNode } from 'react';
 import { getCurrentTheme, applyTheme } from '../utils/theme-utils';
 
+interface ThemeManagerProps {
+  children: ReactNode;
+}
+
 /**
- * ThemeManager - A minimal client component that ensures theme is properly initialized
- * Extremely simplified to prevent any update loops
+ * ThemeManager - A client component that ensures theme is properly initialized and wrapped around content
  */
-export default function ThemeManager() {
+export default function ThemeManager({ children }: ThemeManagerProps) {
   // Use ref to track if we've initialized
   const initialized = useRef(false);
   
@@ -23,6 +26,6 @@ export default function ThemeManager() {
     // No event listeners here - they're handled by individual components that need them
   }, []); // Empty dependency array - only run once
   
-  // This component doesn't render anything
-  return null;
+  // Return children to allow wrapping
+  return children;
 } 

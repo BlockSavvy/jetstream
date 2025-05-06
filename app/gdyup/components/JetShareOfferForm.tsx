@@ -807,60 +807,44 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
       return;
     }
     
-    // Calculate exactly half the seats (rounded)
-    const yourSeats = Math.ceil(totalSeats / 2);
-    const partnerSeats = totalSeats - yourSeats;
+    // Calculate the exact 50% split for seats
+    const ownerSeats = Math.ceil(totalSeats * 0.5); // Owner gets slightly more on odd numbers
+    const partnerSeats = totalSeats - ownerSeats;
     
-    // Update the form with the partner seats
+    // Update form values directly
     form.setValue('available_seats', partnerSeats, { shouldValidate: true });
     
-    // Update the share amount
+    // Update share amount based on 50% split
     const totalCost = form.getValues('total_flight_cost') || 0;
-    const newRequestedShareAmount = Math.round(totalCost * 0.5);
-    form.setValue('requested_share_amount', newRequestedShareAmount, { shouldValidate: true });
+    const requestedAmount = Math.round(totalCost * 0.5); // Exactly 50% of cost
+    form.setValue('requested_share_amount', requestedAmount, { shouldValidate: true });
     
-    console.log(`[FORM handleResetTo5050] Setting visualization to ${yourSeats} seats for you, ${partnerSeats} for partner`);
-    
-    // Update the visualizer to show half the seats selected - with retry logic
+    // If visualizer is available, update its selection
     if (visualizerRef.current) {
-      try {
-        // First attempt
-        visualizerRef.current.selectSeatsByCount(yourSeats);
-        console.log(`[FORM handleResetTo5050] Visualizer updated on first try: ${yourSeats} seats`);
-      } catch (e) {
-        console.warn('[FORM handleResetTo5050] Error updating visualizer on first try:', e);
-        // Retry after a short delay
-        setTimeout(() => {
-          try {
-            if (visualizerRef.current) {
-              visualizerRef.current.selectSeatsByCount(yourSeats);
-              console.log(`[FORM handleResetTo5050] Visualizer updated on retry: ${yourSeats} seats`);
-            }
-          } catch (retryError) {
-            console.error('[FORM handleResetTo5050] Error updating visualizer on retry:', retryError);
-          }
-        }, 200);
-      }
-    } else {
-      console.warn('[FORM handleResetTo5050] Visualizer ref not available for selection');
+      // Get potential seat IDs for the owner
+      const potentialSeats = getPotentialSeatIds(totalSeats);
+      const selectedSeats = potentialSeats.slice(0, ownerSeats);
+      
+      // Update the visualizer directly
+      visualizerRef.current.selectSeatsByCount(ownerSeats);
+      
+      // Create a proper split configuration
+      const updatedConfig: OldSplitConfiguration = {
+        jetId: selectedJetId,
+        splitOrientation: 'horizontal',
+        splitRatio: '50/50',
+        splitPercentage: 50,
+        allocatedSeats: {
+          front: selectedSeats,
+          back: []
+        }
+      };
+      
+      // Update the split configuration
+      setSplitConfiguration(updatedConfig);
+      form.setValue('seat_split_configuration', updatedConfig);
     }
-    
-    // Immediately force update split configuration state
-    const updatedConfig: OldSplitConfiguration = {
-      jetId: selectedJetId || 'default',
-      splitOrientation: 'horizontal',
-      splitRatio: '50:50',
-      splitPercentage: 50,
-      allocatedSeats: {
-        front: []  // This will be populated by the visualizer's onChange event
-      }
-    };
-    setSplitConfiguration(updatedConfig);
-    
-    // Force a component update to reflect changes
-    setForceUpdateCounter(prev => prev + 1);
-    
-  }, [form, visualizerRef, selectedJetId, setSplitConfiguration, setForceUpdateCounter, setShareRatio]);
+  }, [form, getPotentialSeatIds, selectedJetId, setSplitConfiguration, setShareRatio, visualizerRef]);
   
   // Ensure proper seat initialization on load and reset to 50/50 when seats change
   useEffect(() => {

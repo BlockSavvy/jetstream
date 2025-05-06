@@ -221,11 +221,78 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
         debugLog(`[Visualizer selectSeatsByCount] Selecting ${count} seats.`);
         const allValidSeatIds = generateAllSeatIds();
         const validatedCount = Math.max(0, Math.min(allValidSeatIds.length, count));
-        const seatsToSelect = allValidSeatIds.slice(0, validatedCount);
-        setSelectedSeats(seatsToSelect);
-        // Trigger onChange to notify parent of the new selection state
+        
+        // NEW LOGIC: Distribute seats more evenly by selecting from each row in turn
+        // rather than selecting from the top down
+        const newSelectedSeats: string[] = [];
+        
+        // If no valid seats or count is zero, just clear selection
+        if (allValidSeatIds.length === 0 || validatedCount === 0) {
+          setSelectedSeats([]);
+          if (onChange) onChange([]);
+          return;
+        }
+        
+        // Organize seats by row
+        const seatsByRow: { [row: string]: string[] } = {};
+        for (const seatId of allValidSeatIds) {
+          const row = seatId.charAt(0); // A, B, C, etc.
+          if (!seatsByRow[row]) seatsByRow[row] = [];
+          seatsByRow[row].push(seatId);
+        }
+        
+        // Get sorted rows (A, B, C, etc.)
+        const rows = Object.keys(seatsByRow).sort();
+        
+        // Calculate how many seats to select per row
+        const rowCount = rows.length;
+        const idealSeatsPerRow = Math.ceil(validatedCount / rowCount);
+        
+        // Select seats from each row, distributing as evenly as possible
+        let remainingSeats = validatedCount;
+        
+        // First pass: try to distribute seats evenly across rows
+        for (const row of rows) {
+          if (remainingSeats <= 0) break;
+          
+          const seatsInThisRow = seatsByRow[row].length;
+          const seatsToSelectFromRow = Math.min(
+            seatsInThisRow, 
+            Math.min(idealSeatsPerRow, remainingSeats)
+          );
+          
+          // Prefer leftmost seats in each row for better visual balance
+          const rowSeats = seatsByRow[row].slice(0, seatsToSelectFromRow);
+          newSelectedSeats.push(...rowSeats);
+          remainingSeats -= seatsToSelectFromRow;
+        }
+        
+        // Second pass: if we still have seats to select, add more to existing rows
+        if (remainingSeats > 0) {
+          for (const row of rows) {
+            if (remainingSeats <= 0) break;
+            
+            const seatsAlreadySelected = newSelectedSeats.filter(id => id.charAt(0) === row).length;
+            const seatsAvailableInRow = seatsByRow[row].length - seatsAlreadySelected;
+            
+            if (seatsAvailableInRow > 0) {
+              const additionalSeats = Math.min(seatsAvailableInRow, remainingSeats);
+              const additionalRowSeats = seatsByRow[row]
+                .filter(id => !newSelectedSeats.includes(id))
+                .slice(0, additionalSeats);
+                
+              newSelectedSeats.push(...additionalRowSeats);
+              remainingSeats -= additionalSeats;
+            }
+          }
+        }
+        
+        debugLog(`[Visualizer selectSeatsByCount] Selected ${newSelectedSeats.length} seats with even distribution.`);
+        
+        // Update state and notify parent
+        setSelectedSeats(newSelectedSeats);
         if (onChange) {
-          onChange(seatsToSelect);
+          onChange(newSelectedSeats);
         }
       }
     }));
@@ -657,38 +724,35 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           const isSelected = selectedSeats.includes(seatId);
           const isSelectable = isSeatSelectable(seatId);
           
-          // Get theme-specific seat styling
-          const seatClasses = getThemeClasses({
-            base: cn(
-              "flex items-center justify-center rounded-lg transition-all font-medium",
-              sizingClass, // Dynamic sizing based on total seat count
-              isSelectable ? "focus:outline-none focus:ring-2 cursor-pointer hover:scale-105" : "opacity-50 cursor-not-allowed",
-              isSelected ? "shadow-md transform scale-[0.98] transition-transform" : ""
-            ),
-            default: cn(
-              isSelected 
-                ? "bg-gdyup-primary text-black border border-gdyup-primary/70 focus:ring-gdyup-primary/50" 
-                : "bg-gdyup-accent text-white/90 border border-gray-700 hover:bg-gray-700 focus:ring-gdyup-primary/40",
-              !isSelectable && "bg-gray-800 text-gray-500 border-gray-700 hover:bg-gray-800"  
-            ),
-            blue: cn(
-              isSelected 
-                ? "bg-blue-500 text-white border border-blue-400 focus:ring-blue-400/50" 
-                : "bg-blue-900/60 text-white/90 border border-blue-800 hover:bg-blue-800 focus:ring-blue-500/40",
-              !isSelectable && "bg-blue-900/30 text-blue-300/50 border-blue-900 hover:bg-blue-900/30"  
-            ),
-            pink: cn(
-              isSelected 
-                ? "bg-pink-500 text-white border border-pink-400 focus:ring-pink-400/50" 
-                : "bg-pink-900/60 text-white/90 border border-pink-800 hover:bg-pink-800 focus:ring-pink-500/40",
-              !isSelectable && "bg-pink-900/30 text-pink-300/50 border-pink-900 hover:bg-pink-900/30"  
-            )
+          // Apply appropriate styling based on seat state
+          let seatClass = getThemeClasses({
+            base: `${sizingClass} flex items-center justify-center rounded border transition-colors cursor-pointer relative`,
+            default: isSelected
+              ? "bg-[#DAFF0D] text-black border-[#DAFF0D]"
+              : isSelectable
+                ? "bg-gdyup-accent text-white border-gray-700 hover:bg-[#DAFF0D]/30"
+                : "bg-gray-900/30 text-gray-600 border-gray-800 opacity-50 cursor-not-allowed",
+            blue: isSelected 
+              ? "bg-blue-500 text-white border-blue-400"
+              : isSelectable
+                ? "bg-blue-900/60 text-blue-100 border-blue-800 hover:bg-blue-500/30"
+                : "bg-blue-950/30 text-blue-700 border-blue-900 opacity-50 cursor-not-allowed",
+            pink: isSelected
+              ? "bg-pink-500 text-white border-pink-400"
+              : isSelectable
+                ? "bg-pink-900/60 text-pink-100 border-pink-800 hover:bg-pink-500/30"
+                : "bg-pink-950/30 text-pink-700 border-pink-900 opacity-50 cursor-not-allowed"
           });
+          
+          // Add additional class to fix hover state persistence issues
+          if (isSelected) {
+            seatClass += " pointer-events-auto gdyup-seat-selected";
+          }
           
           gridItems.push(
             <div
               key={seatId}
-              className={seatClasses}
+              className={seatClass}
               data-key={seatId}
               onClick={() => {
                 if (selectionMode === 'tap' && isSelectable && !readOnly) {

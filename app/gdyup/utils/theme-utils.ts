@@ -3,6 +3,7 @@
  * Enhanced to prevent update loops with proper locking
  */
 
+// Define the possible theme types
 export type GdyupTheme = 'default' | 'blue' | 'pink';
 
 // Flag to prevent double-handling theme changes with timeout tracking
@@ -60,26 +61,17 @@ export function applyTheme(theme: GdyupTheme): void {
 }
 
 /**
- * Get the current theme from localStorage or use default
- * 
+ * Get the current theme from localStorage
  * @returns The current theme
  */
 export function getCurrentTheme(): GdyupTheme {
-  if (typeof window === 'undefined') {
+  try {
+    const theme = localStorage.getItem('gdyup-theme') as GdyupTheme;
+    return theme && ['default', 'blue', 'pink'].includes(theme) ? theme : 'default';
+  } catch (e) {
+    // If localStorage is not available, return default theme
     return 'default';
   }
-  
-  try {
-    const storedTheme = localStorage.getItem('gdyup-theme') as GdyupTheme | null;
-    
-    if (storedTheme && ['default', 'blue', 'pink'].includes(storedTheme)) {
-      return storedTheme;
-    }
-  } catch (e) {
-    console.warn('Error reading theme from localStorage:', e);
-  }
-  
-  return 'default';
 }
 
 /**
@@ -112,21 +104,21 @@ export function addThemeChangeListener(callback: (theme: GdyupTheme) => void): (
  */
 export const themeInfo = {
   default: {
-    name: 'Lime Green',
-    gradient: 'linear-gradient(145deg, #DAFF0D, #C8EA00)',
-    glowColor: 'rgba(218, 255, 13, 0.6)',
+    name: 'Default',
+    gradient: 'linear-gradient(135deg, #DAFF0D 0%, #A5BF0C 100%)',
+    glowColor: 'rgba(218, 255, 13, 0.5)',
     textColor: 'black'
   },
   blue: {
     name: 'Luxury Black',
-    gradient: 'linear-gradient(145deg, #F25C05, #D04A04)',
-    glowColor: 'rgba(242, 92, 5, 0.6)',
+    gradient: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+    glowColor: 'rgba(59, 130, 246, 0.5)',
     textColor: 'white'
   },
   pink: {
-    name: 'Bitcoin Orange',
-    gradient: 'linear-gradient(145deg, #F7931A, #D67908)',
-    glowColor: 'rgba(247, 147, 26, 0.6)',
-    textColor: 'black'
+    name: 'BTC Orange',
+    gradient: 'linear-gradient(135deg, #F7931A 0%, #F15A24 100%)',
+    glowColor: 'rgba(236, 72, 153, 0.5)',
+    textColor: 'white'
   }
 }; 

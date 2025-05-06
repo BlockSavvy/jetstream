@@ -28,6 +28,10 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   const [offerData, setOfferData] = useState<any>(null);
   const [boardingPassData, setBoardingPassData] = useState<any>(null);
   const { getThemeClasses, theme } = useGdyupTheme();
+  const [qrType, setQrType] = useState<'standard' | 'nostr'>('standard');
+  const [showNostrInfo, setShowNostrInfo] = useState(false);
+  const [isWalletProcessing, setIsWalletProcessing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -131,6 +135,136 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   
   const handleGoBack = () => {
     router.push('/gdyup/dashboard');
+  };
+  
+  const renderQrCodeOptions = () => {
+    return (
+      <div className="flex justify-center gap-2 mb-4">
+        <Button
+          variant={qrType === 'standard' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setQrType('standard')}
+          className={getThemeClasses({
+            base: "text-xs py-1 h-8",
+            default: qrType === 'standard' ? 'bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/90' : 'text-white',
+            blue: qrType === 'standard' ? 'bg-[#F25C05] text-white hover:bg-[#F25C05]/90' : 'text-blue-100',
+            pink: qrType === 'standard' ? 'bg-[#F7931A] text-white hover:bg-[#F7931A]/90' : 'text-pink-100'
+          })}
+        >
+          Standard QR
+        </Button>
+        <Button
+          variant={qrType === 'nostr' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setQrType('nostr');
+            setShowNostrInfo(true);
+          }}
+          className={getThemeClasses({
+            base: "text-xs py-1 h-8",
+            default: qrType === 'nostr' ? 'bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/90' : 'text-white',
+            blue: qrType === 'nostr' ? 'bg-[#F25C05] text-white hover:bg-[#F25C05]/90' : 'text-blue-100',
+            pink: qrType === 'nostr' ? 'bg-[#F7931A] text-white hover:bg-[#F7931A]/90' : 'text-pink-100'
+          })}
+        >
+          Nostr QR
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowNostrInfo(!showNostrInfo)}
+          className="text-xs py-1 h-8 text-gray-400"
+        >
+          ?
+        </Button>
+      </div>
+    );
+  };
+  
+  const getQrCodeUrl = () => {
+    if (!boardingPassData) return '';
+    
+    try {
+      const qrData = JSON.stringify({
+        id: boardingPassData.id || 'no-id',
+        offer_id: params.id,
+        ticket_code: boardingPassData.ticket_code || 'NO-CODE',
+        passenger: boardingPassData.passenger_name,
+        seat: boardingPassData.seat_number,
+        flight_date: offerData.flight_date,
+        from: offerData.departure_location,
+        to: offerData.arrival_location
+      });
+      
+      // Get current theme background color for QR code
+      const bgColor = theme === 'blue' ? '18182f' : 
+                      theme === 'pink' ? '2d121e' : 
+                      '000000';
+      
+      // Return the URL with the appropriate QR code type
+      return `/api/jetshare/qrcode?data=${encodeURIComponent(qrData)}&type=${qrType}&background=${bgColor}`;
+    } catch (err) {
+      console.error('Error generating QR code data:', err);
+      return '';
+    }
+  };
+  
+  const handleAddToWallet = async () => {
+    setIsWalletProcessing(true);
+    try {
+      const response = await fetch(`/api/jetshare/generatePasskit?offer_id=${params.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate Apple Wallet pass');
+      }
+      
+      // Get the passkit file and download it
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gdyup-boarding-pass-${boardingPassData?.ticket_code || 'ticket'}.pkpass`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Boarding pass added to Apple Wallet');
+    } catch (err) {
+      console.error('Error generating Apple Wallet pass:', err);
+      toast.error('Failed to add to Apple Wallet');
+    } finally {
+      setIsWalletProcessing(false);
+    }
+  };
+  
+  const handleDownloadPass = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/jetshare/downloadBoardingPass?id=${params.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate boarding pass PDF');
+      }
+      
+      // Get the PDF file and download it
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `gdyup-boarding-pass-${boardingPassData?.ticket_code || 'ticket'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Boarding pass downloaded');
+    } catch (err) {
+      console.error('Error downloading boarding pass:', err);
+      toast.error('Failed to download boarding pass');
+    } finally {
+      setIsDownloading(false);
+    }
   };
   
   if (isLoading) {
@@ -510,6 +644,66 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 showQR={true}
               />
             </motion.div>
+            
+            <div className="mb-6 flex flex-col items-center">
+              <h3 className={getThemeClasses({
+                base: "text-lg font-medium mb-2",
+                default: "text-white",
+                blue: "text-blue-100",
+                pink: "text-pink-100"
+              })}>Boarding Pass QR Code</h3>
+              
+              {renderQrCodeOptions()}
+              
+              {showNostrInfo && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className={getThemeClasses({
+                    base: "text-xs p-3 rounded-md mb-4 max-w-xs text-center",
+                    default: "bg-gray-800/70 text-gray-300 border border-gray-700",
+                    blue: "bg-blue-950/70 text-blue-200 border border-blue-900/50",
+                    pink: "bg-pink-950/70 text-pink-200 border border-pink-900/50"
+                  })}
+                >
+                  Nostr QR codes contain cryptographically verifiable boarding pass data that can be validated by any Nostr-compatible scanner without requiring a central server.
+                </motion.div>
+              )}
+              
+              <div className={getThemeClasses({
+                base: "p-4 rounded-xl",
+                default: "bg-white",
+                blue: "bg-white",
+                pink: "bg-white"
+              })}>
+                <Image
+                  src={getQrCodeUrl()}
+                  alt="Boarding Pass QR Code"
+                  width={200}
+                  height={200}
+                  className="mx-auto rounded-lg"
+                />
+              </div>
+              
+              <p className={getThemeClasses({
+                base: "mt-2 text-sm",
+                default: "text-gray-400",
+                blue: "text-blue-300",
+                pink: "text-pink-300"
+              })}>
+                {qrType === 'nostr' ? 'Nostr-compatible boarding pass' : 'Standard boarding pass'}
+              </p>
+              
+              <p className={getThemeClasses({
+                base: "mt-1 text-xs font-mono",
+                default: "text-gray-500",
+                blue: "text-blue-400",
+                pink: "text-pink-400"
+              })}>
+                {boardingPassData.ticket_code}
+              </p>
+            </div>
           </CardContent>
           
           <CardFooter className="relative z-10 pt-0 text-center justify-center">
