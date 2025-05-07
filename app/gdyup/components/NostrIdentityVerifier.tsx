@@ -47,7 +47,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
       // Extract name and domain from NIP-05
       const [name, domain] = nip05.split('@');
       
-      // Fetch well-known JSON file according to NIP-05 spec
+      // First, we'll manually fetch to verify the NIP-05 and get the pubkey
       const response = await fetch(`https://${domain}/.well-known/nostr.json?name=${name}`);
       
       if (!response.ok) {
@@ -64,7 +64,39 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
       // Get the hexadecimal public key
       const pubkey = data.names[name];
       
-      // Validation successful - save to user profile
+      if (!profile?.id) {
+        throw new Error('User profile not found');
+      }
+      
+      // Now use our API to update the user profile with the verified NIP-05
+      const apiResponse = await fetch('/api/gdyup/profile/nostr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: profile.id,
+          nostrData: {
+            nostr_pubkey: pubkey,
+            nip05,
+            nostr_settings: {
+              enabled: true,
+              broadcast_offers: profile?.nostr_settings?.broadcast_offers ?? true,
+              receive_messages: profile?.nostr_settings?.receive_messages ?? true,
+              enable_zaps: profile?.nostr_settings?.enable_zaps ?? true,
+              private_mode: profile?.nostr_settings?.private_mode ?? false,
+              auto_connect: profile?.nostr_settings?.auto_connect ?? true
+            }
+          }
+        }),
+      });
+      
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json();
+        throw new Error(errorData.error || 'Failed to save Nostr identity');
+      }
+      
+      // Refresh the user profile to get the updated data
       await updateProfile({
         nip05,
         nostr_pubkey: pubkey,

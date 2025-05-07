@@ -1,9 +1,9 @@
 import React from 'react';
 import { Metadata } from 'next';
-import GDYupDashboard from '@/app/gdyup/components/GDYupDashboard';
+import EnhancedGDYupDashboard from '@/app/gdyup/components/EnhancedGDYupDashboard';
 
 export const metadata: Metadata = {
-  title: 'JetStream | Dashboard',
+  title: 'GDY·UP | Dashboard',
 };
 
 export default function Dashboard() {
@@ -16,7 +16,7 @@ export default function Dashboard() {
             Manage your jet shares, bookings, and account activity
           </p>
         </div>
-        <GDYupDashboard />
+        <EnhancedGDYupDashboard />
       </div>
     </div>
   );

@@ -22,6 +22,18 @@ export interface NostrSettings {
   auto_connect: boolean;
 }
 
+// Define flight group interface
+export interface NostrFlightGroup {
+  offerId: string;
+  relayUrls: string[];
+  isConnected: boolean;
+  participants: {
+    pubkey: string;
+    name?: string;
+    nip05?: string;
+  }[];
+}
+
 // Define the context state interface
 interface NostrContextState {
   isInitialized: boolean;
@@ -31,12 +43,16 @@ interface NostrContextState {
   pubkey: string | null;
   nip05: string | null;
   relays: string[];
+  flightGroups: Record<string, NostrFlightGroup>;
   settings: NostrSettings;
   connect: () => Promise<boolean>;
   disconnect: () => void;
   publishEvent: (eventKind: number, content: string, tags?: string[][]) => Promise<string | null>;
   updateSettings: (newSettings: Partial<NostrSettings>) => Promise<boolean>;
-  zapRequest: (receiverPubkey: string, amount: number, comment?: string) => Promise<string | null>;
+  zapRequest: (receiverPubkey: string, amount: number, comment?: string, offerId?: string) => Promise<string | null>;
+  joinFlightGroup: (offerId: string, customRelays?: string[]) => Promise<boolean>;
+  leaveFlightGroup: (offerId: string) => void;
+  sendFlightGroupMessage: (offerId: string, content: string) => Promise<string | null>;
 }
 
 // Create the context with default values
@@ -48,6 +64,7 @@ const NostrContext = createContext<NostrContextState>({
   pubkey: null,
   nip05: null,
   relays: [],
+  flightGroups: {},
   settings: {
     enabled: false,
     broadcast_offers: true,
@@ -60,7 +77,10 @@ const NostrContext = createContext<NostrContextState>({
   disconnect: () => {},
   publishEvent: async () => null,
   updateSettings: async () => false,
-  zapRequest: async () => null
+  zapRequest: async () => null,
+  joinFlightGroup: async () => false,
+  leaveFlightGroup: () => {},
+  sendFlightGroupMessage: async () => null
 });
 
 // Define the provider props
@@ -78,6 +98,7 @@ export function NostrProvider({ children }: NostrProviderProps) {
   const [pubkey, setPubkey] = useState<string | null>(null);
   const [nip05, setNip05] = useState<string | null>(null);
   const [relays, setRelays] = useState<string[]>([]);
+  const [flightGroups, setFlightGroups] = useState<Record<string, NostrFlightGroup>>({});
   const [settings, setSettings] = useState<NostrSettings>({
     enabled: false,
     broadcast_offers: true,
@@ -98,6 +119,7 @@ export function NostrProvider({ children }: NostrProviderProps) {
         setPubkey(null);
         setNip05(null);
         setRelays([]);
+        setFlightGroups({});
         return;
       }
       
@@ -145,6 +167,7 @@ export function NostrProvider({ children }: NostrProviderProps) {
           setIsEnabled(true);
           setPubkey(data.pubkey);
           setNip05(data.nip05 || null);
+          setHasNip05(!!data.nip05);
           setRelays(data.relays || []);
           setIsConnected(true);
         } else {
@@ -167,7 +190,7 @@ export function NostrProvider({ children }: NostrProviderProps) {
     };
     
     initializeNostr();
-  }, [user, toast]);
+  }, [user]);
   
   // Connect to Nostr relays
   const connectToRelays = async (relayUrls: string[] = relays): Promise<boolean> => {
@@ -208,6 +231,9 @@ export function NostrProvider({ children }: NostrProviderProps) {
     // This is where you would close WebSocket connections
     console.log('Disconnecting from Nostr relays');
     setIsConnected(false);
+    
+    // Also disconnect from all flight groups
+    setFlightGroups({});
   }, []);
   
   // Publish an event to Nostr network
@@ -282,7 +308,8 @@ export function NostrProvider({ children }: NostrProviderProps) {
   const zapRequest = useCallback(async (
     receiverPubkey: string, 
     amount: number, 
-    comment?: string
+    comment?: string,
+    offerId?: string
   ): Promise<string | null> => {
     if (!isConnected || !pubkey || !settings.enable_zaps) {
       console.warn('Cannot create zap request: not connected, missing pubkey, or zaps disabled');
@@ -296,14 +323,46 @@ export function NostrProvider({ children }: NostrProviderProps) {
       // 2. Include the receiver pubkey, amount, and optional comment
       // 3. Sign and publish it to connected relays
       
-      console.log('Creating zap request:', { receiverPubkey, amount, comment });
+      console.log('Creating zap request:', { receiverPubkey, amount, comment, offerId });
       
-      // Publish the zap request event
-      const zapEventId = await publishEvent(9734, comment || '', [
+      // Prepare tags
+      const zapTags = [
         ['p', receiverPubkey],
         ['amount', amount.toString()],
         ['relays', ...relays],
-      ]);
+      ];
+      
+      // Add offer ID tag if provided
+      if (offerId) {
+        zapTags.push(['e', offerId, 'offer']);
+      }
+      
+      // Publish the zap request event
+      const zapEventId = await publishEvent(9734, comment || '', zapTags);
+      
+      // If successful, store the zap receipt in our database
+      if (zapEventId && user?.id) {
+        try {
+          await fetch('/api/gdyup/nostr/zap', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              zapEventId,
+              amount,
+              senderPubkey: pubkey,
+              recipientPubkey: receiverPubkey,
+              offerId,
+              comment,
+              userId: user.id
+            }),
+          });
+        } catch (error) {
+          console.error('Error storing zap receipt:', error);
+          // Continue even if storing fails
+        }
+      }
       
       return zapEventId;
     } catch (error) {
@@ -311,7 +370,119 @@ export function NostrProvider({ children }: NostrProviderProps) {
       toast.error('Failed to create zap request');
       return null;
     }
-  }, [isConnected, pubkey, settings.enable_zaps, publishEvent, relays]);
+  }, [isConnected, pubkey, settings.enable_zaps, publishEvent, relays, user?.id]);
+  
+  // Join a flight-specific Nostr group
+  const joinFlightGroup = useCallback(async (
+    offerId: string,
+    customRelays?: string[]
+  ): Promise<boolean> => {
+    if (!isConnected || !pubkey) {
+      console.warn('Cannot join flight group: not connected or missing pubkey');
+      return false;
+    }
+    
+    // Check if already joined
+    if (flightGroups[offerId]?.isConnected) {
+      console.log(`Already joined flight group for offer ${offerId}`);
+      return true;
+    }
+    
+    try {
+      // Determine relay URLs for this flight group
+      const flightRelays = customRelays || relays;
+      
+      // In a real implementation, you would:
+      // 1. Subscribe to events specific to this flight group
+      // 2. Set up event listeners for messages/zaps
+      // 3. Fetch historical messages
+      
+      console.log(`Joining flight group for offer ${offerId}`);
+      
+      // Update flight groups state
+      setFlightGroups(prev => ({
+        ...prev,
+        [offerId]: {
+          offerId,
+          relayUrls: flightRelays,
+          isConnected: true,
+          participants: [
+            {
+              pubkey,
+              name: user?.user_metadata?.full_name || 'You',
+              nip05: nip05 || undefined
+            }
+          ]
+        }
+      }));
+      
+      // Publish a "joined" event
+      await publishEvent(1, 'Joined the flight group', [
+        ['e', offerId, 'offer'],
+        ['t', 'gdyup-flight']
+      ]);
+      
+      return true;
+    } catch (error) {
+      console.error('Error joining flight group:', error);
+      toast.error('Failed to join flight group');
+      return false;
+    }
+  }, [isConnected, pubkey, relays, flightGroups, publishEvent, user?.user_metadata?.full_name, nip05]);
+  
+  // Leave a flight-specific Nostr group
+  const leaveFlightGroup = useCallback((offerId: string) => {
+    if (!flightGroups[offerId]) {
+      return;
+    }
+    
+    try {
+      // In a real implementation, you would:
+      // 1. Unsubscribe from events for this flight group
+      // 2. Remove event listeners
+      // 3. Publish a "left" event
+      
+      console.log(`Leaving flight group for offer ${offerId}`);
+      
+      // Update flight groups state
+      setFlightGroups(prev => {
+        const newGroups = { ...prev };
+        delete newGroups[offerId];
+        return newGroups;
+      });
+      
+      // Try to publish a "left" event, but don't wait for it
+      publishEvent(1, 'Left the flight group', [
+        ['e', offerId, 'offer'],
+        ['t', 'gdyup-flight']
+      ]).catch(console.error);
+    } catch (error) {
+      console.error('Error leaving flight group:', error);
+    }
+  }, [flightGroups, publishEvent]);
+  
+  // Send a message to a flight group
+  const sendFlightGroupMessage = useCallback(async (
+    offerId: string,
+    content: string
+  ): Promise<string | null> => {
+    if (!isConnected || !pubkey || !flightGroups[offerId]?.isConnected) {
+      console.warn('Cannot send flight group message: not connected, missing pubkey, or not in group');
+      return null;
+    }
+    
+    try {
+      // Publish a message event to the flight group
+      return await publishEvent(1, content, [
+        ['e', offerId, 'offer'],
+        ['t', 'gdyup-flight-message']
+      ]);
+    } catch (error) {
+      console.error('Error sending flight group message:', error);
+      toast.error('Failed to send message');
+      return null;
+    }
+  }, [isConnected, pubkey, flightGroups, publishEvent]);
   
   // Create context value
   const contextValue = useMemo(() => ({
@@ -322,12 +493,16 @@ export function NostrProvider({ children }: NostrProviderProps) {
     pubkey,
     nip05,
     relays,
+    flightGroups,
     settings,
     connect,
     disconnect,
     publishEvent,
     updateSettings,
-    zapRequest
+    zapRequest,
+    joinFlightGroup,
+    leaveFlightGroup,
+    sendFlightGroupMessage
   }), [
     isInitialized,
     isEnabled,
@@ -336,12 +511,16 @@ export function NostrProvider({ children }: NostrProviderProps) {
     pubkey,
     nip05,
     relays,
+    flightGroups,
     settings,
     connect,
     disconnect,
     publishEvent,
     updateSettings,
-    zapRequest
+    zapRequest,
+    joinFlightGroup,
+    leaveFlightGroup,
+    sendFlightGroupMessage
   ]);
   
   return (

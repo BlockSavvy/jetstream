@@ -95,6 +95,13 @@ export type UserProfile = {
   feature_flags?: NostrFeatureFlags & {
     [key: string]: boolean;
   };
+  // Bitcoin wallet fields
+  btcWalletAddress?: string | null;
+  lnurl?: string | null;
+  lightningWalletType?: 'custodial' | 'non-custodial';
+  theme?: string | null;
+  role?: string | null;
+  affiliation?: string | null;
 };
 
 /**
