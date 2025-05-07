@@ -431,3 +431,118 @@
   border-top-color: var(--gdyup-primary);
 }
 
+/* GDY UP Theme-Specific Styles */
+.gdyup-theme-default {
+  --gdyup-primary: #DAFF0D;
+  --gdyup-primary-hover: #c8eb00;
+  --gdyup-secondary: #FF4B47;
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #121212;
+  --gdyup-border: #2a2a2a;
+  --gdyup-text: #FFFFFF;
+  --gdyup-text-medium: #E0E0E0;
+  --gdyup-text-subtle: #A0A0A0;
+}
+
+.gdyup-theme-blue {
+  --gdyup-primary: #3B82F6;
+  --gdyup-primary-hover: #2563EB;
+  --gdyup-secondary: #9CA3AF;
+  --gdyup-bg-dark: #0F172A;
+  --gdyup-bg-card: #1E293B;
+  --gdyup-border: #334155;
+  --gdyup-text: #F8FAFC;
+  --gdyup-text-medium: #CBD5E1;
+  --gdyup-text-subtle: #94A3B8;
+}
+
+.gdyup-theme-pink {
+  --gdyup-primary: #EC4899;
+  --gdyup-primary-hover: #DB2777;
+  --gdyup-secondary: #9CA3AF;
+  --gdyup-bg-dark: #1F1123;
+  --gdyup-bg-card: #2D1636;
+  --gdyup-border: #4A2D4F;
+  --gdyup-text: #FBCFE8;
+  --gdyup-text-medium: #F9A8D4;
+  --gdyup-text-subtle: #F472B6;
+}
+
+/* Themed Button Styles */
+.gdyup-btn-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  border: none !important;
+  font-weight: 500 !important;
+  transition: background-color 0.2s !important;
+}
+
+.gdyup-btn-primary:hover {
+  background-color: var(--gdyup-primary-hover) !important;
+}
+
+.gdyup-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--gdyup-text) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  transition: background-color 0.2s, border-color 0.2s !important;
+}
+
+.gdyup-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: var(--gdyup-text-medium) !important;
+}
+
+.gdyup-btn-outline {
+  background-color: transparent !important;
+  color: var(--gdyup-primary) !important;
+  border: 1px solid var(--gdyup-primary) !important;
+  transition: background-color 0.2s !important;
+}
+
+.gdyup-btn-outline:hover {
+  background-color: rgba(218, 255, 13, 0.1) !important;
+}
+
+/* Themed Tab Styles */
+.gdyup-tab {
+  color: var(--gdyup-text-medium) !important;
+  transition: color 0.2s, background-color 0.2s !important;
+}
+
+.gdyup-tab:hover {
+  color: var(--gdyup-text) !important;
+}
+
+.gdyup-tab.active {
+  background-color: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  font-weight: 500 !important;
+}
+
+/* Themed Card Styles */
+.gdyup-card {
+  background-color: var(--gdyup-bg-card) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Themed Badge Styles */
+.gdyup-badge-success {
+  background-color: rgba(0, 180, 0, 0.2) !important;
+  color: #4eff4e !important;
+  border: 1px solid #2ead2e !important;
+}
+
+.gdyup-badge-warning {
+  background-color: rgba(255, 180, 0, 0.2) !important;
+  color: #ffcc4d !important;
+  border: 1px solid #cc9633 !important;
+}
+
+.gdyup-badge-error {
+  background-color: rgba(255, 0, 0, 0.2) !important;
+  color: #ff6b6b !important;
+  border: 1px solid #cc3e3e !important;
+}
+
