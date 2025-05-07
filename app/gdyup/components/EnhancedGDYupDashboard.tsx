@@ -26,23 +26,29 @@ export default function EnhancedGDYupDashboard() {
   
   // Redirect to onboarding if user hasn't completed it
   useEffect(() => {
-    if (!loading && user) {
-      // Check if the user has completed onboarding
-      const checkOnboarding = async () => {
-        try {
-          const response = await fetch(`/api/gdyup/profile?userId=${user.id}`);
-          if (response.ok) {
-            const { data } = await response.json();
-            if (!data.onboarding_completed) {
-              router.push('/gdyup/onboarding');
+    if (!loading) {
+      if (user) {
+        // Check if the user has completed onboarding
+        const checkOnboarding = async () => {
+          try {
+            const response = await fetch(`/api/gdyup/profile?userId=${user.id}`);
+            if (response.ok) {
+              const { data } = await response.json();
+              if (!data.onboarding_completed) {
+                router.push('/gdyup/onboarding');
+              }
             }
+          } catch (error) {
+            console.error('Error checking onboarding status:', error);
           }
-        } catch (error) {
-          console.error('Error checking onboarding status:', error);
-        }
-      };
-      
-      checkOnboarding();
+        };
+        
+        checkOnboarding();
+      } else {
+        // If user is not loaded but not loading, we might have an auth issue
+        console.log('User not authenticated or session expired, redirecting to login');
+        router.push('/gdyup/auth/login');
+      }
     }
   }, [user, loading, router]);
 
@@ -70,9 +76,9 @@ export default function EnhancedGDYupDashboard() {
         onValueChange={setActiveTab}
         className="w-full"
       >
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-12">
           <TabsList className={cn(
-            "grid grid-cols-3 md:grid-cols-6 w-full md:w-auto rounded-lg p-1",
+            "grid grid-cols-3 md:grid-cols-6 w-full md:w-auto rounded-lg p-1 relative z-20 shadow-lg",
             getThemeClasses({
               base: "",
               default: "bg-gray-900",
@@ -86,9 +92,9 @@ export default function EnhancedGDYupDashboard() {
                 "flex flex-col gap-1 py-2 px-3 data-[state=active]:text-black",
                 getThemeClasses({
                   base: "",
-                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black"
+                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-gray-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-blue-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-pink-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black"
                 })
               )}
             >
@@ -102,9 +108,9 @@ export default function EnhancedGDYupDashboard() {
                 "flex flex-col gap-1 py-2 px-3",
                 getThemeClasses({
                   base: "",
-                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black"
+                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-gray-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-blue-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-pink-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black"
                 })
               )}
             >
@@ -118,9 +124,9 @@ export default function EnhancedGDYupDashboard() {
                 "flex flex-col gap-1 py-2 px-3",
                 getThemeClasses({
                   base: "",
-                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black"
+                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-gray-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-blue-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-pink-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black"
                 })
               )}
             >
@@ -134,9 +140,9 @@ export default function EnhancedGDYupDashboard() {
                 "flex flex-col gap-1 py-2 px-3",
                 getThemeClasses({
                   base: "",
-                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black"
+                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-gray-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-blue-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-pink-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black"
                 })
               )}
             >
@@ -150,9 +156,9 @@ export default function EnhancedGDYupDashboard() {
                 "flex flex-col gap-1 py-2 px-3",
                 getThemeClasses({
                   base: "",
-                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black"
+                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-gray-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-blue-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-pink-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black"
                 })
               )}
             >
@@ -166,9 +172,9 @@ export default function EnhancedGDYupDashboard() {
                 "flex flex-col gap-1 py-2 px-3",
                 getThemeClasses({
                   base: "",
-                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black",
-                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black"
+                  default: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-gray-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  blue: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-blue-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black",
+                  pink: "data-[state=active]:bg-gdyup-primary data-[state=active]:text-black hover:bg-pink-800 hover:text-white data-[state=active]:hover:bg-gdyup-primary/90 data-[state=active]:hover:text-black"
                 })
               )}
             >
@@ -178,39 +184,42 @@ export default function EnhancedGDYupDashboard() {
           </TabsList>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            <TabsContent value="bookings" className="mt-0">
-              <MyBookingsTab />
-            </TabsContent>
-            
-            <TabsContent value="listings" className="mt-0">
-              <MyListingsTab />
-            </TabsContent>
-            
-            <TabsContent value="passes" className="mt-0">
-              <BoardingPassesTab />
-            </TabsContent>
-            
-            <TabsContent value="chats" className="mt-0">
-              <FlightChatsTab />
-            </TabsContent>
-            
-            <TabsContent value="wallet" className="mt-0">
-              <WalletIdentityTab />
-            </TabsContent>
-            
-            <TabsContent value="activity" className="mt-0">
-              <ActivityFeedTab />
-            </TabsContent>
-          </motion.div>
-        </AnimatePresence>
+        <div className="mt-8 pt-2 relative z-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <TabsContent value="bookings" className="mt-2">
+                <MyBookingsTab />
+              </TabsContent>
+              
+              <TabsContent value="listings" className="mt-2">
+                <MyListingsTab />
+              </TabsContent>
+              
+              <TabsContent value="passes" className="mt-2">
+                <BoardingPassesTab />
+              </TabsContent>
+              
+              <TabsContent value="chats" className="mt-2">
+                <FlightChatsTab />
+              </TabsContent>
+              
+              <TabsContent value="wallet" className="mt-2">
+                <WalletIdentityTab />
+              </TabsContent>
+              
+              <TabsContent value="activity" className="mt-2">
+                <ActivityFeedTab />
+              </TabsContent>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </Tabs>
     </div>
   );

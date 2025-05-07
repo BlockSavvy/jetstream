@@ -333,12 +333,6 @@ export default function MyBookingsTab() {
               pink: "text-pink-400"
             })}>
               <p>You don't have any active bookings.</p>
-              <Button
-                onClick={() => router.push('/gdyup/browse')}
-                className="mt-4"
-              >
-                Browse Available Flights
-              </Button>
             </div>
           ) : (
             <div className="space-y-4">

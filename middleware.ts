@@ -37,6 +37,11 @@ const PUBLIC_ROUTES = [
   '/api/gdyup/jets',
   '/api/gdyup/activity',
   '/api/gdyup/transactions',
+  '/api/gdyup/wallet',
+  '/api/gdyup/boardingpasses',
+  '/api/gdyup/flightchats',
+  '/api/nostr/relay',
+  '/api/gdyup/nostr/relay',
   
   // Static assets
   '/_next'
@@ -186,11 +191,11 @@ export async function middleware(req: NextRequest) {
   }
 
   // DEV MODE: Bypass all auth checks when in dev mode
-  if (process.env.NEXT_PUBLIC_AUTH_DEV_MODE === 'true') {
-    console.log(`DEV MODE: Bypassing auth checks for ${req.nextUrl.pathname}`);
-    
-    // For API routes, ensure we mark it as a DEV request in headers
-    if (req.nextUrl.pathname.startsWith('/api/')) {
+  if (process.env.NEXT_PUBLIC_AUTH_DEV_MODE === 'true' || process.env.NODE_ENV !== 'production') {
+    // For API routes that start with /api/gdyup or /api/nostr, allow access in dev mode
+    if (req.nextUrl.pathname.startsWith('/api/gdyup/') || 
+        req.nextUrl.pathname.startsWith('/api/nostr/')) {
+      console.log(`DEV MODE: Bypassing auth checks for ${req.nextUrl.pathname}`);
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-dev-mode', 'true');
       requestHeaders.set('x-dev-user-id', process.env.NEXT_PUBLIC_AUTH_DEV_USER_ID || '');
