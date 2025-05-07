@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import * as pinecone from '@/lib/services/pinecone'
 import * as embeddings from '@/lib/services/embeddings'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { checkJetOwnership } from './check-ownership'
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,36 +101,49 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * API route to get jets owned by a user
+ */
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get('userId')
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get('userId')
+    const includeDetails = searchParams.get('includeDetails') === 'true'
     
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
     
-    const supabase = await createClient()
+    // Initialize Supabase client
+    const supabase = createRouteHandlerClient({ cookies })
     
-    // Fetch user's jets
-    const { data, error } = await supabase
+    // Check user jet ownership first
+    const hasJets = await checkJetOwnership(supabase, userId)
+    
+    // Select query with optional details
+    let query = supabase
       .from('jets')
-      .select('*')
+      .select(
+        includeDetails 
+          ? `*, interior_images, exterior_images, layouts, assignments` 
+          : `id, registration, make, model, seat_capacity, created_at, updated_at`
+      )
       .eq('owner_id', userId)
+      
+    const { data, error } = await query
     
     if (error) {
       console.error('Error fetching jets:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch jets' }, { status: 500 })
     }
     
     return NextResponse.json({
       success: true,
-      data,
+      hasJets,
+      jets: data
     })
   } catch (error) {
-    console.error('Error in jets fetch API:', error)
-    return NextResponse.json({ 
-      error: 'An unexpected error occurred',
-      details: error
-    }, { status: 500 })
+    console.error('Error in jets API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 } 

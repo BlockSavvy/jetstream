@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { updateUserMetadataFromProfile } from '../sync-metadata'
 
+/**
+ * API route for saving Nostr identity information
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -14,59 +19,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nostr data is required' }, { status: 400 })
     }
     
-    // Validate the Nostr data
-    const { 
-      nostr_pubkey, 
-      nip05, 
-      nostr_settings,
-      nostr_relays
-    } = nostrData
+    // Initialize Supabase client
+    const supabase = createRouteHandlerClient({ cookies })
     
-    // Create allowed data object with only the fields we want to update
-    const updateData: Record<string, any> = {}
-    
-    if (nostr_pubkey !== undefined) {
-      updateData.nostr_pubkey = nostr_pubkey
-    }
-    
-    if (nip05 !== undefined) {
-      updateData.nip05 = nip05
-    }
-    
-    if (nostr_settings !== undefined) {
-      updateData.nostr_settings = nostr_settings
-    }
-    
-    if (nostr_relays !== undefined) {
-      updateData.nostr_relays = nostr_relays
-    }
-    
-    const supabase = await createClient()
-    
-    // Update the user profile in the database
+    // Update the profile with Nostr data
     const { data, error } = await supabase
       .from('profiles')
-      .update(updateData)
+      .update({
+        nostr_pubkey: nostrData.nostr_pubkey,
+        nip05: nostrData.nip05,
+        nostr_settings: nostrData.nostr_settings,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', userId)
       .select()
       .single()
     
     if (error) {
-      console.error('Error updating Nostr data:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      console.error('Error updating Nostr identity:', error)
+      return NextResponse.json({ error: 'Failed to save Nostr identity' }, { status: 500 })
     }
+    
+    // Sync updated profile data to user metadata
+    await updateUserMetadataFromProfile(supabase, userId)
     
     return NextResponse.json({
       success: true,
-      data,
-      message: 'Nostr information updated successfully'
+      profile: data
     })
   } catch (error) {
-    console.error('Error in Nostr update API:', error)
-    return NextResponse.json({ 
-      error: 'An unexpected error occurred',
-      details: error
-    }, { status: 500 })
+    console.error('Error in Nostr identity API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -78,7 +61,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
     
-    const supabase = await createClient()
+    const supabase = await createRouteHandlerClient({ cookies })
     
     // Fetch the user Nostr data
     const { data, error } = await supabase
@@ -142,7 +125,7 @@ export async function PUT(request: NextRequest) {
       // Check if the pubkey matches
       if (data.names && data.names[name] === pubkey) {
         // Update the user profile with verified NIP-05
-        const supabase = await createClient()
+        const supabase = await createRouteHandlerClient({ cookies })
         
         const { data: profileData, error } = await supabase
           .from('profiles')

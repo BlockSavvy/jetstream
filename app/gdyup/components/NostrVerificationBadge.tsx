@@ -12,6 +12,7 @@ interface NostrVerificationBadgeProps {
   nip05?: string | null;
   pubkey?: string | null;
   isVerified?: boolean;
+  nip05_verified?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showTooltip?: boolean;
   className?: string;
@@ -21,6 +22,7 @@ export default function NostrVerificationBadge({
   nip05,
   pubkey,
   isVerified,
+  nip05_verified,
   size = 'md',
   showTooltip = true,
   className
@@ -31,7 +33,13 @@ export default function NostrVerificationBadge({
   );
 
   useEffect(() => {
-    // If isVerified is explicitly provided, use that
+    // First check the nip05_verified field from database
+    if (nip05_verified === true) {
+      setVerificationStatus('verified');
+      return;
+    }
+    
+    // Then check isVerified prop
     if (isVerified !== undefined) {
       setVerificationStatus(isVerified ? 'verified' : 'unverified');
       return;
@@ -39,13 +47,19 @@ export default function NostrVerificationBadge({
     
     // Otherwise, determine based on nip05 presence
     if (nip05) {
-      setVerificationStatus('verified');
+      // If we have a nip05 but it's not verified, mark as unverified
+      if (nip05_verified === false) {
+        setVerificationStatus('unverified');
+      } else {
+        // By default, assume verified if we have nip05
+        setVerificationStatus('verified');
+      }
     } else if (pubkey) {
       setVerificationStatus('unverified');
     } else {
       setVerificationStatus('unknown');
     }
-  }, [nip05, pubkey, isVerified]);
+  }, [nip05, pubkey, isVerified, nip05_verified]);
 
   const sizeClasses = {
     sm: 'text-xs py-0.5 px-1.5',

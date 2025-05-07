@@ -124,6 +124,32 @@ export function NostrProvider({ children }: NostrProviderProps) {
       }
       
       try {
+        // First try to get data from user profile directly - this has the most accurate NIP-05
+        let userProfile = null;
+        try {
+          const profileResponse = await fetch(`/api/gdyup/profile?userId=${user.id}`);
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            userProfile = profileData.profile;
+            
+            // Log the profile NIP-05 data
+            console.log('Profile NIP-05:', userProfile?.nip05);
+            
+            // If we have a NIP-05 from the profile and it's not the default, use it
+            if (userProfile?.nip05 && userProfile.nip05 !== 'dev@gdyup.xyz') {
+              setNip05(userProfile.nip05);
+              setHasNip05(!!userProfile.nip05);
+            }
+            
+            // If we have a pubkey from the profile, use it
+            if (userProfile?.nostr_pubkey) {
+              setPubkey(userProfile.nostr_pubkey);
+            }
+          }
+        } catch (profileError) {
+          console.error('Error fetching user profile for Nostr data:', profileError);
+        }
+        
         // Add a timeout to prevent hanging requests
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -133,65 +159,56 @@ export function NostrProvider({ children }: NostrProviderProps) {
           credentials: 'include' // Ensure cookies are sent
         });
         
-        // Clear the timeout since the request completed
         clearTimeout(timeoutId);
         
-        // Handle non-OK responses properly
+        // Handle response
         if (!response.ok) {
-          if (response.status === 401) {
-            console.log('Nostr: Authentication required, using default settings');
-            // Set initialized but not enabled for unauthorized users
-            setIsInitialized(true);
-            setIsEnabled(false);
-            setIsConnected(false);
-            setPubkey(null);
-            setNip05(null);
-            setRelays([]);
-            return;
-          }
-          
-          throw new Error(`Nostr API returned ${response.status}: ${response.statusText}`);
-        }
-        
-        // Only try to parse JSON for successful responses
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error(`Expected JSON response but got ${contentType}`);
+          console.error('Failed to fetch Nostr relay info', response.statusText);
+          setIsInitialized(true);
+          setIsEnabled(false);
+          return;
         }
         
         const data = await response.json();
         
-        if (data.pubkey) {
-          console.log('Nostr: Successfully initialized');
-          setIsInitialized(true);
-          setIsEnabled(true);
+        // Configure state based on relay response
+        setIsInitialized(true);
+        setIsEnabled(data.nostrEnabled || false);
+        
+        // Only set pubkey from relay data if we don't already have one from profile
+        if (!pubkey && data.pubkey) {
           setPubkey(data.pubkey);
-          // Ensure we use the nip05 from user profile directly, not from settings
-          setNip05(user.user_metadata?.nip05 || data.nip05 || null);
-          setHasNip05(!!(user.user_metadata?.nip05 || data.nip05));
-          setRelays(data.relays || []);
+        }
+        
+        // Only set NIP-05 from relay data if:
+        // 1. We don't already have one from profile
+        // 2. It's not the default dev@gdyup.xyz (which may be incorrect)
+        if (!nip05 && data.nip05 && data.nip05 !== 'dev@gdyup.xyz') {
+          setNip05(data.nip05);
+          setHasNip05(!!data.nip05);
+        }
+        
+        const defaultRelays = data.relays || [];
+        const userRelays = data.userRelays || [];
+        const allRelays = [...new Set([...defaultRelays, ...userRelays])];
+        
+        setRelays(allRelays);
+        
+        // Connect to relays if pubkey is available
+        if ((pubkey || data.pubkey) && allRelays.length > 0 && data.nostrEnabled) {
           setIsConnected(true);
         } else {
-          console.log('Nostr: Initialized but no pubkey available');
-          setIsInitialized(true);
-          setIsEnabled(false);
+          setIsConnected(false);
         }
       } catch (error) {
-        console.error('Error initializing Nostr:', error);
-        
-        // Provide fallback for various error conditions
+        console.error('Error initializing Nostr context:', error);
         setIsInitialized(true);
         setIsEnabled(false);
-        setIsConnected(false);
-        toast.error('Failed to initialize NOSTR', {
-          id: 'nostr-init-failed',
-          duration: 3000,
-        });
       }
     };
     
     initializeNostr();
-  }, [user]);
+  }, [user, pubkey, nip05]);
   
   // Connect to Nostr relays
   const connectToRelays = async (relayUrls: string[] = relays): Promise<boolean> => {

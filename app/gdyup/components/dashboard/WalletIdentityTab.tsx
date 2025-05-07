@@ -34,11 +34,15 @@ import { cn } from '@/lib/utils';
 
 interface UserWallet {
   id?: string;
-  bitcoin_address?: string;
-  lightning_address?: string;
+  user_id?: string;
+  bitcoin_address?: string | null;
+  lightning_address?: string | null;
   custodial?: boolean;
   label?: string;
   nostr_linked?: boolean;
+  nostr_pubkey?: string | null;
+  nip05?: string | null;
+  nip05_verified?: boolean;
 }
 
 export default function WalletIdentityTab() {
@@ -54,36 +58,76 @@ export default function WalletIdentityTab() {
   const { pubkey, nip05, isConnected, isEnabled } = useNostr();
 
   useEffect(() => {
-    const fetchWalletInfo = async () => {
-      if (!user) return;
+    const fetchWalletData = async () => {
+      if (!user?.id) return;
+      
+      setIsLoading(true);
       
       try {
-        setIsLoading(true);
+        // First try to get profile data which has the correct wallet info
+        const profileResponse = await fetch(`/api/gdyup/profile?userId=${user.id}`);
         
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          
+          if (profileData.profile) {
+            console.log('Loaded profile wallet data:', {
+              btcAddress: profileData.profile.btcWalletAddress,
+              bitcoin_address: profileData.profile.bitcoin_address,
+              lightning: profileData.profile.lightning_address,
+              nip05: profileData.profile.nip05,
+              nostrPubkey: profileData.profile.nostr_pubkey,
+              nip05Verified: profileData.profile.nip05_verified
+            });
+            
+            // Use profile data for wallet info since it's more reliable
+            const bitcoinAddress = profileData.profile.btcWalletAddress || 
+                                  profileData.profile.bitcoin_address || 
+                                  null;
+            
+            setWallet({
+              user_id: user.id,
+              bitcoin_address: bitcoinAddress,
+              lightning_address: profileData.profile.lightning_address || null,
+              custodial: false, 
+              nostr_linked: !!profileData.profile.nostr_pubkey,
+              nostr_pubkey: profileData.profile.nostr_pubkey || null,
+              nip05: profileData.profile.nip05 || null,
+              nip05_verified: profileData.profile.nip05_verified || false
+            });
+            
+            // Set the form values to match
+            setBitcoinAddress(bitcoinAddress || '');
+            setLightningAddress(profileData.profile.lightning_address || '');
+            
+            setIsLoading(false);
+            return;
+          }
+        }
+        
+        // Fallback to wallet-specific API
         const response = await fetch(`/api/gdyup/wallet?userId=${user.id}`);
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch wallet information');
-        }
-        
-        const data = await response.json();
-        setWallet(data.wallet || null);
-        
-        if (data.wallet) {
-          setBitcoinAddress(data.wallet.bitcoin_address || '');
-          setLightningAddress(data.wallet.lightning_address || '');
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.success && data.wallet) {
+            console.log('Loaded wallet API data:', data.wallet);
+            setWallet(data.wallet);
+            setBitcoinAddress(data.wallet.bitcoin_address || '');
+            setLightningAddress(data.wallet.lightning_address || '');
+          }
         }
       } catch (error) {
-        console.error('Error fetching wallet information:', error);
-        // Still allow manual entry by setting null wallet
-        setWallet(null);
+        console.error('Error fetching wallet data:', error);
+        toast.error('Failed to load wallet data');
       } finally {
         setIsLoading(false);
       }
     };
     
-    fetchWalletInfo();
-  }, [user]);
+    fetchWalletData();
+  }, [user?.id]);
 
   const handleSaveWallet = async () => {
     if (!user) return;
@@ -502,7 +546,7 @@ export default function WalletIdentityTab() {
                   pink: "bg-pink-900"
                 })} />
               </div>
-            ) : !nip05 ? (
+            ) : (!wallet?.nip05 && !nip05) ? (
               <NostrIdentityVerifier />
             ) : (
               <div className="space-y-4">
@@ -522,9 +566,13 @@ export default function WalletIdentityTab() {
                       blue: "text-blue-50",
                       pink: "text-pink-50"
                     })}>
-                      {nip05}
+                      {wallet?.nip05 || nip05 || 'Not set'}
                     </div>
-                    <NostrVerificationBadge pubkey={pubkey} nip05={nip05} />
+                    <NostrVerificationBadge 
+                      pubkey={wallet?.nostr_pubkey || pubkey} 
+                      nip05={wallet?.nip05 || nip05}
+                      nip05_verified={wallet?.nip05_verified}
+                    />
                   </div>
                 </div>
                 
@@ -538,25 +586,38 @@ export default function WalletIdentityTab() {
                     Nostr Public Key
                   </div>
                   <div className="flex justify-between items-center">
-                    <div className={getThemeClasses({
-                      base: "font-mono text-sm break-all",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50"
-                    })}>
-                      {pubkey ? `${pubkey.substring(0, 8)}...${pubkey.substring(pubkey.length - 8)}` : 'No public key found'}
-                    </div>
+                    {wallet?.nostr_pubkey || pubkey ? (
+                      <div className={getThemeClasses({
+                        base: "font-mono text-sm break-all",
+                        default: "text-white",
+                        blue: "text-blue-50",
+                        pink: "text-pink-50"
+                      })}>
+                        {(wallet?.nostr_pubkey || pubkey) ? 
+                          `${(wallet?.nostr_pubkey || pubkey || '').substring(0, 8)}...${(wallet?.nostr_pubkey || pubkey || '').substring((wallet?.nostr_pubkey || pubkey || '').length - 8)}` 
+                          : 'No public key found'}
+                      </div>
+                    ) : (
+                      <div className={getThemeClasses({
+                        base: "text-sm italic",
+                        default: "text-gray-500", 
+                        blue: "text-blue-500",
+                        pink: "text-pink-500"
+                      })}>
+                        No Nostr public key connected
+                      </div>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => pubkey && copyToClipboard(pubkey, 'Nostr Public Key')}
+                      onClick={() => (wallet?.nostr_pubkey || pubkey) && copyToClipboard(wallet?.nostr_pubkey || pubkey || '', 'Nostr Public Key')}
                       className={getThemeClasses({
                         base: "h-8 w-8",
                         default: "text-gray-400 hover:text-white",
                         blue: "text-blue-400 hover:text-blue-50",
                         pink: "text-pink-400 hover:text-pink-50"
                       })}
-                      disabled={!pubkey}
+                      disabled={!(wallet?.nostr_pubkey || pubkey)}
                     >
                       {copiedField === 'Nostr Public Key' ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -577,6 +638,22 @@ export default function WalletIdentityTab() {
                     Relay Connection Status
                   </div>
                   <NostrRelayStatus />
+                </div>
+
+                <div className="pt-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setWallet(null)}
+                    className={getThemeClasses({
+                      base: "w-full",
+                      default: "border-gray-700 text-gray-400 hover:bg-gray-800",
+                      blue: "border-blue-800 text-blue-400 hover:bg-blue-900",
+                      pink: "border-pink-800 text-pink-400 hover:bg-pink-900"
+                    })}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Update Nostr Identity
+                  </Button>
                 </div>
               </div>
             )}

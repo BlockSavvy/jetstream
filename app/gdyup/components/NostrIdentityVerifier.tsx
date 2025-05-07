@@ -27,8 +27,14 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
   // Initialize with user's NIP-05 from profile if available
   useEffect(() => {
     if (profile?.nip05) {
-      setNip05(profile.nip05);
-      setVerificationStatus('success');
+      // If the NIP-05 is the default one, allow changing it
+      if (profile.nip05 === 'dev@gdyup.xyz') {
+        setNip05('');
+        setVerificationStatus('none');
+      } else {
+        setNip05(profile.nip05);
+        setVerificationStatus('success');
+      }
     }
   }, [profile?.nip05]);
   
@@ -78,7 +84,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
           userId: profile.id,
           nostrData: {
             nostr_pubkey: pubkey,
-            nip05,
+            nip05: nip05, // Use the provided NIP-05 (e.g., Matt@primal.net)
             nostr_settings: {
               enabled: true,
               broadcast_offers: profile?.nostr_settings?.broadcast_offers ?? true,
@@ -96,19 +102,12 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
         throw new Error(errorData.error || 'Failed to save Nostr identity');
       }
       
-      // Refresh the user profile to get the updated data
-      await updateProfile({
-        nip05,
-        nostr_pubkey: pubkey,
-        nostr_settings: {
-          enabled: true,
-          broadcast_offers: profile?.nostr_settings?.broadcast_offers ?? true,
-          receive_messages: profile?.nostr_settings?.receive_messages ?? true,
-          enable_zaps: profile?.nostr_settings?.enable_zaps ?? true,
-          private_mode: profile?.nostr_settings?.private_mode ?? false,
-          auto_connect: profile?.nostr_settings?.auto_connect ?? true
-        }
-      });
+      // Wait for the profile update to complete
+      const result = await apiResponse.json();
+      console.log('Updated Nostr identity:', result);
+      
+      // Refresh the user profile data
+      window.location.reload(); // Force a reload to ensure all Nostr data is refreshed
       
       setVerificationStatus('success');
       toast.success('NIP-05 identity verified successfully!');
