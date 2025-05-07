@@ -18,14 +18,18 @@ import NostrZapButton from '@/app/gdyup/components/NostrZapButton';
 import NostrRelayStatus from '@/app/gdyup/components/NostrRelayStatus';
 import NostrCommunityChat from '@/app/gdyup/components/NostrCommunityChat';
 import { cn } from '@/lib/utils';
+import { use } from 'react';
 
 interface BoardingPassPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function BoardingPassPage({ params }: BoardingPassPageProps) {
+  // Unwrap params
+  const { id } = use(params);
+  
   const router = useRouter();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
@@ -40,6 +44,8 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   const [checkInStatus, setCheckInStatus] = useState<'pending' | 'available' | 'completed' | 'expired'>('pending');
   const [totalZaps, setTotalZaps] = useState(0);
   const [totalZapAmount, setTotalZapAmount] = useState(0);
+  const [qrError, setQrError] = useState(false);
+  const [isQrLoading, setIsQrLoading] = useState(true);
   
   useEffect(() => {
     const fetchData = async () => {
@@ -47,7 +53,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
       
       try {
         // Fetch boarding pass data
-        const response = await fetch(`/api/boardingpass/${params.id}`);
+        const response = await fetch(`/api/gdyup/boardingpass/${id}`);
         
         if (!response.ok) {
           throw new Error('Failed to load boarding pass');
@@ -86,18 +92,17 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
     };
     
     fetchData();
-  }, [params.id]);
+  }, [id]);
   
   const handleGoBack = () => {
     router.push('/gdyup/dashboard');
   };
   
   const getQrCodeUrl = () => {
-    // In a real implementation, these would be different URLs
     if (qrType === 'nostr') {
-      return `/api/boardingpass/${params.id}/qr?type=nostr&t=${Date.now()}`;
+      return `/api/gdyup/boardingpass/${id}/qr?type=nostr&t=${Date.now()}`;
     }
-    return `/api/boardingpass/${params.id}/qr?t=${Date.now()}`;
+    return `/api/gdyup/boardingpass/${id}/qr?t=${Date.now()}`;
   };
   
   const handleSaveToFiles = async () => {
@@ -105,7 +110,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
     
     try {
       // Fetch the boarding pass PDF
-      const response = await fetch(`/api/boardingpass/${params.id}?format=pdf`);
+      const response = await fetch(`/api/gdyup/boardingpass/${id}/pdf`);
       
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
@@ -120,7 +125,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
       // Create a temporary link element
       const link = document.createElement('a');
       link.href = url;
-      link.download = `boarding-pass-${params.id}.pdf`;
+      link.download = `boarding-pass-${id}.pdf`;
       
       // Append to the document, click it, and remove it
       document.body.appendChild(link);
@@ -144,7 +149,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
     
     try {
       // Fetch the Apple Wallet pass
-      const response = await fetch(`/api/boardingpass/${params.id}?format=pkpass`);
+      const response = await fetch(`/api/gdyup/boardingpass/${id}/pkpass`);
       
       if (!response.ok) {
         throw new Error('Failed to generate wallet pass');
@@ -159,7 +164,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
       // Create a temporary link element
       const link = document.createElement('a');
       link.href = url;
-      link.download = `boarding-pass-${params.id}.pkpass`;
+      link.download = `boarding-pass-${id}.pkpass`;
       
       // Append to the document, click it, and remove it
       document.body.appendChild(link);
@@ -560,7 +565,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               transition={{ delay: 0.5 }}
             >
               <BoardingPassButton 
-                offerId={params.id} 
+                offerId={id} 
                 variant="expanded"
                 showQR={true}
               />
@@ -605,13 +610,41 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
               >
-                <Image
+                {isQrLoading && !qrError && (
+                  <div className="flex items-center justify-center h-[200px] w-[200px]">
+                    <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
+                  </div>
+                )}
+                <img
                   src={getQrCodeUrl()}
                   alt="Boarding Pass QR Code"
                   width={200}
                   height={200}
                   className="mx-auto rounded-lg"
+                  onError={() => {
+                    setQrError(true);
+                    setIsQrLoading(false);
+                  }}
+                  onLoad={() => setIsQrLoading(false)}
+                  style={{ display: isQrLoading || qrError ? 'none' : 'block' }}
                 />
+                {qrError && (
+                  <div className="flex flex-col items-center justify-center h-[200px] w-[200px]">
+                    <QrCode className="h-12 w-12 text-gray-400 mb-2" />
+                    <p className="text-gray-500 text-sm text-center">QR code not available</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        setQrError(false);
+                        setIsQrLoading(true);
+                      }}
+                      className="mt-2 text-xs"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                )}
               </motion.div>
               
               <p className={getThemeClasses({
@@ -758,7 +791,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               transition={{ delay: 0.7, duration: 0.5 }}
             >
               <NostrCommunityChat 
-                flightId={params.id}
+                flightId={id}
                 flightName={`${offerData.departure_location_code || offerData.departure_location.substring(0, 3).toUpperCase()} to ${offerData.arrival_location_code || offerData.arrival_location.substring(0, 3).toUpperCase()}`}
                 initialCollapsed={true}
               />

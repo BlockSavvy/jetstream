@@ -166,8 +166,9 @@ export function NostrProvider({ children }: NostrProviderProps) {
           setIsInitialized(true);
           setIsEnabled(true);
           setPubkey(data.pubkey);
-          setNip05(data.nip05 || null);
-          setHasNip05(!!data.nip05);
+          // Ensure we use the nip05 from user profile directly, not from settings
+          setNip05(user.user_metadata?.nip05 || data.nip05 || null);
+          setHasNip05(!!(user.user_metadata?.nip05 || data.nip05));
           setRelays(data.relays || []);
           setIsConnected(true);
         } else {

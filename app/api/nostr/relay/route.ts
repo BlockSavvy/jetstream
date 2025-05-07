@@ -19,30 +19,50 @@ const DEFAULT_RELAYS = [
  */
 export async function GET(request: NextRequest) {
   // Check for dev mode header set by middleware
-  const isDevMode = request.headers.get('x-dev-mode') === 'true';
+  const isDevMode = request.headers.get('x-dev-mode') === 'true' || process.env.NODE_ENV !== 'production';
+  const devUserId = request.headers.get('x-dev-user-id');
   
   try {
-    if (!isDevMode) {
-      // In production, we need to authenticate the user
-      const supabase = createRouteHandlerClient({ cookies });
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        console.log('No authenticated user in Nostr relay API request');
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-      }
-      
-      // TODO: Get user's specific relay configuration from database
-      // For now, return defaults
-    } else {
+    // Initialize Supabase client
+    const supabase = createRouteHandlerClient({ cookies });
+    
+    // In development mode, we can bypass authentication
+    if (isDevMode) {
       console.log('DEV MODE: Bypassing authentication for Nostr relay API');
+      
+      // Return sample data for development
+      return NextResponse.json({
+        nostrEnabled: true,
+        pubkey: "7f3b335850f7d12cd2e7f8f2b671b943e3cb3001e0fca2994411398534e9454a", // Sample pubkey for dev
+        nip05: "dev@gdyup.xyz",
+        relays: DEFAULT_RELAYS,
+        userRelays: [],
+        canAddCustomRelays: true
+      });
     }
     
-    // Return relay configuration
+    // In production, authenticate the user
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      console.log('No authenticated user in Nostr relay API request');
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    
+    // Get user's profile to check for Nostr pubkey
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('nostr_pubkey, nostr_settings')
+      .eq('id', session.user.id)
+      .single();
+      
+    // Return relay configuration with user-specific data if available
     return NextResponse.json({
       nostrEnabled: true,
+      pubkey: profile?.nostr_pubkey || null,
+      nip05: session?.user?.user_metadata?.nip05 || profile?.nostr_settings?.nip05 || null,
       relays: DEFAULT_RELAYS,
-      userRelays: [],
+      userRelays: profile?.nostr_settings?.relays || [],
       canAddCustomRelays: true
     });
   } catch (error) {

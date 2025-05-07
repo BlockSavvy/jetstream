@@ -66,10 +66,15 @@ export default function EnhancedBoardingPassButton({
   const downloadBoardingPass = async () => {
     setIsPdfLoading(true);
     try {
+      // Log the start of PDF download 
+      console.log(`Requesting boarding pass PDF for offer ${offerId}`);
+      
       const response = await fetch(`/api/gdyup/boardingpass/${offerId}/pdf?${transactionId ? `transactionId=${transactionId}` : ''}`);
       
       if (!response.ok) {
-        throw new Error(`Error generating PDF: ${response.statusText}`);
+        const errorData = await response.json().catch(() => null);
+        const errorMsg = errorData?.error || response.statusText;
+        throw new Error(`Error generating PDF (${response.status}): ${errorMsg}`);
       }
       
       const blob = await response.blob();
@@ -83,9 +88,24 @@ export default function EnhancedBoardingPassButton({
       document.body.removeChild(a);
       
       toast.success('Boarding pass PDF downloaded');
+      
+      // Record successful download
+      try {
+        await fetch('/api/gdyup/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'boarding_pass_downloaded',
+            metadata: { offerId, format: 'pdf' }
+          })
+        });
+      } catch (activityError) {
+        // Non-critical error, just log it
+        console.error('Failed to record boarding pass download activity:', activityError);
+      }
     } catch (error) {
       console.error('Error downloading boarding pass:', error);
-      toast.error('Failed to download boarding pass');
+      toast.error(`Failed to download boarding pass: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsPdfLoading(false);
     }
@@ -95,10 +115,15 @@ export default function EnhancedBoardingPassButton({
   const addToAppleWallet = async () => {
     setIsAppleWalletLoading(true);
     try {
+      // Log the start of Apple Wallet pass generation
+      console.log(`Requesting Apple Wallet pass for offer ${offerId}`);
+      
       const response = await fetch(`/api/gdyup/boardingpass/${offerId}/pkpass?${transactionId ? `transactionId=${transactionId}` : ''}`);
       
       if (!response.ok) {
-        throw new Error(`Error generating pass: ${response.statusText}`);
+        const errorData = await response.json().catch(() => null);
+        const errorMsg = errorData?.error || response.statusText;
+        throw new Error(`Error generating Apple Wallet pass (${response.status}): ${errorMsg}`);
       }
       
       const blob = await response.blob();
@@ -112,9 +137,24 @@ export default function EnhancedBoardingPassButton({
       document.body.removeChild(a);
       
       toast.success('Apple Wallet pass downloaded');
+      
+      // Record successful download
+      try {
+        await fetch('/api/gdyup/activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'wallet_pass_downloaded',
+            metadata: { offerId, format: 'pkpass' }
+          })
+        });
+      } catch (activityError) {
+        // Non-critical error, just log it
+        console.error('Failed to record wallet pass download activity:', activityError);
+      }
     } catch (error) {
       console.error('Error generating Apple Wallet pass:', error);
-      toast.error('Failed to generate Apple Wallet pass');
+      toast.error(`Failed to generate Apple Wallet pass: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsAppleWalletLoading(false);
     }

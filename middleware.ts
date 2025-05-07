@@ -39,9 +39,13 @@ const PUBLIC_ROUTES = [
   '/api/gdyup/transactions',
   '/api/gdyup/wallet',
   '/api/gdyup/boardingpasses',
+  '/api/gdyup/boardingpass',
+  '/api/boardingpass',
+  '/api/nostr',
+  '/api/jetshare/qrcode',
+  '/api/jetshare/payment',
+  '/api/gdyup/offer',
   '/api/gdyup/flightchats',
-  '/api/nostr/relay',
-  '/api/gdyup/nostr/relay',
   
   // Static assets
   '/_next'
@@ -194,7 +198,8 @@ export async function middleware(req: NextRequest) {
   if (process.env.NEXT_PUBLIC_AUTH_DEV_MODE === 'true' || process.env.NODE_ENV !== 'production') {
     // For API routes that start with /api/gdyup or /api/nostr, allow access in dev mode
     if (req.nextUrl.pathname.startsWith('/api/gdyup/') || 
-        req.nextUrl.pathname.startsWith('/api/nostr/')) {
+        req.nextUrl.pathname.startsWith('/api/nostr/') ||
+        req.nextUrl.pathname.startsWith('/api/jetshare/')) {
       console.log(`DEV MODE: Bypassing auth checks for ${req.nextUrl.pathname}`);
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-dev-mode', 'true');
@@ -203,6 +208,13 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next({
         request: { headers: requestHeaders }
       });
+    }
+    
+    // Allow payment routes in dev mode
+    if (req.nextUrl.pathname.startsWith('/gdyup/payment/') || 
+        req.nextUrl.pathname.startsWith('/gdyup/offer/')) {
+      console.log(`DEV MODE: Bypassing auth checks for ${req.nextUrl.pathname}`);
+      return NextResponse.next();
     }
     
     return NextResponse.next();

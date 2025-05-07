@@ -32,8 +32,7 @@ export async function GET(
   try {
     const offerId = params.id;
     const searchParams = request.nextUrl.searchParams;
-    const format = searchParams.get('format') || 'pdf';
-    const isTestMode = searchParams.get('test') === 'true';
+    const formatParam = searchParams.get('format');
     
     if (!offerId) {
       return NextResponse.json({ error: 'Missing offer ID' }, { status: 400 });
@@ -45,82 +44,78 @@ export async function GET(
     // Fetch offer data
     const { data: offerData, error: offerError } = await supabase
       .from('jetshare_offers')
-      .select('*')
+      .select(`
+        *,
+        user:user_id (*),
+        matched_user:matched_user_id (*),
+        jet:jet_id (*)
+      `)
       .eq('id', offerId)
       .single();
     
     if (offerError || !offerData) {
       console.error('Error fetching offer data:', offerError);
-      
-      // If in test mode, use mock data
-      if (isTestMode) {
-        const mockData: FlightData = {
-          id: offerId,
-          departure_location: 'New York',
-          departure_location_code: 'NYC',
-          arrival_location: 'Los Angeles',
-          arrival_location_code: 'LAX',
-          flight_date: new Date().toISOString(),
-          aircraft_type: 'Gulfstream G650',
-          boarding_time: new Date(Date.now() + 3600000).toISOString(),
-          gate: 'G1'
-        };
-        
-        const mockBoardingPass: BoardingPassData = {
-          id: `bp-${Date.now()}`,
-          passenger_name: 'Test Passenger',
-          seat: '1A',
-          ticket_code: `GDYUP-${offerId.substring(0, 6)}`,
-          created_at: new Date().toISOString()
-        };
-        
-        if (format === 'pdf') {
-          return generatePDF(mockData, mockBoardingPass);
-        } else if (format === 'pkpass') {
-          return generatePKPass(mockData, mockBoardingPass);
-        } else {
-          return NextResponse.json({ error: 'Invalid format specified' }, { status: 400 });
-        }
-      }
-      
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
     }
     
-    // Fetch the user's boarding pass
-    const { data: boardingPassData, error: bpError } = await supabase
+    // Prepare the flight data
+    const flightData: FlightData = {
+      id: offerData.id,
+      departure_location: offerData.departure_location,
+      departure_location_code: offerData.departure_location_code || offerData.departure_location.substring(0, 3).toUpperCase(),
+      arrival_location: offerData.arrival_location,
+      arrival_location_code: offerData.arrival_location_code || offerData.arrival_location.substring(0, 3).toUpperCase(),
+      flight_date: offerData.flight_date,
+      aircraft_type: offerData.jet?.model || 'Private Jet',
+      boarding_time: offerData.boarding_time || new Date(new Date(offerData.flight_date).getTime() - 30 * 60000).toISOString(),
+      gate: offerData.gate || 'FBO'
+    };
+    
+    // Fetch user name
+    let passengerName = 'GDY·UP Passenger';
+    if (offerData.matched_user?.full_name) {
+      passengerName = offerData.matched_user.full_name;
+    } else if (offerData.matched_user?.email) {
+      passengerName = offerData.matched_user.email.split('@')[0];
+    }
+    
+    // Generate a boarding pass object
+    const boardingPassData: BoardingPassData = {
+      id: `bp-${offerId}`,
+      passenger_name: passengerName,
+      seat: offerData.requested_seats > 1 ? 'Multiple' : '1A',
+      ticket_code: `GDYUP-${offerId.substring(0, 6).toUpperCase()}`,
+      created_at: new Date().toISOString()
+    };
+    
+    // Try to get the boarding pass from the database
+    const { data: dbBoardingPass, error: bpError } = await supabase
       .from('boarding_passes')
       .select('*')
       .eq('offer_id', offerId)
       .single();
     
-    if (bpError || !boardingPassData) {
-      console.error('Error fetching boarding pass data:', bpError);
-      
-      // If boarding pass doesn't exist yet, create a mock one for testing
-      const mockBoardingPass: BoardingPassData = {
-        id: `bp-${Date.now()}`,
-        passenger_name: 'GDY·UP Passenger',
-        seat: offerData.requested_seats > 1 ? 'Multiple' : '1A',
-        ticket_code: `GDYUP-${offerId.substring(0, 6)}`,
-        created_at: new Date().toISOString()
-      };
-      
-      if (format === 'pdf') {
-        return generatePDF(offerData, mockBoardingPass);
-      } else if (format === 'pkpass') {
-        return generatePKPass(offerData, mockBoardingPass);
-      } else {
-        return NextResponse.json({ error: 'Invalid format specified' }, { status: 400 });
-      }
+    // If we found a boarding pass in the DB, use that data
+    if (dbBoardingPass && !bpError) {
+      boardingPassData.id = dbBoardingPass.id;
+      boardingPassData.passenger_name = dbBoardingPass.passenger_name || boardingPassData.passenger_name;
+      boardingPassData.seat = dbBoardingPass.seat || boardingPassData.seat;
+      boardingPassData.ticket_code = dbBoardingPass.ticket_code || boardingPassData.ticket_code;
+      boardingPassData.created_at = dbBoardingPass.created_at || boardingPassData.created_at;
     }
     
-    // Generate requested format
-    if (format === 'pdf') {
-      return generatePDF(offerData, boardingPassData);
-    } else if (format === 'pkpass') {
-      return generatePKPass(offerData, boardingPassData);
+    // Return different formats based on the format parameter
+    if (formatParam === 'pdf') {
+      return generatePDF(flightData, boardingPassData);
+    } else if (formatParam === 'pkpass') {
+      return generatePKPass(flightData, boardingPassData);
     } else {
-      return NextResponse.json({ error: 'Invalid format specified' }, { status: 400 });
+      // Default: Return JSON with all boarding pass data
+      return NextResponse.json({
+        success: true,
+        offer: offerData,
+        boarding_pass: boardingPassData
+      });
     }
   } catch (error) {
     console.error('Error generating boarding pass:', error);
@@ -254,10 +249,7 @@ async function generatePDF(flightData: FlightData, boardingPassData: BoardingPas
 
 async function generatePKPass(flightData: FlightData, boardingPassData: BoardingPassData) {
   try {
-    // In a production environment, this would use the PassKit library
-    // For this implementation, we'll create a minimal .pkpass structure
-    // A real implementation would require Apple Developer certificates
-    
+    // Create a new ZIP file (for .pkpass)
     const zip = new JSZip();
     
     // Create pass.json
@@ -353,12 +345,13 @@ async function generatePKPass(flightData: FlightData, boardingPassData: Boarding
     // Add pass.json to the zip
     zip.file('pass.json', JSON.stringify(passJson, null, 2));
     
-    // We would normally include signature, manifest and certificate files
-    // For this implementation, we'll create placeholders
-    zip.file('manifest.json', JSON.stringify({
-      'pass.json': 'hash-placeholder',
-    }, null, 2));
+    // Add signature and manifest files (simplified for this implementation)
+    // In production, this would use real certificates and proper signing
+    const manifest = {
+      'pass.json': 'sha-placeholder'
+    };
     
+    zip.file('manifest.json', JSON.stringify(manifest, null, 2));
     zip.file('signature', 'signature-placeholder');
     
     // Generate the ZIP file as a buffer
