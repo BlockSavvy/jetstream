@@ -97,52 +97,80 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
     
-    // Initialize Supabase client
+    // Initialize Supabase client with properly awaited cookies
     const supabase = createRouteHandlerClient({ cookies })
     
-    // Fix inconsistencies to ensure profile and metadata are in sync
-    await fixProfileInconsistencies(supabase, userId)
-    
-    // First sync user metadata with profile to ensure we have the latest data
-    await syncUserMetadataWithProfile(supabase, userId)
-    
-    // Get the user profile
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        jets:jets(id, make, model, serial_number, created_at)
-      `)
-      .eq('id', userId)
-      .single()
-    
-    if (error) {
-      console.error('Error fetching profile:', error)
-      return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
-    }
-    
-    // Check if user has jets
-    const hasJets = data.jets && data.jets.length > 0
-    
-    // Also get the user's auth data to access user_metadata
-    const { data: userData, error: userError } = await supabase.auth.getUser()
-    
-    if (userError) {
-      console.error('Error fetching user auth data:', userError)
-      // Continue without user metadata
-    }
-    
-    // Return the profile with hasJets flag and metadata if available
-    return NextResponse.json({
-      profile: {
-        ...data,
-        hasJets,
-        // Override with user metadata when available to ensure it matches
-        nip05: userData?.user?.user_metadata?.nip05 || data.nip05,
-        bitcoin_address: userData?.user?.user_metadata?.bitcoin_address || data.bitcoin_address,
-        lightning_address: userData?.user?.user_metadata?.lightning_address || data.lightning_address,
+    try {
+      // First get the basic profile data without joins
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
       }
-    })
+      
+      // Now check if the user has jets in a separate query
+      const { data: jetsData, error: jetsError } = await supabase
+        .from('jets')
+        .select('id, model, manufacturer')
+        .eq('owner_id', userId);
+        
+      if (jetsError) {
+        console.error('Error fetching jets:', jetsError);
+        // Continue without jets data
+      }
+      
+      // Also get the user's auth data to access user_metadata
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error fetching user auth data:', userError);
+        // Continue without user metadata
+      }
+      
+      // Call fixProfileInconsistencies to ensure data consistency
+      await fixProfileInconsistencies(supabase, userId);
+      
+      // Ensure user metadata is synced with profile
+      await syncUserMetadataWithProfile(supabase, userId);
+      
+      // Return the profile with hasJets flag and metadata if available
+      return NextResponse.json({
+        profile: {
+          ...profileData,
+          hasJets: jetsData && jetsData.length > 0,
+          jets: jetsData || [],
+          // Override with user metadata when available to ensure it matches
+          nip05: userData?.user?.user_metadata?.nip05 || profileData.nip05,
+          btcWalletAddress: userData?.user?.user_metadata?.bitcoin_address || profileData.btcWalletAddress,
+          lightning_address: userData?.user?.user_metadata?.lightning_address || profileData.lightning_address,
+          // Make sure NIP-05 verification status is passed on 
+          nip05_verified: profileData.nip05_verified || false
+        }
+      });
+    } catch (err) {
+      // Handle any errors from fixProfileInconsistencies or syncUserMetadataWithProfile
+      console.error('Error in profile data operations:', err);
+      
+      // Try to do a simpler profile fetch as a fallback
+      const { data: simpleProfile, error: simpleError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (simpleError) {
+        return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
+      }
+      
+      return NextResponse.json({
+        profile: simpleProfile
+      });
+    }
   } catch (error) {
     console.error('Error in profile API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

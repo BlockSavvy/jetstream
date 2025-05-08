@@ -33,10 +33,15 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
         setVerificationStatus('none');
       } else {
         setNip05(profile.nip05);
-        setVerificationStatus('success');
+        // Show as success if we've already verified it before
+        if (profile.nip05_verified) {
+          setVerificationStatus('success');
+        } else {
+          setVerificationStatus('none');
+        }
       }
     }
-  }, [profile?.nip05]);
+  }, [profile?.nip05, profile?.nip05_verified]);
   
   // NIP-05 verification function
   const verifyNip05 = async () => {
@@ -85,6 +90,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
           nostrData: {
             nostr_pubkey: pubkey,
             nip05: nip05, // Use the provided NIP-05 (e.g., Matt@primal.net)
+            nip05_verified: true, // Explicitly mark as verified
             nostr_settings: {
               enabled: true,
               broadcast_offers: profile?.nostr_settings?.broadcast_offers ?? true,
@@ -105,6 +111,19 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
       // Wait for the profile update to complete
       const result = await apiResponse.json();
       console.log('Updated Nostr identity:', result);
+      
+      // Now, explicitly call the verification endpoint to ensure NIP-05 is marked as verified
+      await fetch('/api/gdyup/profile/nostr', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: profile.id,
+          nip05: nip05,
+          pubkey: pubkey
+        }),
+      });
       
       // Refresh the user profile data
       window.location.reload(); // Force a reload to ensure all Nostr data is refreshed

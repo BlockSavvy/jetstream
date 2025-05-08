@@ -413,11 +413,11 @@ export default function WalletIdentityTab() {
                   ) : (
                     <div className={getThemeClasses({
                       base: "text-sm italic",
-                      default: "text-gray-500",
+                      default: "text-gray-500", 
                       blue: "text-blue-500",
                       pink: "text-pink-500"
                     })}>
-                      No Lightning address set
+                      No Lightning Address set
                     </div>
                   )}
                 </div>

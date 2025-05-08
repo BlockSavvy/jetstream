@@ -40,19 +40,23 @@ export default function NostrVerificationBadge({
     }
     
     // Then check isVerified prop
-    if (isVerified !== undefined) {
-      setVerificationStatus(isVerified ? 'verified' : 'unverified');
+    if (isVerified === true) {
+      setVerificationStatus('verified');
       return;
     }
     
     // Otherwise, determine based on nip05 presence
     if (nip05) {
-      // If we have a nip05 but it's not verified, mark as unverified
+      // If we have a nip05 but it's explicitly not verified, mark as unverified
       if (nip05_verified === false) {
         setVerificationStatus('unverified');
       } else {
-        // By default, assume verified if we have nip05
-        setVerificationStatus('verified');
+        // If it's a valid nip05 format (not the default one), assume verified
+        if (nip05 !== 'dev@gdyup.xyz') {
+          setVerificationStatus('verified');
+        } else {
+          setVerificationStatus('unverified');
+        }
       }
     } else if (pubkey) {
       setVerificationStatus('unverified');

@@ -80,6 +80,7 @@ export type UserProfile = {
   // Nostr-related fields
   npub?: string | null;
   nip05?: string | null;
+  nip05_verified?: boolean;
   lud16?: string | null;
   nostr_pubkey?: string | null;
   nostr_relays?: string[];
