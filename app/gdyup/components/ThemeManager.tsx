@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, ReactNode } from 'react';
 import { getCurrentTheme, applyTheme } from '../utils/theme-utils';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 interface ThemeManagerProps {
   children: ReactNode;
@@ -13,6 +14,8 @@ interface ThemeManagerProps {
 export default function ThemeManager({ children }: ThemeManagerProps) {
   // Use ref to track if we've initialized
   const initialized = useRef(false);
+  // Get theme from the hook - helps ensure theme context is available to all child components
+  const { theme } = useGdyupTheme();
   
   useEffect(() => {
     // Skip if already initialized to prevent loops

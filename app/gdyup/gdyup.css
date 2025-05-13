@@ -1,425 +1,293 @@
-/* Theme definitions - completely rewritten for reliability */
+/* Theme definitions - Centralized and Consistent */
 :root {
-  /* Default theme values to prevent flash of unstyled content */
-  --gdyup-primary: #DAFF0D !important; 
-  --gdyup-primary-rgb: 218, 255, 13 !important;
-  --gdyup-secondary: #FF4B47 !important;
-  --gdyup-secondary-rgb: 255, 75, 71 !important;
-  --gdyup-background: #000000 !important;
-  --gdyup-card-bg: #121212 !important;
-  --gdyup-hover-bg: #181818 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E0E0E0 !important;
-  --gdyup-text-subtle: #D0D0D0 !important; 
-  --gdyup-border: #2a2a2a !important;
-  --gdyup-button-bg: #DAFF0D !important;
-  --gdyup-button-hover-bg: #E8FF4D !important;
-  --gdyup-button-active-bg: #C8EA00 !important;
-  --gdyup-button-text: #000000 !important;
-  --gdyup-icon-shadow: rgba(218, 255, 13, 0.4) !important;
-  --gdyup-concierge-bg: #DAFF0D !important;
-  --gdyup-concierge-text: #000000 !important;
-  --gdyup-nav-active-bg: #DAFF0D !important;
-  --gdyup-nav-active-text: #000000 !important;
-  --gdyup-nav-hover-border: rgba(218, 255, 13, 0.6) !important;
+  /* Default GDY-UP values, primarily for fallback or initial state if needed */
+  --gdyup-primary: #DAFF0D;
+  --gdyup-primary-hover: #c8eb00;
+  --gdyup-secondary: #FF4B47;
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #121212;
+  --gdyup-border: #2a2a2a;
+  --gdyup-text: #FFFFFF;
+  --gdyup-text-medium: #E0E0E0;
+  --gdyup-text-subtle: #A0A0A0;
+  --gdyup-button-text: #000000; /* Default text for primary buttons */
+
+  /* RGB versions for convenience if needed by JS/CSS for rgba() */
+  --gdyup-primary-rgb: 218, 255, 13;
+  --gdyup-secondary-rgb: 255, 75, 71;
 }
 
-/* Lime Green Theme (Default) */
+/* Lime Theme (Default) - gdyup-theme-default */
 .gdyup-theme-default {
-  --gdyup-primary: #DAFF0D !important; 
-  --gdyup-primary-rgb: 218, 255, 13 !important;
-  --gdyup-secondary: #FF4B47 !important;
-  --gdyup-secondary-rgb: 255, 75, 71 !important;
-  --gdyup-background: #000000 !important;
-  --gdyup-card-bg: #121212 !important;
-  --gdyup-hover-bg: #181818 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E0E0E0 !important;
-  --gdyup-text-subtle: #D0D0D0 !important; 
-  --gdyup-border: #2a2a2a !important;
-  --gdyup-button-bg: #DAFF0D !important;
-  --gdyup-button-hover-bg: #E8FF4D !important;
-  --gdyup-button-active-bg: #C8EA00 !important;
-  --gdyup-button-text: #000000 !important;
-  --gdyup-icon-shadow: rgba(218, 255, 13, 0.4) !important;
-  --gdyup-concierge-bg: #DAFF0D !important;
-  --gdyup-concierge-text: #000000 !important;
-  --gdyup-nav-active-bg: #DAFF0D !important;
-  --gdyup-nav-active-text: #000000 !important;
-  --gdyup-nav-hover-border: rgba(218, 255, 13, 0.6) !important;
-}
+  --gdyup-primary: #DAFF0D;
+  --gdyup-primary-hover: #c8eb00;
+  --gdyup-primary-rgb: 218, 255, 13;
+  --gdyup-secondary: #FF4B47;
+  --gdyup-secondary-rgb: 255, 75, 71;
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #121212;
+  --gdyup-border: #2a2a2a;
+  --gdyup-text: #FFFFFF;
+  --gdyup-text-medium: #E0E0E0;
+  --gdyup-text-subtle: #A0A0A0;
+  --gdyup-button-text: #000000; /* Text on primary button */
 
-/* Luxury Black Theme (Orange) */
-.gdyup-theme-blue {
-  --gdyup-primary: #F25C05 !important;
-  --gdyup-primary-rgb: 242, 92, 5 !important;
-  --gdyup-secondary: #F77A2E !important;
-  --gdyup-secondary-rgb: 247, 122, 46 !important;
-  --gdyup-background: #000000 !important;
-  --gdyup-card-bg: #1A1F20 !important;
-  --gdyup-hover-bg: #222B30 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #A0A0A0 !important;
-  --gdyup-text-subtle: #808080 !important;
-  --gdyup-border: #333333 !important;
-  --gdyup-button-bg: #F25C05 !important;
-  --gdyup-button-hover-bg: #F77A2E !important;
-  --gdyup-button-active-bg: #D04A04 !important;
-  --gdyup-button-text: #FFFFFF !important;
-  --gdyup-icon-shadow: rgba(242, 92, 5, 0.4) !important;
-  --gdyup-concierge-bg: #F25C05 !important;
-  --gdyup-concierge-text: #FFFFFF !important;
-  --gdyup-nav-active-bg: #F25C05 !important;
-  --gdyup-nav-active-text: #FFFFFF !important;
-  --gdyup-nav-hover-border: rgba(242, 92, 5, 0.6) !important;
-  --gdyup-carbon-texture: url('/carbonfibertexture.png') !important;
+  /* Theme-specific button styles if they differ beyond just primary color */
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-active-bg: #b2d400; /* Darker shade for active */
   
-  /* Apply carbon fiber texture background */
-  background-image: var(--gdyup-carbon-texture) !important;
-  background-repeat: repeat !important;
-  background-size: 500px 500px !important;
+  /* Additional theme-specific variables */
+  --gdyup-icon-shadow: rgba(var(--gdyup-primary-rgb), 0.4);
+  --gdyup-concierge-bg: var(--gdyup-primary);
+  --gdyup-concierge-text: var(--gdyup-button-text);
+  --gdyup-nav-active-bg: var(--gdyup-primary);
+  --gdyup-nav-active-text: var(--gdyup-button-text);
+  --gdyup-nav-hover-border: rgba(var(--gdyup-primary-rgb), 0.6);
 }
 
-/* Ensure proper styling for card backgrounds in Luxury Black theme */
-.gdyup-theme-blue .gdyup-card,
-.gdyup-theme-blue [class*="Card"],
-.gdyup-theme-blue .bg-card,
-.gdyup-theme-blue [role="dialog"],
-.gdyup-theme-blue .modal-content {
-  background-image: var(--gdyup-carbon-texture) !important;
-  background-color: rgba(20, 20, 20, 0.85) !important;
-  background-blend-mode: overlay !important;
-  backdrop-filter: blur(5px) !important;
-  border: 1px solid rgba(242, 92, 5, 0.3) !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+/* Luxury Black Theme (gdyup-theme-luxury) */
+.gdyup-theme-luxury {
+  /* Primary color is neon green for Luxury Black theme */
+  --gdyup-primary: #39FF14 !important;
+  --gdyup-primary-hover: #50FF32 !important;
+  --gdyup-primary-rgb: 57, 255, 20 !important;
+  --gdyup-secondary: #FF4500; /* Flare Orange */
+  --gdyup-secondary-rgb: 255, 69, 0;
+  --gdyup-bg-dark: #000000; /* Jet Black */
+  --gdyup-bg-card: #1A1A1A; /* Gunmetal Gray */
+  --gdyup-border: #333333;
+  --gdyup-text: #E0E0E0; /* Jet Silver */
+  --gdyup-text-medium: #CCCCCC; /* Ash Gray */
+  --gdyup-text-subtle: #999999;
+  --gdyup-button-text: #000000; /* Text on primary button MUST be dark to contrast with light primary */
+
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-active-bg: #32CC10 !important;
+  
+  /* Additional theme-specific variables */
+  --gdyup-icon-shadow: rgba(var(--gdyup-primary-rgb), 0.4);
+  --gdyup-concierge-bg: var(--gdyup-primary);
+  --gdyup-concierge-text: var(--gdyup-button-text);
+  --gdyup-nav-active-bg: var(--gdyup-primary);
+  --gdyup-nav-active-text: var(--gdyup-button-text);
+  --gdyup-nav-hover-border: rgba(var(--gdyup-primary-rgb), 0.6);
+  --gdyup-carbon-texture: url('/carbonfibertexture.png');
 }
 
-/* Bitcoin Orange Theme */
-.gdyup-theme-pink {
-  --gdyup-primary: #F7931A !important;
-  --gdyup-primary-rgb: 247, 147, 26 !important;
-  --gdyup-secondary: #FFB75E !important;
-  --gdyup-secondary-rgb: 255, 183, 94 !important;
-  --gdyup-background: #1A1A1A !important;
-  --gdyup-card-bg: #2A2A2A !important;
-  --gdyup-hover-bg: #333333 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E5E5E5 !important;
-  --gdyup-text-subtle: #C0C0C0 !important;
-  --gdyup-border: #3A3A3A !important;
-  --gdyup-button-bg: #F7931A !important;
-  --gdyup-button-hover-bg: #FFB75E !important;
-  --gdyup-button-active-bg: #D67908 !important;
-  --gdyup-button-text: #000000 !important;
-  --gdyup-icon-shadow: rgba(247, 147, 26, 0.4) !important;
-  --gdyup-concierge-bg: #F7931A !important;
-  --gdyup-concierge-text: #000000 !important;
-  --gdyup-nav-active-bg: #F7931A !important;
-  --gdyup-nav-active-text: #000000 !important;
-  --gdyup-nav-hover-border: rgba(247, 147, 26, 0.6) !important;
+/* Bitcoin Orange Theme (gdyup-theme-bitcoin) */
+.gdyup-theme-bitcoin {
+  /* Primary color is gold for Bitcoin theme */
+  --gdyup-primary: #F7931A; /* Bitcoin Orange */
+  --gdyup-primary-hover: #FFAA33;
+  --gdyup-primary-rgb: 247, 147, 26;
+  --gdyup-secondary: #FF6B00; /* Burnt Orange */
+  --gdyup-secondary-rgb: 255, 107, 0;
+  --gdyup-bg-dark: #121212; /* Midnight Charcoal */
+  --gdyup-bg-card: #2D2D2D; /* Block Gray */
+  --gdyup-border: #3A3A3A;
+  --gdyup-text: #FDFDFD; /* Lightning White */
+  --gdyup-text-medium: #E5E5E5;
+  --gdyup-text-subtle: #B8B8B8;
+  --gdyup-button-text: #000000; /* Text on primary button MUST be dark to contrast with gold */
+
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-active-bg: #D68000; /* Darker bitcoin orange for active */
+  
+  /* Additional theme-specific variables */
+  --gdyup-icon-shadow: rgba(var(--gdyup-primary-rgb), 0.4);
+  --gdyup-concierge-bg: var(--gdyup-primary);
+  --gdyup-concierge-text: var(--gdyup-button-text);
+  --gdyup-nav-active-bg: var(--gdyup-primary);
+  --gdyup-nav-active-text: var(--gdyup-button-text);
+  --gdyup-nav-hover-border: rgba(var(--gdyup-primary-rgb), 0.6);
+  --gdyup-accent-color: #B87333; /* Proof Copper for accents */
 }
 
-/* Special styling for header navigation - ensuring white colors for non-active items */
-header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]),
-header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]),
-.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]),
-.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) {
-  color: white !important;
-  background-color: transparent;
-  font-weight: 500;
+/* ============================================================== */
+/* CORE STYLING - MODERNIZED WITH THEME VARIABLES                 */
+/* ============================================================== */
+
+/* Base styles */
+.gdyup-app,
+body.gdyup-app,
+:root body.gdyup-app,
+html body.gdyup-app {
+  color: var(--gdyup-text, #FFFFFF) !important;
+  background-color: var(--gdyup-bg-dark, #000000) !important;
 }
 
-/* Ensure icons are white in non-active menu items */
-header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
+/* Fallback styles to prevent white text on white background during loading */
+html, body,
+html:root, html:root body {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
 }
 
-/* Ensure text is white in non-active menu items */
-header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span,
-header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span,
-.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span,
-.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) span {
-  color: white !important;
+/* Override shadcn background */
+.bg-background {
+  background-color: var(--gdyup-bg-dark, #000000) !important;
 }
 
-/* GDY UP Branding Colors - Using CSS Variables for Themability */
-:root {
-  /* These variables are set by the theme classes in gdyup-forms.css */
-  --gdyup-primary: #DAFF0D !important; 
-  --gdyup-primary-rgb: 218, 255, 13 !important;
-  --gdyup-secondary: #FF4B47 !important;
-  --gdyup-secondary-rgb: 255, 75, 71 !important;
-  --gdyup-background: #000000 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E0E0E0 !important;
-  --gdyup-text-subtle: #D0D0D0 !important; 
-  --gdyup-accent: #1A1A1A !important;
-  --gdyup-active-bg: rgba(218, 255, 13, 0.2) !important;
-  --gdyup-card-border: #2a2a2a !important;
-  --gdyup-button-bg: #DAFF0D !important;
-  --gdyup-button-hover-bg: #E8FF4D !important;
-  --gdyup-button-active-bg: #C8EA00 !important;
-  --gdyup-button-text: #000000 !important;
+/* Direct header and navigation styling to ensure visibility */
+header,
+header nav,
+header nav button,
+header nav a,
+.mobile-menu button,
+.mobile-menu a,
+.profile-menu div,
+.profile-menu a,
+.profile-menu button {
+  color: var(--gdyup-text, #FFFFFF) !important;
 }
 
-/* Add new rule near the top to force button styling with the primary color */
-/* Fix button styling across the app */
-button, a {
-  --button-text-color: var(--gdyup-button-text, #000000);
-  transition: all 0.2s ease !important;
+/* Extra styling for dropdown menus to ensure visibility */
+[role="menu"],
+[role="menu"] div,
+[role="menu"] button,
+[role="menu"] a,
+[role="menuitem"],
+[data-state="open"] [role="menuitem"],
+[data-radix-popper-content-wrapper] div {
+  color: var(--gdyup-text, #FFFFFF) !important;
+  background-color: var(--gdyup-bg-card, #111111) !important;
 }
 
-button.bg-\[var\(--gdyup-primary\)\], 
-a.bg-\[var\(--gdyup-primary\)\] {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.3) !important;
+/* Special styling for Luxury Black theme */
+.gdyup-theme-luxury .gdyup-app,
+.gdyup-theme-luxury body.gdyup-app,
+html.gdyup-theme-luxury body.gdyup-app {
+  /* Base colors for luxury theme */
+  --gdyup-bg-light: #0a0d14;
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-hover: rgba(13, 19, 33, 0.8);
+  --gdyup-bg-card: rgba(5, 10, 20, 0.8);
+  
+  /* Text colors */
+  --gdyup-text: #e6e6e6;
+  --gdyup-text-subtle: #9da9b9;
+  --gdyup-text-muted: #6d7a8c;
+  
+  /* Primary theme color */
+  --gdyup-primary: #39FF14;
+  --gdyup-primary-hover: #50FF32;
+  --gdyup-primary-active: #32CC10;
+  
+  /* Secondary color */
+  --gdyup-secondary: #4c5b6e;
+  --gdyup-secondary-hover: #5d6c7e;
+  
+  /* Border colors */
+  --gdyup-border: #1a2233;
+  --gdyup-border-light: #2a3243;
+  
+  /* Button text colors */
+  --gdyup-button-text: #000000;
+  
+  /* Special colors */
+  --gdyup-warning: #ff9800;
+  --gdyup-error: #f44336;
+  --gdyup-success: #4caf50;
+  
+  /* Navigation colors */
+  --gdyup-nav-active: #39FF14;
+  --gdyup-nav-active-text: #000000;
+  
+  /* Shadow effects */
+  --gdyup-shadow: rgba(0, 0, 0, 0.3);
+  --gdyup-shadow-light: rgba(0, 0, 0, 0.15);
 }
 
-button.bg-\[var\(--gdyup-primary\)\] svg, 
-a.bg-\[var\(--gdyup-primary\)\] svg {
-  color: var(--gdyup-button-text) !important;
-  stroke: var(--gdyup-button-text) !important;
-  fill: none !important;
+/* Special styling for Bitcoin theme */
+.gdyup-theme-bitcoin .gdyup-app,
+.gdyup-theme-bitcoin body.gdyup-app,
+html.gdyup-theme-bitcoin body.gdyup-app {
+  /* Base colors */
+  --gdyup-bg-light: #1a1118;
+  --gdyup-bg-dark: #0a0508;
+  --gdyup-bg-hover: rgba(26, 17, 24, 0.8);
+  --gdyup-bg-card: rgba(13, 8, 12, 0.8);
+  
+  /* Text colors */
+  --gdyup-text: #f0e6eb;
+  --gdyup-text-subtle: #bd9fb3;
+  --gdyup-text-muted: #8a6f84;
+  
+  /* Primary theme color */
+  --gdyup-primary: #F7931A;
+  --gdyup-primary-hover: #FFAA33;
+  --gdyup-primary-active: #D68000;
+  
+  /* Secondary color */
+  --gdyup-secondary: #6e4c66;
+  --gdyup-secondary-hover: #7e5d76;
+  
+  /* Border colors */
+  --gdyup-border: #371a2f;
+  --gdyup-border-light: #4a2940;
+  
+  /* Button text colors */
+  --gdyup-button-text: #000000;
+  
+  /* Special colors */
+  --gdyup-warning: #ff9800;
+  --gdyup-error: #f44336;
+  --gdyup-success: #4caf50;
+  
+  /* Navigation colors */
+  --gdyup-nav-active: #F7931A;
+  --gdyup-nav-active-text: #000000;
+  
+  /* Shadow effects */
+  --gdyup-shadow: rgba(0, 0, 0, 0.3);
+  --gdyup-shadow-light: rgba(0, 0, 0, 0.15);
 }
 
-button.bg-\[var\(--gdyup-primary\)\] span, 
-a.bg-\[var\(--gdyup-primary\)\] span {
-  color: var(--gdyup-button-text) !important;
-}
-
-/* Fix hover effects */
-button.bg-\[var\(--gdyup-primary\)\]:hover, 
-a.bg-\[var\(--gdyup-primary\)\]:hover {
-  filter: brightness(110%) !important;
-  transform: translateY(-2px) !important;
-  transition: all 0.2s ease !important;
-}
-
-/* Critical Theme Override Rules - Force hardcoded colors to use theme variables */
-.bg-\[\#DAFF0D\],
-button.bg-\[\#DAFF0D\],
-a.bg-\[\#DAFF0D\],
-nav button.bg-\[\#DAFF0D\],
-nav a.bg-\[\#DAFF0D\],
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-  border-color: var(--gdyup-border) !important;
-}
-
-/* Ensure SVG icons in buttons have the correct color based on theme */
-.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] svg,
-nav button.bg-\[\#DAFF0D\] svg,
-nav a.bg-\[\#DAFF0D\] svg {
-  color: var(--gdyup-button-text) !important;
-  stroke: var(--gdyup-button-text) !important;
-  fill: none !important;
-}
-
-/* Ensure text in buttons also has the correct color */
-.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span,
-nav button.bg-\[\#DAFF0D\] span,
-nav a.bg-\[\#DAFF0D\] span {
-  color: var(--gdyup-button-text) !important;
-}
-
-.text-\[\#DAFF0D\] {
-  color: var(--gdyup-primary) !important;
-}
-
-.border-\[\#DAFF0D\] {
-  border-color: var(--gdyup-primary) !important;
-}
-
-.hover\:bg-\[\#E8FF4D\]:hover {
-  background-color: var(--gdyup-button-hover-bg) !important;
-}
-
-.hover\:bg-\[\#C8EA00\]:hover {
-  background-color: var(--gdyup-button-active-bg) !important;
-}
-
-/* Default button styles */
-.gdyup-button {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-}
-
-/* Fix logo styling to prevent unwanted glow effects */
-header a img[src*="gdyup-logo"] {
-  border: none !important;
-  box-shadow: none !important;
-  filter: none !important;
-  background: none !important;
-}
-
-/* Additional theming overrides for GdyupHeader component */
-header button.bg-\[\#DAFF0D\],
-header a.bg-\[\#DAFF0D\],
-nav button.bg-\[\#DAFF0D\],
-nav a.bg-\[\#DAFF0D\],
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-  border: 1px solid rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Text Colors */
-.gdyup-primary {
-  color: var(--gdyup-primary);
-}
-
-.gdyup-secondary {
-  color: var(--gdyup-secondary);
-}
-
-/* Background Colors */
-.gdyup-bg-primary {
-  background-color: var(--gdyup-primary);
-  color: #000000; /* Always black text on bright background */
-  font-weight: bold;
-}
-
-.gdyup-bg-secondary {
-  background-color: var(--gdyup-secondary);
-  color: var(--gdyup-text);
-}
-
-/* Gradient Effects */
-.gdyup-gradient {
-  background: linear-gradient(90deg, var(--gdyup-primary), var(--gdyup-secondary));
-  color: #000000; /* Always black text on bright background */
-  font-weight: bold;
-}
-
-/* Border Utilities */
-.gdyup-border {
-  border-color: var(--gdyup-primary);
-}
-
-.gdyup-border-secondary {
-  border-color: var(--gdyup-secondary);
-}
-
-/* Button Styles - Enhanced for better visibility */
-.gdyup-button, 
-button.btn-primary,
-.btn-primary,
-button[type="submit"],
-.gdyup-app button.bg-primary {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  font-weight: bold !important;
-  transition: all 0.2s ease !important;
-  border: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 0.375rem !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 1rem !important;
-  line-height: 1.5 !important;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5) !important; /* Added for better text contrast */
-}
-
-.gdyup-button:hover,
-button.btn-primary:hover,
-.btn-primary:hover,
-button[type="submit"]:hover,
-.gdyup-app button.bg-primary:hover {
-  filter: brightness(110%) !important; /* Use filter instead of fixed color for theming */
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-}
-
-.gdyup-button-outline,
-button.btn-outline,
-.btn-outline {
-  background-color: transparent !important;
-  border: 2px solid var(--gdyup-primary) !important;
-  color: var(--gdyup-primary) !important;
-  font-weight: bold !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 0.375rem !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.gdyup-button-outline:hover,
-button.btn-outline:hover,
-.btn-outline:hover {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-background) !important;
-  transform: translateY(-2px) !important;
-}
-
-/* Fix for specific buttons */
-.main-cta-button,
-.action-button,
-.list-seats-button {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-background) !important;
-  font-weight: bold !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-  border: none !important;
-  font-size: 1rem !important;
-  padding: 0.75rem 1.5rem !important;
-  border-radius: 0.375rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Card & Container Styles */
-.gdyup-card {
-  background-color: var(--gdyup-accent);
-  border-radius: 8px;
-  border-left: 4px solid var(--gdyup-primary);
-  padding: 1rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.gdyup-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* Icons with glowing effect */
-.gdyup-icon {
-  color: var(--gdyup-primary);
-  filter: drop-shadow(0 0 8px rgba(218, 255, 13, 0.5));
-}
-
-.gdyup-icon-container {
-  background-color: black;
-  border: 2px solid var(--gdyup-primary);
-  border-radius: 50%;
-  padding: 0.75rem;
-  box-shadow: 0 0 20px rgba(218, 255, 13, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Default lime theme - Variables are set directly on :root for better compatibility */
+:root,
+.gdyup-theme-default {
+  /* Base colors */
+  --gdyup-bg-light: #0f1208;
+  --gdyup-bg-dark: #080c04;
+  --gdyup-bg-hover: rgba(15, 18, 8, 0.8);
+  --gdyup-bg-card: rgba(8, 12, 4, 0.7);
+  
+  /* Text colors */
+  --gdyup-text: #e6ebe0;
+  --gdyup-text-subtle: #a7b399;
+  --gdyup-text-muted: #798c6b;
+  
+  /* Primary theme color */
+  --gdyup-primary: #a4ff00;
+  --gdyup-primary-hover: #93e600;
+  --gdyup-primary-active: #83cc00;
+  
+  /* Secondary color */
+  --gdyup-secondary: #4c6e50;
+  --gdyup-secondary-hover: #5d7e60;
+  
+  /* Border colors */
+  --gdyup-border: #223319;
+  --gdyup-border-light: #304326;
+  
+  /* Button text colors */
+  --gdyup-button-text: #000000;
+  
+  /* Special colors */
+  --gdyup-warning: #ff9800;
+  --gdyup-error: #f44336;
+  --gdyup-success: #4caf50;
+  
+  /* Navigation colors */
+  --gdyup-nav-active: #a4ff00;
+  --gdyup-nav-active-text: #000000;
+  
+  /* Shadow effects */
+  --gdyup-shadow: rgba(0, 0, 0, 0.3);
+  --gdyup-shadow-light: rgba(0, 0, 0, 0.15);
 }
 
 /* Typography */
@@ -427,7 +295,7 @@ button.btn-outline:hover,
   color: var(--gdyup-primary);
   font-weight: bold;
   letter-spacing: -0.02em;
-  text-shadow: 0 0 10px rgba(218, 255, 13, 0.3);
+  text-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.3);
 }
 
 .gdyup-subtitle {
@@ -444,1175 +312,508 @@ button.btn-outline:hover,
   font-weight: bold;
 }
 
-/* Override shadcn components for better contrast */
-.gdyup-app .bg-card {
-  background-color: var(--gdyup-card-bg) !important;
-  border-color: var(--gdyup-card-border) !important;
+/* Text Colors */
+.gdyup-primary {
+  color: var(--gdyup-primary);
 }
 
-.gdyup-app .text-card-foreground {
-  color: var(--gdyup-text) !important;
+.gdyup-secondary {
+  color: var(--gdyup-secondary);
 }
 
-.gdyup-app .text-muted-foreground {
-  color: var(--gdyup-text-medium) !important;
+h1, h2, h3, h4, h5, h6 {
+  color: var(--gdyup-text);
 }
 
+h1.gdyup-primary, h2.gdyup-primary, h3.gdyup-primary, 
+h4.gdyup-primary, h5.gdyup-primary, h6.gdyup-primary {
+  color: var(--gdyup-primary);
+  text-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Background Colors */
+.gdyup-bg-primary {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  font-weight: bold;
+}
+
+.gdyup-bg-secondary {
+  background-color: var(--gdyup-secondary);
+  color: var(--gdyup-text);
+}
+
+/* Gradient Effects */
+.gdyup-gradient {
+  background: linear-gradient(90deg, var(--gdyup-primary), var(--gdyup-secondary));
+  color: var(--gdyup-button-text);
+  font-weight: bold;
+}
+
+/* Button Styling - With explicit text color for better visibility */
+button, a {
+  transition: all 0.2s ease;
+}
+
+.gdyup-button, 
+button.btn-primary,
+.btn-primary,
+button[type="submit"],
+.gdyup-app button.bg-primary,
+.gdyup-primary-button {
+  background-color: var(--gdyup-primary, #DAFF0D) !important;
+  color: var(--gdyup-button-text, #000000) !important; /* Ensuring contrast */
+  font-weight: bold;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-button:hover,
+button.btn-primary:hover,
+.btn-primary:hover,
+button[type="submit"]:hover,
+.gdyup-app button.bg-primary:hover,
+.gdyup-primary-button:hover {
+  filter: brightness(110%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: var(--gdyup-button-text, #000000) !important; /* Maintaining visibility on hover */
+}
+
+.gdyup-button-outline,
+button.btn-outline,
+.btn-outline {
+  background-color: transparent;
+  border: 2px solid var(--gdyup-primary);
+  color: var(--gdyup-primary);
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gdyup-button-outline:hover,
+button.btn-outline:hover,
+.btn-outline:hover {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  transform: translateY(-2px);
+}
+
+/* Specialized CTA buttons */
+.main-cta-button,
+.action-button,
+.list-seats-button,
+.gdyup-app .form-next-button {
+  background-color: var(--gdyup-primary, #DAFF0D) !important;
+  color: var(--gdyup-button-text, #000000) !important; /* Ensuring contrast */
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: none;
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Specific element overrides for common components when text is invisible */
+.gdyup-app button[class*="next"],
+.gdyup-app button[class*="submit"],
+.gdyup-app button[class*="primary"],
+.gdyup-app button[class*="action"],
+.gdyup-app button[type="submit"] {
+  background-color: var(--gdyup-primary, #DAFF0D) !important;
+  color: var(--gdyup-button-text, #000000) !important;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Fix for white/invisible text on white/light backgrounds */
+.gdyup-app [style*="background-color: rgb(255, 255, 255)"] {
+  color: #000000 !important;
+}
+
+.gdyup-app [style*="background-color: rgb(218, 255, 13)"],
+.gdyup-app [style*="background-color: #DAFF0D"],
+.gdyup-app [style*="background-color: rgb(57, 255, 20)"],
+.gdyup-app [style*="background-color: #39FF14"],
+.gdyup-app [style*="background-color: rgb(242, 169, 0)"],
+.gdyup-app [style*="background-color: #F2A900"] {
+  color: #000000 !important; /* All light primary colors get dark text */
+}
+
+/* Make sure all forms have proper text contrast */
+.gdyup-app input,
+.gdyup-app textarea,
+.gdyup-app select {
+  color: var(--gdyup-text, #FFFFFF) !important;
+  background-color: rgba(26, 26, 26, 0.8) !important;
+}
+
+/* Ensure dropdown triggers have proper text visibility */
+button[aria-haspopup="dialog"],
+button[aria-haspopup="menu"],
+button[aria-haspopup="listbox"] {
+  color: var(--gdyup-text, #FFFFFF) !important;
+}
+
+/* Emergency contrast classes for developers to use directly */
+.text-contrast-dark {
+  color: #000000 !important;
+}
+
+.text-contrast-light {
+  color: #FFFFFF !important;
+}
+
+/* Icon styling */
+svg, .lucide, .lucide-icon {
+  color: currentColor;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2px;
+}
+
+.gdyup-icon {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 8px rgba(var(--gdyup-primary-rgb), 0.5));
+}
+
+.gdyup-icon-container {
+  background-color: var(--gdyup-bg-dark);
+  border: 2px solid var(--gdyup-primary);
+  border-radius: 50%;
+  padding: 0.75rem;
+  box-shadow: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Navigation icon styling */
+header nav button svg,
+header nav a svg,
+.mobile-menu button svg,
+.mobile-menu a svg,
+.nav-icon {
+  color: var(--gdyup-text, #FFFFFF);
+  stroke: var(--gdyup-text, #FFFFFF);
+  fill: none;
+  stroke-width: 2px;
+  filter: none;
+}
+
+/* Active state navigation */
+header nav button.bg-primary svg,
+header nav a.bg-primary svg,
+.mobile-menu button.bg-primary svg,
+.mobile-menu a.bg-primary svg,
+.nav-active-icon {
+  color: var(--gdyup-nav-active-text, #000000);
+  stroke: var(--gdyup-nav-active-text, #000000);
+  fill: none;
+  stroke-width: 2px;
+}
+
+/* Icon utility classes */
+.gdyup-icon-primary {
+  color: var(--gdyup-primary);
+  stroke: var(--gdyup-primary);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+.gdyup-icon-white {
+  color: var(--gdyup-text);
+  stroke: var(--gdyup-text);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+.gdyup-icon-black {
+  color: var(--gdyup-bg-dark);
+  stroke: var(--gdyup-bg-dark);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+.gdyup-icon-secondary {
+  color: var(--gdyup-secondary);
+  stroke: var(--gdyup-secondary);
+  fill: none;
+  stroke-width: 2.5px;
+}
+
+/* Card & Container Styles */
+.gdyup-card {
+  background-color: var(--gdyup-bg-card);
+  border-radius: 8px;
+  border-left: 4px solid var(--gdyup-primary);
+  padding: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-app .bg-card,
+.gdyup-app [class*="Card"],
+.card, .bg-card {
+  background-color: var(--gdyup-bg-card);
+  border-color: var(--gdyup-border);
+}
+
+/* Form Elements */
 .gdyup-app input,
 .gdyup-app select,
 .gdyup-app textarea {
-  background-color: #1a1a1a !important;
-  border: 1px solid #4a4a4a !important; /* Brightened from #3a3a3a */
-  color: var(--gdyup-text) !important;
+  background-color: rgba(26, 26, 26, 0.8);
+  border: 1px solid var(--gdyup-border);
+  color: var(--gdyup-text);
 }
 
 .gdyup-app input:focus,
 .gdyup-app select:focus,
 .gdyup-app textarea:focus {
-  border-color: var(--gdyup-primary) !important;
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(218, 255, 13, 0.25) !important; /* Increased size and opacity */
+  border-color: var(--gdyup-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.25);
 }
 
-/* Badge styling with better contrast */
-.gdyup-app .badge-success {
-  background-color: rgba(0, 180, 0, 0.25) !important; /* Increased opacity */
-  color: #5aff5a !important; /* Brightened */
-  border: 1px solid #2ead2e !important;
-  font-weight: bold !important;
-}
-
-.gdyup-app .badge-warning {
-  background-color: rgba(255, 180, 0, 0.25) !important; /* Increased opacity */
-  color: #ffd761 !important; /* Brightened */
-  border: 1px solid #cc9633 !important;
-  font-weight: bold !important;
-}
-
-.gdyup-app .badge-error {
-  background-color: rgba(255, 0, 0, 0.25) !important; /* Increased opacity */
-  color: #ff7a7a !important; /* Brightened */
-  border: 1px solid #cc3e3e !important;
-  font-weight: bold !important;
-}
-
-/* Status indicators with better contrast */
-.gdyup-app .status-available {
-  color: #5aff5a !important; /* Brightened from #4eff4e */
-  font-weight: bold !important;
-}
-
-.gdyup-app .status-pending {
-  color: #ffd761 !important; /* Brightened from #ffcc4d */
-  font-weight: bold !important;
-}
-
-.gdyup-app .status-unavailable {
-  color: #ff7a7a !important; /* Brightened from #ff6b6b */
-  font-weight: bold !important;
-}
-
-/* Dialog/modal styling for better contrast */
+/* Dialog/modal styling */
 .gdyup-app [role="dialog"] {
-  background-color: #121212 !important;
-  border-color: #3a3a3a !important; /* Brightened from #2a2a2a */
+  background-color: var(--gdyup-bg-card);
+  border-color: var(--gdyup-border);
 }
 
 .gdyup-app [role="dialog"] h2 {
-  color: white !important;
+  color: var(--gdyup-text);
 }
 
 .gdyup-app [role="dialog"] p {
-  color: #e0e0e0 !important;
+  color: var(--gdyup-text-medium);
 }
 
-/* Loading indicators */
-.gdyup-app .loading-spinner {
-  border-color: rgba(218, 255, 13, 0.3) !important; /* Increased opacity */
-  border-top-color: var(--gdyup-primary) !important;
+/* Status badges */
+.gdyup-app .badge-success {
+  background-color: rgba(0, 180, 0, 0.25);
+  color: #5aff5a;
+  border: 1px solid #2ead2e;
+  font-weight: bold;
 }
 
-/* Mobile-specific Styles */
-.gdyup-mobile .gdyup-card {
-  margin-bottom: 1rem;
+.gdyup-app .badge-warning {
+  background-color: rgba(255, 180, 0, 0.25);
+  color: #ffd761;
+  border: 1px solid #cc9633;
+  font-weight: bold;
 }
 
-.gdyup-mobile .gdyup-button,
-.gdyup-mobile button.btn-primary,
-.gdyup-mobile .btn-primary,
-.gdyup-mobile button[type="submit"] {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
+.gdyup-app .badge-error {
+  background-color: rgba(255, 0, 0, 0.25);
+  color: #ff7a7a;
+  border: 1px solid #cc3e3e;
+  font-weight: bold;
 }
 
-/* Text color overrides for better contrast */
-.text-gray-300, .text-gray-400, .text-gray-500 {
-  color: #D0D0D0 !important; /* Brightened for better visibility */
+/* Status indicators */
+.gdyup-app .status-available {
+  color: #5aff5a;
+  font-weight: bold;
 }
 
-/* Make sure all text on dark backgrounds has sufficient contrast */
-.bg-gray-900 .text-gray-100, 
-.bg-gray-800 .text-gray-100,
-.bg-black .text-gray-100 {
-  color: #FFFFFF !important; /* Ensure maximum contrast */
+.gdyup-app .status-pending {
+  color: #ffd761;
+  font-weight: bold;
 }
 
-/* Make sure links and interactive elements are clearly visible */
-a.text-gray-400:hover, 
-a.text-gray-500:hover, 
-button.text-gray-400:hover, 
-button.text-gray-500:hover {
-  color: var(--gdyup-primary) !important;
+.gdyup-app .status-unavailable {
+  color: #ff7a7a;
+  font-weight: bold;
 }
 
-/* Ensure headings have good contrast */
-h1, h2, h3, h4, h5, h6 {
-  color: #FFFFFF !important;
-}
-
-h1.gdyup-primary, h2.gdyup-primary, h3.gdyup-primary, 
-h4.gdyup-primary, h5.gdyup-primary, h6.gdyup-primary,
-h1 .gdyup-primary, h2 .gdyup-primary, h3 .gdyup-primary, 
-h4 .gdyup-primary, h5 .gdyup-primary, h6 .gdyup-primary,
-h1.text-\[\#DAFF0D\], h2.text-\[\#DAFF0D\], h3.text-\[\#DAFF0D\],
-h4.text-\[\#DAFF0D\], h5.text-\[\#DAFF0D\], h6.text-\[\#DAFF0D\] {
-  color: var(--gdyup-primary) !important;
-  text-shadow: 0 0 10px rgba(218, 255, 13, 0.3); /* Adding slight glow effect */
-}
-
-/* Add additional contrast for card content */
-.bg-gray-900 .text-gray-100, 
-.bg-gray-800 .text-gray-100,
-.bg-black .text-gray-100 {
-  color: #FFFFFF !important;
-}
-
-/* Icon visibility enhancements */
-svg, .lucide, .lucide-icon {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: drop-shadow(0 0 3px var(--gdyup-icon-shadow)) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Enhance primary icons */
-svg.text-\[\#DAFF0D\], 
-.lucide.text-\[\#DAFF0D\], 
-.text-\[\#DAFF0D\] svg,
-.text-\[\#DAFF0D\] .lucide {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.6)); /* Add glow to primary colored icons */
-}
-
-/* Button background enhancements for landing page */
-.bg-gray-900, .bg-gray-800 {
-  background-color: #0D0D0D !important; /* Darker background for better contrast */
-}
-
-/* Enhance button background contrast */
-.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.3); /* Add glow effect to buttons */
-}
-
-/* Improve border visibility */
-.border-\[\#DAFF0D\] {
-  border-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.4); /* Add glow to borders */
-}
-
-/* Special treatment for icon containers */
-.rounded-full svg,
-.rounded-full .lucide,
-div[class*="rounded"] svg,
-div[class*="rounded"] .lucide {
-  color: var(--gdyup-primary);
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.6));
-}
-
-/* Improve card visibility */
-.card, .bg-card, [class*="Card"] {
-  background-color: #111111 !important;
-  border-color: #333333 !important;
-}
-
-/* GDYUP Seat Visualizer Enhancements */
-/* Container for the seat visualizer with improved styling */
-.gdyup-app .seat-visualizer-container {
-  background-color: #0A0A0A !important;
-  border: 1px solid #333333 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-  padding: 16px !important;
-  overflow: hidden !important;
-}
-
-/* Individual seat styling */
-.gdyup-app [data-seat-id] {
-  transition: all 0.2s ease !important;
-  transform: scale(0.95) !important;
-  border-radius: 8px !important;
-  font-weight: bold !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Selected seat styling with GDY UP branding */
-.gdyup-app [data-seat-id].bg-blue-600,
-.gdyup-app [data-seat-id][aria-checked="true"] {
-  background-color: var(--gdyup-primary) !important;
-  color: #000000 !important;
-  border-color: var(--gdyup-primary) !important;
-  transform: scale(1) !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.4) !important;
-}
-
-/* Hover effects for available seats */
-.gdyup-app [data-seat-id]:not([aria-checked="true"]):hover {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  border-color: rgba(218, 255, 13, 0.5) !important;
-  transform: scale(1) !important;
-  cursor: pointer !important;
-}
-
-/* Improved visualization header */
-.gdyup-app .seat-visualizer-header {
-  background-color: #151515 !important;
-  border-bottom: 2px solid #333333 !important;
-  color: white !important;
-  padding: 10px 16px !important;
-  border-radius: 8px 8px 0 0 !important;
-  font-weight: bold !important;
-}
-
-/* Improved control buttons in the visualizer */
-.gdyup-app .seat-control-button {
-  background-color: #222222 !important;
-  border: 1px solid #444444 !important;
-  color: #FFFFFF !important;
-  border-radius: 6px !important;
-  padding: 6px 12px !important;
-  transition: all 0.2s ease !important;
-  text-transform: uppercase !important;
-  font-size: 0.8rem !important;
-  letter-spacing: 0.04em !important;
-}
-
-.gdyup-app .seat-control-button:hover {
-  background-color: #333333 !important;
-  border-color: var(--gdyup-primary) !important;
-}
-
-.gdyup-app .seat-control-button.active {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  border-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-/* Improve seat legend */
-.gdyup-app .seat-legend {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  backdrop-filter: blur(5px) !important;
-  border-radius: 8px !important;
-  padding: 8px 12px !important;
-  margin-top: 12px !important;
-  border: 1px solid #333333 !important;
-}
-
-.gdyup-app .seat-legend-item {
-  display: flex !important;
-  align-items: center !important;
-  margin-right: 12px !important;
-}
-
-.gdyup-app .seat-legend-color {
-  width: 16px !important;
-  height: 16px !important;
-  border-radius: 4px !important;
-  margin-right: 6px !important;
-}
-
-/* Create Offer Form Enhancements */
-/* Section containers with consistent styling */
-.gdyup-app .offer-section {
-  background-color: #0F0F0F !important;
-  border-radius: 12px !important;
-  border: 1px solid #333333 !important;
-  padding: 20px !important;
-  margin-bottom: 24px !important;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Section headers */
-.gdyup-app .offer-section-header {
-  color: var(--gdyup-primary) !important;
-  font-size: 1.25rem !important;
-  font-weight: bold !important;
-  margin-bottom: 16px !important;
-  display: flex !important;
-  align-items: center !important;
-  border-bottom: 1px solid #333333 !important;
-  padding-bottom: 10px !important;
-}
-
-.gdyup-app .offer-section-header svg {
-  color: var(--gdyup-primary) !important;
-  margin-right: 8px !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
-}
-
-/* Input groups with improved spacing and styling */
-.gdyup-app .form-input-group {
-  margin-bottom: 16px !important;
-}
-
-.gdyup-app .form-input-label {
-  color: #FFFFFF !important;
-  font-weight: 500 !important;
-  margin-bottom: 6px !important;
-  display: block !important;
-}
-
-/* Form error messages with better visibility */
-.gdyup-app .form-error {
-  color: #FF6B6B !important;
-  font-size: 0.875rem !important;
-  margin-top: 4px !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-.gdyup-app .form-error svg {
-  color: #FF6B6B !important;
-  margin-right: 4px !important;
-}
-
-/* Navigation buttons for the multi-step form */
-.gdyup-app .form-nav-buttons {
-  display: flex !important;
-  justify-content: space-between !important;
-  margin-top: 24px !important;
-}
-
-.gdyup-app .form-back-button {
-  background-color: #222222 !important;
-  color: #FFFFFF !important;
-  border: 1px solid #444444 !important;
-  padding: 8px 16px !important;
-  border-radius: 6px !important;
-  transition: all 0.2s ease !important;
-}
-
-.gdyup-app .form-back-button:hover {
-  background-color: #333333 !important;
-  border-color: #555555 !important;
-}
-
-.gdyup-app .form-next-button {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  font-weight: 700 !important; /* Bolder for better contrast */
-  box-shadow: 0 0 15px rgba(218, 255, 13, 0.4) !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important; /* Added for better text contrast */
-  letter-spacing: 0.01em !important; /* Slightly increased letter spacing */
-  padding: 0.6rem 1.2rem !important; /* Slightly larger button */
-}
-
-.gdyup-app .form-next-button:hover {
-  background-color: #E8FF4D !important; /* Slightly brighter */
-  box-shadow: 0 0 12px rgba(218, 255, 13, 0.5) !important;
-  transform: translateY(-2px) !important;
-}
-
-/* Slider component styling */
-.gdyup-app .slider-container {
-  padding: 16px 12px !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 10px !important;
-  border: 1px solid #333333 !important;
-  margin: 20px 0 !important;
-}
-
-.gdyup-app .slider-track {
-  height: 8px !important;
-  background-color: #333333 !important;
-  border-radius: 4px !important;
-}
-
-.gdyup-app .slider-track-active {
-  background-color: var(--gdyup-primary) !important;
-  height: 8px !important;
-  border-radius: 4px !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4) !important;
-}
-
-.gdyup-app .slider-thumb {
-  width: 22px !important;
-  height: 22px !important;
-  background-color: var(--gdyup-primary) !important;
-  border: 2px solid #000000 !important;
-  border-radius: 50% !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
-  cursor: grab !important;
-}
-
-.gdyup-app .slider-thumb:active {
-  cursor: grabbing !important;
-  transform: scale(1.1) !important;
-}
-
-/* GDY UP SVG Logo Enhancement */
-.gdyup-logo,
-header a img[src*="gdyup-logo"],
-header a img[src*="GDYUP"] {
-  border: none !important;
-  box-shadow: none !important;
-  filter: drop-shadow(0 0 10px rgba(218, 255, 13, 0.3)) !important;
-}
-
-.gdyup-logo:hover {
-  filter: drop-shadow(0 0 12px rgba(218, 255, 13, 0.5));
-  transform: scale(1.02);
-}
-
-header a img[src*="gdyup-logo"] {
-  filter: none !important;
-  height: 40px !important;
-}
-
-@media (prefers-color-scheme: dark) {
-  header a img[src*="gdyup-logo"] {
-    filter: none !important;
-  }
-}
-
-.dark header a img[src*="gdyup-logo"] {
-  filter: none !important;
-}
-
-/* Mobile optimization for the logo */
-@media (max-width: 768px) {
-  header a img[src*="gdyup-logo.svg"] {
-    height: 38px !important;
-    margin-left: -5px; /* Adjust for optical alignment on small screens */
-  }
-}
-
-/* Add drop shadow glow effect for airport map visualization */
-.drop-shadow-glow {
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
-}
-
-/* ====== NEW STYLES BELOW ====== */
-
-/* GDYUP JetShareOfferForm Specific Theming */
-/* Replace all blue/amber colors with GDYUP branding */
-
-/* Fix jet selector contrast issue */
-.gdyup-app .aircraft-model-field button,
-button[class*="TabsTrigger"] {
-  background-color: #151515 !important;
-  border: 1px solid #333333 !important;
-  color: #FFFFFF !important;
-}
-
-.gdyup-app .aircraft-model-field button[data-state="active"],
-button[class*="TabsTrigger"][data-state="active"] {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-  border-color: rgba(218, 255, 13, 0.4) !important;
-  font-weight: bold !important;
-}
-
-/* Improve contrast for selected items in dropdowns */
-.gdyup-app [data-state="active"] {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-  font-weight: bold !important;
-}
-
-/* Replace blue backgrounds in offer form */
-.gdyup-app .bg-blue-900\/30,
-.gdyup-app .bg-blue-900\/20,
-.gdyup-app .bg-blue-600\/30,
-.gdyup-app .bg-blue-500\/20,
-.gdyup-app [class*="bg-blue-"] {
-  background-color: rgba(218, 255, 13, 0.1) !important;
-  border-color: rgba(218, 255, 13, 0.3) !important;
-}
-
-/* Replace amber backgrounds */
-.gdyup-app .bg-amber-900\/30,
-.gdyup-app .bg-amber-600\/30,
-.gdyup-app .bg-amber-500\/20,
-.gdyup-app [class*="bg-amber-"] {
-  background-color: rgba(255, 75, 71, 0.1) !important; /* Using secondary color */
-  border-color: rgba(255, 75, 71, 0.3) !important;
-}
-
-/* Replace blue text colors */
-.gdyup-app .text-blue-300,
-.gdyup-app .text-blue-400,
-.gdyup-app .text-blue-500,
-.gdyup-app .text-blue-100,
-.gdyup-app [class*="text-blue-"] {
-  color: var(--gdyup-primary) !important;
-}
-
-/* Replace amber text colors */
-.gdyup-app .text-amber-300,
-.gdyup-app .text-amber-400,
-.gdyup-app .text-amber-500,
-.gdyup-app .text-amber-100,
-.gdyup-app [class*="text-amber-"] {
-  color: var(--gdyup-secondary) !important;
-}
-
-/* Border and focus replacements */
-.gdyup-app .border-blue-500\/30,
-.gdyup-app .border-blue-400,
-.gdyup-app .border-blue-700,
-.gdyup-app [class*="border-blue-"] {
-  border-color: rgba(218, 255, 13, 0.5) !important;
-}
-
-.gdyup-app .border-amber-500\/30,
-.gdyup-app .border-amber-400,
-.gdyup-app .border-amber-700,
-.gdyup-app [class*="border-amber-"] {
-  border-color: rgba(255, 75, 71, 0.5) !important;
-}
-
-/* Fix ring focus colors */
-.gdyup-app .ring-blue-500\/30,
-.gdyup-app .focus\:ring-blue-500:focus,
-.gdyup-app .focus-visible\:ring-blue-500:focus-visible,
-.gdyup-app [class*="ring-blue-"] {
-  --tw-ring-color: rgba(218, 255, 13, 0.3) !important;
-  --tw-ring-opacity: 0.3 !important;
-}
-
-/* Improved contrast for badge components */
-.gdyup-app .bg-blue-900\/20,
-.gdyup-app .bg-blue-900\/50 {
-  background-color: rgba(0, 0, 0, 0.7) !important;
-  border: 1px solid rgba(218, 255, 13, 0.3) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-/* Fix hover effects */
-.gdyup-app .hover\:bg-blue-700:hover,
-.gdyup-app .hover\:bg-blue-600:hover,
-.gdyup-app .hover\:bg-gray-700:hover {
-  background-color: rgba(218, 255, 13, 0.2) !important;
-}
-
-.gdyup-app .hover\:text-blue-500:hover,
-.gdyup-app .hover\:text-white:hover {
-  color: var(--gdyup-primary) !important;
-}
-
-/* Fix form field focus */
-.gdyup-app .focus\:border-blue-500:focus,
-.gdyup-app .focus\:border-amber-500:focus {
-  border-color: var(--gdyup-primary) !important;
-}
-
-/* Fix specific backgrounds in jet selector */
-.gdyup-app .bg-gradient-to-r.from-blue-500,
-.gdyup-app .bg-gradient-to-b.from-blue-500 {
-  background: linear-gradient(to right, rgba(218, 255, 13, 0.7), rgba(218, 255, 13, 0.3)) !important;
-}
-
-.gdyup-app .bg-gradient-to-b.from-gray-900 {
-  background: linear-gradient(to bottom, #151515, #0F0F0F) !important;
-}
-
-/* Enhanced offer states styling */
+/* Enhanced offer status styling */
 .gdyup-app .offer-status-open {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-  border: 1px solid rgba(218, 255, 13, 0.4) !important;
-  font-weight: bold !important;
-  padding: 0.25rem 0.75rem !important;
-  border-radius: 9999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+  border: 1px solid rgba(var(--gdyup-primary-rgb), 0.4);
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .offer-status-pending {
-  background-color: rgba(255, 170, 13, 0.15) !important;
-  color: #FFAA0D !important;
-  border: 1px solid rgba(255, 170, 13, 0.4) !important;
-  font-weight: bold !important;
-  padding: 0.25rem 0.75rem !important;
-  border-radius: 9999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(255, 170, 13, 0.15);
+  color: #FFAA0D;
+  border: 1px solid rgba(255, 170, 13, 0.4);
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .offer-status-accepted {
-  background-color: rgba(0, 200, 83, 0.15) !important;
-  color: #00C853 !important;
-  border: 1px solid rgba(0, 200, 83, 0.4) !important;
-  font-weight: bold !important;
-  padding: 0.25rem 0.75rem !important;
-  border-radius: 9999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(0, 200, 83, 0.15);
+  color: #00C853;
+  border: 1px solid rgba(0, 200, 83, 0.4);
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .offer-status-completed {
-  background-color: rgba(100, 100, 255, 0.15) !important;
-  color: #6464FF !important;
-  border: 1px solid rgba(100, 100, 255, 0.4) !important;
-  font-weight: bold !important;
-  padding: 0.25rem 0.75rem !important;
-  border-radius: 9999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(100, 100, 255, 0.15);
+  color: #6464FF;
+  border: 1px solid rgba(100, 100, 255, 0.4);
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .offer-status-cancelled {
-  background-color: rgba(255, 75, 71, 0.15) !important;
-  color: var(--gdyup-secondary) !important;
-  border: 1px solid rgba(255, 75, 71, 0.4) !important;
-  font-weight: bold !important;
-  padding: 0.25rem 0.75rem !important;
-  border-radius: 9999px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(var(--gdyup-secondary-rgb), 0.15);
+  color: var(--gdyup-secondary);
+  border: 1px solid rgba(var(--gdyup-secondary-rgb), 0.4);
+  font-weight: bold;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
 }
 
 /* Payment status styling */
 .gdyup-app .payment-status-unpaid {
-  background-color: rgba(255, 75, 71, 0.15) !important;
-  color: var(--gdyup-secondary) !important;
-  border: 1px solid rgba(255, 75, 71, 0.4) !important;
-  font-weight: bold !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(var(--gdyup-secondary-rgb), 0.15);
+  color: var(--gdyup-secondary);
+  border: 1px solid rgba(var(--gdyup-secondary-rgb), 0.4);
+  font-weight: bold;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .payment-status-pending {
-  background-color: rgba(255, 170, 13, 0.15) !important;
-  color: #FFAA0D !important;
-  border: 1px solid rgba(255, 170, 13, 0.4) !important;
-  font-weight: bold !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(255, 170, 13, 0.15);
+  color: #FFAA0D;
+  border: 1px solid rgba(255, 170, 13, 0.4);
+  font-weight: bold;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .payment-status-paid {
-  background-color: rgba(0, 200, 83, 0.15) !important;
-  color: #00C853 !important;
-  border: 1px solid rgba(0, 200, 83, 0.4) !important;
-  font-weight: bold !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(0, 200, 83, 0.15);
+  color: #00C853;
+  border: 1px solid rgba(0, 200, 83, 0.4);
+  font-weight: bold;
+  font-size: 0.75rem;
 }
 
 .gdyup-app .payment-status-refunded {
-  background-color: rgba(100, 100, 255, 0.15) !important;
-  color: #6464FF !important;
-  border: 1px solid rgba(100, 100, 255, 0.4) !important;
-  font-weight: bold !important;
-  font-size: 0.75rem !important;
+  background-color: rgba(100, 100, 255, 0.15);
+  color: #6464FF;
+  border: 1px solid rgba(100, 100, 255, 0.4);
+  font-weight: bold;
+  font-size: 0.75rem;
 }
 
-/* Fix specific Button colors in submit form */
-.gdyup-app button.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  font-weight: bold !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
+/* Loading indicators */
+.gdyup-app .loading-spinner,
+svg.animate-spin,
+.loading-indicator svg,
+.spinner svg {
+  border-color: rgba(var(--gdyup-primary-rgb), 0.3);
+  border-top-color: var(--gdyup-primary);
+  color: var(--gdyup-primary);
+  stroke: var(--gdyup-primary);
 }
 
-.gdyup-app button.hover\:bg-\[\#C8EA00\]:hover {
-  background-color: #C8EA00 !important;
-  box-shadow: 0 0 15px rgba(200, 234, 0, 0.4) !important;
+/* Logo styling */
+.gdyup-logo {
+  transition: filter 0.3s ease-in-out;
 }
 
-/* Enhanced Specific Element Selectors */
-
-/* Fix location autocomplete fields */
-.gdyup-app div[class*="LocationAutocomplete"] {
-  --input-border-color: #333333 !important;
-  --input-bg-color: rgba(0, 0, 0, 0.5) !important;
-  --input-text-color: white !important;
-  --input-focus-border: var(--gdyup-primary) !important;
-  --input-focus-ring: rgba(218, 255, 13, 0.3) !important;
-}
-
-/* Fix background issues in JetShareOfferForm */
-.gdyup-app form[class*="JetShareOfferForm"] {
-  --form-bg-color: #0A0A0A !important;
-  --form-card-bg: #151515 !important;
-  --form-input-bg: #202020 !important;
-  --form-border-color: #333333 !important;
-  --form-text-color: white !important;
-  --form-accent-color: var(--gdyup-primary) !important;
-}
-
-/* Fix specific JetSelector styling */
-.gdyup-app .aircraft-model-field button,
-.gdyup-app div[class*="JetSelector"] button {
-  text-align: left !important;
-  padding: 12px !important;
-  background-color: #151515 !important;
-  border: 1px solid #333333 !important;
-  color: white !important;
-  border-radius: 8px !important;
-}
-
-/* Fix dropdown list items in jet selector */
-.gdyup-app div[class*="Command"] [cmdk-item][data-selected="true"] {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-.gdyup-app div[class*="Command"] [cmdk-item]:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Fix tabs in the jet details card */
-.gdyup-app div[class*="Tabs"] [role="tablist"] {
-  background-color: #151515 !important;
-  border-color: #333333 !important;
-}
-
-.gdyup-app div[class*="Tabs"] [role="tab"][data-state="active"] {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-/* Fix selected element background in JetShareOfferForm */
-.gdyup-app .selected-aircraft {
-  border-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.2) !important;
-}
-
-/* Seat map overrides */
-.gdyup-app div[class*="JetSeatVisualizer"] [data-selected="true"],
-.gdyup-app div[class*="JetSeatVisualizer"] .bg-blue-500 {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  border-color: var(--gdyup-primary) !important;
-}
-
-/* Fix progress indicator dots */
-.gdyup-app .w-2.h-2.rounded-full.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 5px rgba(218, 255, 13, 0.6) !important;
-}
-
-/* Fix share ratio slider */
-.gdyup-app [class*="Slider"] span {
-  background-color: #333333 !important;
-}
-
-.gdyup-app [class*="Slider"] [data-orientation="horizontal"] > span {
-  height: 6px !important;
-  border-radius: 3px !important;
-}
-
-.gdyup-app [class*="Slider"] [data-orientation="horizontal"] > span > span {
-  background-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4) !important;
-}
-
-.gdyup-app [class*="Slider"] [role="slider"] {
-  background-color: var(--gdyup-primary) !important;
-  border: 2px solid black !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
-  width: 18px !important;
-  height: 18px !important;
-}
-
-/* Enhanced styling for the Next button and navigation buttons */
-.gdyup-button-primary,
-.gdyup-app .form-next-button,
-.gdyup-app button[type="submit"],
-.gdyup-form button[type="submit"] {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  font-weight: 700 !important; /* Bolder for better contrast */
-  box-shadow: 0 0 15px rgba(218, 255, 13, 0.4) !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important; /* Added for better text contrast */
-  letter-spacing: 0.01em !important; /* Slightly increased letter spacing */
-  padding: 0.6rem 1.2rem !important; /* Slightly larger button */
-}
-
-/* Enhance Next button icon visibility */
-.gdyup-button-primary svg,
-.gdyup-app .form-next-button svg,
-button[type="submit"] svg,
-.gdyup-app button.bg-\[\#DAFF0D\] svg {
-  color: black !important;
-  fill: black !important;
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Split information displays with better contrast */
-.gdyup-app .share-ratio-info,
-.gdyup-app .seat-info,
-.gdyup-app [class*="split-ratio"] {
-  font-weight: 600 !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7) !important;
-  letter-spacing: 0.02em !important;
-}
-
-.gdyup-app .gdyup-primary,
-.gdyup-primary {
-  color: var(--gdyup-primary) !important;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8) !important;
-  font-weight: 600 !important;
-}
-
-/* Enhance reset buttons */
-.gdyup-app button[class*="reset"],
-.gdyup-app button:has(span:contains("Reset")) {
-  border: 1px solid var(--gdyup-primary) !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: var(--gdyup-primary) !important;
-  font-weight: 600 !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.2) !important;
-}
-
-.gdyup-app button[class*="reset"]:hover,
-.gdyup-app button:has(span:contains("Reset")):hover {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  box-shadow: 0 0 12px rgba(218, 255, 13, 0.3) !important;
-}
-
-/* Fix the Next button icon opacity issues */
-.gdyup-button-primary svg.lucide-chevron-right,
-button[type="submit"] svg.lucide-chevron-right,
-button svg.lucide-chevron-right {
-  color: black !important;
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: inline-block !important;
-  width: 16px !important;
-  height: 16px !important;
-  margin-left: 4px !important;
-}
-
-/* Add direct selector for all lucide icons in primary buttons */
-.lucide-chevron-right,
-.lucide-chevron-left,
-.lucide-loader2 {
-  display: inline-block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Ensure that fixed navigation footer buttons have visible icons */
-.fixed.bottom-0.left-0.right-0 button svg,
-.fixed.bottom-0.left-0.right-0 a svg {
-  display: inline-block !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  stroke-width: 2.5px !important;
-}
-
-/* Fix SVG icons inside buttons with theme background color */
-.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] svg,
-nav button.bg-\[\#DAFF0D\] svg,
-nav a.bg-\[\#DAFF0D\] svg {
-  color: var(--gdyup-button-text) !important;
-  stroke: var(--gdyup-button-text) !important;
-  fill: none !important;
-}
-
-/* Fix text inside buttons with theme background color */
-.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span,
-nav button.bg-\[\#DAFF0D\] span,
-nav a.bg-\[\#DAFF0D\] span {
-  color: var(--gdyup-button-text) !important;
-}
-
-/* Fix logo styling in Header */
-header a img[src*="gdyup-logo-v2.svg"],
+header a img.gdyup-logo,
+img.gdyup-logo,
 header a img[src*="gdyup-logo"],
+header a img[src*="gdyup-logo-v2.svg"],
 header a img[alt*="GDYUP"],
 header a img[alt="GDYUP Logo"] {
-  filter: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  outline: none !important;
-  background: none !important;
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
+  border: none;
+  box-shadow: none;
+  filter: none;
+  background: none;
 }
 
-/* Add styles for our custom theme-responsive button class */
-.gdyup-primary-button {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.3) !important;
-  transition: all 0.2s ease-in-out !important;
+/* Mobile menu styling */
+.mobile-menu {
+  background-color: var(--gdyup-bg-dark);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.gdyup-primary-button:hover {
-  filter: brightness(110%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(var(--gdyup-primary-rgb), 0.4) !important;
+.mobile-menu button,
+.mobile-menu a {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0.35rem 0;
+  transition: all 0.2s ease-in-out;
 }
 
-.gdyup-primary-button svg {
-  color: var(--gdyup-button-text) !important;
-  stroke: var(--gdyup-button-text) !important;
-  fill: none !important;
+.mobile-menu button.bg-primary,
+.mobile-menu a.bg-primary {
+  background-color: var(--gdyup-nav-active-bg);
+  color: var(--gdyup-nav-active-text);
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.gdyup-primary-button span {
-  color: var(--gdyup-button-text) !important;
-}
-
-/* Button hover effects for the different themes */
-.gdyup-theme-default .bg-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-default .bg-\[\#DAFF0D\]:hover,
-.gdyup-theme-default .gdyup-primary-button:hover {
-  filter: brightness(110%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(218, 255, 13, 0.4) !important;
-}
-
-.gdyup-theme-blue .bg-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-blue .bg-\[\#DAFF0D\]:hover,
-.gdyup-theme-blue .gdyup-primary-button:hover {
-  filter: brightness(110%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(242, 92, 5, 0.4) !important;
-}
-
-.gdyup-theme-pink .bg-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-pink .bg-\[\#DAFF0D\]:hover,
-.gdyup-theme-pink .gdyup-primary-button:hover {
-  filter: brightness(110%) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.4) !important;
-}
-
-/* Comprehensive theme overrides - ensure everything changes with theme */
-
-/* Fix any possible hover effects on the logo */
-a:hover img[src*="gdyup-logo"],
-a:hover img[src*="gdyup-logo-v2.svg"] {
-  filter: none !important;
-  box-shadow: none !important;
-  border: none !important;
-  outline: none !important;
-  background: none !important;
-  opacity: 1 !important;
-}
-
-/* Text elements - ensure all text with class .text-[#DAFF0D] changes with theme */
-.gdyup-theme-default .text-\[\#DAFF0D\],
-.gdyup-theme-default .text-\[var\(--gdyup-primary\)\] {
-  color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue .text-\[\#DAFF0D\],
-.gdyup-theme-blue .text-\[var\(--gdyup-primary\)\] {
-  color: #F25C05 !important;
-}
-
-.gdyup-theme-pink .text-\[\#DAFF0D\],
-.gdyup-theme-pink .text-\[var\(--gdyup-primary\)\] {
-  color: #F7931A !important;
-}
-
-/* Primary color element overrides */
-.gdyup-theme-default .text-\[var\(--gdyup-primary\)\],
-.gdyup-theme-default .gdyup-primary {
-  color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue .text-\[var\(--gdyup-primary\)\],
-.gdyup-theme-blue .gdyup-primary {
-  color: #F25C05 !important;
-}
-
-.gdyup-theme-pink .text-\[var\(--gdyup-primary\)\],
-.gdyup-theme-pink .gdyup-primary {
-  color: #F7931A !important;
-}
-
-/* Background elements for page sections */
-.gdyup-theme-default .bg-\[var\(--gdyup-primary\)\],
-.gdyup-theme-default .gdyup-bg-primary,
-.gdyup-theme-default .bg-gdyup-primary {
-  background-color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue .bg-\[var\(--gdyup-primary\)\],
-.gdyup-theme-blue .gdyup-bg-primary,
-.gdyup-theme-blue .bg-gdyup-primary {
-  background-color: #F25C05 !important;
-}
-
-.gdyup-theme-pink .bg-\[var\(--gdyup-primary\)\],
-.gdyup-theme-pink .gdyup-bg-primary,
-.gdyup-theme-pink .bg-gdyup-primary {
-  background-color: #F7931A !important;
-}
-
-/* Border colors */
-.gdyup-theme-default .border-\[var\(--gdyup-primary\)\],
-.gdyup-theme-default .border-\[\#DAFF0D\],
-.gdyup-theme-default .border-l-\[\#DAFF0D\],
-.gdyup-theme-default .border-r-\[\#DAFF0D\],
-.gdyup-theme-default .border-t-\[\#DAFF0D\],
-.gdyup-theme-default .border-b-\[\#DAFF0D\] {
-  border-color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue .border-\[var\(--gdyup-primary\)\],
-.gdyup-theme-blue .border-\[\#DAFF0D\],
-.gdyup-theme-blue .border-l-\[\#DAFF0D\],
-.gdyup-theme-blue .border-r-\[\#DAFF0D\],
-.gdyup-theme-blue .border-t-\[\#DAFF0D\],
-.gdyup-theme-blue .border-b-\[\#DAFF0D\] {
-  border-color: #F25C05 !important;
-}
-
-.gdyup-theme-pink .border-\[var\(--gdyup-primary\)\],
-.gdyup-theme-pink .border-\[\#DAFF0D\],
-.gdyup-theme-pink .border-l-\[\#DAFF0D\],
-.gdyup-theme-pink .border-r-\[\#DAFF0D\],
-.gdyup-theme-pink .border-t-\[\#DAFF0D\],
-.gdyup-theme-pink .border-b-\[\#DAFF0D\] {
-  border-color: #F7931A !important;
-}
-
-/* Shadow effects */
-.gdyup-theme-default .shadow-\[0_0_10px_rgba\(218\,255\,13\,0\.3\)\],
-.gdyup-theme-default .shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.4\)\],
-.gdyup-theme-default .shadow-\[0_0_20px_rgba\(218\,255\,13\,0\.5\)\] {
-  box-shadow: 0 0 15px rgba(218, 255, 13, 0.4) !important;
-}
-
-.gdyup-theme-blue .shadow-\[0_0_10px_rgba\(218\,255\,13\,0\.3\)\],
-.gdyup-theme-blue .shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.4\)\],
-.gdyup-theme-blue .shadow-\[0_0_20px_rgba\(218\,255\,13\,0\.5\)\] {
-  box-shadow: 0 0 15px rgba(242, 92, 5, 0.4) !important;
-}
-
-.gdyup-theme-pink .shadow-\[0_0_10px_rgba\(218\,255\,13\,0\.3\)\],
-.gdyup-theme-pink .shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.4\)\],
-.gdyup-theme-pink .shadow-\[0_0_20px_rgba\(218\,255\,13\,0\.5\)\] {
-  box-shadow: 0 0 15px rgba(247, 147, 26, 0.4) !important;
-}
-
-/* Text shadow and drop shadow for headings and text */
-.gdyup-theme-default .drop-shadow-\[0_0_10px_rgba\(var\(--gdyup-primary-rgb\,218\,255\,13\)\,0\.3\)\],
-.gdyup-theme-default .drop-shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.3\)\] {
-  filter: drop-shadow(0 0 10px rgba(218, 255, 13, 0.3)) !important;
-}
-
-.gdyup-theme-blue .drop-shadow-\[0_0_10px_rgba\(var\(--gdyup-primary-rgb\,218\,255\,13\)\,0\.3\)\],
-.gdyup-theme-blue .drop-shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.3\)\] {
-  filter: drop-shadow(0 0 10px rgba(242, 92, 5, 0.3)) !important;
-}
-
-.gdyup-theme-pink .drop-shadow-\[0_0_10px_rgba\(var\(--gdyup-primary-rgb\,218\,255\,13\)\,0\.3\)\],
-.gdyup-theme-pink .drop-shadow-\[0_0_15px_rgba\(218\,255\,13\,0\.3\)\] {
-  filter: drop-shadow(0 0 10px rgba(247, 147, 26, 0.3)) !important;
-}
-
-/* Icon coloring throughout the app */
-.gdyup-theme-default svg.text-\[var\(--gdyup-primary\)\],
-.gdyup-theme-default svg.text-\[\#DAFF0D\] {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-}
-
-.gdyup-theme-blue svg.text-\[var\(--gdyup-primary\)\],
-.gdyup-theme-blue svg.text-\[\#DAFF0D\] {
-  color: #F25C05 !important;
-  stroke: #F25C05 !important;
-}
-
-.gdyup-theme-pink svg.text-\[var\(--gdyup-primary\)\],
-.gdyup-theme-pink svg.text-\[\#DAFF0D\] {
-  color: #F7931A !important;
-  stroke: #F7931A !important;
-}
-
-/* Hover states for text */
-.gdyup-theme-default .hover\:text-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-default .hover\:text-\[\#DAFF0D\]:hover {
-  color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue .hover\:text-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-blue .hover\:text-\[\#DAFF0D\]:hover {
-  color: #F25C05 !important;
-}
-
-.gdyup-theme-pink .hover\:text-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-pink .hover\:text-\[\#DAFF0D\]:hover {
-  color: #F7931A !important;
-}
-
-/* Special styling for theme palette button */
-button:has(.lucide-palette),
-.theme-menu-button,
-button[title="Change theme"] {
-  background-color: transparent !important;
-  border: 1px solid var(--gdyup-nav-hover-border) !important;
-}
-
-button:has(.lucide-palette) svg,
-.theme-menu-button svg,
-button[title="Change theme"] svg {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  fill: none !important;
-  filter: drop-shadow(0 0 3px var(--gdyup-icon-shadow)) !important;
-}
-
-button:has(.lucide-palette):hover,
-.theme-menu-button:hover,
-button[title="Change theme"]:hover {
-  background-color: rgba(var(--gdyup-primary-rgb), 0.1) !important;
-} 
-
-/* AI Concierge Theming - fix all concierge button variants */
+/* AI Concierge styling */
 .ai-concierge-button,
 .concierge-button,
 div[class*="concierge-button"],
 button[class*="concierge-button"],
 [data-ai-concierge="true"],
 [data-testid="ai-concierge-button"] {
-  background-color: var(--gdyup-concierge-bg) !important;
-  color: var(--gdyup-concierge-text) !important;
-  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.5) !important;
-  border: none !important;
-  border-radius: 999px !important;
-  transition: all 0.2s ease-in-out !important;
+  background-color: var(--gdyup-concierge-bg);
+  color: var(--gdyup-concierge-text);
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.5);
+  border: none;
+  border-radius: 999px;
+  transition: all 0.2s ease-in-out;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
 }
 
 .ai-concierge-button svg,
@@ -1621,1158 +822,264 @@ div[class*="concierge-button"] svg,
 button[class*="concierge-button"] svg,
 [data-ai-concierge="true"] svg,
 [data-testid="ai-concierge-button"] svg {
-  color: var(--gdyup-concierge-text) !important;
-  stroke: var(--gdyup-concierge-text) !important;
-  fill: none !important;
-  filter: none !important;
-  stroke-width: 2.5px !important;
+  color: var(--gdyup-concierge-text);
+  stroke: var(--gdyup-concierge-text);
+  fill: none;
+  stroke-width: 2px;
+  filter: none;
 }
 
-/* Hover effect for concierge button */
 .ai-concierge-button:hover,
 .concierge-button:hover,
 div[class*="concierge-button"]:hover,
 button[class*="concierge-button"]:hover,
 [data-ai-concierge="true"]:hover,
 [data-testid="ai-concierge-button"]:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.7) !important;
-  filter: brightness(110%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.7);
+  filter: brightness(110%);
+}
+
+/* GDYUP Seat Visualizer Enhancements */
+.gdyup-app .seat-visualizer-container {
+  background-color: rgba(10, 10, 10, 0.9);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  padding: 16px;
+  overflow: hidden;
 }
 
-/* Enhanced logo styling for theme support */
-.gdyup-logo {
-  transition: filter 0.3s ease-in-out;
+.gdyup-app [data-seat-id] {
+  transition: all 0.2s ease;
+  transform: scale(0.95);
+  border-radius: 8px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-/* Base white logo for all themes */
-header a img.gdyup-logo,
-img.gdyup-logo {
-  border: none !important;
-  box-shadow: none !important;
-  filter: brightness(1) contrast(1) drop-shadow(0 0 8px rgba(0, 0, 0, 0.5)) !important;
-  background: none !important;
+.gdyup-app [data-seat-id].bg-blue-600,
+.gdyup-app [data-seat-id][aria-checked="true"],
+.gdyup-app div[class*="JetSeatVisualizer"] [data-selected="true"],
+.gdyup-app div[class*="JetSeatVisualizer"] .bg-blue-500 {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  border-color: var(--gdyup-primary);
+  transform: scale(1);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.4);
 }
 
-/* Theme-specific logo treatments */
-.gdyup-theme-default header a img.gdyup-logo,
-.gdyup-theme-default img.gdyup-logo {
-  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 8px rgba(218, 255, 13, 0.3)) !important;
+.gdyup-app [data-seat-id]:not([aria-checked="true"]):hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  border-color: rgba(var(--gdyup-primary-rgb), 0.5);
+  transform: scale(1);
+  cursor: pointer;
 }
 
-.gdyup-theme-blue header a img.gdyup-logo,
-.gdyup-theme-blue img.gdyup-logo {
-  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 8px rgba(242, 92, 5, 0.3)) !important;
+.gdyup-app .seat-visualizer-header {
+  background-color: rgba(21, 21, 21, 0.9);
+  border-bottom: 2px solid var(--gdyup-border);
+  color: var(--gdyup-text);
+  padding: 10px 16px;
+  border-radius: 8px 8px 0 0;
+  font-weight: bold;
 }
 
-.gdyup-theme-pink header a img.gdyup-logo,
-.gdyup-theme-pink img.gdyup-logo {
-  filter: brightness(1.05) contrast(1.05) drop-shadow(0 0 8px rgba(247, 147, 26, 0.3)) !important;
+.gdyup-app .seat-control-button {
+  background-color: rgba(34, 34, 34, 0.9);
+  border: 1px solid #444444;
+  color: var(--gdyup-text);
+  border-radius: 6px;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
 }
 
-/* Fix mobile menu styling with theme variables */
-.mobile-menu {
-  background-color: var(--gdyup-background) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+.gdyup-app .seat-control-button:hover {
+  background-color: rgba(51, 51, 51, 0.9);
+  border-color: var(--gdyup-primary);
 }
 
-/* Ensure mobile menu button specific styles */
-.mobile-menu button,
-.mobile-menu a {
-  background-color: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  margin: 0.35rem 0 !important;
-  transition: all 0.2s ease-in-out !important;
+.gdyup-app .seat-control-button.active {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  border-color: var(--gdyup-primary);
+  color: var(--gdyup-primary);
 }
 
-/* Active state for mobile menu buttons */
-.mobile-menu button.bg-\[var\(--gdyup-primary\)\],
-.mobile-menu a.bg-\[var\(--gdyup-primary\)\],
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-nav-active-bg) !important;
-  color: var(--gdyup-nav-active-text) !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+/* Slider component styling */
+.gdyup-app .slider-container {
+  padding: 16px 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border: 1px solid var(--gdyup-border);
+  margin: 20px 0;
 }
 
-/* Icon colors for active mobile menu buttons */
-.mobile-menu button.bg-\[var\(--gdyup-primary\)\] svg,
-.mobile-menu a.bg-\[var\(--gdyup-primary\)\] svg,
-.mobile-menu button.bg-\[\#DAFF0D\] svg,
-.mobile-menu a.bg-\[\#DAFF0D\] svg {
-  color: var(--gdyup-nav-active-text) !important;
-  stroke: var(--gdyup-nav-active-text) !important;
-  filter: none !important;
-}
-
-/* Text colors for active mobile menu buttons */
-.mobile-menu button.bg-\[var\(--gdyup-primary\)\] span,
-.mobile-menu a.bg-\[var\(--gdyup-primary\)\] span,
-.mobile-menu button.bg-\[\#DAFF0D\] span,
-.mobile-menu a.bg-\[\#DAFF0D\] span {
-  color: var(--gdyup-nav-active-text) !important;
-}
-
-/* Fix for Sign Out button */
-.mobile-menu button.text-\[\#FF4B47\],
-.mobile-menu a.text-\[\#FF4B47\] {
-  background-color: rgba(255, 75, 71, 0.1) !important;
-  border-color: rgba(255, 75, 71, 0.3) !important;
-}
-
-.mobile-menu button.text-\[\#FF4B47\]:hover,
-.mobile-menu a.text-\[\#FF4B47\]:hover {
-  background-color: rgba(255, 75, 71, 0.2) !important;
-}
-
-/* =========================== */
-/* Theme-specific button hover effects */
-/* =========================== */
-
-/* Default (Lime Green) Theme */
-.gdyup-theme-default button:hover, 
-.gdyup-theme-default a.button:hover,
-.gdyup-theme-default .gdyup-button:hover {
-  background-color: var(--gdyup-button-hover-bg) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(218, 255, 13, 0.4) !important;
-}
-
-.gdyup-theme-default header button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-default header a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-default .mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-default .mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover {
-  background-color: rgba(218, 255, 13, 0.1) !important;
-  border-color: rgba(218, 255, 13, 0.6) !important;
-}
-
-/* Luxury Black (Orange) Theme */
-.gdyup-theme-blue button:hover, 
-.gdyup-theme-blue a.button:hover,
-.gdyup-theme-blue .gdyup-button:hover {
-  background-color: var(--gdyup-button-hover-bg) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(242, 92, 5, 0.4) !important;
-}
-
-.gdyup-theme-blue header button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-blue header a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-blue .mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-blue .mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover {
-  background-color: rgba(242, 92, 5, 0.1) !important;
-  border-color: rgba(242, 92, 5, 0.6) !important;
-}
-
-/* Bitcoin Orange Theme */
-.gdyup-theme-pink button:hover, 
-.gdyup-theme-pink a.button:hover,
-.gdyup-theme-pink .gdyup-button:hover {
-  background-color: var(--gdyup-button-hover-bg) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(247, 147, 26, 0.4) !important;
-}
-
-.gdyup-theme-pink header button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-pink header a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-pink .mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover,
-.gdyup-theme-pink .mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]):hover {
-  background-color: rgba(247, 147, 26, 0.1) !important;
-  border-color: rgba(247, 147, 26, 0.6) !important;
-}
-
-/* =========================== */
-/* UNIVERSAL ICON STYLING - CRITICAL FIX */
-/* =========================== */
-
-/* Global override for all SVG icons to ensure theme consistency */
-svg,
-.lucide,
-.lucide-icon,
-[stroke="currentColor"],
-[data-lucide],
-[class*="lucide-"] {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-  filter: drop-shadow(0 0 3px var(--gdyup-icon-shadow)) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-/* Force white icons in navigation when not active */
-header nav button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-header nav a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-.mobile-menu button:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-.mobile-menu a:not(.bg-\[var\(--gdyup-primary\)\]):not(.bg-\[\#DAFF0D\]) svg,
-nav [role="menuitem"] svg,
-.mobile-menu [role="menuitem"] svg {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* Icon colors in theme-colored buttons */
-header button.bg-\[var\(--gdyup-primary\)\] svg,
-header a.bg-\[var\(--gdyup-primary\)\] svg,
-nav button.bg-\[var\(--gdyup-primary\)\] svg,
-nav a.bg-\[var\(--gdyup-primary\)\] svg,
-.mobile-menu button.bg-\[var\(--gdyup-primary\)\] svg,
-.mobile-menu a.bg-\[var\(--gdyup-primary\)\] svg,
-.bg-\[var\(--gdyup-primary\)\] svg,
-button.bg-\[var\(--gdyup-primary\)\] svg,
-a.bg-\[var\(--gdyup-primary\)\] svg,
-button.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] svg,
-.gdyup-button svg,
-.gdyup-button-primary svg,
-[class*="primary-button"] svg,
-.ai-concierge-button svg,
-[class*="concierge-button"] svg {
-  color: var(--gdyup-button-text) !important;
-  stroke: var(--gdyup-button-text) !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* Fix for mobile menu button icon */
-button:has(.lucide-menu),
-[aria-label*="menu"] svg,
-[aria-label*="Menu"] svg,
-button[aria-label="Open menu"] svg,
-button[aria-label="Close menu"] svg {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* Loading spinner and animated elements */
-svg.animate-spin,
-.lucide-loader2,
-svg.lucide-loader2,
-.loading-icon,
-.animate-spin {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  fill: none !important;
-}
-
-/* AI Concierge button icons */
-.ai-concierge-button svg,
-[class*="concierge-button"] svg,
-[data-ai-concierge="true"] svg,
-[data-testid="ai-concierge-button"] svg {
-  color: var(--gdyup-concierge-text) !important;
-  stroke: var(--gdyup-concierge-text) !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* Fix sign out icon */
-.text-\[\#FF4B47\] svg,
-[class*="text-[#FF4B47]"] svg,
-svg.text-red-500,
-svg[class*="text-red"] {
-  color: #FF4B47 !important;
-  stroke: #FF4B47 !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* =========================== */
-/* MOBILE-SPECIFIC ICON FIXES */
-/* =========================== */
-
-/* Mobile menu icon fixes - enforce white color on toggle button */
-button .lucide-menu,
-button .lucide-x,
-.mobile-menu-button .lucide-menu,
-.mobile-menu-button .lucide-x,
-header .gdyup-header-menu svg,
-button[type="button"] .lucide-menu,
-button[type="button"] .lucide-x {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  filter: none !important;
-  stroke-width: 2.5px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Concierge button styling for mobile */
-[data-testid="ai-concierge-button"],
-.ai-concierge-button,
-[class*="concierge-button"] {
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 28px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 50 !important;
-  background-color: var(--gdyup-concierge-bg) !important;
-  color: var(--gdyup-concierge-text) !important;
-  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.5) !important;
-  border: none !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-/* Styling for the concierge icon */
-[data-testid="ai-concierge-button"] svg,
-.ai-concierge-button svg,
-[class*="concierge-button"] svg {
-  width: 24px !important;
-  height: 24px !important;
-  color: var(--gdyup-concierge-text) !important;
-  stroke: var(--gdyup-concierge-text) !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-}
-
-/* Mobile-specific loading animation */
-.loading-indicator svg,
-.spinner svg,
-.loading-indicator .animate-spin,
-.spinner .animate-spin {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  animation-duration: 1.5s !important;
-}
-
-/* =========================== */
-/* HEADER NAV ICON CLASSES */
-/* =========================== */
-
-/* Navigation icon - inactive state */
-.nav-icon {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  filter: none !important;
-  stroke-width: 2px !important;
-  transition: all 0.2s ease !important;
-}
-
-/* Navigation icon - active state */
-.nav-active-icon {
-  color: var(--gdyup-nav-active-text) !important;
-  stroke: var(--gdyup-nav-active-text) !important;
-  fill: none !important;
-  filter: none !important;
-  stroke-width: 2px !important;
-  transition: all 0.2s ease !important;
-}
-
-/* Navigation icons in hover state */
-button:hover .nav-icon,
-a:hover .nav-icon {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-}
-
-/* =========================== */
-/* AI CONCIERGE BUTTON - CRITICAL FIX */
-/* =========================== */
-
-/* Critical override for AI concierge button - highest priority */
-div[data-testid="ai-concierge-button"],
-button[data-testid="ai-concierge-button"],
-.ai-concierge-button,
-.ai-agent-button,
-div[class*="concierge-button"],
-button[class*="concierge-button"],
-#aiConciergeButton,
-div[data-ai-concierge],
-button[data-ai-concierge],
-[class*="ai-chat-toggle"],
-.ai-chat-trigger,
-html body div[class*="concierge"],
-html body button[class*="concierge"] {
-  background-color: var(--gdyup-concierge-bg) !important;
-  color: var(--gdyup-concierge-text) !important;
-  box-shadow: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.5) !important;
-  border-radius: 999px !important;
-  border: none !important;
-  z-index: 9999 !important;
-  position: fixed !important;
-  right: 20px !important;
-  bottom: 20px !important;
-  width: 56px !important;
-  height: 56px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Icon styling in concierge button */
-div[data-testid="ai-concierge-button"] svg,
-button[data-testid="ai-concierge-button"] svg,
-.ai-concierge-button svg,
-.ai-agent-button svg,
-div[class*="concierge-button"] svg,
-button[class*="concierge-button"] svg,
-#aiConciergeButton svg,
-div[data-ai-concierge] svg,
-button[data-ai-concierge] svg,
-[class*="ai-chat-toggle"] svg,
-.ai-chat-trigger svg,
-html body div[class*="concierge"] svg,
-html body button[class*="concierge"] svg {
-  color: var(--gdyup-concierge-text) !important;
-  stroke: var(--gdyup-concierge-text) !important;
-  stroke-width: 2.5px !important;
-  fill: none !important;
-  filter: none !important;
-  width: 24px !important;
-  height: 24px !important;
-}
-
-/* Ensure hover effects for concierge button */
-div[data-testid="ai-concierge-button"]:hover,
-button[data-testid="ai-concierge-button"]:hover,
-.ai-concierge-button:hover,
-.ai-agent-button:hover,
-div[class*="concierge-button"]:hover,
-button[class*="concierge-button"]:hover,
-#aiConciergeButton:hover,
-div[data-ai-concierge]:hover,
-button[data-ai-concierge]:hover,
-[class*="ai-chat-toggle"]:hover,
-.ai-chat-trigger:hover,
-html body div[class*="concierge"]:hover,
-html body button[class*="concierge"]:hover {
-  transform: translateY(-5px) !important;
-  box-shadow: 0 0 25px rgba(var(--gdyup-primary-rgb), 0.6) !important;
-}
-
-/* =========================== */
-/* CRITICAL SVG FIXES - HIGHEST PRIORITY */
-/* =========================== */
-
-/* Direct attribute selector for SVG with currentColor - highest specificity possible */
-svg[stroke="currentColor"],
-svg[stroke="currentColor"] *,
-[stroke="currentColor"],
-.lucide[stroke="currentColor"],
-.lucide-icon[stroke="currentColor"],
-header .lucide,
-.mobile-menu .lucide,
-.gdyup-header-menu .lucide,
-.nav-icon,
-header svg.nav-icon {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-/* Direct override for active nav state */
-header button.bg-\[\#DAFF0D\] .lucide,
-header a.bg-\[\#DAFF0D\] .lucide,
-.mobile-menu button.bg-\[\#DAFF0D\] .lucide,
-.mobile-menu a.bg-\[\#DAFF0D\] .lucide,
-button.bg-\[\#DAFF0D\] .lucide,
-a.bg-\[\#DAFF0D\] .lucide,
-.bg-\[\#DAFF0D\] .lucide,
-.nav-active-icon,
-.bg-\[\#DAFF0D\] svg {
-  color: var(--gdyup-nav-active-text) !important;
-  stroke: var(--gdyup-nav-active-text) !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-/* Direct override for active buttons with theme variables */
-.gdyup-theme-default button.bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-default a.bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-default .bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-default .nav-active-icon {
-  color: black !important;
-  stroke: black !important;
-}
-
-.gdyup-theme-blue button.bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-blue a.bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-blue .bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-blue .nav-active-icon {
-  color: white !important;
-  stroke: white !important;
-}
-
-.gdyup-theme-pink button.bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-pink a.bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-pink .bg-\[\#DAFF0D\] .lucide,
-.gdyup-theme-pink .nav-active-icon {
-  color: black !important;
-  stroke: black !important;
-}
-
-/* Ultra-specific selector for concierge button */
-.gdyup-app div[data-testid="ai-concierge-button"],
-.gdyup-app button[data-testid="ai-concierge-button"],
-.gdyup-app .ai-concierge-button,
-.gdyup-app div[class*="concierge-button"],
-.gdyup-app button[class*="concierge-button"],
-.gdyup-app [data-ai-concierge="true"] {
-  background-color: var(--gdyup-concierge-bg) !important;
-}
-
-.gdyup-theme-default [data-testid="ai-concierge-button"],
-.gdyup-theme-default .ai-concierge-button,
-.gdyup-theme-default [class*="concierge-button"],
-.gdyup-theme-default [data-ai-concierge="true"] {
-  background-color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue [data-testid="ai-concierge-button"],
-.gdyup-theme-blue .ai-concierge-button,
-.gdyup-theme-blue [class*="concierge-button"],
-.gdyup-theme-blue [data-ai-concierge="true"] {
-  background-color: #F25C05 !important;
-}
-
-.gdyup-theme-pink [data-testid="ai-concierge-button"],
-.gdyup-theme-pink .ai-concierge-button,
-.gdyup-theme-pink [class*="concierge-button"],
-.gdyup-theme-pink [data-ai-concierge="true"] {
-  background-color: #F7931A !important;
-}
-
-/* Fix for concierge icon image */
-.gdyup-app img[src*="conciergebutton.png"],
-.gdyup-app img[alt="Concierge"] {
-  background-color: var(--gdyup-concierge-bg) !important;
-  border-radius: 9999px !important;
-}
-
-/* Extremely high specificity palette icon fix */
-html body header button:has(.lucide-palette) svg,
-html body header .theme-menu-button svg,
-html body .gdyup-app button[title="Change theme"] svg,
-html body .gdyup-app [title="Choose Theme"] + div svg.lucide-palette {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* =========================== */
-/* SPECIFIC INLINE SVG FIXES */
-/* =========================== */
-
-/* Direct fix for the plane-takeoff icon */
-svg.lucide-plane-takeoff,
-.lucide-plane-takeoff,
-[class*="lucide-plane-takeoff"],
-[class*="plane-takeoff"],
-svg[class*="plane-takeoff"] {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-/* Fix for all navigation SVG elements by tag type */
-header nav button svg,
-header nav a svg,
-.mobile-menu button svg,
-.mobile-menu a svg {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  -webkit-filter: none !important;
-}
-
-/* Fix for specific navigation items */
-header nav button svg path,
-header nav a svg path,
-.mobile-menu button svg path,
-.mobile-menu a svg path,
-svg.lucide-plane-takeoff path,
-.lucide-plane-takeoff path,
-.lucide-search path,
-.lucide-plane path,
-.lucide-user path,
-.lucide-users path,
-.lucide-logout path {
-  stroke: white !important;
-  stroke-width: 2.5px !important;
-}
-
-/* Fix active state for specific paths */
-header button.bg-\[\#DAFF0D\] svg path,
-header a.bg-\[\#DAFF0D\] svg path,
-.mobile-menu button.bg-\[\#DAFF0D\] svg path,
-.mobile-menu a.bg-\[\#DAFF0D\] svg path,
-button.bg-\[\#DAFF0D\] svg path,
-a.bg-\[\#DAFF0D\] svg path,
-.bg-\[\#DAFF0D\] svg path,
-.nav-active-icon path {
-  stroke: var(--gdyup-nav-active-text) !important;
-}
-
-/* Fix for palette icon */
-.lucide-palette path,
-svg.lucide-palette path {
-  stroke: var(--gdyup-primary) !important;
-}
-
-/* =========================== */
-/* CONCIERGE BUTTON IMAGE FIX */
-/* =========================== */
-
-/* Direct styling for concierge button img */
-img[src*="conciergebutton.png"],
-img[alt="Concierge"],
-.ai-concierge-icon,
-a[href*="concierge"] img,
-button[data-testid*="concierge"] img {
-  background-color: transparent !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-}
-
-/* Container styling for concierge button */
-.ai-concierge-button-container,
-.ai-concierge-button-wrapper,
-div[data-testid="ai-concierge-button"],
-div[class*="concierge-button"],
-.concierge-wrapper {
-  overflow: hidden !important;
-  border-radius: 28px !important;
-  background-color: var(--gdyup-concierge-bg) !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 56px !important;
-  height: 56px !important;
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  z-index: 9999 !important;
-  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.5) !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Set direct colors for each theme */
-.gdyup-theme-default .ai-concierge-button-container,
-.gdyup-theme-default .ai-concierge-button-wrapper,
-.gdyup-theme-default div[data-testid="ai-concierge-button"],
-.gdyup-theme-default div[class*="concierge-button"],
-.gdyup-theme-default .concierge-wrapper {
-  background-color: #DAFF0D !important;
-}
-
-.gdyup-theme-blue .ai-concierge-button-container,
-.gdyup-theme-blue .ai-concierge-button-wrapper,
-.gdyup-theme-blue div[data-testid="ai-concierge-button"],
-.gdyup-theme-blue div[class*="concierge-button"],
-.gdyup-theme-blue .concierge-wrapper {
-  background-color: #F25C05 !important;
-}
-
-.gdyup-theme-pink .ai-concierge-button-container,
-.gdyup-theme-pink .ai-concierge-button-wrapper,
-.gdyup-theme-pink div[data-testid="ai-concierge-button"],
-.gdyup-theme-pink div[class*="concierge-button"],
-.gdyup-theme-pink .concierge-wrapper {
-  background-color: #F7931A !important;
-}
-
-/* Ultra-specific override to fix any style attribute inconsistencies */
-.gdyup-theme-default [style*="background"] button[data-ai-concierge="true"],
-.gdyup-theme-default button.ai-concierge-button,
-.gdyup-theme-default [style*="background"].ai-concierge-button,
-.gdyup-theme-default button[data-testid="ai-concierge-button"] {
-  background: #DAFF0D !important;
-}
-
-.gdyup-theme-blue [style*="background"] button[data-ai-concierge="true"],
-.gdyup-theme-blue button.ai-concierge-button,
-.gdyup-theme-blue [style*="background"].ai-concierge-button,
-.gdyup-theme-blue button[data-testid="ai-concierge-button"] {
-  background: #F25C05 !important;
-}
-
-.gdyup-theme-pink [style*="background"] button[data-ai-concierge="true"],
-.gdyup-theme-pink button.ai-concierge-button,
-.gdyup-theme-pink [style*="background"].ai-concierge-button,
-.gdyup-theme-pink button[data-testid="ai-concierge-button"] {
-  background: #F7931A !important;
-}
-
-/* =========================== */
-/* DIRECT SVG PATH FIXES */
-/* =========================== */
-
-/* 
-   This is the most radical approach, directly targeting SVG paths
-   which should override everything else. This is a last resort fix.
-*/
-
-/* Default styling for navigation SVG paths */
-header svg path,
-.mobile-menu svg path,
-.nav-icon path,
-.lucide path {
-  stroke: white !important;
-  stroke-width: 2.5px !important;
-  stroke-linecap: round !important;
-  stroke-linejoin: round !important;
-}
-
-/* Active state paths in navigation */
-header .bg-\[\#DAFF0D\] svg path,
-.mobile-menu .bg-\[\#DAFF0D\] svg path,
-.bg-\[\#DAFF0D\] .lucide path,
-.nav-active-icon path {
-  stroke: var(--gdyup-nav-active-text) !important;
-  stroke-width: 2.5px !important;
-}
-
-/* Theme specific path colors for active state */
-.gdyup-theme-default .bg-\[\#DAFF0D\] svg path,
-.gdyup-theme-default .nav-active-icon path {
-  stroke: black !important;
-}
-
-.gdyup-theme-blue .bg-\[\#DAFF0D\] svg path,
-.gdyup-theme-blue .nav-active-icon path {
-  stroke: white !important;
-}
-
-.gdyup-theme-pink .bg-\[\#DAFF0D\] svg path,
-.gdyup-theme-pink .nav-active-icon path {
-  stroke: black !important;
-}
-
-/* Specific icon classes */
-.lucide-plane-takeoff path,
-.lucide-search path,
-.lucide-plane path,
-.lucide-user path,
-.lucide-chart path,
-svg[class*="lucide-"] path {
-  stroke: currentColor !important;
-}
-
-/* Fix for palette icon paths */
-.palette-icon path,
-.lucide-palette path,
-svg.lucide-palette path,
-button:has(.lucide-palette) svg path {
-  stroke: var(--gdyup-primary) !important;
-}
-
-/* Fix for sign out icon colors */
-.text-\[\#FF4B47\] svg path,
-[class*="text-[#FF4B47]"] svg path,
-.lucide-log-out path {
-  stroke: #FF4B47 !important;
-}
-
-/* Add the most specific selector possible to override inline styles */
-button[data-testid="ai-concierge-button"][style*="background"],
-button[data-ai-concierge="true"][style*="background"],
-.ai-concierge-button[style*="background"] {
-  background: var(--gdyup-concierge-bg) !important;
-}
-
-/* For each theme, add a direct override with !important */
-.gdyup-theme-default button[data-testid="ai-concierge-button"][style*="background"],
-.gdyup-theme-default button[data-ai-concierge="true"][style*="background"],
-.gdyup-theme-default .ai-concierge-button[style*="background"] {
-  background: #DAFF0D !important;
-}
-
-.gdyup-theme-blue button[data-testid="ai-concierge-button"][style*="background"],
-.gdyup-theme-blue button[data-ai-concierge="true"][style*="background"],
-.gdyup-theme-blue .ai-concierge-button[style*="background"] {
-  background: #F25C05 !important;
-}
-
-.gdyup-theme-pink button[data-testid="ai-concierge-button"][style*="background"],
-.gdyup-theme-pink button[data-ai-concierge="true"][style*="background"],
-.gdyup-theme-pink .ai-concierge-button[style*="background"] {
-  background: #F7931A !important;
-}
-
-/* Primary button icons must always be black for contrast */
-.gdyup-primary-button svg,
-.bg-primary svg, 
-a.bg-primary svg,
-button.bg-primary svg,
-.bg-\[var\(--gdyup-primary\)\] svg,
-a.bg-\[var\(--gdyup-primary\)\] svg,
-button.bg-\[var\(--gdyup-primary\)\] svg,
-.gdyup-theme-default .gdyup-primary-button svg,
-.gdyup-theme-default .bg-primary svg,
-.gdyup-theme-pink .gdyup-primary-button svg,
-.gdyup-theme-pink .bg-primary svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Special case for blue theme which needs white icons instead for contrast */
-.gdyup-theme-blue .gdyup-primary-button svg,
-.gdyup-theme-blue .bg-primary svg,
-.gdyup-theme-blue a.bg-primary svg,
-.gdyup-theme-blue button.bg-primary svg {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Force the correct text colors on primary buttons */
-.gdyup-primary-button,
-.bg-primary,
-a.bg-primary,
-button.bg-primary,
-.gdyup-theme-default .gdyup-primary-button,
-.gdyup-theme-default .bg-primary,
-.gdyup-theme-pink .gdyup-primary-button,
-.gdyup-theme-pink .bg-primary {
-  color: #000000 !important;
-}
-
-.gdyup-theme-blue .gdyup-primary-button,
-.gdyup-theme-blue .bg-primary,
-.gdyup-theme-blue a.bg-primary,
-.gdyup-theme-blue button.bg-primary {
-  color: #FFFFFF !important;
-}
-
-/* Additional specificity for primary button icons - targeting nested elements */
-.bg-primary svg.lucide,
-.gdyup-primary-button svg.lucide,
-a.bg-primary svg.lucide,
-.bg-\[var\(--gdyup-primary\)\] svg.lucide,
-[class*="bg-primary"] svg,
-[class*="bg-\[var\(--gdyup-primary\)\]"] svg,
-a[class*="bg-primary"] svg,
-button[class*="bg-primary"] svg,
-a[href="/gdyup/offer"] svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Target direct children of elements with bg-primary */
-.bg-primary > svg,
-.gdyup-primary-button > svg,
-a.bg-primary > svg,
-[class*="bg-primary"] > svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-/* Target the path elements directly inside SVG */
-.bg-primary svg path,
-.gdyup-primary-button svg path,
-a.bg-primary svg path,
-[class*="bg-primary"] svg path,
-a[href="/gdyup/offer"] svg path {
-  stroke: #000000 !important;
-  stroke-width: 2px !important;
-}
-
-/* Add special case for luxury theme (blue) */
-.gdyup-theme-blue .bg-primary svg.lucide,
-.gdyup-theme-blue .gdyup-primary-button svg.lucide,
-.gdyup-theme-blue a.bg-primary svg.lucide,
-.gdyup-theme-blue [class*="bg-primary"] svg,
-.gdyup-theme-blue a[href="/gdyup/offer"] svg {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-}
-
-.gdyup-theme-blue .bg-primary svg path,
-.gdyup-theme-blue .gdyup-primary-button svg path,
-.gdyup-theme-blue a.bg-primary svg path,
-.gdyup-theme-blue [class*="bg-primary"] svg path,
-.gdyup-theme-blue a[href="/gdyup/offer"] svg path {
-  stroke: #FFFFFF !important;
-}
-
-/* ULTRA HIGH SPECIFICITY ICON FIX FOR PRIMARY BUTTONS - CRITICAL OVERRIDE */
-html body .gdyup-app [class*="bg-primary"] svg,
-html body .gdyup-app [class*="bg-primary"] svg *,
-html body .gdyup-app a.bg-primary svg,
-html body .gdyup-app a.bg-primary svg *,
-html body .gdyup-app button.bg-primary svg,
-html body .gdyup-app button.bg-primary svg *,
-html body .gdyup-app a[href="/gdyup/offer"] svg,
-html body .gdyup-app a[href="/gdyup/offer"] svg *,
-html body .gdyup-app a[class*="bg-primary"] svg,
-html body .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg,
-html body .gdyup-app [class*="inline-flex"][class*="justify-center"][class*="bg-primary"] svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Direct path override with maximum specificity */
-html body .gdyup-app [class*="bg-primary"] svg path,
-html body .gdyup-app a.bg-primary svg path,
-html body .gdyup-app button.bg-primary svg path,
-html body .gdyup-app a[href="/gdyup/offer"] svg path {
-  stroke: #000000 !important;
-  stroke-width: 2px !important;
-}
-
-/* Extremely specific selectors for the luxury blue theme */
-html body .gdyup-theme-blue .gdyup-app [class*="bg-primary"] svg,
-html body .gdyup-theme-blue .gdyup-app [class*="bg-primary"] svg *,
-html body .gdyup-theme-blue .gdyup-app a.bg-primary svg,
-html body .gdyup-theme-blue .gdyup-app a.bg-primary svg *,
-html body .gdyup-theme-blue .gdyup-app button.bg-primary svg,
-html body .gdyup-theme-blue .gdyup-app button.bg-primary svg *,
-html body .gdyup-theme-blue .gdyup-app a[href="/gdyup/offer"] svg,
-html body .gdyup-theme-blue .gdyup-app a[href="/gdyup/offer"] svg *,
-html body .gdyup-theme-blue .gdyup-app a[class*="bg-primary"] svg,
-html body .gdyup-theme-blue .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-html body .gdyup-theme-blue .gdyup-app [class*="bg-primary"] svg path,
-html body .gdyup-theme-blue .gdyup-app a.bg-primary svg path,
-html body .gdyup-theme-blue .gdyup-app button.bg-primary svg path,
-html body .gdyup-theme-blue .gdyup-app a[href="/gdyup/offer"] svg path {
-  stroke: #FFFFFF !important;
-  stroke-width: 2px !important;
-}
-
-/* Direct targeting of inline SVG attributes for maximum compatibility */
-html body .gdyup-app [class*="bg-primary"] svg[stroke="currentColor"],
-html body .gdyup-app [class*="bg-primary"] [stroke="currentColor"],
-html body .gdyup-app a[class*="bg-primary"] svg[stroke="currentColor"],
-html body .gdyup-app a[href="/gdyup/offer"] svg[stroke="currentColor"],
-html body .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg[stroke="currentColor"] {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Target lucide icons specifically */
-html body .gdyup-app [class*="bg-primary"] svg.lucide,
-html body .gdyup-app [class*="bg-primary"] [class*="lucide"],
-html body .gdyup-app a[class*="bg-primary"] svg.lucide,
-html body .gdyup-app a[href="/gdyup/offer"] svg.lucide,
-html body .gdyup-app [class*="inline-flex"][class*="bg-primary"] svg.lucide,
-html body .gdyup-app [class*="inline-flex"][class*="justify-center"][class*="bg-primary"] svg.lucide-share {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Target by exact class structure from example */
-html body .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg,
-html body .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg *,
-html body .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg,
-html body .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg * {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Specific variant for the blue theme */
-html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg,
-html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="items-center"][class*="justify-center"][class*="gap-2"][class*="whitespace-nowrap"][class*="bg-primary"] svg *,
-html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg,
-html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primary"][class*="flex"][class*="items-center"] svg * {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Enhanced styling for Luxury Black theme's carbon fiber texture */
-.gdyup-theme-blue .gdyup-app {
-  background-image: var(--gdyup-carbon-texture) !important;
-  background-color: rgba(0, 0, 0, 0.9) !important;
-  background-blend-mode: overlay !important;
-  background-size: 600px 600px !important;
-  position: relative !important;
-}
-
-/* Add subtle gradient overlay to the app container */
-.gdyup-theme-blue .gdyup-app::after {
-  content: "" !important;
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  background: linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,20,0.85) 50%, rgba(0,0,0,0.9) 100%) !important;
-  pointer-events: none !important;
-  z-index: -1 !important;
-}
-
-/* Give buttons in Luxury Black theme a metallic, glossy finish */
-.gdyup-theme-blue .gdyup-button,
-.gdyup-theme-blue button.bg-\[var\(--gdyup-primary\)\],
-.gdyup-theme-blue a.bg-\[var\(--gdyup-primary\)\],
-.gdyup-theme-blue button.bg-primary,
-.gdyup-theme-blue .gdyup-primary-button {
-  background: linear-gradient(180deg, #F25C05 0%, #D04A04 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 2px 10px rgba(242, 92, 5, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Add hover effect for Luxury Black theme buttons */
-.gdyup-theme-blue .gdyup-button:hover,
-.gdyup-theme-blue button.bg-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-blue a.bg-\[var\(--gdyup-primary\)\]:hover,
-.gdyup-theme-blue button.bg-primary:hover,
-.gdyup-theme-blue .gdyup-primary-button:hover {
-  background: linear-gradient(180deg, #F77A2E 0%, #F25C05 100%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 15px rgba(242, 92, 5, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-}
-
-/* Add carbon-fiber style to specific UI components */
-.gdyup-theme-blue input,
-.gdyup-theme-blue select,
-.gdyup-theme-blue textarea,
-.gdyup-theme-blue .dropdown-content,
-.gdyup-theme-blue [role="combobox"],
-.gdyup-theme-blue [role="listbox"] {
-  background-image: var(--gdyup-carbon-texture) !important;
-  background-color: rgba(15, 15, 15, 0.8) !important;
-  background-blend-mode: overlay !important;
-  background-size: 300px 300px !important;
-  border: 1px solid rgba(242, 92, 5, 0.3) !important;
-  backdrop-filter: blur(5px) !important;
-}
-
-/* Add orange glow to focused elements */
-.gdyup-theme-blue input:focus,
-.gdyup-theme-blue select:focus,
-.gdyup-theme-blue textarea:focus,
-.gdyup-theme-blue button:focus,
-.gdyup-theme-blue a:focus {
-  box-shadow: 0 0 0 2px rgba(242, 92, 5, 0.5) !important;
-  border-color: rgba(242, 92, 5, 0.8) !important;
-}
-
-/* Orange glow for theme icons and SVGs */
-.gdyup-theme-blue svg,
-.gdyup-theme-blue .lucide,
-.gdyup-theme-blue .gdyup-icon {
-  filter: drop-shadow(0 0 3px rgba(242, 92, 5, 0.6)) !important;
-}
-
-/* Special utility classes for icons to remove inline styles */
-.gdyup-icon-primary {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-}
-
-.gdyup-icon-white {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-}
-
-.gdyup-icon-black {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-}
-
-.gdyup-icon-secondary {
-  color: var(--gdyup-secondary) !important;
-  stroke: var(--gdyup-secondary) !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-}
-
-.gdyup-icon-active {
-  color: var(--gdyup-nav-active-text) !important;
-  stroke: var(--gdyup-nav-active-text) !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-}
-
-/* Logo container styling to prevent unwanted hover effects */
-.gdyup-logo-container a,
-.gdyup-logo-container a:hover,
-.gdyup-logo-container a:focus,
-.gdyup-logo-container a:active {
-  display: block !important;
-  background: none !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.gdyup-logo-image {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  filter: none !important;
-  outline: none !important;
-}
-
-/* Special utility classes for the visualizer split ratio display */
+.gdyup-app .slider-track {
+  height: 8px;
+  background-color: #333333;
+  border-radius: 4px;
+}
+
+.gdyup-app .slider-track-active {
+  background-color: var(--gdyup-primary);
+  height: 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.4);
+}
+
+.gdyup-app .slider-thumb {
+  width: 22px;
+  height: 22px;
+  background-color: var(--gdyup-primary);
+  border: 2px solid #000000;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.5);
+  cursor: grab;
+}
+
+.gdyup-app .slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.gdyup-app [class*="Slider"] span {
+  background-color: #333333;
+}
+
+.gdyup-app [class*="Slider"] [data-orientation="horizontal"] > span {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.gdyup-app [class*="Slider"] [data-orientation="horizontal"] > span > span {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.4);
+}
+
+.gdyup-app [class*="Slider"] [role="slider"] {
+  background-color: var(--gdyup-primary);
+  border: 2px solid black;
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.5);
+  width: 18px;
+  height: 18px;
+}
+
+/* Fix jet selector styling */
+.gdyup-app .aircraft-model-field button,
+button[class*="TabsTrigger"],
+.gdyup-app div[class*="JetSelector"] button {
+  background-color: rgba(21, 21, 21, 0.9);
+  border: 1px solid var(--gdyup-border);
+  color: var(--gdyup-text);
+  text-align: left;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.gdyup-app .aircraft-model-field button[data-state="active"],
+button[class*="TabsTrigger"][data-state="active"],
+.gdyup-app div[class*="Tabs"] [role="tab"][data-state="active"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+  border-color: rgba(var(--gdyup-primary-rgb), 0.4);
+  font-weight: bold;
+}
+
+.gdyup-app [data-state="active"],
+.gdyup-app div[class*="Command"] [cmdk-item][data-selected="true"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+  font-weight: bold;
+}
+
+.gdyup-app div[class*="Command"] [cmdk-item]:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.gdyup-app div[class*="Tabs"] [role="tablist"] {
+  background-color: rgba(21, 21, 21, 0.9);
+  border-color: var(--gdyup-border);
+}
+
+.gdyup-app .selected-aircraft {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.2);
+}
+
+/* Form enhancements */
+.gdyup-app .form-input-group {
+  margin-bottom: 16px;
+}
+
+.gdyup-app .form-input-label {
+  color: var(--gdyup-text);
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.gdyup-app .form-error {
+  color: #FF6B6B;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.gdyup-app .form-error svg {
+  color: #FF6B6B;
+  margin-right: 4px;
+}
+
+.gdyup-app .form-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+/* Section containers for offer form */
+.gdyup-app .offer-section {
+  background-color: rgba(15, 15, 15, 0.9);
+  border-radius: 12px;
+  border: 1px solid var(--gdyup-border);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-app .offer-section-header {
+  color: var(--gdyup-primary);
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--gdyup-border);
+  padding-bottom: 10px;
+}
+
+.gdyup-app .offer-section-header svg {
+  color: var(--gdyup-primary);
+  margin-right: 8px;
+  filter: drop-shadow(0 0 3px rgba(var(--gdyup-primary-rgb), 0.4));
+}
+
+/* Split ratio visualization */
+.gdyup-app .share-ratio-info,
+.gdyup-app .seat-info,
+.gdyup-app [class*="split-ratio"] {
+  font-weight: 600;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.02em;
+}
+
 .gdyup-split-ratio-bar {
   width: 100%;
   height: 8px;
-  background-color: var(--gdyup-accent, #1A1A1A);
+  background-color: var(--gdyup-bg-card);
   border-radius: 4px;
   overflow: hidden;
   display: flex;
@@ -2785,7 +1092,29 @@ html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primar
 
 .gdyup-split-ratio-secondary {
   height: 100%;
-  background-color: var(--gdyup-accent, #1A1A1A);
+  background-color: var(--gdyup-bg-card);
+}
+
+/* Mobile specific styling */
+@media (max-width: 768px) {
+  header a img[src*="gdyup-logo.svg"] {
+    height: 38px;
+    margin-left: -5px;
+  }
+  
+  .gdyup-mobile .gdyup-card {
+    margin-bottom: 1rem;
+  }
+  
+  .gdyup-mobile .gdyup-button,
+  .gdyup-mobile button.btn-primary,
+  .gdyup-mobile .btn-primary,
+  .gdyup-mobile button[type="submit"] {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 /* Map container styles */
@@ -2817,13 +1146,35 @@ html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primar
   object-position: 50% 50%;
 }
 
-/* Fix for animations on theme switching - ensure they complete */
-.gdyup-theme-transition * {
-  transition-duration: 0.3s !important;
-  transition-property: background-color, color, border-color, text-shadow, box-shadow, transform, filter !important;
+/* Theme-specific selectors to support legacy component usage */
+/* Replace hardcoded styles with theme variables */
+.text-\[\#DAFF0D\] {
+  color: var(--gdyup-primary);
 }
 
-/* Add a global CSS refresh trigger class to help with theme refresh issues */
+.border-\[\#DAFF0D\] {
+  border-color: var(--gdyup-primary);
+}
+
+.bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+}
+
+.hover\:bg-\[\#E8FF4D\]:hover {
+  background-color: var(--gdyup-button-hover-bg);
+}
+
+.hover\:bg-\[\#C8EA00\]:hover {
+  background-color: var(--gdyup-button-active-bg);
+}
+
+/* Theme transitions */
+.gdyup-theme-transition * {
+  transition-duration: 0.3s;
+  transition-property: background-color, color, border-color, text-shadow, box-shadow, transform, filter;
+}
+
 .gdyup-theme-refresh {
   animation: gdyup-theme-refresh 0.01s;
 }
@@ -2831,4 +1182,597 @@ html body .gdyup-theme-blue .gdyup-app a[class*="inline-flex"][class*="bg-primar
 @keyframes gdyup-theme-refresh {
   0% { opacity: 0.99; }
   100% { opacity: 1; }
+}
+
+/* Radix UI component overrides */
+[data-radix-popper-content-wrapper] {
+  position: absolute !important;
+  z-index: 9999 !important;
+  transform-origin: var(--radix-popper-transform-origin) !important;
+}
+
+[data-state="open"] {
+  animation: fadeIn 150ms ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* More aggressive fix for Radix UI dropdown menus */
+.fixed-dropdown,
+[role="menu"],
+[data-radix-menu-content] {
+  width: auto !important;
+  min-width: 12rem !important;
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4) !important;
+  overflow: hidden !important;
+}
+
+/* Ensure icons in theme dropdown and other menus are visible */
+[role="menu"] svg,
+[data-radix-menu-content] svg,
+.fixed-dropdown svg,
+[data-state="open"] [role="menuitem"] svg {
+  stroke: currentColor !important;
+  fill: none !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Fix date picker calendar items */
+.gdyup-app .rdp-day_selected, 
+.gdyup-app .rdp-day_selected:focus,
+.gdyup-app .rdp-day_selected:hover,
+.gdyup-app .rdp-button:focus,
+.gdyup-app .rdp-button:active,
+.gdyup-app .rdp-button_today {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text, #000000) !important;
+}
+
+/* Fix calendar day highlighting */
+.gdyup-app .rdp-day:not(.rdp-day_selected):hover,
+.gdyup-app .rdp-button:not(.rdp-day_selected):hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.2) !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Ensure menu visibility in all themes */
+.gdyup-theme-luxury [role="menu"],
+.gdyup-theme-bitcoin [role="menu"],
+.gdyup-theme-default [role="menu"] {
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Fix active menu items */
+[role="menuitem"][data-highlighted],
+[role="menuitem"]:hover,
+[role="menuitem"]:focus,
+[role="menuitem"][data-state="checked"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* ============================================================== */
+/* THEME DEBUGGING UTILITIES                                      */
+/* ============================================================== */
+
+/* These classes can be added to elements to diagnose theme issues */
+
+/* Highlight elements with theme issues */
+.theme-debug {
+  outline: 3px solid red !important;
+  position: relative;
+}
+
+.theme-debug::after {
+  content: "THEME DEBUG";
+  position: absolute;
+  top: -20px;
+  left: 0;
+  background-color: red;
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  z-index: 9999;
+}
+
+/* Show current theme variables on an element */
+.theme-vars {
+  position: relative;
+}
+
+.theme-vars::after {
+  content: 
+    "Primary: " var(--gdyup-primary) "\A"
+    "Bg-dark: " var(--gdyup-bg-dark) "\A"
+    "Text: " var(--gdyup-text) "\A"
+    "Button-text: " var(--gdyup-button-text);
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+  font-size: 10px;
+  padding: 5px;
+  border-radius: 3px;
+  z-index: 9999;
+  white-space: pre;
+  text-align: left;
+}
+
+/* Force colors for emergency fixes */
+.force-bg-primary {
+  background-color: var(--gdyup-primary) !important;
+}
+
+.force-text-primary {
+  color: var(--gdyup-primary) !important;
+}
+
+.force-text-dark {
+  color: #000000 !important;
+}
+
+.force-text-light {
+  color: #FFFFFF !important;
+}
+
+.force-bg-dark {
+  background-color: var(--gdyup-bg-dark) !important;
+}
+
+.force-bg-card {
+  background-color: var(--gdyup-bg-card) !important;
+}
+
+/* Show the current theme name in corner - enable with body class */
+body.show-theme-name::after {
+  content: "Theme: "
+    attr(class);
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 3px;
+  z-index: 9999;
+}
+
+/* Theme dropdown menu fixes */
+.fixed-dropdown {
+  position: absolute !important;
+  z-index: 9999 !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+}
+
+/* Fix header transparency */
+header {
+  background-color: var(--gdyup-bg-dark) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Fix date picker theming */
+.gdyup-app [class*="DatePicker"] button,
+.gdyup-app [class*="DatePicker"] div,
+.gdyup-app [class*="DatePicker"] span,
+.gdyup-app [class*="TimePicker"] button,
+.gdyup-app [class*="TimePicker"] div,
+.gdyup-app [class*="TimePicker"] span {
+  color: var(--gdyup-text, #FFFFFF) !important;
+}
+
+.gdyup-app .rdp-day_selected, 
+.gdyup-app .rdp-button:focus,
+.gdyup-app .rdp-button:active,
+.gdyup-app .rdp-button_today {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text, #000000) !important;
+}
+
+/* Hover states for calendar */
+.gdyup-app .rdp-day:hover,
+.gdyup-app .rdp-button:hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.5) !important;
+}
+
+/* Fix the icon colors in the header */
+header svg,
+header .lucide,
+header button svg,
+header [role="button"] svg {
+  color: var(--gdyup-text, #FFFFFF) !important;
+  stroke: var(--gdyup-text, #FFFFFF) !important;
+  fill: none !important;
+}
+
+/* Fix active buttons in header always showing correct text color */
+header button.bg-gdyup-primary,
+header button.bg-primary,
+header a.bg-gdyup-primary,
+header a.bg-primary,
+button.bg-gdyup-primary svg,
+button.bg-primary svg,
+a.bg-gdyup-primary svg,
+a.bg-primary svg {
+  color: var(--gdyup-button-text, #000000) !important;
+  stroke: var(--gdyup-button-text, #000000) !important;
+}
+
+/* Enhanced visibility for date/time picker */
+.gdyup-app .react-datepicker,
+.gdyup-app .react-datepicker__month-container,
+.gdyup-app .react-datepicker__header,
+.gdyup-app .react-datepicker__day-names,
+.gdyup-app .react-datepicker__month,
+.gdyup-app .react-datepicker__day,
+.gdyup-app .react-datepicker__time-container,
+.gdyup-app .react-datepicker__time-box {
+  background-color: var(--gdyup-bg-card, #121212) !important;
+  color: var(--gdyup-text, #FFFFFF) !important;
+  border-color: var(--gdyup-border, #333333) !important;
+}
+
+/* Fix date and time picker components completely */
+.gdyup-app [class*="Calendar"],
+.gdyup-app [class*="DatePicker"],
+.gdyup-app .rdp,
+.gdyup-app .rdp-months,
+.gdyup-app .rdp-month,
+.gdyup-app .rdp-table,
+.gdyup-app .rdp-caption,
+.gdyup-app .rdp-cell,
+.gdyup-app .rdp-tbody,
+.gdyup-app .rdp-head,
+.gdyup-app .rdp-nav,
+.gdyup-app div[role="grid"] {
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+/* Fix date and time selector components */
+.gdyup-app .rdp-head_cell,
+.gdyup-app [class*="Calendar"] th,
+.gdyup-app [class*="DatePicker"] th,
+.gdyup-app [class*="Calendar"] tr,
+.gdyup-app [class*="DatePicker"] tr,
+.gdyup-app div[role="grid"] button,
+.gdyup-app div[role="row"] {
+  color: var(--gdyup-text) !important;
+}
+
+/* Fix the calendar today styling */
+.gdyup-app .rdp-day_today:not(.rdp-day_selected) {
+  border-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-primary) !important;
+  font-weight: bold !important;
+}
+
+/* Fix calendar nav buttons */
+.gdyup-app .rdp-nav_button,
+.gdyup-app .rdp-button {
+  color: var(--gdyup-text) !important;
+  background-color: transparent !important;
+}
+
+/* Fix time selector */
+.gdyup-app select[class*="Time"],
+.gdyup-app div[role="listbox"],
+.gdyup-app [role="option"] {
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+/* Fix time selector active item */
+.gdyup-app [role="option"][aria-selected="true"],
+.gdyup-app [role="option"][data-highlighted] {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Fix Select component in DateTimePicker */
+.gdyup-app [class*="SelectContent"],
+.gdyup-app [class*="SelectItem"] {
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+/* Fix select trigger button */
+.gdyup-app [class*="SelectTrigger"] {
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+/* Enhanced dropdown fixes */
+.dropdown-content {
+  position: absolute !important;
+  z-index: 9999 !important;
+  max-height: 80vh !important;
+  overflow-y: auto !important;
+}
+
+/* Improved theme switcher dropdown positioning */
+.theme-switcher-container [data-radix-popper-content-wrapper] {
+  position: absolute !important;
+  z-index: 9999 !important;
+}
+
+/* Fix Radix UI dropdown position with higher specificity */
+[data-radix-popper-content-wrapper] {
+  position: absolute !important;
+  z-index: 9999 !important;
+  transform-origin: var(--radix-popper-transform-origin) !important;
+}
+
+/* Make sure menu items have proper visibility */
+.theme-menu-item {
+  color: var(--gdyup-text) !important;
+  background-color: transparent !important;
+}
+
+.theme-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Make sure icons in themed menus are visible */
+.theme-menu-item svg,
+.gdyup-theme-menu svg,
+.dropdown-content svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+  stroke-width: 1.75px !important;
+  visibility: visible !important;
+}
+
+.theme-check-icon {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+}
+
+/* Set max height for mobile dropdowns */
+@media (max-width: 768px) {
+  .dropdown-content {
+    max-height: 70vh !important;
+  }
+}
+
+/* Fix stacking contexts for dropdowns */
+.radix-dropdown-content {
+  pointer-events: auto !important;
+}
+
+/* Ensure popup menus have proper backgrounds */
+.gdyup-theme-menu,
+[role="menu"] {
+  background-color: var(--gdyup-bg-card) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Override all menu and radix menu styles */
+[role="menu"], 
+[role="dialog"], 
+[data-radix-popper-content-wrapper],
+[data-state="open"] {
+  z-index: 9999 !important;
+}
+
+/* Fix for calendar/datepicker in forms */
+.gdyup-app .rdp,
+.gdyup-app .rdp-months,
+.gdyup-app .rdp-month,
+.gdyup-app .rdp-table,
+.gdyup-app .rdp-caption,
+.gdyup-app .rdp-caption_label,
+.gdyup-app .rdp-head_cell,
+.gdyup-app .rdp-cell,
+.gdyup-app .rdp-button {
+  background-color: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+.gdyup-app .rdp-day_selected, 
+.gdyup-app .rdp-button:focus-visible,
+.gdyup-app .rdp-button_active {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+  font-weight: bold !important;
+}
+
+/* Fix for disabled buttons */
+.gdyup-app button:disabled {
+  opacity: 0.5 !important;
+}
+
+/* Fix navigation buttons on forms */
+.gdyup-form button[type="submit"],
+.gdyup-form button[type="button"],
+.gdyup-form button.next-step-button,
+.gdyup-form button.prev-step-button {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Add additional form button fixes */
+
+/* ============================================================== */
+/* JET SEAT VISUALIZER - ENHANCED THEME STYLING                   */
+/* ============================================================== */
+
+/* Base seat styling - Consistent across all themes */
+.jet-seat-visualizer .seat {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing: -0.5px;
+  font-weight: 600;
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--gdyup-text);
+  border: 1px solid rgba(60, 60, 60, 0.8);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  transform: scale(0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* Seat hover state */
+.jet-seat-visualizer .seat:hover:not(.selected) {
+  background-color: rgba(50, 50, 50, 0.9);
+  border-color: rgba(var(--gdyup-primary-rgb), 0.5);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  transform: scale(0.98);
+}
+
+/* Focus state for accessibility */
+.jet-seat-visualizer .seat:focus {
+  outline: 2px solid var(--gdyup-primary);
+  outline-offset: 2px;
+}
+
+/* Default theme - Lime selected seats */
+.gdyup-theme-default .jet-seat-visualizer .seat.selected,
+.jet-seat-visualizer .seat.selected {
+  background-color: var(--gdyup-primary, #DAFF0D);
+  color: #000000; /* Always black text on lime */
+  border-color: var(--gdyup-primary, #DAFF0D);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb, 218, 255, 13), 0.4);
+  transform: scale(1.05);
+  font-weight: 700;
+  z-index: 2;
+}
+
+/* Luxury theme - Neon green selected seats */
+.gdyup-theme-luxury .jet-seat-visualizer .seat.selected {
+  background-color: var(--gdyup-primary, #39FF14);
+  color: #000000; /* Always black text on neon green */
+  border-color: var(--gdyup-primary, #39FF14);
+  box-shadow: 0 0 12px rgba(var(--gdyup-primary-rgb, 57, 255, 20), 0.5);
+}
+
+/* Bitcoin theme - Orange selected seats */
+.gdyup-theme-bitcoin .jet-seat-visualizer .seat.selected {
+  background-color: var(--gdyup-primary, #F7931A);
+  color: #000000; /* Always black text on orange */
+  border-color: var(--gdyup-primary, #F7931A);
+  box-shadow: 0 0 12px rgba(var(--gdyup-primary-rgb, 247, 147, 26), 0.5);
+}
+
+/* Disabled seats */
+.jet-seat-visualizer .seat.disabled,
+.jet-seat-visualizer .seat[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: rgba(20, 20, 20, 0.6);
+  border-color: rgba(40, 40, 40, 0.6);
+  transform: scale(0.9);
+}
+
+/* Compact styling for improved 14-seat layouts */
+.jet-seat-visualizer.compact-layout .seat {
+  font-size: 0.9em;
+  padding: 0.2em;
+}
+
+/* Enhance the legend items */
+.jet-seat-visualizer-legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.jet-seat-visualizer-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.jet-seat-visualizer-legend-dot.selected {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 5px rgba(var(--gdyup-primary-rgb), 0.4);
+}
+
+.jet-seat-visualizer-legend-dot.available {
+  background-color: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(60, 60, 60, 0.8);
+}
+
+.jet-seat-visualizer-legend-dot.unavailable {
+  background-color: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(40, 40, 40, 0.6);
+  opacity: 0.5;
+}
+
+/* Compact the UI for seat split page */
+.gdyup-split-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  max-width: 26rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gdyup-split-circle {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-split-your {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+}
+
+.gdyup-split-partner {
+  background-color: rgba(40, 40, 40, 0.9);
+  color: var(--gdyup-text);
+  border: 1px solid rgba(60, 60, 60, 0.9);
+}
+
+.gdyup-split-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.gdyup-split-percentage {
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* Feature card icon container styling */
+.gdyup-feature-icon-container {
+  border-left-width: 2px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-feature-icon-container:hover {
+  border-left-width: 3px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }

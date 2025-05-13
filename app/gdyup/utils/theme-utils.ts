@@ -3,8 +3,7 @@
  * Enhanced to prevent update loops with proper locking
  */
 
-// Define the possible theme types
-export type GdyupTheme = 'default' | 'blue' | 'pink';
+import type { GdyupTheme } from '../hooks/useGdyupTheme';
 
 // Flag to prevent double-handling theme changes with timeout tracking
 let isProcessingThemeChange = false;
@@ -12,66 +11,96 @@ let themeProcessingTimeout: NodeJS.Timeout | null = null;
 
 /**
  * Apply a theme - optimized to avoid unnecessary DOM operations
+ * Uses data attributes instead of classes to avoid hydration issues
  * 
  * @param theme - The theme to apply
  * @returns void
  */
 export function applyTheme(theme: GdyupTheme): void {
-  // Skip if already processing to prevent loops
-  if (isProcessingThemeChange) return;
-  
   try {
-    isProcessingThemeChange = true;
-    
-    // Clear any pending timeout
-    if (themeProcessingTimeout) {
-      clearTimeout(themeProcessingTimeout);
-    }
-    
-    // Check if theme is already applied to avoid DOM updates
-    const currentThemeClass = Array.from(document.documentElement.classList)
-      .find(cls => cls.startsWith('gdyup-theme-'));
-    
-    if (currentThemeClass === `gdyup-theme-${theme}`) {
-      return; // Theme is already applied, no need to change
-    }
-    
-    // Remove all theme classes once
-    document.documentElement.classList.remove(
-      'gdyup-theme-default',
-      'gdyup-theme-blue',
-      'gdyup-theme-pink'
-    );
-    
-    // Add the new theme class
-    document.documentElement.classList.add(`gdyup-theme-${theme}`);
-    
-    // Store in localStorage without triggering a loop
-    const currentStoredTheme = localStorage.getItem('gdyup-theme');
-    if (currentStoredTheme !== theme) {
+    if (typeof document !== 'undefined') {
+      // Prevent multiple rapid theme changes
+      if (isProcessingThemeChange) {
+        if (themeProcessingTimeout) {
+          clearTimeout(themeProcessingTimeout);
+        }
+        themeProcessingTimeout = setTimeout(() => {
+          isProcessingThemeChange = false;
+          // Try again after the lock is released
+          applyTheme(theme);
+        }, 100);
+        return;
+      }
+      
+      isProcessingThemeChange = true;
+      
+      const htmlEl = document.documentElement;
+      
+      // Clear any existing theme classes first (defensive coding)
+      htmlEl.classList.remove('gdyup-theme-default', 'gdyup-theme-luxury', 'gdyup-theme-bitcoin');
+      
+      // Set the theme as a data attribute 
+      htmlEl.setAttribute('data-gdyup-theme', theme);
+      
+      // Also add as a class for legacy selectors that might still use it
+      htmlEl.classList.add(`gdyup-theme-${theme}`);
+      
+      // Save to localStorage for persistence
       localStorage.setItem('gdyup-theme', theme);
+      
+      // Force a css variable recomputation by triggering a small layout change
+      document.body.style.zoom = '0.99999';
+      setTimeout(() => {
+        document.body.style.zoom = '1';
+        
+        // Dispatch a custom event that components can listen for
+        const event = new CustomEvent('gdyup-theme-changed', { 
+          detail: { theme },
+          bubbles: true,
+          cancelable: true
+        });
+        document.dispatchEvent(event);
+        
+        // Release lock after theme is fully applied
+        isProcessingThemeChange = false;
+        
+        // Log success for debugging
+        console.log(`Theme applied: ${theme}`);
+      }, 50);
     }
-  } finally {
-    // Always reset flag after a short delay
-    themeProcessingTimeout = setTimeout(() => {
-      isProcessingThemeChange = false;
-      themeProcessingTimeout = null;
-    }, 100);
+  } catch (error) {
+    console.error('Error applying theme:', error);
+    isProcessingThemeChange = false;
   }
 }
 
 /**
- * Get the current theme from localStorage
- * @returns The current theme
+ * Get the current theme from data attribute or localStorage
  */
 export function getCurrentTheme(): GdyupTheme {
   try {
-    const theme = localStorage.getItem('gdyup-theme') as GdyupTheme;
-    return theme && ['default', 'blue', 'pink'].includes(theme) ? theme : 'default';
-  } catch (e) {
-    // If localStorage is not available, return default theme
-    return 'default';
+    // First check HTML element data attribute
+    if (typeof document !== 'undefined') {
+      const htmlEl = document.documentElement;
+      const themeAttr = htmlEl.getAttribute('data-gdyup-theme') as GdyupTheme;
+      if (themeAttr && ['default', 'luxury', 'bitcoin'].includes(themeAttr)) {
+        return themeAttr;
+      }
+    }
+    
+    // Then check localStorage
+    if (typeof window !== 'undefined') {
+      const storedTheme = localStorage.getItem('gdyup-theme') as GdyupTheme;
+      if (storedTheme && ['default', 'luxury', 'bitcoin'].includes(storedTheme)) {
+        return storedTheme;
+      }
+    }
+  } catch (error) {
+    console.error('Error getting current theme:', error);
   }
+  
+  // Default theme
+  return 'default';
 }
 
 /**
@@ -86,7 +115,7 @@ export function addThemeChangeListener(callback: (theme: GdyupTheme) => void): (
       const newTheme = event.newValue as GdyupTheme;
       
       // Validate theme value
-      if (newTheme && ['default', 'blue', 'pink'].includes(newTheme)) {
+      if (newTheme && ['default', 'luxury', 'bitcoin'].includes(newTheme)) {
         callback(newTheme);
       }
     }
@@ -109,16 +138,42 @@ export const themeInfo = {
     glowColor: 'rgba(218, 255, 13, 0.5)',
     textColor: 'black'
   },
-  blue: {
+  luxury: {
     name: 'Luxury Black',
     gradient: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
     glowColor: 'rgba(59, 130, 246, 0.5)',
     textColor: 'white'
   },
-  pink: {
+  bitcoin: {
     name: 'BTC Orange',
     gradient: 'linear-gradient(135deg, #F7931A 0%, #F15A24 100%)',
     glowColor: 'rgba(236, 72, 153, 0.5)',
     textColor: 'white'
   }
-}; 
+};
+
+/**
+ * Safely toggles between dark and light mode
+ * This is a separate function from the theme system
+ */
+export function toggleDarkMode(): void {
+  try {
+    if (typeof document !== 'undefined') {
+      const htmlEl = document.documentElement;
+      
+      // Check current mode
+      const isDarkMode = htmlEl.classList.contains('dark');
+      
+      // Toggle the class
+      if (isDarkMode) {
+        htmlEl.classList.remove('dark');
+        localStorage.setItem('color-theme', 'light');
+      } else {
+        htmlEl.classList.add('dark');
+        localStorage.setItem('color-theme', 'dark');
+      }
+    }
+  } catch (error) {
+    console.error('Error toggling dark mode:', error);
+  }
+} 
