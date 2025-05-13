@@ -21,7 +21,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'success' | 'error'>('none');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const { getThemeClasses, getThemedButtonClasses, theme } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const { profile, updateProfile } = useUserProfile();
   
   // Initialize with user's NIP-05 from profile if available
@@ -155,35 +155,15 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
   };
   
   return (
-    <Card className={getThemeClasses({
-      base: "border shadow",
-      default: "bg-white border-gray-200",
-      blue: "bg-blue-950/40 border-blue-900/60",
-      pink: "bg-pink-950/40 border-pink-900/60"
-    })}>
-      <CardHeader className={getThemeClasses({
-        base: "pb-3",
-        default: "bg-gray-50 border-b border-gray-100",
-        blue: "bg-blue-950/60 border-b border-blue-900/60",
-        pink: "bg-pink-950/60 border-b border-pink-900/60"
-      })}>
-        <CardTitle className={getThemeClasses({
-          base: "",
-          default: "text-gray-900",
-          blue: "text-blue-50",
-          pink: "text-pink-50"
-        })}>
+    <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border shadow")}>
+      <CardHeader className={cn("pb-3 border-b border-gdyup-border")}>
+        <CardTitle className={getThemedTextClasses()}>
           Nostr Identity Verification
         </CardTitle>
       </CardHeader>
       
       <CardContent className="pt-4 space-y-4">
-        <div className={getThemeClasses({
-          base: "text-sm",
-          default: "text-gray-600",
-          blue: "text-blue-200",
-          pink: "text-pink-200"
-        })}>
+        <div className={getThemedTextClasses('muted')}>
           <p>Verify your Nostr identity to enable Nostr features in GDY·UP.</p>
           <p className="mt-1">Enter your NIP-05 identifier (e.g., name@domain.com).</p>
         </div>
@@ -195,12 +175,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
               value={nip05}
               onChange={(e) => setNip05(e.target.value)}
               disabled={verificationStatus === 'success' || isVerifying}
-              className={getThemeClasses({
-                base: "w-full",
-                default: "border-gray-300 bg-white text-gray-900",
-                blue: "border-blue-800 bg-blue-950/80 text-blue-50",
-                pink: "border-pink-800 bg-pink-950/80 text-pink-50"
-              })}
+              className={cn("bg-gdyup-bg-dark border-gdyup-border", getThemedTextClasses())}
             />
           </div>
           
@@ -225,12 +200,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
           )}
           
           {verificationStatus === 'success' && (
-            <Badge className={getThemeClasses({
-              base: "px-2 py-1 gap-1",
-              default: "bg-green-100 text-green-800 hover:bg-green-200",
-              blue: "bg-green-900 text-green-100 hover:bg-green-800",
-              pink: "bg-green-900 text-green-100 hover:bg-green-800"
-            })}>
+            <Badge className={cn(getThemedBadgeClasses('success'), "px-2 py-1 gap-1")}>
               <Check className="h-3 w-3" />
               Verified
             </Badge>
@@ -240,12 +210,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
             <Button 
               variant="outline"
               onClick={resetVerification}
-              className={getThemeClasses({
-                base: "",
-                default: "border-red-300 text-red-600 hover:bg-red-50",
-                blue: "border-red-800 text-red-400 hover:bg-red-900/50",
-                pink: "border-red-800 text-red-400 hover:bg-red-900/50"
-              })}
+              className={cn("border-red-800 text-red-400 hover:bg-red-900/50")}
             >
               <X className="h-4 w-4 mr-1" />
               Reset
@@ -260,12 +225,10 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className={getThemeClasses({
-                base: "p-3 rounded text-sm flex items-start gap-2",
-                default: "bg-red-50 text-red-700 border border-red-100",
-                blue: "bg-red-900/20 text-red-300 border border-red-900/30",
-                pink: "bg-red-900/20 text-red-300 border border-red-900/30"
-              })}
+              className={cn(
+                "p-3 rounded text-sm flex items-start gap-2",
+                "bg-red-900/20 text-red-300 border border-red-900/30"
+              )}
             >
               <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>{errorMessage}</div>
@@ -278,12 +241,10 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className={getThemeClasses({
-                base: "p-3 rounded text-sm",
-                default: "bg-green-50 text-green-700 border border-green-100",
-                blue: "bg-green-900/20 text-green-300 border border-green-900/30",
-                pink: "bg-green-900/20 text-green-300 border border-green-900/30"
-              })}
+              className={cn(
+                "p-3 rounded text-sm",
+                "bg-green-900/20 text-green-300 border border-green-900/30"
+              )}
             >
               <div className="flex items-center gap-2 font-medium mb-1">
                 <Check className="h-4 w-4" />
@@ -296,13 +257,9 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
       </CardContent>
       
       <CardFooter className={cn(
-        "flex justify-between",
-        getThemeClasses({
-          base: "text-xs border-t p-3",
-          default: "border-gray-100 text-gray-500",
-          blue: "border-blue-900/30 text-blue-300",
-          pink: "border-pink-900/30 text-pink-300"
-        })
+        "flex justify-between text-xs border-t p-3",
+        "border-gdyup-border",
+        getThemedTextClasses('muted')
       )}>
         <div>
           What is Nostr? 
@@ -310,12 +267,7 @@ export default function NostrIdentityVerifier({ onComplete }: NostrIdentityVerif
             href="https://nostr.com/what-is-nostr" 
             target="_blank" 
             rel="noopener noreferrer"
-            className={getThemeClasses({
-              base: "ml-1 inline-flex items-center underline",
-              default: "text-blue-600 hover:text-blue-800",
-              blue: "text-blue-300 hover:text-blue-100",
-              pink: "text-pink-300 hover:text-pink-100"
-            })}
+            className={cn("ml-1 inline-flex items-center underline", getThemedTextClasses('primary'))}
           >
             Learn more <ExternalLink className="h-3 w-3 ml-0.5" />
           </a>

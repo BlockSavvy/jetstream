@@ -58,7 +58,12 @@ export default function NostrConnectionStatus() {
   
   const [showSettings, setShowSettings] = useState(false);
   const [showIdentityVerifier, setShowIdentityVerifier] = useState(false);
-  const { getThemeClasses, getThemedButtonClasses } = useGdyupTheme();
+  const { 
+    getThemedButtonClasses, 
+    getThemedTextClasses, 
+    getThemedBackgroundClasses, 
+    getThemedBadgeClasses 
+  } = useGdyupTheme();
   
   // Handle connection toggle
   const handleConnectionToggle = async () => {
@@ -111,12 +116,7 @@ export default function NostrConnectionStatus() {
         variant="ghost" 
         size="sm" 
         disabled 
-        className={getThemeClasses({
-          base: "gap-2 h-7",
-          default: "text-gray-500",
-          blue: "text-blue-300",
-          pink: "text-pink-300"
-        })}
+        className={cn("gap-2 h-7", getThemedTextClasses('muted'))}
       >
         <Radio className="h-3 w-3 animate-pulse" />
         <span className="text-xs">Nostr</span>
@@ -131,12 +131,7 @@ export default function NostrConnectionStatus() {
         variant="ghost" 
         size="sm" 
         onClick={() => router.push('/gdyup/auth/login?returnUrl=/gdyup/settings/nostr')}
-        className={getThemeClasses({
-          base: "gap-2 h-7",
-          default: "text-gray-500 hover:text-gray-900",
-          blue: "text-blue-300 hover:text-blue-100",
-          pink: "text-pink-300 hover:text-pink-100"
-        })}
+        className={cn("gap-2 h-7", getThemedTextClasses('muted'))}
       >
         <LogIn className="h-3 w-3" />
         <span className="text-xs">Login for Nostr</span>
@@ -153,18 +148,11 @@ export default function NostrConnectionStatus() {
             size="sm" 
             className={cn(
               "gap-2 h-7",
-              getThemeClasses({
-                base: "",
-                default: isEnabled 
-                  ? (isConnected ? "text-green-600" : "text-amber-600") 
-                  : "text-gray-500",
-                blue: isEnabled 
-                  ? (isConnected ? "text-green-400" : "text-amber-400") 
-                  : "text-blue-300",
-                pink: isEnabled 
-                  ? (isConnected ? "text-green-400" : "text-amber-400") 
-                  : "text-pink-300"
-              })
+              isEnabled 
+                ? (isConnected 
+                  ? "text-green-600 dark:text-green-400" 
+                  : "text-amber-600 dark:text-amber-400") 
+                : getThemedTextClasses('muted')
             )}
           >
             {isEnabled ? (
@@ -176,102 +164,60 @@ export default function NostrConnectionStatus() {
           </Button>
         </DropdownMenuTrigger>
         
-        <DropdownMenuContent className={getThemeClasses({
-          base: "min-w-[220px]",
-          default: "bg-white border-gray-200",
-          blue: "bg-blue-950 border-blue-900 text-blue-50",
-          pink: "bg-pink-950 border-pink-900 text-pink-50"
-        })}>
+        <DropdownMenuContent className={cn(
+          "min-w-[220px]",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <DropdownMenuLabel className="flex justify-between items-center">
-            <span>Nostr Status</span>
+            <span className={getThemedTextClasses()}>Nostr Status</span>
             {isEnabled && (
               <Badge className={cn(
-                "text-xs",
-                getThemeClasses({
-                  base: "px-1 py-0",
-                  default: isConnected 
-                    ? "bg-green-100 text-green-800" 
-                    : "bg-amber-100 text-amber-800",
-                  blue: isConnected 
-                    ? "bg-green-900 text-green-100" 
-                    : "bg-amber-900 text-amber-100",
-                  pink: isConnected 
-                    ? "bg-green-900 text-green-100" 
-                    : "bg-amber-900 text-amber-100"
-                })
+                "text-xs px-1 py-0",
+                isConnected 
+                  ? getThemedBadgeClasses('success')
+                  : getThemedBadgeClasses('warning')
               )}>
                 {isConnected ? 'Connected' : 'Disconnected'}
               </Badge>
             )}
           </DropdownMenuLabel>
           
-          <DropdownMenuSeparator className={getThemeClasses({
-            base: "",
-            default: "bg-gray-100",
-            blue: "bg-blue-900/60",
-            pink: "bg-pink-900/60"
-          })} />
+          <DropdownMenuSeparator className="bg-gdyup-border" />
           
           {hasNip05 ? (
             <div className={cn(
               "px-2 py-1.5 text-xs",
-              getThemeClasses({
-                base: "",
-                default: "text-gray-500",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })
+              getThemedTextClasses('muted')
             )}>
               <div className="flex items-center gap-1 mb-1">
                 <User className="h-3 w-3" />
                 <span className="font-medium">NIP-05 Identity:</span>
               </div>
-              <div className={getThemeClasses({
-                base: "ml-4 truncate",
-                default: "text-gray-900",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
-              })}>
+              <div className={cn("ml-4 truncate", getThemedTextClasses())}>
                 {nip05}
               </div>
             </div>
           ) : (
             <DropdownMenuItem 
               onClick={() => setShowIdentityVerifier(true)}
-              className={getThemeClasses({
-                base: "",
-                default: "text-blue-600 focus:bg-blue-50 focus:text-blue-700",
-                blue: "text-blue-300 focus:bg-blue-800 focus:text-blue-50",
-                pink: "text-pink-300 focus:bg-pink-800 focus:text-pink-50"
-              })}
+              className={cn(getThemedTextClasses('secondary'))}
             >
               <User className="h-4 w-4 mr-2" />
               Verify Nostr Identity
             </DropdownMenuItem>
           )}
           
-          <DropdownMenuSeparator className={getThemeClasses({
-            base: "",
-            default: "bg-gray-100",
-            blue: "bg-blue-900/60",
-            pink: "bg-pink-900/60"
-          })} />
+          <DropdownMenuSeparator className="bg-gdyup-border" />
           
           <DropdownMenuItem 
             onClick={handleConnectionToggle}
             disabled={!isEnabled && !hasNip05}
-            className={getThemeClasses({
-              base: "",
-              default: isConnected 
-                ? "text-red-600 focus:bg-red-50 focus:text-red-700" 
-                : "text-green-600 focus:bg-green-50 focus:text-green-700",
-              blue: isConnected 
-                ? "text-red-400 focus:bg-red-900/30 focus:text-red-300" 
-                : "text-green-400 focus:bg-green-900/30 focus:text-green-300",
-              pink: isConnected 
-                ? "text-red-400 focus:bg-red-900/30 focus:text-red-300" 
-                : "text-green-400 focus:bg-green-900/30 focus:text-green-300"
-            })}
+            className={cn(
+              isConnected 
+                ? "text-red-600 dark:text-red-400" 
+                : "text-green-600 dark:text-green-400"
+            )}
           >
             {isConnected ? (
               <>
@@ -288,12 +234,7 @@ export default function NostrConnectionStatus() {
           
           <DropdownMenuItem 
             onClick={() => setShowSettings(true)}
-            className={getThemeClasses({
-              base: "",
-              default: "focus:bg-gray-50",
-              blue: "focus:bg-blue-900",
-              pink: "focus:bg-pink-900"
-            })}
+            className={getThemedTextClasses()}
           >
             <Settings className="h-4 w-4 mr-2" />
             Nostr Settings
@@ -303,27 +244,16 @@ export default function NostrConnectionStatus() {
       
       {/* Nostr Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className={getThemeClasses({
-          base: "max-w-md",
-          default: "bg-white",
-          blue: "bg-blue-950 border-blue-900 text-blue-50",
-          pink: "bg-pink-950 border-pink-900 text-pink-50"
-        })}>
+        <DialogContent className={cn(
+          "max-w-md",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <DialogHeader>
-            <DialogTitle className={getThemeClasses({
-              base: "",
-              default: "text-gray-900",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            })}>
+            <DialogTitle className={getThemedTextClasses()}>
               Nostr Settings
             </DialogTitle>
-            <DialogDescription className={getThemeClasses({
-              base: "",
-              default: "text-gray-500",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
+            <DialogDescription className={getThemedTextClasses('muted')}>
               Configure your Nostr integration preferences
             </DialogDescription>
           </DialogHeader>
@@ -331,20 +261,10 @@ export default function NostrConnectionStatus() {
           <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className={getThemeClasses({
-                  base: "text-base",
-                  default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
-                })}>
+                <Label className={getThemedTextClasses()}>
                   Enable Nostr
                 </Label>
-                <div className={getThemeClasses({
-                  base: "text-xs",
-                  default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <div className={getThemedTextClasses('muted') + " text-xs"}>
                   Turn Nostr features on or off
                 </div>
               </div>
@@ -352,48 +272,22 @@ export default function NostrConnectionStatus() {
                 checked={settings.enabled}
                 onCheckedChange={(checked) => handleSettingToggle('enabled', checked)}
                 disabled={!hasNip05}
-                className={getThemeClasses({
-                  base: "",
-                  default: "",
-                  blue: "data-[state=checked]:bg-[#F25C05]",
-                  pink: "data-[state=checked]:bg-[#F7931A]"
-                })}
               />
             </div>
             
-            <div className={getThemeClasses({
-              base: "h-px my-6",
-              default: "bg-gray-100",
-              blue: "bg-blue-900/60",
-              pink: "bg-pink-900/60"
-            })} />
+            <div className="h-px my-6 bg-gdyup-border" />
             
             <div className="flex items-center justify-between">
               <div className="flex items-start gap-2">
                 <Zap className={cn(
                   "h-5 w-5 mt-0.5",
-                  getThemeClasses({
-                    base: "",
-                    default: "text-amber-500",
-                    blue: "text-amber-400",
-                    pink: "text-amber-400"
-                  })
+                  "text-amber-500 dark:text-amber-400"
                 )} />
                 <div className="space-y-0.5">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>
+                  <Label className={getThemedTextClasses()}>
                     Enable Zaps
                   </Label>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-xs"}>
                     Allow sending and receiving Bitcoin zaps
                   </div>
                 </div>
@@ -402,12 +296,6 @@ export default function NostrConnectionStatus() {
                 checked={settings.enable_zaps}
                 onCheckedChange={(checked) => handleSettingToggle('enable_zaps', checked)}
                 disabled={!settings.enabled}
-                className={getThemeClasses({
-                  base: "",
-                  default: "",
-                  blue: "data-[state=checked]:bg-[#F25C05]",
-                  pink: "data-[state=checked]:bg-[#F7931A]"
-                })}
               />
             </div>
             
@@ -415,28 +303,13 @@ export default function NostrConnectionStatus() {
               <div className="flex items-start gap-2">
                 <MessageSquare className={cn(
                   "h-5 w-5 mt-0.5",
-                  getThemeClasses({
-                    base: "",
-                    default: "text-blue-500",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })
+                  "text-blue-500 dark:text-blue-400"
                 )} />
                 <div className="space-y-0.5">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>
+                  <Label className={getThemedTextClasses()}>
                     Receive Messages
                   </Label>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-xs"}>
                     Allow receiving direct messages via Nostr
                   </div>
                 </div>
@@ -445,12 +318,6 @@ export default function NostrConnectionStatus() {
                 checked={settings.receive_messages}
                 onCheckedChange={(checked) => handleSettingToggle('receive_messages', checked)}
                 disabled={!settings.enabled}
-                className={getThemeClasses({
-                  base: "",
-                  default: "",
-                  blue: "data-[state=checked]:bg-[#F25C05]",
-                  pink: "data-[state=checked]:bg-[#F7931A]"
-                })}
               />
             </div>
             
@@ -458,28 +325,13 @@ export default function NostrConnectionStatus() {
               <div className="flex items-start gap-2">
                 <Radio className={cn(
                   "h-5 w-5 mt-0.5",
-                  getThemeClasses({
-                    base: "",
-                    default: "text-green-500",
-                    blue: "text-green-400",
-                    pink: "text-green-400"
-                  })
+                  "text-green-500 dark:text-green-400"
                 )} />
                 <div className="space-y-0.5">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>
+                  <Label className={getThemedTextClasses()}>
                     Broadcast Offers
                   </Label>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-xs"}>
                     Broadcast your JetShare offers to the Nostr network
                   </div>
                 </div>
@@ -488,12 +340,6 @@ export default function NostrConnectionStatus() {
                 checked={settings.broadcast_offers}
                 onCheckedChange={(checked) => handleSettingToggle('broadcast_offers', checked)}
                 disabled={!settings.enabled}
-                className={getThemeClasses({
-                  base: "",
-                  default: "",
-                  blue: "data-[state=checked]:bg-[#F25C05]",
-                  pink: "data-[state=checked]:bg-[#F7931A]"
-                })}
               />
             </div>
             
@@ -501,28 +347,13 @@ export default function NostrConnectionStatus() {
               <div className="flex items-start gap-2">
                 <Lock className={cn(
                   "h-5 w-5 mt-0.5",
-                  getThemeClasses({
-                    base: "",
-                    default: "text-purple-500",
-                    blue: "text-purple-400",
-                    pink: "text-purple-400"
-                  })
+                  "text-purple-500 dark:text-purple-400"
                 )} />
                 <div className="space-y-0.5">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>
+                  <Label className={getThemedTextClasses()}>
                     Private Mode
                   </Label>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-xs"}>
                     Only communicate with known contacts via Nostr
                   </div>
                 </div>
@@ -531,12 +362,6 @@ export default function NostrConnectionStatus() {
                 checked={settings.private_mode}
                 onCheckedChange={(checked) => handleSettingToggle('private_mode', checked)}
                 disabled={!settings.enabled}
-                className={getThemeClasses({
-                  base: "",
-                  default: "",
-                  blue: "data-[state=checked]:bg-[#F25C05]",
-                  pink: "data-[state=checked]:bg-[#F7931A]"
-                })}
               />
             </div>
             
@@ -544,28 +369,13 @@ export default function NostrConnectionStatus() {
               <div className="flex items-start gap-2">
                 <Wifi className={cn(
                   "h-5 w-5 mt-0.5",
-                  getThemeClasses({
-                    base: "",
-                    default: "text-blue-500",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })
+                  "text-blue-500 dark:text-blue-400"
                 )} />
                 <div className="space-y-0.5">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>
+                  <Label className={getThemedTextClasses()}>
                     Auto-Connect
                   </Label>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-xs"}>
                     Automatically connect to relays when enabled
                   </div>
                 </div>
@@ -574,12 +384,6 @@ export default function NostrConnectionStatus() {
                 checked={settings.auto_connect}
                 onCheckedChange={(checked) => handleSettingToggle('auto_connect', checked)}
                 disabled={!settings.enabled}
-                className={getThemeClasses({
-                  base: "",
-                  default: "",
-                  blue: "data-[state=checked]:bg-[#F25C05]",
-                  pink: "data-[state=checked]:bg-[#F7931A]"
-                })}
               />
             </div>
           </div>
@@ -597,27 +401,16 @@ export default function NostrConnectionStatus() {
       
       {/* Nostr Identity Verifier Dialog */}
       <Dialog open={showIdentityVerifier} onOpenChange={setShowIdentityVerifier}>
-        <DialogContent className={getThemeClasses({
-          base: "max-w-md",
-          default: "bg-white",
-          blue: "bg-blue-950 border-blue-900 text-blue-50",
-          pink: "bg-pink-950 border-pink-900 text-pink-50"
-        })}>
+        <DialogContent className={cn(
+          "max-w-md",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <DialogHeader>
-            <DialogTitle className={getThemeClasses({
-              base: "",
-              default: "text-gray-900",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            })}>
+            <DialogTitle className={getThemedTextClasses()}>
               Verify Nostr Identity
             </DialogTitle>
-            <DialogDescription className={getThemeClasses({
-              base: "",
-              default: "text-gray-500",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
+            <DialogDescription className={getThemedTextClasses('muted')}>
               Set up your Nostr identity to enable all features
             </DialogDescription>
           </DialogHeader>

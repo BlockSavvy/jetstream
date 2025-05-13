@@ -49,7 +49,7 @@ export default function NostrCommunityChat({
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -150,40 +150,27 @@ export default function NostrCommunityChat({
   
   return (
     <div className={cn(
-      getThemeClasses({
-        base: "border rounded-lg overflow-hidden",
-        default: "bg-black/20 border-gray-800",
-        blue: "bg-blue-950/20 border-blue-900",
-        pink: "bg-pink-950/20 border-pink-900"
-      }),
+      getThemedBackgroundClasses('card'),
+      "border rounded-lg overflow-hidden border-gdyup-border",
       className
     )}>
       <div 
-        className={getThemeClasses({
-          base: "p-3 flex items-center justify-between cursor-pointer",
-          default: "bg-black/40 hover:bg-black/60",
-          blue: "bg-blue-950/40 hover:bg-blue-950/60",
-          pink: "bg-pink-950/40 hover:bg-pink-950/60"
-        })}
+        className={cn(
+          getThemedBackgroundClasses('secondary'),
+          "p-3 flex items-center justify-between cursor-pointer hover:bg-opacity-80"
+        )}
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4" />
-          <h3 className={getThemeClasses({
-            base: "font-medium",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <MessageSquare className={cn("h-4 w-4", getThemedTextClasses())} />
+          <h3 className={cn("font-medium", getThemedTextClasses())}>
             {flightName} Community
           </h3>
           {!isCollapsed && messages.length > 0 && (
-            <span className={getThemeClasses({
-              base: "text-xs rounded-full px-2 py-0.5",
-              default: "bg-gray-800 text-gray-300",
-              blue: "bg-blue-900 text-blue-300",
-              pink: "bg-pink-900 text-pink-300"
-            })}>
+            <span className={cn(
+              getThemedBadgeClasses(),
+              "text-xs rounded-full px-2 py-0.5"
+            )}>
               {messages.length}
             </span>
           )}
@@ -191,9 +178,9 @@ export default function NostrCommunityChat({
         
         <div>
           {isCollapsed ? (
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className={cn("h-4 w-4", getThemedTextClasses())} />
           ) : (
-            <ChevronUp className="h-4 w-4" />
+            <ChevronUp className={cn("h-4 w-4", getThemedTextClasses())} />
           )}
         </div>
       </div>
@@ -206,30 +193,18 @@ export default function NostrCommunityChat({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <div className={getThemeClasses({
-              base: "h-64 overflow-y-auto p-3 space-y-3",
-              default: "bg-black/10",
-              blue: "bg-blue-950/10",
-              pink: "bg-pink-950/10"
-            })}>
+            <div className={cn(
+              getThemedBackgroundClasses('primary'),
+              "bg-opacity-50 h-64 overflow-y-auto p-3 space-y-3"
+            )}>
               {isLoading ? (
                 <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                  <Loader2 className={cn("h-6 w-6 animate-spin", getThemedTextClasses('muted'))} />
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full">
-                  <MessageSquare className={getThemeClasses({
-                    base: "h-10 w-10 mb-2 opacity-30",
-                    default: "text-gray-600",
-                    blue: "text-blue-700",
-                    pink: "text-pink-700"
-                  })} />
-                  <p className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-500",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <MessageSquare className={cn("h-10 w-10 mb-2 opacity-30", getThemedTextClasses('muted'))} />
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>
                     No messages yet. Start the conversation!
                   </p>
                 </div>
@@ -239,56 +214,34 @@ export default function NostrCommunityChat({
                     <div 
                       key={msg.id}
                       className={cn(
-                        "p-2 rounded-lg",
-                        getThemeClasses({
-                          base: "",
-                          default: msg.sender.nip05?.includes('gdyup.com') 
-                            ? "bg-amber-950/20 border border-amber-900/30" 
-                            : "bg-gray-900/40 border border-gray-800/30",
-                          blue: msg.sender.nip05?.includes('gdyup.com')
-                            ? "bg-amber-950/20 border border-amber-900/30"
-                            : "bg-blue-900/40 border border-blue-800/30",
-                          pink: msg.sender.nip05?.includes('gdyup.com')
-                            ? "bg-amber-950/20 border border-amber-900/30"
-                            : "bg-pink-900/40 border border-pink-800/30"
-                        })
+                        "p-2 rounded-lg border border-gdyup-border/30",
+                        getThemedBackgroundClasses(msg.sender.nip05?.includes('gdyup.com') ? 'card' : 'secondary')
                       )}
                     >
                       <div className="flex justify-between items-start mb-1">
                         <div className="flex items-center gap-1">
-                          <span className={getThemeClasses({
-                            base: "font-medium text-sm",
-                            default: msg.sender.nip05?.includes('gdyup.com') ? "text-amber-400" : "text-white",
-                            blue: msg.sender.nip05?.includes('gdyup.com') ? "text-amber-400" : "text-blue-100",
-                            pink: msg.sender.nip05?.includes('gdyup.com') ? "text-amber-400" : "text-pink-100"
-                          })}>
+                          <span className={cn(
+                            "font-medium text-sm", 
+                            msg.sender.nip05?.includes('gdyup.com') ? "text-amber-400" : getThemedTextClasses()
+                          )}>
                             {msg.sender.name}
                           </span>
                           {msg.sender.nip05 && (
                             <NostrVerificationBadge 
                               nip05={msg.sender.nip05}
-                              isVerified={true}
+                              pubkey={msg.sender.pubkey}
+                              nip05_verified={true}
                               size="sm"
                               showTooltip={false}
                             />
                           )}
                         </div>
-                        <span className={getThemeClasses({
-                          base: "text-xs flex items-center",
-                          default: "text-gray-500",
-                          blue: "text-blue-400",
-                          pink: "text-pink-400"
-                        })}>
+                        <span className={cn("text-xs flex items-center", getThemedTextClasses('muted'))}>
                           <Clock className="h-3 w-3 mr-1" />
                           {format(new Date(msg.timestamp), 'h:mm a')}
                         </span>
                       </div>
-                      <p className={getThemeClasses({
-                        base: "text-sm",
-                        default: "text-gray-300",
-                        blue: "text-blue-200",
-                        pink: "text-pink-200"
-                      })}>
+                      <p className={cn("text-sm", getThemedTextClasses())}>
                         {msg.content}
                       </p>
                     </div>
@@ -298,23 +251,20 @@ export default function NostrCommunityChat({
               )}
             </div>
             
-            <div className={getThemeClasses({
-              base: "p-3 flex gap-2",
-              default: "bg-black/30 border-t border-gray-800",
-              blue: "bg-blue-950/30 border-t border-blue-900",
-              pink: "bg-pink-950/30 border-t border-pink-900"
-            })}>
+            <div className={cn(
+              getThemedBackgroundClasses('secondary'),
+              "p-3 flex gap-2 border-t border-gdyup-border"
+            )}>
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type a message..."
                 disabled={!user || isSending}
-                className={getThemeClasses({
-                  base: "text-sm",
-                  default: "bg-black/30 border-gray-700 text-white",
-                  blue: "bg-blue-900/30 border-blue-800 text-blue-100",
-                  pink: "bg-pink-900/30 border-pink-800 text-pink-100"
-                })}
+                className={cn(
+                  getThemedBackgroundClasses('card'),
+                  getThemedTextClasses(),
+                  "text-sm border-gdyup-border"
+                )}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -326,12 +276,7 @@ export default function NostrCommunityChat({
                 size="icon"
                 disabled={!message.trim() || !user || isSending}
                 onClick={handleSendMessage}
-                className={getThemeClasses({
-                  base: "",
-                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-                })}
+                className={getThemedButtonClasses('primary')}
               >
                 {isSending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

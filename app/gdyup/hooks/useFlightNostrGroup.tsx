@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNostr } from '@/app/gdyup/contexts/NostrContext';
 import { toast } from 'sonner';
+import { useGdyupTheme } from './useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 // Define message interface
 export interface NostrMessage {
@@ -84,6 +86,8 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
     zapRequest
   } = useNostr();
   
+  const { getThemedTextClasses } = useGdyupTheme();
+  
   const [state, setState] = useState<FlightNostrGroupState>({
     messages: [],
     zaps: [],
@@ -95,6 +99,19 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
   
   // Check if Nostr is ready for use
   const isNostrReady = isEnabled && isConnected && !!pubkey;
+  
+  // Create themed toast notifications
+  const showErrorToast = useCallback((message: string) => {
+    toast.error(message, {
+      className: cn("border-red-800 bg-red-950/80", getThemedTextClasses())
+    });
+  }, [getThemedTextClasses]);
+
+  const showSuccessToast = useCallback((message: string) => {
+    toast.success(message, {
+      className: cn("border-green-800 bg-green-950/80", getThemedTextClasses())
+    });
+  }, [getThemedTextClasses]);
   
   // Update state when flight groups change
   useEffect(() => {
@@ -156,7 +173,7 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
   // Join flight group
   const joinGroup = useCallback(async () => {
     if (!isNostrReady) {
-      toast.error('Nostr not connected or enabled');
+      showErrorToast('Nostr not connected or enabled');
       return false;
     }
     
@@ -164,17 +181,17 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
       const joined = await joinFlightGroup(offerId);
       
       if (joined) {
-        toast.success('Joined flight group');
+        showSuccessToast('Joined flight group');
         setState(prev => ({ ...prev, isJoined: true }));
       }
       
       return joined;
     } catch (error) {
       console.error('Error joining flight group:', error);
-      toast.error('Failed to join flight group');
+      showErrorToast('Failed to join flight group');
       return false;
     }
-  }, [isNostrReady, joinFlightGroup, offerId]);
+  }, [isNostrReady, joinFlightGroup, offerId, showErrorToast, showSuccessToast]);
   
   // Leave flight group
   const leaveGroup = useCallback(() => {
@@ -185,12 +202,12 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
     try {
       leaveFlightGroup(offerId);
       setState(prev => ({ ...prev, isJoined: false }));
-      toast.success('Left flight group');
+      showSuccessToast('Left flight group');
     } catch (error) {
       console.error('Error leaving flight group:', error);
-      toast.error('Failed to leave flight group');
+      showErrorToast('Failed to leave flight group');
     }
-  }, [isNostrReady, state.isJoined, leaveFlightGroup, offerId]);
+  }, [isNostrReady, state.isJoined, leaveFlightGroup, offerId, showErrorToast, showSuccessToast]);
   
   // Send message to flight group
   const sendMessage = useCallback(async (content: string): Promise<boolean> => {
@@ -225,10 +242,10 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
       return false;
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+      showErrorToast('Failed to send message');
       return false;
     }
-  }, [isNostrReady, state.isJoined, sendFlightGroupMessage, offerId, pubkey, nip05]);
+  }, [isNostrReady, state.isJoined, sendFlightGroupMessage, offerId, pubkey, nip05, showErrorToast]);
   
   // Send a zap to a participant
   const sendZap = useCallback(async (
@@ -237,7 +254,7 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
     comment?: string
   ): Promise<string | null> => {
     if (!isNostrReady || !pubkey) {
-      toast.error('Nostr not connected or enabled');
+      showErrorToast('Nostr not connected or enabled');
       return null;
     }
     
@@ -266,16 +283,16 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
           zaps: [...prev.zaps, newZap]
         }));
         
-        toast.success(`Zapped ${amount} sats!`);
+        showSuccessToast(`Zapped ${amount} sats!`);
       }
       
       return zapId;
     } catch (error) {
       console.error('Error sending zap:', error);
-      toast.error('Failed to send zap');
+      showErrorToast('Failed to send zap');
       return null;
     }
-  }, [isNostrReady, pubkey, nip05, zapRequest, offerId]);
+  }, [isNostrReady, pubkey, nip05, zapRequest, offerId, showErrorToast, showSuccessToast]);
   
   // Refresh data
   const refreshData = useCallback(async () => {
@@ -299,14 +316,14 @@ export function useFlightNostrGroup(offerId: string): UseFlightNostrGroupResult 
       // 3. Provide them with a link to join the group
       
       // For now, we'll simulate success
-      toast.success(`Invitation sent to ${email}`);
+      showSuccessToast(`Invitation sent to ${email}`);
       return true;
     } catch (error) {
       console.error('Error inviting to group:', error);
-      toast.error('Failed to send invitation');
+      showErrorToast('Failed to send invitation');
       return false;
     }
-  }, [isNostrReady, state.isJoined]);
+  }, [isNostrReady, state.isJoined, showErrorToast, showSuccessToast]);
   
   return {
     isJoined: state.isJoined,

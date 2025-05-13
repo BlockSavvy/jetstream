@@ -28,7 +28,7 @@ interface NostrQrCodeProps {
 }
 
 export default function NostrQrCode({ flightData, qrType: initialQrType, className }: NostrQrCodeProps) {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const { isConnected, pubkey } = useNostr();
   const [isLoading, setIsLoading] = useState(true);
   const [qrImageUrl, setQrImageUrl] = useState<string | null>(null);
@@ -127,26 +127,12 @@ export default function NostrQrCode({ flightData, qrType: initialQrType, classNa
   
   return (
     <Card className={cn(
-      getThemeClasses({
-        base: "overflow-hidden",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-950 border-blue-900",
-        pink: "bg-pink-950 border-pink-900"
-      }),
+      getThemedBackgroundClasses('card'),
+      "border-gdyup-border overflow-hidden shadow",
       className
     )}>
-      <CardHeader className={getThemeClasses({
-        base: "pb-2",
-        default: "bg-black/30",
-        blue: "bg-blue-950/50",
-        pink: "bg-pink-950/50"
-      })}>
-        <CardTitle className={getThemeClasses({
-          base: "text-base flex items-center gap-2",
-          default: "text-white",
-          blue: "text-blue-50",
-          pink: "text-pink-50"
-        })}>
+      <CardHeader className={cn(getThemedBackgroundClasses('card'), "bg-opacity-50 pb-2")}>
+        <CardTitle className={cn(getThemedTextClasses(), "text-base flex items-center gap-2")}>
           <QrCode className="h-4 w-4" />
           GDY·UP Boarding Pass
         </CardTitle>
@@ -155,15 +141,10 @@ export default function NostrQrCode({ flightData, qrType: initialQrType, classNa
       <CardContent className="pt-4 flex flex-col items-center justify-center">
         {isLoading ? (
           <div className="h-[200px] w-[200px] flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
+            <Loader2 className="h-10 w-10 animate-spin text-gdyup-text-subtle" />
           </div>
         ) : (
-          <div className={getThemeClasses({
-            base: "p-4 rounded-lg bg-white",
-            default: "",
-            blue: "border border-blue-800",
-            pink: "border border-pink-800"
-          })}>
+          <div className="p-4 rounded-lg bg-white border border-gdyup-border">
             {qrImageUrl ? (
               <img 
                 src={qrImageUrl} 
@@ -171,7 +152,7 @@ export default function NostrQrCode({ flightData, qrType: initialQrType, classNa
                 className="w-[200px] h-[200px]"
               />
             ) : (
-              <div className="w-[200px] h-[200px] flex items-center justify-center text-gray-400">
+              <div className="w-[200px] h-[200px] flex items-center justify-center text-gdyup-text-subtle">
                 QR code not available
               </div>
             )}
@@ -185,22 +166,12 @@ export default function NostrQrCode({ flightData, qrType: initialQrType, classNa
             onCheckedChange={(checked) => setQrType(checked ? 'nostr' : 'standard')}
             disabled={!isConnected || !pubkey}
           />
-          <Label htmlFor="qr-type" className={getThemeClasses({
-            base: "",
-            default: "text-gray-400",
-            blue: "text-blue-200",
-            pink: "text-pink-200"
-          })}>
+          <Label htmlFor="qr-type" className={getThemedTextClasses()}>
             {qrType === 'nostr' ? 'Nostr Signed QR (NIP-01)' : 'Standard QR'}
           </Label>
         </div>
         
-        <p className={getThemeClasses({
-          base: "text-xs text-center mt-2",
-          default: "text-gray-500",
-          blue: "text-blue-400",
-          pink: "text-pink-400"
-        })}>
+        <p className={cn(getThemedTextClasses('muted'), "text-xs text-center mt-2")}>
           {qrType === 'nostr' 
             ? 'This QR code contains cryptographically signed flight details using your Nostr identity' 
             : 'Standard QR code contains your flight details'}
@@ -213,12 +184,7 @@ export default function NostrQrCode({ flightData, qrType: initialQrType, classNa
           size="sm"
           onClick={downloadQrCode}
           disabled={isLoading || !qrImageUrl}
-          className={getThemeClasses({
-            base: "",
-            default: "border-gray-700 text-white",
-            blue: "border-blue-800 text-blue-100",
-            pink: "border-pink-800 text-pink-100"
-          })}
+          className={getThemedButtonClasses('outline')}
         >
           <Download className="h-4 w-4 mr-2" />
           Download
@@ -229,12 +195,7 @@ export default function NostrQrCode({ flightData, qrType: initialQrType, classNa
           size="sm"
           onClick={copyQrData}
           disabled={isLoading}
-          className={getThemeClasses({
-            base: "",
-            default: "border-gray-700 text-white",
-            blue: "border-blue-800 text-blue-100",
-            pink: "border-pink-800 text-pink-100"
-          })}
+          className={getThemedButtonClasses('outline')}
         >
           <Copy className="h-4 w-4 mr-2" />
           Copy Data

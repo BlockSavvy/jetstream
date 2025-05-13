@@ -35,7 +35,7 @@ interface NostrOfferActivityProps {
 }
 
 export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: NostrOfferActivityProps) {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const { isConnected, isEnabled, pubkey, nip05, publishEvent } = useNostr();
   
   const [messages, setMessages] = useState<NostrMessage[]>([]);
@@ -154,68 +154,40 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
   // Not connected to Nostr state
   if (!isEnabled || !isConnected) {
     return (
-      <Card className={getThemeClasses({
-        base: "border shadow",
-        default: "bg-white border-gray-200",
-        blue: "bg-blue-950/40 border-blue-900/60",
-        pink: "bg-pink-950/40 border-pink-900/60"
-      })}>
-        <CardHeader className={getThemeClasses({
-          base: "pb-3",
-          default: "bg-gray-50 border-b border-gray-100",
-          blue: "bg-blue-950/60 border-b border-blue-900/60",
-          pink: "bg-pink-950/60 border-b border-pink-900/60"
-        })}>
-          <CardTitle className={getThemeClasses({
-            base: "",
-            default: "text-gray-900",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
+      <Card className={cn(
+        "border shadow",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
+        <CardHeader className={cn(
+          "pb-3 border-b border-gdyup-border",
+          getThemedBackgroundClasses('card')
+        )}>
+          <CardTitle className={getThemedTextClasses()}>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               <span>Flight Group</span>
             </div>
           </CardTitle>
-          <CardDescription className={getThemeClasses({
-            base: "",
-            default: "text-gray-600",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
-          })}>
+          <CardDescription className={getThemedTextClasses('muted')}>
             Connect to Nostr to join the conversation
           </CardDescription>
         </CardHeader>
         
         <CardContent className="pt-4 space-y-4">
           <div className="flex flex-col items-center justify-center py-8">
-            <AlertCircle className={getThemeClasses({
-              base: "h-12 w-12 mb-3 opacity-60",
-              default: "text-amber-500",
-              blue: "text-amber-400",
-              pink: "text-amber-300"
-            })} />
+            <AlertCircle className="h-12 w-12 mb-3 opacity-60 text-amber-500" />
             
-            <h3 className={getThemeClasses({
-              base: "text-lg font-medium",
-              default: "text-gray-800",
-              blue: "text-blue-100",
-              pink: "text-pink-100"
-            })}>
+            <h3 className={getThemedTextClasses()}>
               Nostr Not Connected
             </h3>
             
-            <p className={getThemeClasses({
-              base: "text-sm text-center mt-1 max-w-xs",
-              default: "text-gray-600",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
+            <p className={cn("text-sm text-center mt-1 max-w-xs", getThemedTextClasses('muted'))}>
               Connect your Nostr identity in your profile settings to join this flight's group chat.
             </p>
             
             <Button
-              className="mt-4"
+              className={cn("mt-4", getThemedButtonClasses('primary'))}
               onClick={() => {
                 // Redirect to profile page to set up Nostr
                 window.location.href = '/gdyup/profile';
@@ -230,25 +202,17 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
   }
   
   return (
-    <Card className={getThemeClasses({
-      base: "border shadow",
-      default: "bg-white border-gray-200",
-      blue: "bg-blue-950/40 border-blue-900/60",
-      pink: "bg-pink-950/40 border-pink-900/60"
-    })}>
-      <CardHeader className={getThemeClasses({
-        base: "pb-3",
-        default: "bg-gray-50 border-b border-gray-100",
-        blue: "bg-blue-950/60 border-b border-blue-900/60",
-        pink: "bg-pink-950/60 border-b border-pink-900/60"
-      })}>
+    <Card className={cn(
+      "border shadow",
+      getThemedBackgroundClasses('card'),
+      "border-gdyup-border"
+    )}>
+      <CardHeader className={cn(
+        "pb-3 border-b border-gdyup-border",
+        getThemedBackgroundClasses('card')
+      )}>
         <div className="flex items-center justify-between">
-          <CardTitle className={getThemeClasses({
-            base: "",
-            default: "text-gray-900",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
+          <CardTitle className={getThemedTextClasses()}>
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               <span>Flight Group</span>
@@ -260,12 +224,7 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
             variant="ghost" 
             onClick={refreshMessages}
             disabled={isLoading}
-            className={getThemeClasses({
-              base: "h-8 w-8 p-0",
-              default: "text-gray-600 hover:text-gray-900",
-              blue: "text-blue-300 hover:text-blue-100",
-              pink: "text-pink-300 hover:text-pink-100"
-            })}
+            className={getThemedButtonClasses('ghost')}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -275,12 +234,7 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
           </Button>
         </div>
         
-        <CardDescription className={getThemeClasses({
-          base: "",
-          default: "text-gray-600",
-          blue: "text-blue-300",
-          pink: "text-pink-300"
-        })}>
+        <CardDescription className={getThemedTextClasses('muted')}>
           Secure, decentralized communication via Nostr
         </CardDescription>
       </CardHeader>
@@ -289,12 +243,7 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
         {/* Messages container */}
         <div className={cn(
           "flex flex-col space-y-3 overflow-y-auto max-h-[300px] min-h-[200px] p-2 rounded-md",
-          getThemeClasses({
-            base: "",
-            default: "bg-gray-50",
-            blue: "bg-blue-950/30",
-            pink: "bg-pink-950/30"
-          })
+          getThemedBackgroundClasses('card')
         )}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
@@ -312,18 +261,8 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
                   className={cn(
                     "p-3 rounded-lg",
                     message.pubkey === pubkey 
-                      ? getThemeClasses({
-                          base: "ml-auto max-w-[85%]",
-                          default: "bg-blue-100 text-blue-900",
-                          blue: "bg-blue-900/50 text-blue-50",
-                          pink: "bg-pink-900/50 text-pink-50"
-                        })
-                      : getThemeClasses({
-                          base: "mr-auto max-w-[85%]",
-                          default: "bg-gray-100 text-gray-900",
-                          blue: "bg-blue-950/70 text-blue-100",
-                          pink: "bg-pink-950/70 text-pink-100"
-                        })
+                      ? cn(getThemedBackgroundClasses('primary'), "bg-opacity-20")
+                      : cn(getThemedBackgroundClasses('secondary'), "bg-opacity-10")
                   )}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
@@ -357,12 +296,7 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className={getThemeClasses({
-                          base: "h-6 w-6 p-0",
-                          default: "text-amber-500 hover:text-amber-600 hover:bg-amber-50",
-                          blue: "text-amber-400 hover:text-amber-300 hover:bg-blue-900/50",
-                          pink: "text-amber-400 hover:text-amber-300 hover:bg-pink-900/50"
-                        })}
+                        className={getThemedButtonClasses('ghost')}
                       >
                         <Zap className="h-3.5 w-3.5" />
                       </Button>
@@ -373,18 +307,8 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
             </AnimatePresence>
           ) : (
             <div className="flex flex-col items-center justify-center h-full">
-              <MessageCircle className={getThemeClasses({
-                base: "h-8 w-8 mb-2 opacity-40",
-                default: "text-gray-400",
-                blue: "text-blue-700",
-                pink: "text-pink-700"
-              })} />
-              <p className={getThemeClasses({
-                base: "text-sm opacity-70",
-                default: "text-gray-500",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}>
+              <MessageCircle className="h-8 w-8 mb-2 opacity-40 text-gray-400" />
+              <p className={cn("text-sm opacity-70", getThemedTextClasses('muted'))}>
                 No messages yet. Start the conversation!
               </p>
             </div>
@@ -397,24 +321,23 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className={getThemeClasses({
-              base: "resize-none flex-grow",
-              default: "border-gray-300 bg-white text-gray-900",
-              blue: "border-blue-800 bg-blue-950/80 text-blue-50",
-              pink: "border-pink-800 bg-pink-950/80 text-pink-50"
-            })}
+            className={cn(
+              "resize-none flex-grow",
+              getThemedBackgroundClasses('card'),
+              getThemedTextClasses(),
+              "border-gdyup-border"
+            )}
             disabled={isSending}
           />
           
           <Button
             onClick={sendMessage}
             disabled={!newMessage || isSending}
-            className={getThemeClasses({
-              base: "px-3 self-end h-[38px]",
-              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-            })}
+            className={cn(
+              "px-3 self-end h-[38px]",
+              getThemedButtonClasses('primary'),
+              getThemedBackgroundClasses('primary')
+            )}
           >
             {isSending ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -424,12 +347,7 @@ export default function NostrOfferActivity({ offerId, offerCreatorPubkey }: Nost
           </Button>
         </div>
         
-        <div className={getThemeClasses({
-          base: "text-xs text-center",
-          default: "text-gray-500",
-          blue: "text-blue-400",
-          pink: "text-pink-400"
-        })}>
+        <div className={cn("text-xs text-center", getThemedTextClasses('muted'))}>
           Messages are end-to-end encrypted and stored on the Nostr network
         </div>
       </CardContent>

@@ -49,7 +49,7 @@ export default function FlightNostrGroup({
   className,
   initialCollapsed = true
 }: FlightNostrGroupProps) {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const { isConnected, pubkey } = useNostr();
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
   const [message, setMessage] = useState('');
@@ -113,53 +113,30 @@ export default function FlightNostrGroup({
   if (!isNostrReady) {
     return (
       <Card className={cn(
-        getThemeClasses({
-          base: "border",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-900 border-blue-800",
-          pink: "bg-pink-900 border-pink-800",
-        }),
+        "border",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border",
         className
       )}>
         <CardHeader>
-          <CardTitle className={getThemeClasses({
-            base: "flex items-center gap-2",
-            default: "text-white",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
+          <CardTitle className={cn("flex items-center gap-2", getThemedTextClasses())}>
             <Users className="h-5 w-5" />
             {flightTitle}
           </CardTitle>
-          <CardDescription className={getThemeClasses({
-            base: "",
-            default: "text-gray-400",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}>
+          <CardDescription className={getThemedTextClasses('muted')}>
             Connect your Nostr identity to join this flight group
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-8">
           <Loader2 className={cn(
             "h-10 w-10 mb-3 animate-spin opacity-60",
-            getThemeClasses({
-              base: "",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })
+            getThemedTextClasses('muted')
           )} />
-          <p className={getThemeClasses({
-            base: "text-sm text-center max-w-xs",
-            default: "text-gray-400",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}>
+          <p className={cn("text-sm text-center max-w-xs", getThemedTextClasses('muted'))}>
             Please connect your Nostr identity in your profile settings to join this flight group.
           </p>
           <Button 
-            className="mt-4" 
+            className={cn("mt-4", getThemedButtonClasses('primary'))}
             onClick={() => window.location.href = '/gdyup/profile'}
           >
             Set Up Nostr
@@ -171,22 +148,14 @@ export default function FlightNostrGroup({
 
   return (
     <Card className={cn(
-      getThemeClasses({
-        base: "border",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-900 border-blue-800",
-        pink: "bg-pink-900 border-pink-800"
-      }),
+      "border",
+      getThemedBackgroundClasses('card'),
+      "border-gdyup-border",
       className
     )}>
       <CardHeader className="px-4 py-3">
         <div className="flex justify-between items-center">
-          <CardTitle className={getThemeClasses({
-            base: "flex items-center gap-2 text-base",
-            default: "text-white",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
+          <CardTitle className={cn("flex items-center gap-2 text-base", getThemedTextClasses())}>
             <Users className="h-5 w-5" />
             {flightTitle}
           </CardTitle>
@@ -197,12 +166,7 @@ export default function FlightNostrGroup({
                 variant="outline" 
                 size="sm"
                 onClick={joinGroup}
-                className={getThemeClasses({
-                  base: "",
-                  default: "border-gray-700 hover:bg-gray-800",
-                  blue: "border-blue-700 hover:bg-blue-800",
-                  pink: "border-pink-700 hover:bg-pink-800"
-                })}
+                className="border-gdyup-border hover:bg-gdyup-bg-dark"
               >
                 <UserPlus className="h-4 w-4 mr-1" />
                 Join
@@ -213,12 +177,7 @@ export default function FlightNostrGroup({
               variant="ghost" 
               size="icon" 
               onClick={toggleCollapsed}
-              className={getThemeClasses({
-                base: "h-8 w-8",
-                default: "text-gray-400 hover:text-white",
-                blue: "text-blue-400 hover:text-blue-100",
-                pink: "text-pink-400 hover:text-pink-100"
-              })}
+              className="h-8 w-8 text-gdyup-text-muted hover:text-gdyup-text"
             >
               {isCollapsed ? (
                 <ChevronDown className="h-5 w-5" />
@@ -230,12 +189,7 @@ export default function FlightNostrGroup({
         </div>
         
         {!isCollapsed && (
-          <CardDescription className={getThemeClasses({
-            base: "mt-1",
-            default: "text-gray-400",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}>
+          <CardDescription className={getThemedTextClasses('muted')}>
             {isJoined ? 
               `${participants.length} participant${participants.length !== 1 ? 's' : ''} in this encrypted flight group`
               : 'Private Nostr group for flight participants'
@@ -246,45 +200,20 @@ export default function FlightNostrGroup({
       
       {!isCollapsed && (
         <>
-          <CardContent className={getThemeClasses({
-            base: "px-4 py-0",
-            default: "",
-            blue: "",
-            pink: ""
-          })}>
+          <CardContent className={getThemedBackgroundClasses('card')}>
             {isLoading ? (
               <div className="flex justify-center items-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                <Loader2 className="h-8 w-8 animate-spin text-gdyup-text-muted" />
               </div>
             ) : !isJoined ? (
               <div className="py-8 text-center">
-                <div className={getThemeClasses({
-                  base: "h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-3",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-800",
-                  pink: "bg-pink-800"
-                })}>
-                  <Users className={getThemeClasses({
-                    base: "h-6 w-6",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })} />
+                <div className={cn("h-12 w-12 rounded-full flex items-center justify-center mx-auto mb-3", getThemedBackgroundClasses('card'))}>
+                  <Users className={cn("h-6 w-6", getThemedTextClasses('muted'))} />
                 </div>
-                <h3 className={getThemeClasses({
-                  base: "text-base font-medium mb-2",
-                  default: "text-white",
-                  blue: "text-blue-100",
-                  pink: "text-pink-100"
-                })}>
+                <h3 className={cn("text-base font-medium mb-2", getThemedTextClasses())}>
                   Join the Flight Group
                 </h3>
-                <p className={getThemeClasses({
-                  base: "text-sm max-w-xs mx-auto mb-4",
-                  default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
-                })}>
+                <p className={cn("text-sm max-w-xs mx-auto mb-4", getThemedTextClasses('muted'))}>
                   Connect with fellow passengers and coordinate before your flight
                 </p>
                 <Button
@@ -305,33 +234,13 @@ export default function FlightNostrGroup({
                           key={participant.pubkey} 
                           className="flex flex-col items-center min-w-[60px]"
                         >
-                          <div className={getThemeClasses({
-                            base: "h-10 w-10 rounded-full flex items-center justify-center relative",
-                            default: "bg-gray-800",
-                            blue: "bg-blue-800",
-                            pink: "bg-pink-800"
-                          })}>
-                            <User className={getThemeClasses({
-                              base: "h-5 w-5",
-                              default: "text-gray-300",
-                              blue: "text-blue-300",
-                              pink: "text-pink-300"
-                            })} />
+                          <div className={cn("h-10 w-10 rounded-full flex items-center justify-center relative", getThemedBackgroundClasses('card'))}>
+                            <User className={cn("h-5 w-5", getThemedTextClasses('muted'))} />
                             {participant.pubkey === pubkey && (
-                              <div className={getThemeClasses({
-                                base: "absolute -top-1 -right-1 h-4 w-4 rounded-full border-2",
-                                default: "bg-green-500 border-gray-900",
-                                blue: "bg-green-500 border-blue-900",
-                                pink: "bg-green-500 border-pink-900"
-                              })}></div>
+                              <div className={cn("absolute -top-1 -right-1 h-4 w-4 rounded-full border-2", getThemedBackgroundClasses('card'))}></div>
                             )}
                           </div>
-                          <div className={getThemeClasses({
-                            base: "text-xs mt-1 max-w-[80px] truncate text-center",
-                            default: "text-gray-300",
-                            blue: "text-blue-300",
-                            pink: "text-pink-300"
-                          })}>
+                          <div className={cn("text-xs mt-1 max-w-[80px] truncate text-center", getThemedTextClasses('muted'))}>
                             {participant.name || participant.pubkey.substring(0, 6)}
                           </div>
                           {participant.nip05 && (
@@ -347,12 +256,7 @@ export default function FlightNostrGroup({
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsInviteOpen(!isInviteOpen)}
-                        className={getThemeClasses({
-                          base: "h-10 w-10 rounded-full",
-                          default: "bg-gray-800 hover:bg-gray-700 text-gray-400",
-                          blue: "bg-blue-800 hover:bg-blue-700 text-blue-400",
-                          pink: "bg-pink-800 hover:bg-pink-700 text-pink-400"
-                        })}
+                        className={cn("h-10 w-10 rounded-full bg-gdyup-bg-dark hover:bg-gdyup-bg-darker text-gdyup-text-muted")}
                       >
                         <Plus className="h-5 w-5" />
                       </Button>
@@ -361,23 +265,13 @@ export default function FlightNostrGroup({
                 )}
                 
                 {isInviteOpen && (
-                  <div className={getThemeClasses({
-                    base: "mb-4 p-3 rounded-md border flex items-center gap-2",
-                    default: "bg-gray-800 border-gray-700",
-                    blue: "bg-blue-800 border-blue-700",
-                    pink: "bg-pink-800 border-pink-700"
-                  })}>
+                  <div className={cn("mb-4 p-3 rounded-md border flex items-center gap-2", getThemedBackgroundClasses('card'))}>
                     <Input
                       type="email"
                       placeholder="Invite by email"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      className={getThemeClasses({
-                        base: "flex-1 h-8 text-sm",
-                        default: "bg-gray-900 border-gray-700",
-                        blue: "bg-blue-900 border-blue-700",
-                        pink: "bg-pink-900 border-pink-700"
-                      })}
+                      className={cn("flex-1 h-8 text-sm", getThemedBackgroundClasses('card'))}
                     />
                     <Button
                       size="sm"
@@ -389,27 +283,12 @@ export default function FlightNostrGroup({
                   </div>
                 )}
                 
-                <div className={getThemeClasses({
-                  base: "border rounded-md h-60 mb-3 overflow-y-auto",
-                  default: "bg-gray-950 border-gray-800",
-                  blue: "bg-blue-950 border-blue-800",
-                  pink: "bg-pink-950 border-pink-800"
-                })}>
+                <div className={cn("border rounded-md h-60 mb-3 overflow-y-auto", getThemedBackgroundClasses('card'))}>
                   <AnimatePresence>
                     {messages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                        <MessageSquare className={getThemeClasses({
-                          base: "h-8 w-8 mb-2 opacity-40",
-                          default: "text-gray-600",
-                          blue: "text-blue-600",
-                          pink: "text-pink-600"
-                        })} />
-                        <p className={getThemeClasses({
-                          base: "text-sm",
-                          default: "text-gray-500",
-                          blue: "text-blue-500",
-                          pink: "text-pink-500"
-                        })}>
+                        <MessageSquare className={cn("h-8 w-8 mb-2 opacity-40", getThemedTextClasses('muted'))} />
+                        <p className={cn("text-sm", getThemedTextClasses('muted'))}>
                           No messages yet. Start the conversation!
                         </p>
                       </div>
@@ -424,18 +303,8 @@ export default function FlightNostrGroup({
                             className={cn(
                               "p-2 rounded-md",
                               message.pubkey === pubkey ?
-                                getThemeClasses({
-                                  base: "ml-6",
-                                  default: "bg-blue-900/20 border border-blue-900/30",
-                                  blue: "bg-blue-800/30 border border-blue-800",
-                                  pink: "bg-pink-800/30 border border-pink-800"
-                                }) :
-                                getThemeClasses({
-                                  base: "mr-6",
-                                  default: "bg-gray-800/50 border border-gray-800",
-                                  blue: "bg-blue-900/20 border border-blue-900",
-                                  pink: "bg-pink-900/20 border border-pink-900"
-                                })
+                                cn("ml-6", getThemedBackgroundClasses('card')) :
+                                cn("mr-6", getThemedBackgroundClasses('card'))
                             )}
                           >
                             <div className="flex items-start justify-between gap-2 mb-1">
@@ -484,12 +353,7 @@ export default function FlightNostrGroup({
                     placeholder="Type a message..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className={getThemeClasses({
-                      base: "min-h-10 text-sm resize-none",
-                      default: "bg-gray-800 border-gray-700",
-                      blue: "bg-blue-800 border-blue-700",
-                      pink: "bg-pink-800 border-pink-700"
-                    })}
+                    className={cn("min-h-10 text-sm resize-none", getThemedBackgroundClasses('card'))}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -510,22 +374,12 @@ export default function FlightNostrGroup({
             )}
           </CardContent>
           
-          <CardFooter className={getThemeClasses({
-            base: "px-4 py-3 flex justify-between",
-            default: "border-t border-gray-800",
-            blue: "border-t border-blue-800",
-            pink: "border-t border-pink-800"
-          })}>
+          <CardFooter className={cn("px-4 py-3 flex justify-between", getThemedBackgroundClasses('card'))}>
             <Button
               variant="link"
               size="sm"
               onClick={() => window.open('https://nostr.com', '_blank')}
-              className={getThemeClasses({
-                base: "text-xs px-0",
-                default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}
+              className={cn("text-xs px-0", getThemedTextClasses('muted'))}
             >
               Powered by Nostr
             </Button>
@@ -537,12 +391,7 @@ export default function FlightNostrGroup({
                     variant="outline"
                     size="sm"
                     onClick={refreshData}
-                    className={getThemeClasses({
-                      base: "h-8 w-8 p-0",
-                      default: "border-gray-700 hover:bg-gray-800",
-                      blue: "border-blue-700 hover:bg-blue-800",
-                      pink: "border-pink-700 hover:bg-pink-800"
-                    })}
+                    className="h-8 w-8 p-0 border-gdyup-border hover:bg-gdyup-bg-dark"
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
@@ -551,12 +400,7 @@ export default function FlightNostrGroup({
                     variant="outline"
                     size="sm"
                     onClick={leaveGroup}
-                    className={getThemeClasses({
-                      base: "h-8",
-                      default: "border-red-900/30 hover:bg-red-900/20 text-red-500",
-                      blue: "border-red-900/30 hover:bg-red-900/20 text-red-500",
-                      pink: "border-red-900/30 hover:bg-red-900/20 text-red-500"
-                    })}
+                    className="h-8 border-red-900/30 hover:bg-red-900/20 text-red-500"
                   >
                     Leave Group
                   </Button>

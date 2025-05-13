@@ -36,7 +36,7 @@ export default function NostrZapButton({
   const [isProcessing, setIsProcessing] = useState(false);
   const [zapAmount, setZapAmount] = useState(amount);
   const [zapNote, setZapNote] = useState(note);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedButtonClasses, getThemedTextClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   
   const formatSats = (sats: number) => {
     if (sats >= 1000000) {
@@ -89,12 +89,8 @@ export default function NostrZapButton({
           size={size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'default'}
           className={cn(
             sizeClasses[size],
-            getThemeClasses({
-              base: "gap-2",
-              default: "border-amber-600 text-amber-500 hover:bg-amber-950/30 hover:text-amber-400",
-              blue: "border-amber-600 text-amber-500 hover:bg-amber-950/30 hover:text-amber-400",
-              pink: "border-amber-600 text-amber-500 hover:bg-amber-950/30 hover:text-amber-400"
-            }),
+            getThemedTextClasses('secondary'),
+            "gap-2 border border-gdyup-secondary hover:bg-gdyup-secondary/10",
             className
           )}
         >
@@ -105,38 +101,21 @@ export default function NostrZapButton({
         </Button>
       </PopoverTrigger>
       
-      <PopoverContent className={getThemeClasses({
-        base: "w-80",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-950 border-blue-900",
-        pink: "bg-pink-950 border-pink-900"
-      })}>
+      <PopoverContent className={cn(
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border w-80"
+      )}>
         <div className="space-y-4">
-          <h4 className={getThemeClasses({
-            base: "font-medium text-sm",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <h4 className={cn(getThemedTextClasses('primary'), "font-medium text-sm")}>
             Send a Zap
           </h4>
           
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className={getThemeClasses({
-                base: "text-xs",
-                default: "text-gray-400",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })}>
+              <span className={getThemedTextClasses('muted') + " text-xs"}>
                 Amount
               </span>
-              <span className={getThemeClasses({
-                base: "text-xs font-medium",
-                default: "text-amber-500",
-                blue: "text-amber-400",
-                pink: "text-amber-400"
-              })}>
+              <span className={getThemedTextClasses('secondary') + " text-xs font-medium"}>
                 {formatSats(zapAmount)}
               </span>
             </div>
@@ -147,12 +126,7 @@ export default function NostrZapButton({
               max={100000}
               step={100}
               onValueChange={(values) => setZapAmount(values[0])}
-              className={getThemeClasses({
-                base: "",
-                default: "bg-amber-900/20",
-                blue: "bg-amber-900/20",
-                pink: "bg-amber-900/20"
-              })}
+              className="bg-gdyup-secondary/20"
             />
             
             <div className="flex gap-2 mt-2">
@@ -166,18 +140,8 @@ export default function NostrZapButton({
                   className={cn(
                     "text-xs py-0 h-6 flex-1",
                     zapAmount === preset ? 
-                      getThemeClasses({
-                        base: "",
-                        default: "bg-amber-900/30 border-amber-700 text-amber-400",
-                        blue: "bg-amber-900/30 border-amber-700 text-amber-400",
-                        pink: "bg-amber-900/30 border-amber-700 text-amber-400"
-                      }) : 
-                      getThemeClasses({
-                        base: "",
-                        default: "border-gray-700",
-                        blue: "border-blue-700",
-                        pink: "border-pink-700"
-                      })
+                      cn("bg-gdyup-secondary/20", getThemedTextClasses('secondary'), "border-gdyup-secondary") : 
+                      "border-gdyup-border"
                   )}
                 >
                   {formatSats(preset)}
@@ -187,24 +151,14 @@ export default function NostrZapButton({
           </div>
           
           <div className="space-y-2">
-            <label className={getThemeClasses({
-              base: "text-xs",
-              default: "text-gray-400",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
+            <label className={getThemedTextClasses('muted') + " text-xs"}>
               Note (optional)
             </label>
             <Input
               value={zapNote}
               onChange={(e) => setZapNote(e.target.value)}
               placeholder="Add a note to your zap"
-              className={getThemeClasses({
-                base: "text-sm",
-                default: "bg-black/30 border-gray-700 text-white",
-                blue: "bg-blue-900/30 border-blue-800 text-blue-100",
-                pink: "bg-pink-900/30 border-pink-800 text-pink-100"
-              })}
+              className={cn("bg-gdyup-bg-dark border-gdyup-border text-gdyup-text text-sm")}
             />
           </div>
           
@@ -214,12 +168,7 @@ export default function NostrZapButton({
               disabled={isProcessing}
               className={cn(
                 "w-full",
-                getThemeClasses({
-                  base: "",
-                  default: "bg-amber-600 hover:bg-amber-700 text-white",
-                  blue: "bg-amber-600 hover:bg-amber-700 text-white",
-                  pink: "bg-amber-600 hover:bg-amber-700 text-white"
-                })
+                getThemedButtonClasses('secondary')
               )}
             >
               {isProcessing ? (
@@ -235,12 +184,7 @@ export default function NostrZapButton({
               )}
             </Button>
             
-            <p className={getThemeClasses({
-              base: "text-xs mt-2 text-center",
-              default: "text-gray-400",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })}>
+            <p className={cn(getThemedTextClasses('muted'), "text-xs mt-2 text-center")}>
               {recipientNip05 ? `Sending to ${recipientNip05}` : 'Sending via Nostr'}
             </p>
           </div>
