@@ -11,6 +11,8 @@ import { Check, AlertCircle, RefreshCw, Database, User, Plane } from 'lucide-rea
 import { toast } from 'sonner';
 import { JetShareUITest } from '../components/JetShareUITest';
 import { useRouter } from 'next/navigation';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 export default function JetShareDebug() {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +21,7 @@ export default function JetShareDebug() {
   const [runningTests, setRunningTests] = useState(false);
   const [testResults, setTestResults] = useState<{[key: string]: {success: boolean, message: string}}>({});
   const router = useRouter();
+  const { getThemeClasses } = useGdyupTheme();
   
   // Initialize Supabase client
   const supabase = createClient();
@@ -359,15 +362,35 @@ export default function JetShareDebug() {
   if (isLoading && !debugData) {
     return (
       <div className="container mx-auto py-8">
-        <Card>
+        <Card className={getThemeClasses({
+          base: "",
+          default: "bg-gray-900 border-gray-800",
+          luxury: "bg-blue-950 border-blue-900",
+          bitcoin: "bg-pink-950 border-pink-900"
+        })}>
           <CardHeader>
-            <CardTitle>JetShare Diagnostics</CardTitle>
-            <CardDescription>
+            <CardTitle className={getThemeClasses({
+              base: "",
+              default: "text-white",
+              luxury: "text-blue-50",
+              bitcoin: "text-pink-50"
+            })}>JetShare Diagnostics</CardTitle>
+            <CardDescription className={getThemeClasses({
+              base: "",
+              default: "text-gray-400",
+              luxury: "text-blue-400",
+              bitcoin: "text-pink-400"
+            })}>
               Loading diagnostic information...
             </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-amber-500" />
+            <RefreshCw className={cn("h-8 w-8 animate-spin", getThemeClasses({
+              base: "",
+              default: "text-amber-500",
+              luxury: "text-blue-500",
+              bitcoin: "text-pink-500"
+            }))} />
           </CardContent>
         </Card>
       </div>
@@ -378,24 +401,60 @@ export default function JetShareDebug() {
   if (!isLoading && !user) {
     return (
       <div className="container mx-auto py-8">
-        <Card>
+        <Card className={getThemeClasses({
+          base: "",
+          default: "bg-gray-900 border-gray-800",
+          luxury: "bg-blue-950 border-blue-900",
+          bitcoin: "bg-pink-950 border-pink-900"
+        })}>
           <CardHeader>
-            <CardTitle>JetShare Diagnostics</CardTitle>
-            <CardDescription>
+            <CardTitle className={getThemeClasses({
+              base: "",
+              default: "text-white",
+              luxury: "text-blue-50",
+              bitcoin: "text-pink-50"
+            })}>JetShare Diagnostics</CardTitle>
+            <CardDescription className={getThemeClasses({
+              base: "",
+              default: "text-gray-400",
+              luxury: "text-blue-400",
+              bitcoin: "text-pink-400"
+            })}>
               You must be logged in to use the diagnostic tools.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Alert variant="destructive">
+            <Alert variant="destructive" className={getThemeClasses({
+              base: "",
+              default: "border-red-800 bg-red-950/50",
+              luxury: "border-red-800 bg-red-950/50",
+              bitcoin: "border-red-800 bg-red-950/50"
+            })}>
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Authentication Required</AlertTitle>
-              <AlertDescription>
+              <AlertTitle className={getThemeClasses({
+                base: "",
+                default: "text-red-300",
+                luxury: "text-red-300",
+                bitcoin: "text-red-300"
+              })}>Authentication Required</AlertTitle>
+              <AlertDescription className={getThemeClasses({
+                base: "",
+                default: "text-red-300/80",
+                luxury: "text-red-300/80",
+                bitcoin: "text-red-300/80"
+              })}>
                 Please log in to access the JetShare diagnostic tools.
               </AlertDescription>
             </Alert>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => router.push('/auth/login?returnUrl=/jetshare/debug')}>
+            <Button onClick={() => router.push('/auth/login?returnUrl=/jetshare/debug')}
+              className={getThemeClasses({
+                base: "",
+                default: "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/90",
+                luxury: "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/90",
+                bitcoin: "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/90"
+              })}>
               Go to Login
             </Button>
           </CardFooter>
@@ -406,26 +465,62 @@ export default function JetShareDebug() {
   
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      <h1 className="text-3xl font-bold mb-2">JetShare Debug Panel</h1>
-      <p className="text-muted-foreground mb-8">
+      <h1 className={getThemeClasses({
+        base: "text-3xl font-bold mb-2",
+        default: "text-white",
+        luxury: "text-blue-50",
+        bitcoin: "text-pink-50"
+      })}>JetShare Debug Panel</h1>
+      <p className={getThemeClasses({
+        base: "mb-8",
+        default: "text-gray-400",
+        luxury: "text-blue-400",
+        bitcoin: "text-pink-400"
+      })}>
         This panel provides diagnostic information and tools for the JetShare module.
       </p>
       
       {/* UI Test Components */}
       <JetShareUITest />
       
-      <Separator className="my-8" />
+      <Separator className={getThemeClasses({
+        base: "my-8",
+        default: "bg-gray-800",
+        luxury: "bg-blue-800",
+        bitcoin: "bg-pink-800"
+      })} />
       
-      <Card className="mb-6">
+      <Card className={cn("mb-6", getThemeClasses({
+        base: "",
+        default: "bg-gray-900 border-gray-800",
+        luxury: "bg-blue-950 border-blue-900",
+        bitcoin: "bg-pink-950 border-pink-900"
+      }))}>
         <CardHeader>
-          <CardTitle>JetShare Diagnostics</CardTitle>
-          <CardDescription>
+          <CardTitle className={getThemeClasses({
+            base: "",
+            default: "text-white",
+            luxury: "text-blue-50",
+            bitcoin: "text-pink-50"
+          })}>JetShare Diagnostics</CardTitle>
+          <CardDescription className={getThemeClasses({
+            base: "",
+            default: "text-gray-400",
+            luxury: "text-blue-400",
+            bitcoin: "text-pink-400"
+          })}>
             Troubleshoot issues with the JetShare application.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 mb-6">
-            <Button onClick={fetchDebugData} disabled={isLoading} variant="outline">
+            <Button onClick={fetchDebugData} disabled={isLoading} variant="outline"
+              className={getThemeClasses({
+                base: "",
+                default: "border-gray-700 hover:bg-gray-800",
+                luxury: "border-blue-700 hover:bg-blue-800",
+                bitcoin: "border-pink-700 hover:bg-pink-800"
+              })}>
               {isLoading ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -439,12 +534,24 @@ export default function JetShareDebug() {
               )}
             </Button>
             
-            <Button onClick={fixIssues} disabled={isLoading} variant="outline">
+            <Button onClick={fixIssues} disabled={isLoading} variant="outline"
+              className={getThemeClasses({
+                base: "",
+                default: "border-gray-700 hover:bg-gray-800",
+                luxury: "border-blue-700 hover:bg-blue-800",
+                bitcoin: "border-pink-700 hover:bg-pink-800"
+              })}>
               <Database className="mr-2 h-4 w-4" />
               Run Diagnostics
             </Button>
             
-            <Button onClick={runTests} disabled={runningTests || isLoading} variant="secondary">
+            <Button onClick={runTests} disabled={runningTests || isLoading} variant="secondary"
+              className={getThemeClasses({
+                base: "",
+                default: "bg-gray-800 hover:bg-gray-700 text-white",
+                luxury: "bg-blue-800 hover:bg-blue-700 text-blue-100",
+                bitcoin: "bg-pink-800 hover:bg-pink-700 text-pink-100"
+              })}>
               {runningTests ? (
                 <>
                   <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -497,6 +604,12 @@ export default function JetShareDebug() {
               }}
               disabled={isLoading}
               variant="secondary"
+              className={getThemeClasses({
+                base: "",
+                default: "bg-gray-800 hover:bg-gray-700 text-white",
+                luxury: "bg-blue-800 hover:bg-blue-700 text-blue-100",
+                bitcoin: "bg-pink-800 hover:bg-pink-700 text-pink-100"
+              })}
             >
               <Database className="mr-2 h-4 w-4" />
               Check/Fix Database
@@ -506,17 +619,49 @@ export default function JetShareDebug() {
           {/* Test Results */}
           {Object.keys(testResults).length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-medium mb-2">Test Results</h3>
+              <h3 className={getThemeClasses({
+                base: "text-lg font-medium mb-2",
+                default: "text-white",
+                luxury: "text-blue-50",
+                bitcoin: "text-pink-50"
+              })}>Test Results</h3>
               <div className="space-y-2">
                 {Object.entries(testResults).map(([key, result]) => (
-                  <Alert key={key} variant={result.success ? 'default' : 'destructive'}>
+                  <Alert key={key} 
+                    variant={result.success ? 'default' : 'destructive'}
+                    className={getThemeClasses({
+                      base: "",
+                      default: result.success ? "border-green-800 bg-green-950/30" : "border-red-800 bg-red-950/30",
+                      luxury: result.success ? "border-green-800 bg-green-950/30" : "border-red-800 bg-red-950/30",
+                      bitcoin: result.success ? "border-green-800 bg-green-950/30" : "border-red-800 bg-red-950/30"
+                    })}>
                     {result.success ? (
-                      <Check className="h-4 w-4" />
+                      <Check className={getThemeClasses({
+                        base: "h-4 w-4",
+                        default: "text-green-400",
+                        luxury: "text-green-400",
+                        bitcoin: "text-green-400"
+                      })} />
                     ) : (
-                      <AlertCircle className="h-4 w-4" />
+                      <AlertCircle className={getThemeClasses({
+                        base: "h-4 w-4",
+                        default: "text-red-400",
+                        luxury: "text-red-400",
+                        bitcoin: "text-red-400"
+                      })} />
                     )}
-                    <AlertTitle className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</AlertTitle>
-                    <AlertDescription>{result.message}</AlertDescription>
+                    <AlertTitle className={getThemeClasses({
+                      base: "capitalize",
+                      default: result.success ? "text-green-300" : "text-red-300",
+                      luxury: result.success ? "text-green-300" : "text-red-300",
+                      bitcoin: result.success ? "text-green-300" : "text-red-300"
+                    })}>{key.replace(/([A-Z])/g, ' $1').trim()}</AlertTitle>
+                    <AlertDescription className={getThemeClasses({
+                      base: "",
+                      default: result.success ? "text-green-300/80" : "text-red-300/80",
+                      luxury: result.success ? "text-green-300/80" : "text-red-300/80",
+                      bitcoin: result.success ? "text-green-300/80" : "text-red-300/80"
+                    })}>{result.message}</AlertDescription>
                   </Alert>
                 ))}
               </div>
@@ -527,12 +672,27 @@ export default function JetShareDebug() {
             <>
               {/* User Information */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2 flex items-center">
+                <h3 className={getThemeClasses({
+                  base: "text-lg font-medium mb-2 flex items-center",
+                  default: "text-white",
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
+                })}>
                   <User className="mr-2 h-5 w-5" /> 
                   User Information
                 </h3>
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
+                <div className={getThemeClasses({
+                  base: "p-4 rounded-md overflow-auto",
+                  default: "bg-gray-800",
+                  luxury: "bg-blue-900",
+                  bitcoin: "bg-pink-900"
+                })}>
+                  <pre className={getThemeClasses({
+                    base: "text-xs",
+                    default: "text-gray-300",
+                    luxury: "text-blue-300",
+                    bitcoin: "text-pink-300"
+                  })}>
                     {JSON.stringify(debugData.user, null, 2)}
                   </pre>
                 </div>
@@ -540,20 +700,53 @@ export default function JetShareDebug() {
               
               {/* Profile Status */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2 flex items-center">
+                <h3 className={getThemeClasses({
+                  base: "text-lg font-medium mb-2 flex items-center",
+                  default: "text-white",
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
+                })}>
                   <User className="mr-2 h-5 w-5" /> 
                   Profile Status
                 </h3>
-                <Alert variant={debugData.profile.exists ? 'default' : 'destructive'}>
+                <Alert 
+                  variant={debugData.profile.exists ? 'default' : 'destructive'}
+                  className={getThemeClasses({
+                    base: "",
+                    default: debugData.profile.exists ? "border-green-800 bg-green-950/30" : "border-red-800 bg-red-950/30",
+                    luxury: debugData.profile.exists ? "border-green-800 bg-green-950/30" : "border-red-800 bg-red-950/30",
+                    bitcoin: debugData.profile.exists ? "border-green-800 bg-green-950/30" : "border-red-800 bg-red-950/30"
+                  })}
+                >
                   {debugData.profile.exists ? (
-                    <Check className="h-4 w-4" />
+                    <Check className={getThemeClasses({
+                      base: "h-4 w-4",
+                      default: "text-green-400",
+                      luxury: "text-green-400",
+                      bitcoin: "text-green-400"
+                    })} />
                   ) : (
-                    <AlertCircle className="h-4 w-4" />
+                    <AlertCircle className={getThemeClasses({
+                      base: "h-4 w-4",
+                      default: "text-red-400",
+                      luxury: "text-red-400",
+                      bitcoin: "text-red-400"
+                    })} />
                   )}
-                  <AlertTitle>
+                  <AlertTitle className={getThemeClasses({
+                    base: "",
+                    default: debugData.profile.exists ? "text-green-300" : "text-red-300",
+                    luxury: debugData.profile.exists ? "text-green-300" : "text-red-300",
+                    bitcoin: debugData.profile.exists ? "text-green-300" : "text-red-300"
+                  })}>
                     {debugData.profile.exists ? 'Profile Found' : 'Profile Missing'}
                   </AlertTitle>
-                  <AlertDescription>
+                  <AlertDescription className={getThemeClasses({
+                    base: "",
+                    default: debugData.profile.exists ? "text-green-300/80" : "text-red-300/80",
+                    luxury: debugData.profile.exists ? "text-green-300/80" : "text-red-300/80",
+                    bitcoin: debugData.profile.exists ? "text-green-300/80" : "text-red-300/80"
+                  })}>
                     {debugData.profile.exists 
                       ? 'User profile exists in the database' 
                       : debugData.profile.fixed 
@@ -562,8 +755,18 @@ export default function JetShareDebug() {
                   </AlertDescription>
                 </Alert>
                 {debugData.profile.data && (
-                  <div className="mt-2 bg-muted p-4 rounded-md overflow-auto">
-                    <pre className="text-xs">
+                  <div className={getThemeClasses({
+                    base: "mt-2 p-4 rounded-md overflow-auto",
+                    default: "bg-gray-800",
+                    luxury: "bg-blue-900",
+                    bitcoin: "bg-pink-900"
+                  })}>
+                    <pre className={getThemeClasses({
+                      base: "text-xs",
+                      default: "text-gray-300",
+                      luxury: "text-blue-300",
+                      bitcoin: "text-pink-300"
+                    })}>
                       {JSON.stringify(debugData.profile.data, null, 2)}
                     </pre>
                   </div>
@@ -572,39 +775,99 @@ export default function JetShareDebug() {
               
               {/* Offers Information */}
               <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2 flex items-center">
+                <h3 className={getThemeClasses({
+                  base: "text-lg font-medium mb-2 flex items-center",
+                  default: "text-white",
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
+                })}>
                   <Plane className="mr-2 h-5 w-5" /> 
                   Offers Status
                 </h3>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  <Badge variant="outline" className="text-sm">
+                  <Badge variant="outline" className={getThemeClasses({
+                    base: "text-sm",
+                    default: "border-gray-700 bg-gray-800 text-gray-300",
+                    luxury: "border-blue-700 bg-blue-900 text-blue-300",
+                    bitcoin: "border-pink-700 bg-pink-900 text-pink-300"
+                  })}>
                     Your Offers: {debugData.offers.user_offers_count}
                   </Badge>
-                  <Badge variant="outline" className="text-sm">
+                  <Badge variant="outline" className={getThemeClasses({
+                    base: "text-sm",
+                    default: "border-gray-700 bg-gray-800 text-gray-300",
+                    luxury: "border-blue-700 bg-blue-900 text-blue-300",
+                    bitcoin: "border-pink-700 bg-pink-900 text-pink-300"
+                  })}>
                     Total System Offers: {debugData.offers.total_offers_in_system}
                   </Badge>
                 </div>
                 {debugData.offers.user_offers.length > 0 ? (
                   <div className="space-y-2">
                     {debugData.offers.user_offers.map((offer: any) => (
-                      <div key={offer.id} className="border p-4 rounded-md">
-                        <p className="font-medium">
+                      <div key={offer.id} className={getThemeClasses({
+                        base: "border p-4 rounded-md",
+                        default: "border-gray-800 bg-gray-800/50",
+                        luxury: "border-blue-800 bg-blue-900/50",
+                        bitcoin: "border-pink-800 bg-pink-900/50"
+                      })}>
+                        <p className={getThemeClasses({
+                          base: "font-medium",
+                          default: "text-white",
+                          luxury: "text-blue-50",
+                          bitcoin: "text-pink-50"
+                        })}>
                           {offer.departure_location} → {offer.arrival_location}
                         </p>
-                        <div className="text-sm text-muted-foreground">
-                          Status: <Badge>{offer.status}</Badge>
+                        <div className={getThemeClasses({
+                          base: "text-sm",
+                          default: "text-gray-400",
+                          luxury: "text-blue-400",
+                          bitcoin: "text-pink-400"
+                        })}>
+                          Status: <Badge className={getThemeClasses({
+                            base: "",
+                            default: "bg-gdyup-primary text-gdyup-button-text",
+                            luxury: "bg-gdyup-primary text-gdyup-button-text",
+                            bitcoin: "bg-gdyup-primary text-gdyup-button-text"
+                          })}>{offer.status}</Badge>
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className={getThemeClasses({
+                          base: "text-sm",
+                          default: "text-gray-400",
+                          luxury: "text-blue-400",
+                          bitcoin: "text-pink-400"
+                        })}>
                           ID: {offer.id}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No Offers Found</AlertTitle>
-                    <AlertDescription>
+                  <Alert className={getThemeClasses({
+                    base: "",
+                    default: "bg-gray-800 border-gray-700",
+                    luxury: "bg-blue-900 border-blue-800",
+                    bitcoin: "bg-pink-900 border-pink-800"
+                  })}>
+                    <AlertCircle className={getThemeClasses({
+                      base: "h-4 w-4",
+                      default: "text-gray-400",
+                      luxury: "text-blue-400",
+                      bitcoin: "text-pink-400"
+                    })} />
+                    <AlertTitle className={getThemeClasses({
+                      base: "",
+                      default: "text-gray-300",
+                      luxury: "text-blue-300",
+                      bitcoin: "text-pink-300"
+                    })}>No Offers Found</AlertTitle>
+                    <AlertDescription className={getThemeClasses({
+                      base: "",
+                      default: "text-gray-400",
+                      luxury: "text-blue-400",
+                      bitcoin: "text-pink-400"
+                    })}>
                       You don't have any offers in the system. Create an offer to test.
                     </AlertDescription>
                   </Alert>
@@ -614,10 +877,27 @@ export default function JetShareDebug() {
           )}
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => window.location.href = '/jetshare'}>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.href = '/jetshare'}
+            className={getThemeClasses({
+              base: "",
+              default: "border-gray-700 hover:bg-gray-800",
+              luxury: "border-blue-700 hover:bg-blue-800",
+              bitcoin: "border-pink-700 hover:bg-pink-800"
+            })}
+          >
             Back to JetShare
           </Button>
-          <Button onClick={() => window.location.href = '/jetshare/create'}>
+          <Button 
+            onClick={() => window.location.href = '/jetshare/create'}
+            className={getThemeClasses({
+              base: "",
+              default: "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/90",
+              luxury: "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/90",
+              bitcoin: "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/90"
+            })}
+          >
             Create Test Offer
           </Button>
         </CardFooter>

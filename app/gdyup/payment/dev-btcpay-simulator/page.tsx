@@ -120,14 +120,14 @@ function DevBTCPaySimulatorContent() {
     <div className={getThemeClasses({
       base: "flex flex-col items-center justify-center min-h-screen p-4",
       default: "bg-black text-white",
-      blue: "bg-blue-950 text-blue-50",
-      pink: "bg-pink-950 text-pink-50",
+      luxury: "bg-blue-950 text-blue-50",
+      bitcoin: "bg-pink-950 text-pink-50",
     })}>
       <div className={getThemeClasses({
         base: "max-w-md w-full p-6 rounded-lg border shadow-xl",
         default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-900 border-blue-800",
-        pink: "bg-pink-900 border-pink-800",
+        luxury: "bg-blue-900 border-blue-800",
+        bitcoin: "bg-pink-900 border-pink-800",
       })}>
         <div className="flex items-center justify-between mb-6">
           <Button 
@@ -137,8 +137,8 @@ function DevBTCPaySimulatorContent() {
             className={getThemeClasses({
               base: "p-0",
               default: "text-gray-400 hover:text-white",
-              blue: "text-blue-400 hover:text-blue-100",
-              pink: "text-pink-400 hover:text-pink-100"
+              luxury: "text-blue-400 hover:text-blue-100",
+              bitcoin: "text-pink-400 hover:text-pink-100"
             })}
             disabled={stage !== 'initial'}
           >
@@ -155,15 +155,15 @@ function DevBTCPaySimulatorContent() {
           <Bitcoin className={getThemeClasses({
             base: "h-16 w-16 mx-auto mb-4",
             default: "text-amber-500",
-            blue: "text-amber-400",
-            pink: "text-amber-300"
+            luxury: "text-amber-400",
+            bitcoin: "text-amber-300"
           })} />
           <h1 className="text-xl font-bold mb-2">BTC Pay Server Simulator</h1>
           <p className={getThemeClasses({
             base: "text-sm mb-4",
             default: "text-gray-300",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
+            luxury: "text-blue-300",
+            bitcoin: "text-pink-300"
           })}>
             This is a development-only simulator for testing the Bitcoin payment flow.
           </p>
@@ -185,15 +185,15 @@ function DevBTCPaySimulatorContent() {
           <div className={getThemeClasses({
             base: "p-4 rounded-lg border mb-4 text-left",
             default: "bg-black border-gray-800",
-            blue: "bg-blue-950 border-blue-800",
-            pink: "bg-pink-950 border-pink-800",
+            luxury: "bg-blue-950 border-blue-800",
+            bitcoin: "bg-pink-950 border-pink-800",
           })}>
             <p className="text-sm flex justify-between mb-2 font-medium">
               <span className={getThemeClasses({
                 base: "",
                 default: "text-gray-300",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>Order ID:</span> 
               <span className="font-mono">{offerId.substring(0, 8)}...</span>
             </p>
@@ -201,8 +201,8 @@ function DevBTCPaySimulatorContent() {
               <span className={getThemeClasses({
                 base: "",
                 default: "text-gray-300",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>Share Amount:</span> 
               <span className="font-mono text-white">${shareAmount.toLocaleString()}</span>
             </p>
@@ -210,8 +210,8 @@ function DevBTCPaySimulatorContent() {
               <span className={getThemeClasses({
                 base: "",
                 default: "text-gray-300",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>Fee (7.5%):</span> 
               <span className="font-mono text-white">${totalFee.toLocaleString()}</span>
             </p>
@@ -220,8 +220,8 @@ function DevBTCPaySimulatorContent() {
               <span className={getThemeClasses({
                 base: "",
                 default: "text-gray-300",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>Total Due:</span> 
               <span className="font-mono text-white">${totalAmount.toLocaleString()}</span>
             </p>
@@ -229,8 +229,8 @@ function DevBTCPaySimulatorContent() {
               <span className={getThemeClasses({
                 base: "",
                 default: "text-gray-300",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>Rate:</span> 
               <span className="font-mono text-white">1 BTC = ${btcRate.toLocaleString()} USD</span>
             </p>
@@ -238,8 +238,8 @@ function DevBTCPaySimulatorContent() {
               <span className={getThemeClasses({
                 base: "",
                 default: "text-gray-300",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>Bitcoin Amount:</span> 
               <span className="font-mono text-white">{btcAmount.toFixed(8)} BTC</span>
             </p>
@@ -253,8 +253,8 @@ function DevBTCPaySimulatorContent() {
             className={getThemeClasses({
               base: "w-full py-6 font-bold",
               default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+              luxury: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+              bitcoin: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
             })}
             disabled={isLoading}
           >
@@ -311,8 +311,8 @@ function LoadingFallback() {
     <div className={getThemeClasses({
       base: "flex flex-col items-center justify-center min-h-screen p-4",
       default: "bg-black text-white",
-      blue: "bg-blue-950 text-blue-50",
-      pink: "bg-pink-950 text-pink-50",
+      luxury: "bg-blue-950 text-blue-50",
+      bitcoin: "bg-pink-950 text-pink-50",
     })}>
       <Loader2 className="h-10 w-10 animate-spin" />
     </div>

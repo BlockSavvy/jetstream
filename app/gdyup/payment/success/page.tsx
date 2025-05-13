@@ -152,15 +152,15 @@ function PaymentSuccessContent() {
           <Card className={getThemeClasses({
             base: "border shadow-md",
             default: "bg-gray-900/90 border-gray-800",
-            blue: "bg-blue-950/90 border-blue-900",
-            pink: "bg-pink-950/90 border-pink-900"
+            luxury: "bg-blue-950/90 border-blue-900",
+            bitcoin: "bg-pink-950/90 border-pink-900"
           })}>
             <CardHeader>
               <CardTitle className={getThemeClasses({
                 base: "text-center",
                 default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
+                luxury: "text-blue-100",
+                bitcoin: "text-pink-100"
               })}>Verifying Payment</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center py-8">
@@ -168,8 +168,8 @@ function PaymentSuccessContent() {
                 className={getThemeClasses({
                   base: "relative h-16 w-16 mb-4",
                   default: "text-gdyup-primary",
-                  blue: "text-gdyup-primary",
-                  pink: "text-gdyup-primary"
+                  luxury: "text-gdyup-primary",
+                  bitcoin: "text-gdyup-primary"
                 })}
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -191,8 +191,8 @@ function PaymentSuccessContent() {
                 className={getThemeClasses({
                   base: "text-center",
                   default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -223,8 +223,8 @@ function PaymentSuccessContent() {
           <Card className={getThemeClasses({
             base: "border shadow-md",
             default: "bg-gray-900/90 border-red-900/40",
-            blue: "bg-blue-950/90 border-red-900/40",
-            pink: "bg-pink-950/90 border-red-900/40"
+            luxury: "bg-blue-950/90 border-red-900/40",
+            bitcoin: "bg-pink-950/90 border-red-900/40"
           })}>
             <CardHeader>
               <motion.div 
@@ -236,16 +236,16 @@ function PaymentSuccessContent() {
                 <div className={getThemeClasses({
                   base: "rounded-full p-3 mb-2",
                   default: "bg-red-950/30 text-red-500",
-                  blue: "bg-red-950/20 text-red-400",
-                  pink: "bg-red-950/20 text-red-400"
+                  luxury: "bg-red-950/20 text-red-400",
+                  bitcoin: "bg-red-950/20 text-red-400"
                 })}>
                   <AlertCircle className="h-8 w-8" />
                 </div>
                 <CardTitle className={getThemeClasses({
                   base: "text-center",
                   default: "text-red-500",
-                  blue: "text-red-400",
-                  pink: "text-red-400"
+                  luxury: "text-red-400",
+                  bitcoin: "text-red-400"
                 })}>Payment Verification Error</CardTitle>
               </motion.div>
             </CardHeader>
@@ -254,8 +254,8 @@ function PaymentSuccessContent() {
                 className={cn("text-center mb-4", getThemeClasses({
                   base: "",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 }))}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -267,8 +267,8 @@ function PaymentSuccessContent() {
                 className={getThemeClasses({
                   base: "text-center",
                   default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -290,8 +290,8 @@ function PaymentSuccessContent() {
                   className={cn("w-full", getThemeClasses({
                     base: "",
                     default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                    blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                    pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                    luxury: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                    bitcoin: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
                   }))}
                   onClick={handleNavigateToDashboard}
                 >
@@ -321,14 +321,14 @@ function PaymentSuccessContent() {
         <Card className={getThemeClasses({
           base: "border shadow-xl overflow-hidden",
           default: "bg-gray-900/80 border-green-600/40",
-          blue: "bg-blue-950/80 border-green-500/40",
-          pink: "bg-pink-950/80 border-green-500/40"
+          luxury: "bg-blue-950/80 border-green-500/40",
+          bitcoin: "bg-pink-950/80 border-green-500/40"
         })}>
           <div className={getThemeClasses({
             base: "h-1.5 w-full",
             default: "bg-green-500",
-            blue: "bg-green-500",
-            pink: "bg-green-500"
+            luxury: "bg-green-500",
+            bitcoin: "bg-green-500"
           })}></div>
           
           <CardHeader className="text-center pb-2">
@@ -336,8 +336,8 @@ function PaymentSuccessContent() {
               className={getThemeClasses({
                 base: "mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-2",
                 default: "bg-green-900",
-                blue: "bg-green-900",
-                pink: "bg-green-900"
+                luxury: "bg-green-900",
+                bitcoin: "bg-green-900"
               })}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -346,15 +346,15 @@ function PaymentSuccessContent() {
               <CheckCircle className={getThemeClasses({
                 base: "h-10 w-10",
                 default: "text-green-500",
-                blue: "text-green-400",
-                pink: "text-green-400"
+                luxury: "text-green-400",
+                bitcoin: "text-green-400"
               })} />
             </motion.div>
             <CardTitle className={getThemeClasses({
               base: "text-2xl",
               default: "text-green-500",
-              blue: "text-green-400",
-              pink: "text-green-400"
+              luxury: "text-green-400",
+              bitcoin: "text-green-400"
             })}>Payment Successful!</CardTitle>
           </CardHeader>
           
@@ -363,8 +363,8 @@ function PaymentSuccessContent() {
               className={getThemeClasses({
                 base: "text-lg",
                 default: "text-white",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
+                luxury: "text-blue-50",
+                bitcoin: "text-pink-50"
               })}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -377,8 +377,8 @@ function PaymentSuccessContent() {
               className={getThemeClasses({
                 base: "p-4 rounded-lg border",
                 default: "bg-gray-800/50 border-gray-700",
-                blue: "bg-blue-900/50 border-blue-800",
-                pink: "bg-pink-900/50 border-pink-800"
+                luxury: "bg-blue-900/50 border-blue-800",
+                bitcoin: "bg-pink-900/50 border-pink-800"
               })}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -388,8 +388,8 @@ function PaymentSuccessContent() {
                 <div className={getThemeClasses({
                   base: "flex items-center",
                   default: "text-gray-300",
-                  blue: "text-blue-200",
-                  pink: "text-pink-200"
+                  luxury: "text-blue-200",
+                  bitcoin: "text-pink-200"
                 })}>
                   <span>From</span>
                 </div>
@@ -402,8 +402,8 @@ function PaymentSuccessContent() {
                 <div className={getThemeClasses({
                   base: "flex items-center",
                   default: "text-gray-300",
-                  blue: "text-blue-200",
-                  pink: "text-pink-200"
+                  luxury: "text-blue-200",
+                  bitcoin: "text-pink-200"
                 })}>
                   <span>To</span>
                 </div>
@@ -416,8 +416,8 @@ function PaymentSuccessContent() {
                 <div className={getThemeClasses({
                   base: "flex items-center",
                   default: "text-gray-300",
-                  blue: "text-blue-200",
-                  pink: "text-pink-200"
+                  luxury: "text-blue-200",
+                  bitcoin: "text-pink-200"
                 })}>
                   <span>Date</span>
                 </div>
@@ -460,8 +460,8 @@ function PaymentSuccessContent() {
                 className={cn("w-full", getThemeClasses({
                   base: "",
                   default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
+                  luxury: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
+                  bitcoin: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
                 }))}
               >
                 <Ticket className="h-4 w-4 mr-2" />
@@ -482,8 +482,8 @@ function PaymentSuccessContent() {
                   className={cn("w-full", getThemeClasses({
                     base: "",
                     default: "border-gray-700 hover:bg-gray-800 text-white",
-                    blue: "border-blue-700 hover:bg-blue-900 text-blue-100",
-                    pink: "border-pink-700 hover:bg-pink-900 text-pink-100"
+                    luxury: "border-blue-700 hover:bg-blue-900 text-blue-100",
+                    bitcoin: "border-pink-700 hover:bg-pink-900 text-pink-100"
                   }))}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
@@ -497,8 +497,8 @@ function PaymentSuccessContent() {
                   className={cn("w-full", getThemeClasses({
                     base: "",
                     default: "border-gray-700 hover:bg-gray-800 text-white",
-                    blue: "border-blue-700 hover:bg-blue-900 text-blue-100",
-                    pink: "border-pink-700 hover:bg-pink-900 text-pink-100"
+                    luxury: "border-blue-700 hover:bg-blue-900 text-blue-100",
+                    bitcoin: "border-pink-700 hover:bg-pink-900 text-pink-100"
                   }))}
                 >
                   <BookOpen className="h-4 w-4 mr-2" />

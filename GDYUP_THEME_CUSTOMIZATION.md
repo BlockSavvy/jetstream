@@ -1,47 +1,70 @@
-# GDY·UP Theme Customization Form
+# GDY·UP Theme Customization Guide
 
-This form allows you to define a custom theme for the GDY·UP mobile app. Fill in the color values, typography preferences, and other design elements to create a cohesive theme.
+This guide allows designers and developers to create custom themes for the GDY·UP mobile app. It provides a standardized format to ensure all themes are consistent and adhere to our design system architecture.
 
-**Instructions:**
+## Designer Checklist
 
-1. Fill in all fields marked [REQUIRED]
-2. RGB, HEX, and HSL color formats are all accepted
-3. Include references to any design assets or inspirations
-4. Return this completed form along with any mood boards or visual references
+- [ ] Choose a theme concept and define brand narrative
+- [ ] Select primary and secondary colors with proper contrast ratios
+- [ ] Define background and card surface colors
+- [ ] Create text color hierarchy (primary, medium, subtle)
+- [ ] Define status colors (success, warning, error, info)
+- [ ] Test accessibility - ensure text contrast meets WCAG 2.1 AA standards
+- [ ] Verify theme consistency across all component variants
+- [ ] Test theme on both light and dark mode backgrounds if applicable
+- [ ] Provide Figma color styles or equivalent design tokens
+- [ ] Document any special textures, gradients, or visual treatments
+
+## Developer Checklist
+
+- [ ] Implement CSS variables in `app/gdyup/gdyup.css`
+- [ ] Update theme classes (`.gdyup-theme-[name]`)
+- [ ] Add RGB variants for all colors that need transparency
+- [ ] Verify theme is properly applied to all component variants
+- [ ] Test transitions between themes
+- [ ] Ensure all helper functions in `useGdyupTheme` hook work with new theme
+- [ ] Add theme to theme selector component
+- [ ] Update theme tokens in design token JSON file
 
 ## Theme Identity
 
-**Theme Name:** [REQUIRED] _e.g., "Sunset Orange", "Luxury Black"_
+**Theme Name:** [REQUIRED] _e.g., "Lime", "Luxury Black", "Bitcoin Orange"_
+
+**Theme ID:** [REQUIRED] _Technical ID for the theme class (e.g., "default", "blue", "pink")_
 
 **Theme Description:** [REQUIRED] _Brief description of the theme's mood/feeling_
 
-**Theme Keywords:** _List 3-5 keywords that capture the essence of this theme_
+**Target Audience:** _Who is this theme designed for? (e.g., "Bitcoin maximalists", "Luxury travelers")_
 
 **Design Inspiration:** _URLs or descriptions of design inspirations_
 
-## Color Palette
+## Color System
 
 ### Primary Colors
 
-**Primary Color:** [REQUIRED] _The main brand color_
+**Primary Color:** [REQUIRED]
 
 - Hex: #______
-- Dark variant: #______
-- Light variant: #______
+- Hover state: #______
+- Active state: #______
+- RGB: ___,___, ___
 
-**Secondary Color:** [REQUIRED] _Complementary to primary_
-
-- Hex: #______
-- Dark variant: #______
-- Light variant: #______
-
-**Accent Color:** [REQUIRED] _For highlights and calls-to-action_
+**Secondary Color:** [REQUIRED]
 
 - Hex: #______
+- Hover state: #______
+- Active state: #______
+- RGB: ___,___, ___
 
-### UI Colors
+**Accent Color (if applicable):**
 
-**Background Color:** [REQUIRED] _Main app background_
+- Hex: #______
+- RGB: ___,___, ___
+- Usage notes: _How and where this accent should be used_
+
+### Background Colors
+
+**Background Dark:** [REQUIRED] _Main app background_
 
 - Hex: #______
 
@@ -55,147 +78,124 @@ This form allows you to define a custom theme for the GDY·UP mobile app. Fill i
 
 ### Text Colors
 
-**Primary Text:** [REQUIRED] _Main text color_
+**Primary Text:** [REQUIRED]
 
 - Hex: #______
 
-**Secondary Text:** _Less emphasized text_
+**Medium Text:** _Secondary level text_
 
 - Hex: #______
 
-**Muted Text:** _De-emphasized text_
+**Subtle Text:** _Least important text_
 
 - Hex: #______
 
-### Functional Colors
-
-**Success Color:** _For positive actions/status_
+**Button Text:** _Text color on primary buttons_
 
 - Hex: #______
 
-**Warning Color:** _For cautionary elements_
+### Status Colors
+
+**Success:**
 
 - Hex: #______
 
-**Error Color:** _For errors and critical actions_
+**Warning:**
 
 - Hex: #______
 
-**Info Color:** _For informational elements_
+**Error/Destructive:**
 
 - Hex: #______
 
-## Typography
+**Info:**
 
-**Primary Font:** [REQUIRED] _Main font family_
+- Hex: #______
 
-- Suggestions: _List preferred fonts_
+## Special Features
 
-**Heading Font:** _For titles and headings (if different)_
+**Textures/Patterns:** _If this theme uses any textures (like carbon fiber in Luxury Black)_
 
-- Suggestions: _List preferred fonts_
+- URL: ______
+- Usage notes: ______
 
-**Monospace Font:** _For code snippets or technical elements_
+**Gradients:** _If this theme includes any gradients_
 
-- Suggestions: _List preferred fonts_
+- Definition: ______
+- Usage: ______
 
-**Font Sizes:**
+## CSS Implementation Example
 
-- Base Size: ___px [REQUIRED]
-- XS: ___px
-- SM: ___px
-- LG: ___px
-- XL: ___px
-- 2XL: ___px
+```css
+/* Theme Name */
+.gdyup-theme-[id] {
+  --gdyup-primary: #_____;
+  --gdyup-primary-hover: #_____;
+  --gdyup-primary-rgb: ___, ___, ___;
+  --gdyup-secondary: #_____;
+  --gdyup-secondary-rgb: ___, ___, ___;
+  --gdyup-bg-dark: #_____;
+  --gdyup-bg-card: #_____;
+  --gdyup-border: #_____;
+  --gdyup-text: #_____;
+  --gdyup-text-medium: #_____;
+  --gdyup-text-subtle: #_____;
+  --gdyup-button-text: #_____;
+  
+  /* Button styles */
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-active-bg: #_____; /* Darker shade for active */
+}
+```
 
-## Component Styling
+## Component Examples
 
-### Buttons
+Include screenshots or examples of how key components look with this theme:
 
-**Primary Button:**
+- [ ] Primary Button
+- [ ] Secondary Button
+- [ ] Outline Button
+- [ ] Ghost Button
+- [ ] Card/Container
+- [ ] Badge
+- [ ] Typography hierarchy
+- [ ] Form controls
 
-- Background: #______
-- Text Color: #______
-- Hover State: #______
-- Border Radius: ___px
+## Reference Themes
 
-**Secondary Button:**
+Our system currently includes three official themes:
 
-- Background: #______
-- Text Color: #______
-- Hover State: #______
-- Border Radius: ___px
+### Lime Theme (Default)
 
-### Input Fields
+- Primary: #DAFF0D (Neon Lime)
+- Secondary: #FF4B47 (Red accent)
+- Background: #000000 (Black)
+- Card Background: #121212 (Dark Gray)
+- Text: #FFFFFF (White)
 
-**Input Background:** #______
-**Input Border:** #______
-**Input Text:** #______
-**Focus State:** #______
+### Luxury Black Theme
 
-### Cards & Containers
+- Primary: #39FF14 (Neon Green)
+- Secondary: #FF4500 (Flare Orange)
+- Background: #000000 (Jet Black)
+- Card Background: #1A1A1A (Gunmetal Gray)
+- Text: #E0E0E0 (Jet Silver)
+- Special: Carbon texture background overlay
 
-**Border Radius:** ___px
-**Shadow Style:** _e.g., "Subtle", "Prominent", "None"_
-**Border Width:**___px
+### Bitcoin Orange Theme
 
-## Custom Elements
+- Primary: #F2A900 (Satoshi Gold)
+- Secondary: #FF6B00 (Burnt Orange)
+- Background: #121212 (Midnight Charcoal)
+- Card Background: #2D2D2D (Block Gray)
+- Text: #FDFDFD (Lightning White)
+- Accent: #B87333 (Proof Copper)
 
-**Bitcoin Elements:**
+## Submission Guidelines
 
-- Bitcoin Logo Color: #______
-- Transaction Element Background: #______
-
-**Flight Elements:**
-
-- Flight Path Color: #______
-- Destination Marker Color: #______
-
-**Seat Selection:**
-
-- Available Seat Color: #______
-- Selected Seat Color: #______
-- Unavailable Seat Color: #______
-
-## Mobile-Specific Elements
-
-**Status Bar Style:** _"Light", "Dark"_
-**Navigation Bar Style:** _"Transparent", "Colored", "Blurred"_
-**Bottom Tab Bar:**
-
-- Background: #______
-- Active Icon: #______
-- Inactive Icon: #______
-
-## Additional Notes
-
-_Any other design considerations or preferences that don't fit the categories above_
-
----
-
-## Examples and References
-
-I can provide examples of existing themes to guide your design:
-
-### Default Theme
-
-- Primary: #DAFF0D (Neon Green)
-- Background: Rich dark gradient (Black/Gray)
-- Text: White/#FFFFFF
-- Accents: Vibrant contrast
-
-### Blue Theme
-
-- Primary: #F25C05 (Orange)
-- Background: Deep blue gradients
-- Text: Light blue shades
-- Accents: Warm orange
-
-### Pink/Bitcoin Theme
-
-- Primary: #F7931A (Bitcoin Orange)
-- Background: Pink/Purple gradients
-- Text: Light pink shades
-- Accents: Bitcoin orange elements
-
-Please attach any mockups, inspiration images, or color palette screenshots to help communicate your vision for this theme.
+1. Complete this form with all [REQUIRED] fields
+2. Include Figma color styles export or equivalent design tokens
+3. Provide any special assets (textures, patterns) in the assets directory
+4. Submit as a PR to the JetStream repository
+5. Tag the GDY·UP design team for review

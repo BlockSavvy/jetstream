@@ -18,7 +18,8 @@
     "embeddings:all": "npm run embeddings:airports && npm run embeddings:flights && npm run embeddings:jets && npm run embeddings:jetshare",
     "embeddings:worker": "tsx scripts/embedding-worker.ts",
     "embeddings:worker:continuous": "tsx scripts/embedding-worker.ts --continuous",
-    "embeddings:worker:production": "node scripts/embedding-worker.js --continuous --interval=600"
+    "embeddings:worker:production": "node scripts/embedding-worker.js --continuous --interval=600",
+    "theme-audit": "tsx scripts/theme-audit.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
