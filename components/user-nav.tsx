@@ -16,10 +16,12 @@ import { LogOut, Settings, UserCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useGdyupTheme } from '@/app/gdyup/hooks/useGdyupTheme'
 
 export function UserNav() {
   const { user, signOut, loading: authLoading } = useAuth()
   const { profile, loading: profileLoading, refreshProfile } = useUserProfile()
+  const { getThemedButtonClasses, getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme()
   const router = useRouter()
   const pathname = usePathname()
   const [isLoading, setIsLoading] = useState(false)
@@ -95,7 +97,7 @@ export function UserNav() {
       <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 
-          className="text-white hover:text-amber-400 hover:bg-transparent"
+          className={getThemedButtonClasses('ghost')}
           onClick={handleSignIn}
           disabled={isLoading}
         >
@@ -109,7 +111,7 @@ export function UserNav() {
           )}
         </Button>
         <Button 
-          className="bg-amber-500 hover:bg-amber-600 text-black font-semibold"
+          className={getThemedButtonClasses('primary') + ' font-semibold'}
           onClick={handleSignUp}
           disabled={isLoading}
         >
@@ -130,11 +132,11 @@ export function UserNav() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10 border-2 border-amber-500">
+          <Avatar className="h-10 w-10 border-2 border-gdyup-primary">
             {profile?.avatar_url ? (
               <AvatarImage src={profile.avatar_url} alt={profile?.full_name || user?.email || ""} />
             ) : null}
-            <AvatarFallback className="bg-amber-100 text-amber-900">
+            <AvatarFallback className="bg-gdyup-bg-card gdyup-primary">
               {profileLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : initials}
             </AvatarFallback>
           </Avatar>
@@ -172,7 +174,7 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleSignOut}
-          className="flex items-center gap-2 cursor-pointer text-red-500 hover:text-red-600 focus:text-red-600"
+          className={`flex items-center gap-2 cursor-pointer ${getThemedTextClasses('destructive')}`}
           disabled={isLoading}
         >
           {isLoading ? (

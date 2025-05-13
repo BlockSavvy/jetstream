@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { JetShareOfferWithUser } from '@/types/jetshare';
 import { NostrJetShareOffer, NostrEventKind } from '@/types/nostr';
 import * as NostrUtils from '@/lib/services/nostr';
+import { useGdyupTheme } from '@/app/gdyup/hooks/useGdyupTheme';
 
 interface NostrOfferBroadcastProps {
   offer: JetShareOfferWithUser;
@@ -36,6 +37,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
     getNostrProfile,
     error: nostrError
   } = useNostr();
+  const { getThemedButtonClasses, getThemedTextClasses, getThemedBadgeClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
   const [isLoading, setIsLoading] = useState(false);
   const [broadcastOptions, setBroadcastOptions] = useState({
@@ -160,7 +162,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Globe className="h-5 w-5 mr-2 text-amber-500" />
+            <Globe className={`h-5 w-5 mr-2 ${getThemedTextClasses('primary')}`} />
             Decentralized Broadcast
           </CardTitle>
           <CardDescription>
@@ -197,7 +199,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Globe className="h-5 w-5 mr-2 text-amber-500" />
+            <Globe className={`h-5 w-5 mr-2 ${getThemedTextClasses('primary')}`} />
             Offer Broadcasted
           </CardTitle>
           <CardDescription>
@@ -207,8 +209,8 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
         
         <CardContent>
           <div className="flex flex-col items-center justify-center py-4">
-            <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-4 ${getThemedBackgroundClasses('secondary')}`}>
+              <CheckCircle className={`h-8 w-8 ${getThemedTextClasses('primary')}`} />
             </div>
             <p className="text-center text-sm mb-2">
               Your flight share offer has been successfully broadcasted to the Nostr network.
@@ -237,11 +239,11 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Globe className="h-5 w-5 mr-2 text-amber-500" />
+          <Globe className={`h-5 w-5 mr-2 ${getThemedTextClasses('primary')}`} />
           Broadcast to Nostr
           <Badge 
             variant={isConnected ? "default" : "secondary"}
-            className={`ml-2 text-xs ${isConnected ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
+            className={`ml-2 text-xs ${isConnected ? getThemedBadgeClasses('success') : getThemedBadgeClasses('secondary')}`}
           >
             {isConnected ? 'Connected' : 'Not Connected'}
           </Badge>
@@ -267,7 +269,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
             </p>
             
             <Button
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+              className={getThemedButtonClasses('primary') + ' w-full'}
               onClick={handleConnectExtension}
               disabled={isLoading || !hasExtension}
             >
@@ -291,7 +293,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
                   href="https://getalby.com/" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-amber-500 hover:underline"
+                  className={getThemedTextClasses('primary') + ' hover:underline'}
                 >
                   Alby
                 </a>{' '}
@@ -300,7 +302,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
                   href="https://github.com/fiatjaf/nos2x" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-amber-500 hover:underline"
+                  className={getThemedTextClasses('primary') + ' hover:underline'}
                 >
                   nos2x
                 </a>
@@ -309,12 +311,12 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md">
-              <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">Offer Preview</h3>
-              <p className="text-xs text-amber-700 dark:text-amber-200 mt-1">
+            <div className={`${getThemedBackgroundClasses('secondary')} p-3 rounded-md`}>
+              <h3 className={`text-sm font-medium ${getThemedTextClasses('primary')}`}>Offer Preview</h3>
+              <p className={`text-xs mt-1 ${getThemedTextClasses('secondary')}`}>
                 {offer.departure_location} → {offer.arrival_location} | {new Date(offer.flight_date).toLocaleDateString()}
               </p>
-              <p className="text-xs text-amber-700 dark:text-amber-200">
+              <p className={`text-xs ${getThemedTextClasses('secondary')}`}>
                 ${offer.requested_share_amount.toLocaleString()} | {offer.aircraft_model || 'Private Jet'}
               </p>
             </div>
@@ -377,7 +379,7 @@ export default function NostrOfferBroadcast({ offer, onBroadcastSuccess }: Nostr
             
             <div className="pt-2">
               <Button
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                className={getThemedButtonClasses('primary') + ' w-full'}
                 onClick={broadcastOffer}
                 disabled={isLoading}
               >

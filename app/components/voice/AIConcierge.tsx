@@ -318,7 +318,10 @@ export default function AIConcierge({
   buttonImage,
   buttonColor = 'var(--gdyup-concierge-bg)',
   buttonPosition = { bottom: '1rem', right: '1rem' },
-  initiallyOpen = false
+  initiallyOpen = false,
+  initialContext = null,
+  onClose,
+  mode = 'chat'
 }: {
   showButton?: boolean;
   buttonImage?: string;
@@ -330,6 +333,9 @@ export default function AIConcierge({
     left?: string;
   };
   initiallyOpen?: boolean;
+  initialContext?: any;
+  onClose?: () => void;
+  mode?: 'chat' | 'voice';
 }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(initiallyOpen);
@@ -350,6 +356,7 @@ export default function AIConcierge({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const initialContextRef = useRef(initialContext); // Store the initial context
   
   const { user } = useAuth();
 
@@ -396,11 +403,40 @@ export default function AIConcierge({
     }
   };
 
+  // Handle closing the dialog and notify parent
+  const handleClose = () => {
+    setIsOpen(false);
+    if (onClose) {
+      onClose();
+    }
+  };
+
   // Initialize messages with system prompt when context changes
   useEffect(() => {
     const systemPrompt = getSystemPrompt();
     setMessages([{ role: 'system', content: systemPrompt }]);
   }, [pathname]);
+  
+  // Set isOpen based on initiallyOpen prop
+  useEffect(() => {
+    console.log('[AIConcierge] initiallyOpen prop changed:', initiallyOpen);
+    setIsOpen(initiallyOpen);
+    
+    // Set voice mode based on the mode parameter
+    setIsVoiceMode(mode === 'voice');
+    
+    // Add a direct force open event listener
+    const handleForceOpen = () => {
+      console.log('[AIConcierge] Force open event received');
+      setIsOpen(true);
+    };
+    
+    document.addEventListener('force-open-concierge', handleForceOpen);
+    
+    return () => {
+      document.removeEventListener('force-open-concierge', handleForceOpen);
+    };
+  }, [initiallyOpen, mode]);
   
   // Load past conversations if available
   useEffect(() => {
@@ -416,18 +452,40 @@ export default function AIConcierge({
       const context = getContext();
       let welcomeMessage = `Hello${user?.email ? ` ${user.email.split('@')[0]}` : ''}!`;
       
-      switch (context) {
-        case 'jetshare':
-          welcomeMessage += " I'm your JetShare concierge. How can I help you with flight sharing today? I can help you create a new offer, find available shares, or answer questions about the JetShare program.";
-          break;
-        case 'admin':
-          welcomeMessage += " I'm your Admin Assistant. I can help with user management, platform analytics, database exploration, or embedding status. What would you like to do today?";
-          break;
-        case 'jetstream':
-          welcomeMessage += " I'm your JetStream concierge. I can help you explore available flights, check aircraft availability, or learn about our services. How can I assist you today?";
-          break;
-        default:
-          welcomeMessage += " I'm your JetStream assistant. I can help you explore JetShare offers, JetStream flights, or assist with your account. What would you like to know about today?";
+      // Check if we have initialContext for specific topic/prompt
+      if (initialContextRef.current) {
+        console.log('Using initial context:', initialContextRef.current);
+        const { topic, context: contextData } = initialContextRef.current;
+        
+        if (topic === 'offer-pricing-advice' && contextData) {
+          welcomeMessage = `I see you're creating a flight offer${
+            contextData.route ? ` from ${contextData.route}` : ''
+          }${
+            contextData.totalCost ? ` with a total cost of ${formatCurrency(contextData.totalCost)}` : ''
+          }. Would you like some pricing advice to maximize your chances of finding a flight partner?`;
+          
+          if (contextData.currentPrice?.fairShare) {
+            welcomeMessage += `\n\nBased on your seat distribution, a fair share would be around ${formatCurrency(contextData.currentPrice.fairShare)}.`;
+          }
+        } else {
+          // Generic welcome for other contexts
+          welcomeMessage += " I'm your AI assistant. How can I help you today?";
+        }
+      } else {
+        // Default welcome messages by context
+        switch (context) {
+          case 'jetshare':
+            welcomeMessage += " I'm your JetShare concierge. How can I help you with flight sharing today? I can help you create a new offer, find available shares, or answer questions about the JetShare program.";
+            break;
+          case 'admin':
+            welcomeMessage += " I'm your Admin Assistant. I can help with user management, platform analytics, database exploration, or embedding status. What would you like to do today?";
+            break;
+          case 'jetstream':
+            welcomeMessage += " I'm your JetStream concierge. I can help you explore available flights, check aircraft availability, or learn about our services. How can I assist you today?";
+            break;
+          default:
+            welcomeMessage += " I'm your JetStream assistant. I can help you explore JetShare offers, JetStream flights, or assist with your account. What would you like to know about today?";
+        }
       }
       
       setMessages(prev => [
@@ -435,7 +493,7 @@ export default function AIConcierge({
         { role: 'assistant', content: welcomeMessage }
       ]);
     }
-  }, [isOpen, messages, user, pathname]);
+  }, [isOpen, messages, user, pathname, initialContextRef]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -1535,18 +1593,36 @@ export default function AIConcierge({
 
       {/* Concierge dialog */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center sm:items-center" onClick={() => setIsOpen(false)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center sm:items-center" onClick={handleClose}>
           <div 
             className="bg-white dark:bg-gray-800 w-full max-w-md sm:max-w-lg rounded-t-lg sm:rounded-lg shadow-xl flex flex-col max-h-[80vh] sm:max-h-[600px] animate-slide-up"
+            style={{
+              backgroundColor: 'var(--gdyup-bg-card, #121212)', 
+              borderColor: 'var(--gdyup-border, #2a2a2a)',
+              color: 'var(--gdyup-text, #FFFFFF)'
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="px-4 py-3 border-b flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
+            <div 
+              className="px-4 py-3 border-b flex justify-between items-center sticky top-0 z-10"
+              style={{
+                backgroundColor: 'var(--gdyup-bg-card, #121212)', 
+                borderColor: 'var(--gdyup-border, #2a2a2a)',
+                color: 'var(--gdyup-text, #FFFFFF)'
+              }}
+            >
               <div className="flex items-center">
-                <h2 className="text-lg font-semibold">{getConciergeTitle()}</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white" style={{ color: 'var(--gdyup-text, #FFFFFF)' }}>
+                  {getConciergeTitle()}
+                </h2>
                 <button
                   onClick={toggleVoiceMode}
                   className={`ml-3 p-1 rounded-full ${isVoiceMode ? 'bg-blue-100 text-blue-500' : 'text-gray-500'}`}
+                  style={{ 
+                    backgroundColor: isVoiceMode ? 'var(--gdyup-primary, #DAFF0D)' : 'transparent',
+                    color: isVoiceMode ? 'var(--gdyup-button-text, #000000)' : 'var(--gdyup-text-subtle, #A0A0A0)'
+                  }}
                   title={isVoiceMode ? "Voice mode enabled" : "Enable voice mode"}
                 >
                   <svg
@@ -1570,6 +1646,7 @@ export default function AIConcierge({
                 <button
                   onClick={resetConversation}
                   className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  style={{ color: 'var(--gdyup-text-subtle, #A0A0A0)' }}
                   title="Reset conversation"
                 >
                   <svg
@@ -1588,8 +1665,9 @@ export default function AIConcierge({
                   </svg>
                 </button>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  style={{ color: 'var(--gdyup-text-subtle, #A0A0A0)' }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1613,7 +1691,11 @@ export default function AIConcierge({
             <div
               ref={chatContainerRef}
               className="flex-1 overflow-y-auto p-4 space-y-4"
-              style={{ maxHeight: 'calc(80vh - 160px)', scrollBehavior: 'smooth' }}
+              style={{ 
+                maxHeight: 'calc(80vh - 160px)', 
+                scrollBehavior: 'smooth',
+                backgroundColor: 'var(--gdyup-bg-dark, #000000)'
+              }}
             >
               {messages.filter(msg => msg.role !== 'system').map((message, index) => (
                 <div
@@ -1621,11 +1703,19 @@ export default function AIConcierge({
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                    }`}
+                    className={`max-w-[80%] p-3 rounded-lg`}
+                    style={{
+                      backgroundColor: message.role === 'user' 
+                        ? 'var(--gdyup-primary, #DAFF0D)' 
+                        : 'var(--gdyup-bg-card, #121212)',
+                      color: message.role === 'user' 
+                        ? 'var(--gdyup-button-text, #000000)' 
+                        : 'var(--gdyup-text, #FFFFFF)',
+                      borderColor: message.role === 'user'
+                        ? 'transparent'
+                        : 'var(--gdyup-border, #2a2a2a)',
+                      borderWidth: message.role === 'user' ? '0px' : '1px'
+                    }}
                   >
                     {message.content}
                   </div>
@@ -1634,7 +1724,15 @@ export default function AIConcierge({
               
               {streamingResponse && (
                 <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                  <div 
+                    className="max-w-[80%] p-3 rounded-lg"
+                    style={{
+                      backgroundColor: 'var(--gdyup-bg-card, #121212)',
+                      color: 'var(--gdyup-text, #FFFFFF)',
+                      borderColor: 'var(--gdyup-border, #2a2a2a)',
+                      borderWidth: '1px'
+                    }}
+                  >
                     {streamingResponse}
                   </div>
                 </div>
@@ -1642,7 +1740,14 @@ export default function AIConcierge({
               
               {isLoading && !streamingResponse && (
                 <div className="flex justify-start">
-                  <div className="max-w-[80%] p-3 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center space-x-2">
+                  <div 
+                    className="max-w-[80%] p-3 rounded-lg flex items-center space-x-2"
+                    style={{
+                      backgroundColor: 'var(--gdyup-bg-card, #121212)',
+                      borderColor: 'var(--gdyup-border, #2a2a2a)',
+                      borderWidth: '1px'
+                    }}
+                  >
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-100"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse delay-200"></div>
@@ -1711,7 +1816,13 @@ export default function AIConcierge({
             </div>
             
             {/* Input area */}
-            <div className="p-4 border-t sticky bottom-0 bg-white dark:bg-gray-800 z-10">
+            <div 
+              className="p-4 border-t sticky bottom-0 z-10"
+              style={{
+                backgroundColor: 'var(--gdyup-bg-card, #121212)', 
+                borderColor: 'var(--gdyup-border, #2a2a2a)'
+              }}
+            >
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -1724,7 +1835,12 @@ export default function AIConcierge({
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={getContext() === 'jetshare' ? "Ask about flight sharing..." : getContext() === 'admin' ? "Ask about platform management..." : getContext() === 'jetstream' ? "Ask about JetStream services..." : "Ask about JetStream..."}
-                  className="flex-grow rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                  className="flex-grow rounded-lg border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  style={{
+                    backgroundColor: 'var(--gdyup-bg-dark, #000000)',
+                    borderColor: 'var(--gdyup-border, #2a2a2a)',
+                    color: 'var(--gdyup-text, #FFFFFF)'
+                  }}
                   disabled={isLoading || isRecording || isTranscribing}
                 />
                 
@@ -1762,6 +1878,12 @@ export default function AIConcierge({
                   type="submit"
                   disabled={!inputValue.trim() || isLoading || isRecording || isTranscribing}
                   className="p-2 rounded-lg bg-blue-500 text-white disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: !inputValue.trim() || isLoading || isRecording || isTranscribing 
+                      ? 'var(--gdyup-primary-active, #b2d400)' 
+                      : 'var(--gdyup-primary, #DAFF0D)',
+                    color: 'var(--gdyup-button-text, #000000)'
+                  }}
                 >
                   {isTranscribing ? (
                     <svg

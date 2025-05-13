@@ -14,6 +14,7 @@ import * as NostrUtils from '@/lib/services/nostr';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useGdyupTheme } from '@/app/gdyup/hooks/useGdyupTheme';
 
 interface Contact {
   pubkey: string;
@@ -48,6 +49,7 @@ export default function NostrMessagingTab() {
     connectRelay,
     error: nostrError
   } = useNostr();
+  const { getThemedButtonClasses, getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
   const [isLoading, setIsLoading] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -458,7 +460,7 @@ export default function NostrMessagingTab() {
           </AlertDescription>
         </Alert>
         <Button
-          className="mt-4 bg-amber-500 hover:bg-amber-600 text-white"
+          className={`${getThemedButtonClasses('primary')} mt-4`}
           onClick={() => window.location.href = '/settings'}
         >
           Go to Settings
@@ -473,7 +475,7 @@ export default function NostrMessagingTab() {
       <div className="flex flex-col items-center justify-center h-[300px]">
         <p className="mb-4 text-center">Connect to Nostr to access your messages</p>
         <Button
-          className="bg-amber-500 hover:bg-amber-600 text-white"
+          className={getThemedButtonClasses('primary')}
           onClick={connectExtension}
           disabled={isLoading}
         >
@@ -526,7 +528,7 @@ export default function NostrMessagingTab() {
               className="mb-2"
             />
             <Button
-              className="w-full text-xs bg-amber-500 hover:bg-amber-600 text-white"
+              className={`${getThemedButtonClasses('primary')} w-full text-xs`}
               onClick={addContact}
               size="sm"
             >
@@ -549,12 +551,12 @@ export default function NostrMessagingTab() {
                 onClick={() => setSelectedContact(contact)}
                 className={`p-2 rounded-lg cursor-pointer flex items-center gap-2 ${
                   selectedContact?.pubkey === contact.pubkey
-                    ? 'bg-amber-100 dark:bg-amber-900/20'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                    ? getThemedBackgroundClasses('secondary')
+                    : 'hover:opacity-80'
                 }`}
               >
                 <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-amber-100 text-amber-800">
+                  <AvatarFallback className={`${getThemedBackgroundClasses('secondary')} ${getThemedTextClasses('primary')}`}>
                     {(contact.name?.[0] || 'U').toUpperCase()}
                   </AvatarFallback>
                   {contact.avatar && <AvatarImage src={contact.avatar} />}
@@ -603,7 +605,7 @@ export default function NostrMessagingTab() {
             <CardHeader className="py-3 border-b">
               <div className="flex items-center">
                 <Avatar className="h-9 w-9 mr-2">
-                  <AvatarFallback className="bg-amber-100 text-amber-800">
+                  <AvatarFallback className={`${getThemedBackgroundClasses('secondary')} ${getThemedTextClasses('primary')}`}>
                     {(selectedContact.name?.[0] || 'U').toUpperCase()}
                   </AvatarFallback>
                   {selectedContact.avatar && <AvatarImage src={selectedContact.avatar} />}
@@ -623,7 +625,7 @@ export default function NostrMessagingTab() {
               <div className="space-y-4">
                 {filteredMessages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-[200px]">
-                    <MessageSquare className="h-12 w-12 text-gray-300 mb-2" />
+                    <MessageSquare className={`h-12 w-12 mb-2 ${getThemedTextClasses('muted')}`} />
                     <p className="text-muted-foreground text-center">
                       No messages yet. Start the conversation!
                     </p>
@@ -637,14 +639,14 @@ export default function NostrMessagingTab() {
                       <div
                         className={`max-w-[70%] p-3 rounded-lg ${
                           message.isMine
-                            ? 'bg-amber-500 text-white'
+                            ? `${getThemedBackgroundClasses('primary')} ${getThemedTextClasses('inverse')}`
                             : 'bg-gray-200 dark:bg-gray-800'
                         }`}
                       >
                         <div className="text-sm">
                           {message.content}
                         </div>
-                        <div className={`text-xs mt-1 ${message.isMine ? 'text-amber-100' : 'text-muted-foreground'}`}>
+                        <div className={`text-xs mt-1 ${message.isMine ? getThemedTextClasses('inverse') + ' text-opacity-70' : 'text-muted-foreground'}`}>
                           {format(message.created_at, 'HH:mm')}
                           {!message.decrypted && ' (encrypted)'}
                         </div>
@@ -671,7 +673,7 @@ export default function NostrMessagingTab() {
                   }}
                 />
                 <Button
-                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                  className={getThemedButtonClasses('primary')}
                   onClick={sendMessage}
                   disabled={isLoading || !messageInput.trim()}
                 >
@@ -686,7 +688,7 @@ export default function NostrMessagingTab() {
           </>
         ) : (
           <div className="flex flex-col items-center justify-center h-full p-4">
-            <MessageSquare className="h-16 w-16 text-gray-300 mb-4" />
+            <MessageSquare className={`h-16 w-16 mb-4 ${getThemedTextClasses('muted')}`} />
             <p className="text-xl font-medium mb-2">Nostr Messages</p>
             <p className="text-center text-muted-foreground max-w-xs mb-4">
               Select a contact to start messaging. Your conversations are end-to-end encrypted.

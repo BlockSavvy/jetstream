@@ -381,7 +381,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
       if (refreshTimerId) clearInterval(refreshTimerId);
     };
-  }, [supabase.auth, router, pathname]);
+  // Use only stable dependencies to prevent re-rendering loops
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, router]);
   
   /**
    * Sign up with email and password

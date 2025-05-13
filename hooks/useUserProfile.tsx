@@ -332,7 +332,9 @@ export function useUserProfile() {
   
   // Fetch profile on component mount or user change
   useEffect(() => {
-    if (user?.id && !profileFetchAttempted.current) {
+    // Only fetch if we have a userId and haven't attempted a fetch yet
+    if (user?.id && !profileFetchAttempted.current && !isFetchingProfile.current) {
+      console.log('Initial profile fetch for userId:', user.id);
       fetchUserProfile(user.id);
     } else if (!user) {
       // Reset profile when user logs out
@@ -341,7 +343,10 @@ export function useUserProfile() {
       profileFetchAttempted.current = false;
       fetchAttempts.current = 0;
     }
-  }, [user, fetchUserProfile]);
+    
+    // Don't add fetchUserProfile to the dependency array to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
   
   return {
     profile,

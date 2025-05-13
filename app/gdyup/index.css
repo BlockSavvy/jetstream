@@ -390,3 +390,90 @@ div[class*="jet-item"][class*="selected"] svg,
 [id^="radix-"][cmdk-item][role="option"][data-selected="true"] div[class*="inline-flex"][class*="rounded-full"] * {
   color: black !important;
 } 
+
+/* Mobile menu icon fixes - ensure proper contrast */
+.mobile-menu button svg,
+.mobile-menu a svg,
+nav[class*="mobile"] svg,
+div[class*="mobile"] svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+}
+
+/* Special case for menu buttons to ensure they're always visible */
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg,
+[aria-label*="menu"] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Support for ThemedIcon component */
+button .text-current,
+a .text-current,
+.mobile-menu .text-current {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Critical icon visibility fix - DEPRECATED: Use ThemedIcon component instead */
+/* These rules are kept temporarily for backward compatibility */
+
+/* Ensure all icons in buttons/menus use their parent's text color */
+button svg,
+a svg,
+.lucide,
+.lucide-icon,
+[data-lucide] {
+  color: currentColor;
+  stroke: currentColor;
+  fill: none;
+}
+
+/* Legacy code - will be removed in the future */
+.gdyup-header-menu svg,
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg,
+.mobile-menu button svg,
+.mobile-menu a svg {
+  color: var(--gdyup-text);
+  stroke: var(--gdyup-text);
+}
+
+/* Fix primary buttons to use button text color for icons */
+.gdyup-button svg,
+button.bg-primary svg,
+.bg-gdyup-primary svg,
+.gdyup-bg-primary svg {
+  color: var(--gdyup-button-text);
+  stroke: var(--gdyup-button-text);
+}
+
+/* Legacy code - will be removed in the future */
+.gdyup-primary svg,
+.text-gdyup-primary svg {
+  color: var(--gdyup-primary);
+  stroke: var(--gdyup-primary);
+}
+
+/* Dashboard visibility fixes - overrides any conflicting styles */
+.gdyup-app .dashboard-content,
+.gdyup-app .dashboard-content h1, 
+.gdyup-app .dashboard-content h2, 
+.gdyup-app .dashboard-content h3, 
+.gdyup-app .dashboard-content h4, 
+.gdyup-app .dashboard-content p, 
+.gdyup-app .dashboard-content span, 
+.gdyup-app .dashboard-content div {
+  color: var(--gdyup-text) !important;
+}
+
+.gdyup-app .dashboard-content .card {
+  background-color: var(--gdyup-bg-card) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+.gdyup-app .dashboard-content svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+} 

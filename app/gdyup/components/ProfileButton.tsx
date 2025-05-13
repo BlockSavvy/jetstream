@@ -77,8 +77,8 @@ export function ProfileButton() {
         className={getThemeClasses({
           base: "h-7",
           default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-          blue: "bg-blue-500 text-white hover:bg-blue-600", 
-          pink: "bg-pink-500 text-white hover:bg-pink-600"
+          luxury: "bg-blue-500 text-white hover:bg-blue-600", 
+          bitcoin: "bg-pink-500 text-white hover:bg-pink-600"
         })}
         asChild
       >
@@ -96,16 +96,16 @@ export function ProfileButton() {
           className={getThemeClasses({
             base: "h-7 gap-2",
             default: "text-gray-800 hover:text-black hover:bg-gray-100",
-            blue: "text-blue-100 hover:text-white hover:bg-blue-800",
-            pink: "text-pink-100 hover:text-white hover:bg-pink-800"
+            luxury: "text-blue-100 hover:text-white hover:bg-blue-800",
+            bitcoin: "text-pink-100 hover:text-white hover:bg-pink-800"
           })}
         >
           <Avatar className="h-5 w-5">
             <AvatarFallback className={getThemeClasses({
               base: "text-xs",
               default: "bg-amber-500 text-black",
-              blue: "bg-amber-400 text-black",
-              pink: "bg-pink-400 text-black"
+              luxury: "bg-amber-400 text-black",
+              bitcoin: "bg-pink-400 text-black"
             })}>
               {getUserInitials()}
             </AvatarFallback>
@@ -121,15 +121,15 @@ export function ProfileButton() {
         className={getThemeClasses({
           base: "w-56",
           default: "bg-white border-gray-200",
-          blue: "bg-blue-950 border-blue-900 text-blue-50",
-          pink: "bg-pink-950 border-pink-900 text-pink-50"
+          luxury: "bg-blue-950 border-blue-900 text-blue-50",
+          bitcoin: "bg-pink-950 border-pink-900 text-pink-50"
         })}
       >
         <DropdownMenuLabel className={getThemeClasses({
           base: "",
           default: "text-gray-900",
-          blue: "text-blue-50",
-          pink: "text-pink-50"
+          luxury: "text-blue-50",
+          bitcoin: "text-pink-50"
         })}>
           My Account
         </DropdownMenuLabel>
@@ -137,8 +137,8 @@ export function ProfileButton() {
         <DropdownMenuSeparator className={getThemeClasses({
           base: "",
           default: "bg-gray-100",
-          blue: "bg-blue-900/60",
-          pink: "bg-pink-900/60"
+          luxury: "bg-blue-900/60",
+          bitcoin: "bg-pink-900/60"
         })} />
         
         <DropdownMenuGroup>
@@ -147,8 +147,8 @@ export function ProfileButton() {
             className={getThemeClasses({
               base: "",
               default: "focus:bg-gray-50",
-              blue: "focus:bg-blue-900",
-              pink: "focus:bg-pink-900"
+              luxury: "focus:bg-blue-900",
+              bitcoin: "focus:bg-pink-900"
             })}
           >
             <Link href="/gdyup/profile">
@@ -162,8 +162,8 @@ export function ProfileButton() {
             className={getThemeClasses({
               base: "",
               default: "focus:bg-gray-50",
-              blue: "focus:bg-blue-900",
-              pink: "focus:bg-pink-900"
+              luxury: "focus:bg-blue-900",
+              bitcoin: "focus:bg-pink-900"
             })}
           >
             <Link href="/gdyup/dashboard">
@@ -177,8 +177,8 @@ export function ProfileButton() {
             className={getThemeClasses({
               base: "",
               default: "focus:bg-gray-50",
-              blue: "focus:bg-blue-900",
-              pink: "focus:bg-pink-900"
+              luxury: "focus:bg-blue-900",
+              bitcoin: "focus:bg-pink-900"
             })}
           >
             <Link href="/gdyup/settings">
@@ -191,8 +191,8 @@ export function ProfileButton() {
         <DropdownMenuSeparator className={getThemeClasses({
           base: "",
           default: "bg-gray-100",
-          blue: "bg-blue-900/60",
-          pink: "bg-pink-900/60"
+          luxury: "bg-blue-900/60",
+          bitcoin: "bg-pink-900/60"
         })} />
         
         <DropdownMenuItem
@@ -200,8 +200,8 @@ export function ProfileButton() {
           className={getThemeClasses({
             base: "",
             default: "text-red-600 focus:bg-red-50 focus:text-red-700",
-            blue: "text-red-400 focus:bg-red-900/30 focus:text-red-300",
-            pink: "text-red-400 focus:bg-red-900/30 focus:text-red-300"
+            luxury: "text-red-400 focus:bg-red-900/30 focus:text-red-300",
+            bitcoin: "text-red-400 focus:bg-red-900/30 focus:text-red-300"
           })}
         >
           <LogOut className="h-4 w-4 mr-2" />

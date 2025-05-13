@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { NostrProfile } from '@/types/nostr';
 import * as NostrUtils from '@/lib/services/nostr';
+import { useGdyupTheme } from '@/app/gdyup/hooks/useGdyupTheme';
 
 export default function NostrProfileSettings() {
   const {
@@ -30,6 +31,7 @@ export default function NostrProfileSettings() {
     verifyNip05,
     error: nostrError
   } = useNostr();
+  const { getThemedButtonClasses, getThemedTextClasses, getThemedBadgeClasses } = useGdyupTheme();
   
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -189,11 +191,11 @@ export default function NostrProfileSettings() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center">
-              <KeyRound className="h-5 w-5 mr-2 text-amber-500" />
+              <KeyRound className={`h-5 w-5 mr-2 ${getThemedTextClasses('primary')}`} />
               Nostr Identity
               <Badge 
                 variant={isEnabled ? "default" : "secondary"}
-                className={`ml-2 text-xs ${isEnabled ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
+                className={`ml-2 text-xs ${isEnabled ? getThemedBadgeClasses('success') : getThemedBadgeClasses('secondary')}`}
               >
                 {isEnabled ? 'Enabled' : 'Disabled'}
               </Badge>
@@ -259,7 +261,7 @@ export default function NostrProfileSettings() {
                     href="https://getalby.com/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-amber-500 hover:underline"
+                    className={getThemedTextClasses('primary') + ' hover:underline'}
                   >
                     Alby
                   </a>{' '}
@@ -268,7 +270,7 @@ export default function NostrProfileSettings() {
                     href="https://github.com/fiatjaf/nos2x" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-amber-500 hover:underline"
+                    className={getThemedTextClasses('primary') + ' hover:underline'}
                   >
                     nos2x
                   </a>
@@ -329,11 +331,11 @@ export default function NostrProfileSettings() {
                 <Label htmlFor="nip05" className="flex items-center">
                   NIP-05 Identity
                   {isVerifying ? (
-                    <Loader2 className="h-4 w-4 ml-2 animate-spin text-amber-500" />
+                    <Loader2 className={`h-4 w-4 ml-2 animate-spin ${getThemedTextClasses('primary')}`} />
                   ) : isNip05Verified ? (
-                    <CheckCircle className="h-4 w-4 ml-2 text-green-500" />
+                    <CheckCircle className={`h-4 w-4 ml-2 ${getThemedTextClasses('success')}`} />
                   ) : formData.nip05 ? (
-                    <XCircle className="h-4 w-4 ml-2 text-red-500" />
+                    <XCircle className={`h-4 w-4 ml-2 ${getThemedTextClasses('destructive')}`} />
                   ) : null}
                 </Label>
                 
@@ -485,7 +487,7 @@ export default function NostrProfileSettings() {
         <Button
           onClick={handleSaveSettings}
           disabled={isLoading}
-          className="bg-amber-500 hover:bg-amber-600 gdyup-button-primary"
+          className={getThemedButtonClasses('primary')}
         >
           {isLoading ? (
             <>

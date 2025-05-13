@@ -1,138 +1,12 @@
 /* GDYUP Forms Specific CSS - Ensuring brand consistency */
 
-/* Enforce GDYUP colors in offer creation form */
+/* Form-specific styles that extend the main theme */
 .gdyup-form {
-  --bg-dark: #000000;
-  --bg-card: #121212;
-  --bg-card-hover: #1A1A1A;
-  --bg-input: #1A1A1A;
-  --border-default: #2a2a2a;
-  --border-highlight: var(--gdyup-primary, #DAFF0D);
-  --text-primary: #FFFFFF;
-  --text-secondary: #E0E0E0;
-  --text-muted: #D0D0D0;
-
+  /* Use the existing theme variables defined in the main CSS */
   color-scheme: dark;
 }
 
-/* Theme definitions */
-:root {
-  /* Default values to prevent FOUC (Flash of Unstyled Content) */
-  --gdyup-primary: #DAFF0D !important;
-  --gdyup-primary-rgb: 218, 255, 13 !important;
-  --gdyup-secondary: #FF4B47 !important;
-  --gdyup-secondary-rgb: 255, 75, 71 !important;
-  --gdyup-background: #000000 !important;
-  --gdyup-card-bg: #121212 !important;
-  --gdyup-hover-bg: #181818 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E0E0E0 !important;
-  --gdyup-text-subtle: #D0D0D0 !important;
-  --gdyup-border: #2a2a2a !important;
-  --gdyup-button-bg: #DAFF0D !important;
-  --gdyup-button-hover-bg: #E8FF4D !important;
-  --gdyup-button-active-bg: #C8EA00 !important;
-  --gdyup-button-text: #000000 !important;
-
-  /* Default theme: Lime Green */
-  --theme-default-primary: #DAFF0D !important;
-  --theme-default-secondary: #FF4B47 !important;
-  --theme-default-accent: #1A1A1A !important;
-  --theme-default-border: #2a2a2a !important;
-  
-  /* Theme 2: Luxury Black */
-  --theme-luxury-primary: #F25C05 !important;
-  --theme-luxury-secondary: #F77A2E !important;
-  --theme-luxury-accent: #1A1F20 !important;
-  --theme-luxury-border: #333333 !important;
-  
-  /* Theme 3: Bitcoin Orange */
-  --theme-bitcoin-primary: #F7931A !important;
-  --theme-bitcoin-secondary: #FFB75E !important;
-  --theme-bitcoin-accent: #2A2A2A !important;
-  --theme-bitcoin-border: #3A3A3A !important;
-}
-
-/* Default theme (lime green) */
-.gdyup-theme-default {
-  --gdyup-primary: var(--theme-default-primary) !important;
-  --gdyup-primary-rgb: 218, 255, 13 !important; /* RGB version for rgba() usage */
-  --gdyup-secondary: var(--theme-default-secondary) !important;
-  --gdyup-secondary-rgb: 255, 75, 71 !important; /* RGB version for rgba() usage */
-  --gdyup-background: #000000 !important;
-  --gdyup-card-bg: #121212 !important;
-  --gdyup-hover-bg: #181818 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E0E0E0 !important;
-  --gdyup-text-subtle: #D0D0D0 !important;
-  --gdyup-border: var(--theme-default-border) !important;
-  --gdyup-button-bg: var(--theme-default-primary) !important;
-  --gdyup-button-hover-bg: #E8FF4D !important;
-  --gdyup-button-active-bg: #C8EA00 !important;
-  --gdyup-button-text: #000000 !important;
-}
-
-/* Luxury Black theme (blue selector) */
-.gdyup-theme-blue {
-  --gdyup-primary: #F25C05 !important;
-  --gdyup-primary-rgb: 242, 92, 5 !important; /* RGB version for rgba() usage */
-  --gdyup-secondary: #F77A2E !important;
-  --gdyup-secondary-rgb: 247, 122, 46 !important; /* RGB version for rgba() usage */
-  --gdyup-background: #000000 !important;
-  --gdyup-card-bg: #1A1F20 !important;
-  --gdyup-hover-bg: #222B30 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #A0A0A0 !important;
-  --gdyup-text-subtle: #808080 !important;
-  --gdyup-border: var(--theme-luxury-border) !important;
-  --gdyup-button-bg: #F25C05 !important;
-  --gdyup-button-hover-bg: #F77A2E !important;
-  --gdyup-button-active-bg: #D04A04 !important;
-  --gdyup-button-text: #FFFFFF !important;
-  
-  /* Luxury-specific properties */
-  --luxury-black-primary-bg: #000000 !important;
-  --luxury-black-accent-color: #F25C05 !important;
-  --luxury-black-text-primary: #FFFFFF !important;
-  --luxury-black-text-secondary: #A0A0A0 !important;
-  --luxury-black-card-bg: #1A1F20 !important;
-  --luxury-black-button-bg: #F25C05 !important;
-  --luxury-black-button-hover-bg: #F77A2E !important;
-  --luxury-black-footer-bg: #F25C05 !important;
-  --luxury-black-font-family: 'Montserrat', sans-serif !important;
-  --luxury-black-heading-font-size: 48px !important;
-  --luxury-black-subheading-font-size: 36px !important;
-  --luxury-black-body-font-size: 16px !important;
-  --luxury-black-font-weight-bold: 700 !important;
-  --luxury-black-font-weight-regular: 400 !important;
-  --luxury-black-letter-spacing-heading: 1.5px !important;
-  --luxury-black-line-height-body: 1.6 !important;
-  --luxury-black-line-height-heading: 1.2 !important;
-  --luxury-black-padding-section: 40px !important;
-  --luxury-black-margin-section: 80px !important;
-  --luxury-black-border-radius: 8px !important;
-}
-
-/* Bitcoin Orange theme (pink selector) */
-.gdyup-theme-pink {
-  --gdyup-primary: #F7931A !important;
-  --gdyup-primary-rgb: 247, 147, 26 !important; /* RGB version for rgba() usage */
-  --gdyup-secondary: #FFB75E !important;
-  --gdyup-secondary-rgb: 255, 183, 94 !important; /* RGB version for rgba() usage */
-  --gdyup-background: #1A1A1A !important;
-  --gdyup-card-bg: #2A2A2A !important;
-  --gdyup-hover-bg: #333333 !important;
-  --gdyup-text: #FFFFFF !important;
-  --gdyup-text-medium: #E5E5E5 !important;
-  --gdyup-text-subtle: #C0C0C0 !important;
-  --gdyup-border: var(--theme-bitcoin-border) !important;
-  --gdyup-button-bg: #F7931A !important;
-  --gdyup-button-hover-bg: #FFB75E !important;
-  --gdyup-button-active-bg: #D67908 !important;
-  --gdyup-button-text: #000000 !important;
-}
-
-/* Theme-responsive logo colors */
+/* Theme-responsive logo colors - Keep this as it's form-specific */
 .gdyup-logo {
   filter: brightness(1.1) contrast(1.1);
 }
@@ -145,250 +19,494 @@
   filter: brightness(1.1) contrast(1.1) saturate(0.9);
 }
 
-/* Global styles for buttons - these override TailwindCSS styles */
-.bg-\[\#DAFF0D\], 
-button.bg-\[\#DAFF0D\], 
-a.bg-\[\#DAFF0D\] {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-}
-
-.hover\:bg-\[\#E8FF4D\]:hover {
-  background-color: var(--gdyup-button-hover-bg) !important;
-}
-
-.text-\[\#DAFF0D\] {
-  color: var(--gdyup-primary) !important;
-}
-
-/* Ensure TailwindCSS doesn't override themed colors */
-.bg-\[var\(--gdyup-primary\)\] {
-  background-color: var(--gdyup-primary) !important;
-}
-
-.bg-\[var\(--gdyup-background\)\] {
-  background-color: var(--gdyup-background) !important;
-}
-
-.bg-\[var\(--gdyup-card-bg\)\] {
-  background-color: var(--gdyup-card-bg) !important;
-}
-
-.text-\[var\(--gdyup-primary\)\] {
-  color: var(--gdyup-primary) !important;
-}
-
-.text-\[var\(--gdyup-text\)\] {
-  color: var(--gdyup-text) !important;
-}
-
-.text-\[var\(--gdyup-text-medium\)\] {
-  color: var(--gdyup-text-medium) !important;
-}
-
-.border-\[var\(--gdyup-primary\)\] {
-  border-color: var(--gdyup-primary) !important;
-}
-
-/* Global styles for buttons */
-.gdyup-button {
-  background-color: var(--gdyup-button-bg) !important;
-  color: var(--gdyup-button-text, #000000) !important;
-  border: none !important;
-  border-radius: 4px !important;
-  padding: 0.5rem 1rem !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-.gdyup-button:hover {
-  background-color: var(--gdyup-button-hover-bg) !important;
-}
-
-.gdyup-button:active {
-  background-color: var(--gdyup-button-active-bg) !important;
-}
-
-/* Special button styles */
-.gdyup-button-primary {
-  background-color: var(--gdyup-primary) !important;
-  color: var(--gdyup-button-text) !important;
-}
-
-.gdyup-button-secondary {
-  background-color: var(--gdyup-secondary) !important;
-  color: var(--gdyup-button-text) !important;
-}
-
-/* Helper classes for dynamic coloring based on theme */
-.gdyup-primary {
-  color: var(--gdyup-primary) !important;
-}
-
-.gdyup-secondary {
-  color: var(--gdyup-secondary) !important;
-}
-
-.gdyup-bg-primary {
-  background-color: var(--gdyup-primary) !important;
-}
-
-.gdyup-bg-secondary {
-  background-color: var(--gdyup-secondary) !important;
-}
-
-.gdyup-border-primary {
-  border-color: var(--gdyup-primary) !important;
-}
-
-/* Theme switching functionality */
-.gdyup-app {
-  --gdyup-theme: 'default'; /* Current theme identifier */
-}
-
-/* Theme switcher container */
-.gdyup-theme-switcher {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  padding: 12px;
-  border-radius: 12px;
+/* Form Elements */
+.gdyup-form input[type="text"],
+.gdyup-form input[type="number"],
+.gdyup-form input[type="email"],
+.gdyup-form input[type="password"],
+.gdyup-form input[type="search"],
+.gdyup-form textarea,
+.gdyup-form select {
+  background-color: rgba(26, 26, 26, 0.8);
   border: 1px solid var(--gdyup-border);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  color: var(--gdyup-text);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease-in-out;
 }
 
-.gdyup-theme-button {
-  width: 40px;
-  height: 40px;
+.gdyup-form input:focus,
+.gdyup-form textarea:focus,
+.gdyup-form select:focus {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.2);
+  outline: none;
+}
+
+/* Form labels */
+.gdyup-form label {
+  color: var(--gdyup-text-medium);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Form sections */
+.gdyup-form .form-section {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .form-section-header svg {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 6px rgba(var(--gdyup-primary-rgb), 0.3));
+}
+
+.gdyup-form .form-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gdyup-primary);
+}
+
+/* Primary buttons */
+.gdyup-form button[type="submit"],
+.gdyup-form .button-primary,
+.gdyup-form .gdyup-button-primary {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.3);
+  transition: all 0.2s ease-in-out;
+  border: none;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.01em;
+}
+
+.gdyup-form button[type="submit"]:hover,
+.gdyup-form .button-primary:hover,
+.gdyup-form .gdyup-button-primary:hover {
+  background-color: var(--gdyup-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.5);
+}
+
+/* Reset buttons */
+.gdyup-form button[class*="reset"],
+.gdyup-form button:has(span:contains("Reset")) {
+  border: 1px solid var(--gdyup-primary);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: var(--gdyup-primary);
+  font-weight: 600;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.2);
+}
+
+.gdyup-form button[class*="reset"]:hover,
+.gdyup-form button:has(span:contains("Reset")):hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  box-shadow: 0 0 12px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Secondary/outline buttons */
+.gdyup-form .button-secondary,
+.gdyup-form .button-outline {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--gdyup-border);
+  color: var(--gdyup-text);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .button-secondary:hover,
+.gdyup-form .button-outline:hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.1);
+  border-color: rgba(var(--gdyup-primary-rgb), 0.4);
+  color: var(--gdyup-primary);
+}
+
+/* Sliders */
+.gdyup-form [role="slider"] {
+  background-color: var(--gdyup-primary);
+  border: 2px solid var(--gdyup-button-text);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.5);
+}
+
+.gdyup-form [data-orientation="horizontal"] > span {
+  background-color: #333333;
+}
+
+.gdyup-form [data-orientation="horizontal"] > span > span {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.4);
+}
+
+/* Selected items, checkboxes, radio buttons */
+.gdyup-form [data-state="checked"],
+.gdyup-form input[type="checkbox"]:checked,
+.gdyup-form input[type="radio"]:checked {
+  background-color: var(--gdyup-primary);
+  border-color: var(--gdyup-primary);
+}
+
+/* Tabs */
+.gdyup-form [role="tablist"] {
+  background-color: rgba(21, 21, 21, 0.9);
+  border-color: var(--gdyup-border);
+}
+
+.gdyup-form [role="tab"][data-state="active"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+}
+
+/* Multi-step form navigation */
+.gdyup-form .step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.gdyup-form .step-dot {
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s ease;
-  cursor: pointer;
+  background-color: var(--gdyup-border);
+  transition: all 0.2s ease-in-out;
 }
 
-.gdyup-theme-button:hover {
-  transform: scale(1.1);
-  border-color: white;
+.gdyup-form .step-dot.active {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.5);
+  transform: scale(1.2);
 }
 
-.gdyup-theme-button.active {
-  border-color: white;
-  transform: scale(1.1);
-  box-shadow: 0 0 15px currentColor;
-}
-
-.gdyup-theme-default-button {
-  background: linear-gradient(45deg, #DAFF0D, #DAFF0D);
-}
-
-.gdyup-theme-blue-button {
-  background: linear-gradient(45deg, #00EAFF, #00EAFF);
-}
-
-.gdyup-theme-pink-button {
-  background: linear-gradient(45deg, #FF00E4, #FF00E4);
-}
-
-/* Enhanced icon styling */
-.gdyup-icon {
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  /* Remove color and stroke declarations so they can be overridden by context */
-}
-
-/* .gdyup-icon in specific contexts */
-button:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
-a:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
-.gdyup-form .gdyup-icon {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-  fill: none !important;
-}
-
-.gdyup-button-primary .gdyup-icon {
-  color: black !important;
-  filter: none !important;
-}
-
-/* Dialog styling */
-.gdyup-dialog [data-radix-popper-content-wrapper] {
-  background-color: var(--bg-dark) !important;
-  color: var(--text-primary) !important;
-}
-
-/* Fix dialog close button - more specific selectors and enhanced visibility */
-.gdyup-dialog button[data-dialog-close],
-.gdyup-dialog [data-dialog-close] svg,
-.gdyup-dialog [aria-label="Close"],
-.gdyup-dialog [data-state="open"] > button {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border: 1px solid #333333 !important;
-  border-radius: 50% !important;
-  width: 25px !important;
-  height: 25px !important;
-  padding: 5px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  top: 10px !important;
-  right: 10px !important;
-  position: absolute !important;
-  z-index: 50 !important;
-}
-
-.gdyup-dialog button[data-dialog-close]:hover,
-.gdyup-dialog [aria-label="Close"]:hover {
-  background-color: #333333 !important;
-  border-color: var(--gdyup-primary) !important;
-}
-
-.gdyup-dialog button[data-dialog-close] svg,
-.gdyup-dialog [aria-label="Close"] svg {
-  color: #ffffff !important;
-  width: 14px !important;
-  height: 14px !important;
-  stroke-width: 2.5px !important;
-}
-
-/* Enhanced icon styling for buttons to ensure better visibility */
-.gdyup-icon, 
-[class*="button"] svg,
-button svg {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
-}
-
-/* Different icon color for primary buttons */
-.gdyup-button-primary svg,
-.button-primary svg,
-[class*="primary"] svg {
-  color: black !important;
-  filter: none !important;
-}
-
-/* Ensure filter icon is visible in filters button */
-button:has(.lucide-filter) svg {
-  color: var(--gdyup-primary) !important;
-  stroke-width: 2.5px !important;
-  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5)) !important;
-}
-
-/* Additional component-specific styles */
-.gdyup-form .gdyup-swiper {
-  height: calc(100vh - 180px);
+/* Card styles inside forms */
+.gdyup-form .card {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
   overflow: hidden;
 }
 
+.gdyup-form .card-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gdyup-border);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .card-content {
+  padding: 1rem;
+}
+
+/* Dialog styling */
+.gdyup-dialog [role="dialog"],
+.gdyup-dialog [data-state="open"] {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  padding: 0.5rem;
+}
+
+/* Dialog close button styling */
+.gdyup-dialog button[data-dialog-close],
+.gdyup-dialog [data-dialog-close],
+.gdyup-dialog [aria-label="Close"] {
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #333333;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  z-index: 100;
+  top: 8px;
+  right: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-dialog button[data-dialog-close] svg,
+.gdyup-dialog [data-dialog-close] svg,
+.gdyup-dialog [aria-label="Close"] svg {
+  color: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Make dropdown popover match theme */
+.gdyup-form [cmdk-item][data-selected="true"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form [cmdk-item]:hover:not([data-selected="true"]) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Split configuration visualizations */
+.gdyup-form .split-section {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  border: 1px solid var(--gdyup-border);
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .split-ratio {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gdyup-form .split-ratio-bar {
+  flex-grow: 1;
+  height: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--gdyup-border);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .split-ratio-progress {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+.gdyup-form .split-ratio-label {
+  min-width: 60px;
+  font-weight: 600;
+  color: var(--gdyup-text);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+.gdyup-form .split-ratio-label.primary {
+  color: var(--gdyup-primary);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+}
+
+.gdyup-form .split-ratio-label.secondary {
+  text-align: right;
+  color: var(--gdyup-text);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+/* JetSelector specific styles */
+.gdyup-form .jet-selector {
+  background-color: var(--gdyup-bg-card);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--gdyup-border);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .jet-selector:hover {
+  border-color: rgba(var(--gdyup-primary-rgb), 0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-form .jet-selected {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+.gdyup-form .jet-image-container {
+  position: relative;
+  height: 12rem;
+  overflow: hidden;
+}
+
+.gdyup-form .jet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gdyup-form .jet-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gdyup-text);
+  margin-bottom: 0.5rem;
+}
+
+.gdyup-form .jet-subtitle {
+  font-size: 0.875rem;
+  color: var(--gdyup-text-medium);
+}
+
+.gdyup-form .jet-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+  border: 1px solid rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Calendar/DatePicker styles */
+.gdyup-form .calendar-wrapper {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gdyup-form .calendar-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .calendar-day {
+  color: var(--gdyup-text);
+}
+
+.gdyup-form .calendar-day.selected {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+}
+
+.gdyup-form .calendar-day:hover:not(.selected) {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.1);
+}
+
+/* JetSeatVisualizer specific styling */
+.gdyup-form .seat {
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  background-color: #333333;
+  color: var(--gdyup-text-medium);
+}
+
+.gdyup-form .seat.selected {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.4);
+  transform: scale(1.05);
+}
+
+.gdyup-form .seat:hover:not(.selected):not(.disabled) {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .seat.disabled {
+  background-color: #222222;
+  color: #555555;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* For the progress bar in multi-step forms */
+.gdyup-form .progress-wrapper {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #333333;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.gdyup-form .progress-bar {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+  border-radius: 0.25rem;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Summary section styling */
+.gdyup-form .summary-section {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid var(--gdyup-border);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.gdyup-form .summary-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gdyup-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gdyup-form .summary-label {
+  color: var(--gdyup-text-medium);
+}
+
+.gdyup-form .summary-value {
+  font-weight: 600;
+  color: var(--gdyup-text);
+}
+
+.gdyup-form .summary-value.highlight {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .enhanced-map-container {
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.gdyup-form .route-map-mini {
+  background-color: rgba(31, 41, 55, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .route-map-mini .route-line {
+  height: 2px;
+  background: linear-gradient(to right, #3b82f6, var(--gdyup-primary), #f59e0b);
+  border-radius: 999px;
+  box-shadow: 0 0 4px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Additional component-specific styles */
 .gdyup-form .gdyup-section {
   padding: 1rem;
   margin: 0;
@@ -400,11 +518,10 @@ button:has(.lucide-filter) svg {
   color: var(--gdyup-primary);
 }
 
-/* Enhanced styling for components to reduce nesting */
 .gdyup-form .jet-details {
-  background-color: var(--bg-card);
+  background-color: var(--gdyup-bg-card);
   border-radius: 8px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--gdyup-border);
   overflow: hidden;
   margin-top: 0.75rem;
 }
@@ -419,7 +536,7 @@ button:has(.lucide-filter) svg {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 0;
   padding: 0;
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--gdyup-border);
 }
 
 .gdyup-form .seat-configuration {
@@ -429,7 +546,7 @@ button:has(.lucide-filter) svg {
 .gdyup-form .visualizer-container {
   background-color: rgba(17, 24, 39, 0.4);
   border-radius: 8px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--gdyup-border);
   padding: 1rem;
   margin-top: 0.75rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -439,7 +556,7 @@ button:has(.lucide-filter) svg {
   width: 100%;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--gdyup-border);
   padding: 1rem;
   margin-top: 0.75rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -450,38 +567,42 @@ button:has(.lucide-filter) svg {
   min-height: 120px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--gdyup-border);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Form sections */
-.gdyup-form .form-section {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.gdyup-form .form-section-header {
+/* Form error styling */
+.gdyup-form .form-error {
+  color: #FF6B6B;
+  font-size: 0.875rem;
+  margin-top: 4px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-default);
 }
 
-.gdyup-form .form-section-header svg {
-  color: var(--gdyup-primary);
-  filter: drop-shadow(0 0 6px rgba(218, 255, 13, 0.3));
+.gdyup-form .form-error svg {
+  color: #FF6B6B;
+  margin-right: 4px;
 }
 
-.gdyup-form .form-section-title {
-  font-size: 1.25rem;
+.gdyup-form .form-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+/* Badge styling */
+.gdyup-badge {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
   font-weight: 600;
-  color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.5);
+  border-radius: 9999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.gdyup-badge:hover {
+  background-color: var(--gdyup-primary-hover);
 }
 
 /* Mobile-specific style improvements */
@@ -523,7 +644,7 @@ button:has(.lucide-filter) svg {
   .gdyup-form .bg-gray-900\/90 {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--gdyup-border);
     margin-bottom: 0.75rem;
   }
   
@@ -546,12 +667,12 @@ button:has(.lucide-filter) svg {
   
   .gdyup-form [role="tab"][data-state="active"] {
     background-color: var(--gdyup-primary);
-    color: black;
+    color: var(--gdyup-button-text);
     font-weight: 600;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
   
-  /* Adjust specifics for our new component classes */
+  /* Adjust specifics for our component classes */
   .gdyup-form .jet-details {
     margin-top: 0.5rem;
   }
@@ -573,7 +694,7 @@ button:has(.lucide-filter) svg {
   
   /* Make form fields take less vertical space */
   .gdyup-form label {
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0.25rem;
   }
   
   .gdyup-form input, 
@@ -598,1946 +719,51 @@ button:has(.lucide-filter) svg {
   }
 }
 
-/* Primary buttons - improved text visibility */
-.gdyup-form button[type="submit"],
-.gdyup-form .button-primary,
-.gdyup-form .gdyup-button-primary {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  font-weight: 700 !important; /* Bolder for better contrast */
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
-  transition: all 0.2s ease-in-out !important;
-  border: none !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important; /* Text shadow for better visibility */
-  letter-spacing: 0.01em !important; /* Slightly increased letter spacing */
-}
+/* Icon Adaptations for Form Context */
 
-.gdyup-form button[type="submit"]:hover,
-.gdyup-form .button-primary:hover,
-.gdyup-form .gdyup-button-primary:hover {
-  background-color: #E8FF4D !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 0 15px rgba(218, 255, 13, 0.5) !important;
-}
-
-/* Reset buttons with improved styling */
-.gdyup-form button[class*="reset"],
-.gdyup-form button:has(span:contains("Reset")) {
-  border: 1px solid var(--gdyup-primary) !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  color: var(--gdyup-primary) !important;
-  font-weight: 600 !important;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.2) !important;
-}
-
-.gdyup-form button[class*="reset"]:hover,
-.gdyup-form button:has(span:contains("Reset")):hover {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  box-shadow: 0 0 12px rgba(218, 255, 13, 0.3) !important;
-}
-
-/* Secondary/outline buttons */
-.gdyup-form .button-secondary,
-.gdyup-form .button-outline {
-  background-color: rgba(0, 0, 0, 0.3) !important;
-  border: 1px solid var(--border-default) !important;
-  color: var(--text-primary) !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-.gdyup-form .button-secondary:hover,
-.gdyup-form .button-outline:hover {
-  background-color: rgba(218, 255, 13, 0.1) !important;
-  border-color: rgba(218, 255, 13, 0.4) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-/* Form inputs */
-.gdyup-form input[type="text"],
-.gdyup-form input[type="number"],
-.gdyup-form input[type="email"],
-.gdyup-form input[type="password"],
-.gdyup-form input[type="search"],
-.gdyup-form textarea,
-.gdyup-form select {
-  background-color: var(--bg-input) !important;
-  border: 1px solid var(--border-default) !important;
-  color: var(--text-primary) !important;
-  border-radius: 8px !important;
-  padding: 0.75rem 1rem !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-.gdyup-form input:focus,
-.gdyup-form textarea:focus,
-.gdyup-form select:focus {
-  border-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 0 3px rgba(218, 255, 13, 0.2) !important;
-  outline: none !important;
-}
-
-/* Form labels */
-.gdyup-form label {
-  color: var(--text-secondary) !important;
-  font-weight: 500 !important;
-  margin-bottom: 0.5rem !important;
-  display: block !important;
-}
-
-/* Sliders */
-.gdyup-form [role="slider"] {
-  background-color: var(--gdyup-primary) !important;
-  border: 2px solid black !important;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.5) !important;
-}
-
-.gdyup-form [data-orientation="horizontal"] > span {
-  background-color: #333333 !important;
-}
-
-.gdyup-form [data-orientation="horizontal"] > span > span {
-  background-color: var(--gdyup-primary) !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4) !important;
-}
-
-/* Selected items, checkboxes, radio buttons */
-.gdyup-form [data-state="checked"],
-.gdyup-form input[type="checkbox"]:checked,
-.gdyup-form input[type="radio"]:checked {
-  background-color: var(--gdyup-primary) !important;
-  border-color: var(--gdyup-primary) !important;
-}
-
-/* Tabs */
-.gdyup-form [role="tablist"] {
-  background-color: #151515 !important;
-  border-color: #333333 !important;
-}
-
-.gdyup-form [role="tab"][data-state="active"] {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-/* Multi-step form navigation */
-.gdyup-form .step-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.gdyup-form .step-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background-color: var(--border-default);
-  transition: all 0.2s ease-in-out;
-}
-
-.gdyup-form .step-dot.active {
-  background-color: var(--gdyup-primary);
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.5);
-  transform: scale(1.2);
-}
-
-/* Card styles inside forms */
-.gdyup-form .card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.gdyup-form .card-header {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-default);
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
-.gdyup-form .card-content {
-  padding: 1rem;
-}
-
-/* Fix autocomplete styles */
-.gdyup-form [role="combobox"],
-.gdyup-form [cmdk-input] {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
-}
-
-.gdyup-form [cmdk-item][data-selected="true"] {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: var(--gdyup-primary) !important;
-}
-
-.gdyup-form [cmdk-item]:hover:not([data-selected="true"]) {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Make dropdown popover match theme */
-.gdyup-form [role="dialog"],
-.gdyup-form [data-state="open"] {
-  background-color: var(--bg-card) !important;
-  border: 1px solid var(--border-default) !important;
-  border-radius: 8px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
-  padding: 0.5rem !important;
-}
-
-/* Split configuration visualizations with improved contrast */
-.gdyup-form .split-section {
-  background-color: rgba(0, 0, 0, 0.4); /* Darker background for better contrast */
-  border-radius: 10px;
-  border: 1px solid var(--border-default);
-  padding: 1rem;
-  margin-top: 1rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
-}
-
-.gdyup-form .split-ratio {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.gdyup-form .split-ratio-bar {
-  flex-grow: 1;
-  height: 0.75rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  overflow: hidden;
-  border: 1px solid var(--border-default);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.gdyup-form .split-ratio-progress {
-  height: 100%;
-  background-color: var(--gdyup-primary);
-  border-radius: 1rem;
-  transition: width 0.3s ease;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.3);
-}
-
-.gdyup-form .split-ratio-label {
-  min-width: 60px;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
-}
-
-.gdyup-form .split-ratio-label.primary {
+/* For clarity, we add a few specific form icon overrides */
+.gdyup-form button svg,
+.gdyup-form a svg {
   color: var(--gdyup-primary);
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+  stroke: var(--gdyup-primary);
+  fill: none;
+  stroke-width: 2px;
 }
 
-.gdyup-form .split-ratio-label.secondary {
-  text-align: right;
-  color: var(--text-primary);
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+/* Icons on primary buttons within forms */
+.gdyup-form .gdyup-button-primary svg,
+.gdyup-form .button-primary svg,
+.gdyup-form button[type="submit"] svg {
+  color: var(--gdyup-button-text);
+  stroke: var(--gdyup-button-text);
+  fill: none;
+  stroke-width: 2px;
 }
 
-/* JetSelector specific styles */
-.gdyup-form .jet-selector {
-  background-color: var(--bg-card);
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid var(--border-default);
-  transition: all 0.2s ease-in-out;
-}
-
-.gdyup-form .jet-selector:hover {
-  border-color: rgba(218, 255, 13, 0.4);
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-}
-
-.gdyup-form .jet-selected {
-  border-color: var(--gdyup-primary);
-  box-shadow: 0 0 15px rgba(218, 255, 13, 0.3);
-}
-
-.gdyup-form .jet-image-container {
-  position: relative;
-  height: 12rem;
-  overflow: hidden;
-}
-
-.gdyup-form .jet-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.gdyup-form .jet-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 0.5rem;
-}
-
-.gdyup-form .jet-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.gdyup-form .jet-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-right: 0.5rem;
-  background-color: rgba(218, 255, 13, 0.15);
-  color: var(--gdyup-primary);
-  border: 1px solid rgba(218, 255, 13, 0.3);
-}
-
-/* Calendar/DatePicker styles */
-.gdyup-form .calendar-wrapper {
-  background-color: var(--bg-card) !important;
-  border: 1px solid var(--border-default) !important;
-  border-radius: 8px !important;
-  overflow: hidden !important;
-}
-
-.gdyup-form .calendar-header {
-  background-color: rgba(0, 0, 0, 0.2) !important;
-  padding: 0.75rem !important;
-  border-bottom: 1px solid var(--border-default) !important;
-}
-
-.gdyup-form .calendar-day {
-  color: var(--text-primary) !important;
-}
-
-.gdyup-form .calendar-day.selected {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-}
-
-.gdyup-form .calendar-day:hover:not(.selected) {
-  background-color: rgba(218, 255, 13, 0.1) !important;
-}
-
-/* JetSeatVisualizer specific styling */
-.gdyup-form .seat {
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-weight: 600;
-  text-align: center;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
-  background-color: #333333;
-  color: var(--text-secondary);
-}
-
-.gdyup-form .seat.selected {
+/* Tailwind compatibility layer - only absolutely necessary overrides */
+.gdyup-form .bg-\[\#DAFF0D\] {
   background-color: var(--gdyup-primary);
-  color: black;
-  box-shadow: 0 0 10px rgba(218, 255, 13, 0.4);
-  transform: scale(1.05);
+  color: var(--gdyup-button-text);
 }
 
-.gdyup-form .seat:hover:not(.selected):not(.disabled) {
-  background-color: rgba(218, 255, 13, 0.15);
+.gdyup-form .text-\[\#DAFF0D\] {
   color: var(--gdyup-primary);
 }
 
-.gdyup-form .seat.disabled {
-  background-color: #222222;
-  color: #555555;
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-/* For the progress bar in multi-step forms */
-.gdyup-form .progress-wrapper {
-  width: 100%;
-  height: 0.5rem;
-  background-color: #333333;
-  border-radius: 0.25rem;
-  margin-bottom: 1.5rem;
-  overflow: hidden;
-}
-
-.gdyup-form .progress-bar {
-  height: 100%;
-  background-color: var(--gdyup-primary);
-  border-radius: 0.25rem;
-  transition: width 0.3s ease-in-out;
-}
-
-/* Summary section styling */
-.gdyup-form .summary-section {
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  border: 1px solid var(--border-default);
-  padding: 1.25rem;
-  margin-top: 1.5rem;
-}
-
-.gdyup-form .summary-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gdyup-primary);
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.gdyup-form .summary-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.gdyup-form .summary-label {
-  color: var(--text-secondary);
-}
-
-.gdyup-form .summary-value {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.gdyup-form .summary-value.highlight {
-  color: var(--gdyup-primary);
-}
-
-.gdyup-form .enhanced-map-container {
-  border-radius: 8px;
-  overflow: hidden;
-  margin: 0.75rem 0;
-}
-
-.gdyup-form .route-map-mini {
-  background-color: rgba(31, 41, 55, 0.5);
-  border-radius: 8px;
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  padding: 0.75rem;
-  margin: 0.75rem 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.gdyup-form .route-map-mini .route-line {
-  height: 2px;
-  background: linear-gradient(to right, #3b82f6, #DAFF0D, #f59e0b);
-  border-radius: 999px;
-  box-shadow: 0 0 4px rgba(218, 255, 13, 0.3);
-}
-
-.gdyup-form .route-map-mini .plane-icon {
-  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5));
-}
-
-/* Text styling */
-.gdyup-text-primary {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 5px rgba(218, 255, 13, 0.3)) !important;
-}
-
-/* Badge styling */
-.gdyup-badge {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-  font-weight: 600 !important;
-  box-shadow: 0 0 8px rgba(218, 255, 13, 0.5) !important;
-  border-radius: 9999px !important;
-  padding: 0.15rem 0.5rem !important;
-}
-
-.gdyup-badge:hover {
-  background-color: #E8FF4D !important;
-}
-
-/* ====== GLOBAL GDYUP STYLES - Ensure consistent styling across all components ====== */
-:root {
-  --gdyup-primary: #DAFF0D;
-  --gdyup-primary-hover: #E8FF4D;
-  --gdyup-dark: #000000;
-  --gdyup-dark-accent: #121212;
-  --gdyup-gray: #333333;
-  --gdyup-light-gray: #555555;
-  --gdyup-border: #2a2a2a;
-}
-
-/* Apply to all GDYUP components */
-.gdyup-section,
-[class*="gdyup-"],
-[class*="gdyup"] {
-  --bg-dark: #000000;
-  --bg-card: #121212;
-  --bg-card-hover: #1A1A1A;
-  --bg-input: #1A1A1A; 
-  --border-default: #2a2a2a;
-  --border-highlight: var(--gdyup-primary);
-  --text-primary: #FFFFFF;
-  --text-secondary: #E0E0E0;
-  --text-muted: #D0D0D0;
-}
-
-/* ====== ICON VISIBILITY - PROFESSIONAL STYLING ====== */
-
-/* Default styling for icons - clean and professional */
-.gdyup-icon {
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  /* Remove color and stroke declarations so they can be overridden by context */
-}
-
-/* .gdyup-icon in specific contexts */
-button:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
-a:not(.bg-\[\#DAFF0D\]) .gdyup-icon,
-.gdyup-form .gdyup-icon {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-  fill: none !important;
-}
-
-/* CRITICAL FIX: Proper contrast for yellow background elements */
-.bg-\[\#DAFF0D\] svg,
-.bg-\[\#DAFF0D\] span,
-.bg-\[\#DAFF0D\] .gdyup-icon,
-button.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] .gdyup-icon,
-a.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] .gdyup-icon,
-[class*="gdyup-button"] svg,
-[class*="gdyup-button"] span,
-[class*="gdyup-button"] .gdyup-icon,
-[style*="background-color: #DAFF0D"] svg,
-[style*="background: #DAFF0D"] svg,
-[style*="background-color:#DAFF0D"] svg,
-[style*="background:#DAFF0D"] svg,
-nav button.bg-\[\#DAFF0D\] svg,
-header button.bg-\[\#DAFF0D\] svg,
-.mobile-menu button.bg-\[\#DAFF0D\] svg {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-}
-
-/* Mobile menu specific fixes */
-.mobile-menu .bg-\[\#DAFF0D\] svg,
-.mobile-menu .bg-\[\#DAFF0D\] span,
-.mobile-menu .bg-\[\#DAFF0D\] .gdyup-icon,
-.mobile-menu button.bg-\[\#DAFF0D\] svg,
-.mobile-menu button.bg-\[\#DAFF0D\] span,
-.mobile-menu button.bg-\[\#DAFF0D\] .gdyup-icon {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-}
-
-/* Mobile menu button text */
-.mobile-menu button span {
-  font-weight: 500 !important;
-}
-
-/* Specific color override for red sign-out button */
-.text-\[\#FF4B47\] svg,
-[class*="text-[#FF4B47]"] svg {
-  color: #FF4B47 !important;
-  stroke: #FF4B47 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-}
-
-/* Remove any amateur glow effects */
-svg {
-  filter: none !important;
-}
-
-/* ====== CLEAN PROFESSIONAL ICON STYLING ====== */
-
-/* Default navigation icon styling - clean, professional lime green */
-.gdyup-icon, 
-header button:not(.bg-\[\#DAFF0D\]) svg,
-header nav button:not(.bg-\[\#DAFF0D\]) svg,
-header a:not(.bg-\[\#DAFF0D\]) svg {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important; /* No glow effect */
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Clean, professional black icons on lime background */
-.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] svg,
-.gdyup-button svg,
-.gdyup-button-primary svg {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important; /* No glow effect */
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Consistent clean styling for text alongside icons */
-.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span,
-.gdyup-button span,
-.gdyup-button-primary span {
-  color: black !important;
-  font-weight: 500 !important;
-  text-shadow: none !important; /* No text shadow */
-}
-
-/* Clean, sharp menu item styles */
-header button, 
-header nav button,
-.mobile-menu button,
-.profile-menu a {
-  transition: all 0.2s ease;
-}
-
-/* Red button/link styling */
-[class*="text-[#FF4B47]"] svg,
-[class*="text-[#FF4B47]"] span {
-  color: #FF4B47 !important;
-  stroke: #FF4B47 !important;
-  stroke-width: 2px !important;
-}
-
-/* ====== ICON VISIBILITY RULES - Comprehensive styling for all icons ====== */
-
-/* Default icon styling - lime green with shadow for visibility */
-.gdyup-icon, 
-[class*="gdyup"] svg,
-.gdyup-button-secondary svg,
-.gdyup-form button:not([class*="primary"]) svg {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
-  stroke-width: 2px !important;
-}
-
-/* Icons on PRIMARY buttons and elements (lime bg) - BLACK for contrast */
-.gdyup-button-primary svg,
-.button-primary svg,
-[class*="primary"] svg,
-[style*="background-color: #DAFF0D"] svg,
-[style*="background-color:#DAFF0D"] svg,
-[style*="background: #DAFF0D"] svg,
-[style*="background:#DAFF0D"] svg,
-[class*="bg-[#DAFF0D]"] svg,
-button.bg-[#DAFF0D] svg,
-[data-state="active"] svg,
-[class*="gdyup-primary"] svg {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  filter: none !important;
-  stroke-width: 2px !important;
-}
-
-/* Active menu items - ensure black text and icons on lime background */
-.bg-\[\#DAFF0D\] svg,
-.bg-\[\#DAFF0D\] span,
-.bg-\[\#DAFF0D\] .gdyup-icon,
-button.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] .gdyup-icon,
-a.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] .gdyup-icon {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  filter: none !important;
-}
-
-/* Active state and text in navigation specific */
-nav button.bg-\[\#DAFF0D\] svg,
-nav button.bg-\[\#DAFF0D\] span,
-nav button.bg-\[\#DAFF0D\] .gdyup-icon,
-nav a.bg-\[\#DAFF0D\] svg,
-nav a.bg-\[\#DAFF0D\] span,
-nav a.bg-\[\#DAFF0D\] .gdyup-icon,
-[class*="active"].bg-\[\#DAFF0D\] svg,
-[class*="active"].bg-\[\#DAFF0D\] span,
-[class*="active"].bg-\[\#DAFF0D\] .gdyup-icon,
-button[data-state="active"] svg,
-button[data-state="active"] span {
-  color: black !important;
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-}
-
-/* Menu icon specific styling with higher specificity */
-button svg.lucide-menu,
-.gdyup-header-menu svg.lucide-menu,
-header button svg.lucide-menu {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-}
-
-/* Special case for filter icon with higher specificity */
-button svg.lucide-filter,
-[role="button"] svg.lucide-filter {
-  color: black !important;
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-}
-
-/* Filter button styling */
-button:has(.lucide-filter),
-[role="button"]:has(.lucide-filter) {
-  background-color: var(--gdyup-primary) !important;
-  color: black !important;
-}
-
-/* Ensure GDYUP menu items have consistent styling */
-.gdyup-header-menu button svg,
-header [role="menuitem"] svg,
-nav [role="menuitem"] svg {
-  color: var(--gdyup-primary) !important;
-  stroke-width: 2.5px !important;
-  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5)) !important;
-}
-
-/* When on black background */
-.bg-black svg,
-.bg-gray-900 svg,
-[style*="background-color: black"] svg,
-[style*="background-color: #000"] svg,
-[style*="background-color:#000"] svg {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
-}
-
-/* ====== Existing Dialog styling - Enhanced ====== */
-
-/* Dialog close button styling - ensure it's visible against any background */
-button[data-dialog-close],
-.gdyup-dialog [data-dialog-close],
-.gdyup-dialog [aria-label="Close"] {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border: 1px solid #333333 !important;
-  border-radius: 50% !important;
-  width: 32px !important;
-  height: 32px !important;
-  padding: 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  position: absolute !important;
-  z-index: 100 !important;
-  top: 8px !important;
-  right: 8px !important;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Add specific styling for close button icon */
-button[data-dialog-close] svg,
-.gdyup-dialog [data-dialog-close] svg,
-.gdyup-dialog [aria-label="Close"] svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-  stroke-width: 3px !important;
-  width: 16px !important;
-  height: 16px !important;
-  filter: none !important;
-}
-
-/* ====== NAVIGATION SPECIFIC ICON STYLES ====== */
-
-/* Ensure all navigation icons are visible with specific targeting */
-header nav button svg,
-header nav a svg,
-.gdyup-header-menu svg,
-nav [role="menuitem"] svg,
-header .gdyup-icon {
-  color: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4)) !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Ensure black icons on yellow background for active state in navigation */
-header nav button.bg-\[\#DAFF0D\] svg,
-header nav a.bg-\[\#DAFF0D\] svg,
-nav button.bg-\[\#DAFF0D\] svg,
-nav a.bg-\[\#DAFF0D\] svg {
-  color: black !important;
-  stroke: black !important;
-  filter: none !important;
-  stroke-width: 2.5px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Make non-active navigation icons more visible */
-header button:not(.bg-\[\#DAFF0D\]) svg,
-header a:not(.bg-\[\#DAFF0D\]) svg,
-nav button:not(.bg-\[\#DAFF0D\]) svg,
-nav a:not(.bg-\[\#DAFF0D\]) svg {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  filter: drop-shadow(0 0 4px rgba(218, 255, 13, 0.5)) !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Specific style for mobile menu items */
-.mobile-menu button svg,
-.mobile-menu a svg,
-[class*="mobile"] button svg,
-[class*="mobile"] a svg {
-  color: var(--gdyup-primary) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Specific style for profile menu options */
-.profile-menu button svg,
-.profile-menu a svg,
-[data-state="open"] button svg,
-[data-state="open"] a svg {
-  color: var(--gdyup-primary) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* ====== DIRECT ICON FIXES FOR HEADER NAVIGATION ====== */
-
-/* Most specific targeting for inactive navigation icons - direct SVG fix */
-header button:not(.bg-\[\#DAFF0D\]) svg.lucide,
-header nav button:not(.bg-\[\#DAFF0D\]) svg.lucide,
-header a:not(.bg-\[\#DAFF0D\]) svg.lucide,
-.gdyup-header-menu svg.lucide,
-svg.lucide.gdyup-icon {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8)) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: inline-block !important;
-}
-
-/* Override for text in icons - fix contrast */
-header button:not(.bg-\[\#DAFF0D\]) span,
-header nav button:not(.bg-\[\#DAFF0D\]) span {
-  color: white !important;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.7) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Fix for specific SVG path elements inside icons */
-svg.lucide path,
-svg.lucide-plane path,
-svg.lucide-search path,
-svg.lucide-plane-takeoff path {
-  stroke: #DAFF0D !important;
-  stroke-width: 2.5px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* ====== NAVIGATION BUTTONS STYLING ====== */
-
-/* Default state for navigation buttons - clean white text */
-header button:not(.bg-\[\#DAFF0D\]),
-header a:not(.bg-\[\#DAFF0D\]),
-nav button:not(.bg-\[\#DAFF0D\]),
-nav a:not(.bg-\[\#DAFF0D\]),
-.mobile-menu button:not(.bg-\[\#DAFF0D\]),
-.mobile-menu a:not(.bg-\[\#DAFF0D\]) {
-  color: white !important;
-  transition: all 0.2s ease;
-}
-
-/* Default state for icons in navigation - clean white icons without glow */
-header button:not(.bg-\[\#DAFF0D\]) svg,
-header a:not(.bg-\[\#DAFF0D\]) svg,
-nav button:not(.bg-\[\#DAFF0D\]) svg,
-nav a:not(.bg-\[\#DAFF0D\]) svg,
-.mobile-menu button:not(.bg-\[\#DAFF0D\]) svg,
-.mobile-menu a:not(.bg-\[\#DAFF0D\]) svg {
-  color: white !important;
-  stroke: white !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Hover state for inactive nav buttons */
-header button:not(.bg-\[\#DAFF0D\]):hover,
-header a:not(.bg-\[\#DAFF0D\]):hover,
-nav button:not(.bg-\[\#DAFF0D\]):hover,
-nav a:not(.bg-\[\#DAFF0D\]):hover,
-.mobile-menu button:not(.bg-\[\#DAFF0D\]):hover,
-.mobile-menu a:not(.bg-\[\#DAFF0D\]):hover {
-  background-color: rgba(218, 255, 13, 0.15) !important;
-  color: #DAFF0D !important;
-  text-decoration: none !important;
-}
-
-/* Hover state for icons in inactive buttons */
-header button:not(.bg-\[\#DAFF0D\]):hover svg,
-header a:not(.bg-\[\#DAFF0D\]):hover svg,
-nav button:not(.bg-\[\#DAFF0D\]):hover svg,
-nav a:not(.bg-\[\#DAFF0D\]):hover svg,
-.mobile-menu button:not(.bg-\[\#DAFF0D\]):hover svg,
-.mobile-menu a:not(.bg-\[\#DAFF0D\]):hover svg {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-}
-
-/* Active navigation buttons - yellow bg with black text and subtle highlight */
-.bg-\[\#DAFF0D\],
-button.bg-\[\#DAFF0D\],
-a.bg-\[\#DAFF0D\],
-header .bg-\[\#DAFF0D\],
-header button.bg-\[\#DAFF0D\],
-header a.bg-\[\#DAFF0D\],
-nav .bg-\[\#DAFF0D\],
-nav button.bg-\[\#DAFF0D\],
-nav a.bg-\[\#DAFF0D\],
-.mobile-menu .bg-\[\#DAFF0D\],
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  background-color: #DAFF0D !important;
-  color: black !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
-  border: none !important;
-  font-weight: 500 !important;
-}
-
-/* Ensure all text in active buttons is black */
-.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span {
-  color: black !important;
-  font-weight: 500 !important;
-}
-
-/* ====== MENU TEXT STYLING - CLEAN PROFESSIONAL LOOK ====== */
-
-/* Clean text styling for all navigation elements */
-header button span,
-header a span,
-nav button span,
-nav a span, 
-.mobile-menu button span,
-.mobile-menu a span {
-  color: #FFFFFF !important;
-  text-shadow: none !important;
-  opacity: 1 !important;
-  font-weight: 500 !important;
-  filter: none !important;
-}
-
-/* Text styling for active yellow background buttons */
-.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span,
-header .bg-\[\#DAFF0D\] span,
-header button.bg-\[\#DAFF0D\] span,
-header a.bg-\[\#DAFF0D\] span,
-nav .bg-\[\#DAFF0D\] span,
-nav button.bg-\[\#DAFF0D\] span,
-nav a.bg-\[\#DAFF0D\] span,
-.mobile-menu .bg-\[\#DAFF0D\] span,
-.mobile-menu button.bg-\[\#DAFF0D\] span,
-.mobile-menu a.bg-\[\#DAFF0D\] span {
-  color: #000000 !important;
-  text-shadow: none !important;
-  opacity: 1 !important;
-  font-weight: 600 !important;
-  filter: none !important;
-}
-
-/* Ensure all buttons have solid background colors without transparency */
-header button,
-header a,
-nav button,
-nav a,
-.mobile-menu button,
-.mobile-menu a {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Clean hover effects without blurs or glows */
-header button:hover span,
-header a:hover span,
-nav button:hover span,
-nav a:hover span,
-.mobile-menu button:hover span,
-.mobile-menu a:hover span {
-  color: #DAFF0D !important;
-  text-shadow: none !important;
-}
-
-/* Specific styling for Sign Out text */
-.text-\[\#FF4B47\] span,
-[class*="text-[#FF4B47]"] span {
-  color: #FF4B47 !important;
-  text-shadow: none !important;
-}
-
-/* Mobile menu specific styles - clean professional appearance */
-.mobile-menu button,
-.mobile-menu a {
-  padding: 0.5rem 0.75rem !important;
-  margin: 0.25rem 0 !important;
-  border-radius: 6px !important;
-  height: auto !important;
-}
-
-/* Clean active state for mobile menu */
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  background-color: #DAFF0D !important;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Clean hover state for mobile menu */
-.mobile-menu button:hover,
-.mobile-menu a:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Fix for backdrop and transparency issues */
-.mobile-menu {
-  padding: 0.75rem !important;
-  background-color: #000000 !important; 
-  margin-top: 0.5rem !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
-
-/* Ensure all icons are crisp without blurring or fading */
-svg {
-  filter: none !important;
-  opacity: 1 !important;
-  text-rendering: geometricPrecision !important;
-  shape-rendering: geometricPrecision !important;
-  -webkit-font-smoothing: antialiased !important;
-}
-
-/* Remove any blur or backdrop filters from all elements */
-* {
-  text-rendering: optimizeLegibility !important;
-  -webkit-font-smoothing: antialiased !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* ====== ENHANCED BUTTON STYLING ====== */
-
-/* Add thin border to all navigation buttons in inactive state */
-header button:not(.bg-\[\#DAFF0D\]),
-header a:not(.bg-\[\#DAFF0D\]),
-nav button:not(.bg-\[\#DAFF0D\]),
-nav a:not(.bg-\[\#DAFF0D\]),
-.mobile-menu button:not(.bg-\[\#DAFF0D\]),
-.mobile-menu a:not(.bg-\[\#DAFF0D\]) {
-  border: 1px solid rgba(218, 255, 13, 0.2) !important;
-  background-color: rgba(0, 0, 0, 0.3) !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Hover state for inactive buttons */
-header button:not(.bg-\[\#DAFF0D\]):hover,
-header a:not(.bg-\[\#DAFF0D\]):hover,
-nav button:not(.bg-\[\#DAFF0D\]):hover,
-nav a:not(.bg-\[\#DAFF0D\]):hover,
-.mobile-menu button:not(.bg-\[\#DAFF0D\]):hover,
-.mobile-menu a:not(.bg-\[\#DAFF0D\]):hover {
-  border-color: rgba(218, 255, 13, 0.6) !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Active buttons - more defined */
-.bg-\[\#DAFF0D\],
-button.bg-\[\#DAFF0D\],
-a.bg-\[\#DAFF0D\],
-header .bg-\[\#DAFF0D\],
-header button.bg-\[\#DAFF0D\],
-header a.bg-\[\#DAFF0D\],
-nav .bg-\[\#DAFF0D\],
-nav button.bg-\[\#DAFF0D\],
-nav a.bg-\[\#DAFF0D\],
-.mobile-menu .bg-\[\#DAFF0D\],
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  border: 1px solid rgba(0, 0, 0, 0.15) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-  font-weight: 600 !important;
-}
-
-/* Style for Profile and Dashboard menu items to make them look like buttons */
-a[href="/gdyup/profile"],
-a[href="/gdyup/dashboard"],
-.mobile-menu a[href="/gdyup/profile"],
-.mobile-menu a[href="/gdyup/dashboard"] {
-  border-radius: 6px !important;
-  padding: 0.5rem 0.75rem !important;
-  margin: 0.25rem 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-}
-
-/* Special styling for Back to JetStream button */
-a[href="/"],
-.mobile-menu a[href="/"] {
-  border: 1px solid rgba(218, 255, 13, 0.2) !important;
-  background-color: rgba(0, 0, 0, 0.3) !important;
-  border-radius: 6px !important;
-  padding: 0.5rem 0.75rem !important;
-  margin: 0.25rem 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-  transition: all 0.2s ease !important;
-}
-
-/* Special styling for Sign Out button */
-.text-\[\#FF4B47\],
-button.text-\[\#FF4B47\],
-[class*="text-[#FF4B47]"] {
-  border: 1px solid rgba(255, 75, 71, 0.2) !important;
-  background-color: rgba(255, 75, 71, 0.05) !important;
-  border-radius: 6px !important;
-  padding: 0.5rem 0.75rem !important;
-  margin: 0.25rem 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-  transition: all 0.2s ease !important;
-}
-
-/* Hover state for Sign Out button */
-.text-\[\#FF4B47\]:hover,
-button.text-\[\#FF4B47\]:hover,
-[class*="text-[#FF4B47]"]:hover {
-  background-color: rgba(255, 75, 71, 0.15) !important;
-  border-color: rgba(255, 75, 71, 0.6) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Refinement for desktop navigation buttons */
-header nav button,
-header nav a {
-  padding: 0.4rem 0.75rem !important;
-  height: auto !important;
-  margin: 0 0.15rem !important;
-  border-radius: 6px !important;
-}
-
-/* Ensure consistent spacing for icon and text */
-button svg,
-a svg {
-  margin-right: 0.5rem !important;
-}
-
-/* ====== STANDARDIZED BUTTON STYLING ====== */
-
-/* Base styling for all menu buttons - consistent sizing/alignment */
-.mobile-menu button,
-.mobile-menu a {
-  width: 100% !important;
-  padding: 0.75rem 1rem !important;
-  margin: 0.5rem 0 !important;
-  border-radius: 8px !important;
-  height: auto !important;
-  display: flex !important;
-  align-items: center !important;
-  transition: all 0.2s ease !important;
-  border: 1px solid rgba(218, 255, 13, 0.15) !important;
-  background-color: rgba(0, 0, 0, 0.2) !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-
-/* Consistent text styling for all buttons */
-.mobile-menu button span,
-.mobile-menu a span {
-  flex: 1 !important;
-  font-weight: 500 !important;
-  text-align: left !important;
-  font-size: 16px !important;
-  line-height: 1.2 !important;
-}
-
-/* Icon positioning */
-.mobile-menu button svg,
-.mobile-menu a svg {
-  flex-shrink: 0 !important;
-  width: 20px !important;
-  height: 20px !important;
-  margin-right: 12px !important;
-}
-
-/* Active state for buttons - same height, width and alignment */
-.mobile-menu button.bg-\[\#DAFF0D\],
-.mobile-menu a.bg-\[\#DAFF0D\] {
-  background-color: #DAFF0D !important;
-  color: black !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Fixed Sign Out button styling */
-.mobile-menu button.text-\[\#FF4B47\],
-.mobile-menu a.text-\[\#FF4B47\],
-.mobile-menu [class*="text-[#FF4B47]"] {
-  color: white !important;
-  background-color: rgba(255, 75, 71, 0.8) !important;
-  border: 1px solid rgba(255, 75, 71, 0.3) !important;
-}
-
-/* Sign Out button text and icon */
-.mobile-menu button.text-\[\#FF4B47\] span,
-.mobile-menu a.text-\[\#FF4B47\] span,
-.mobile-menu [class*="text-[#FF4B47]"] span {
-  color: white !important;
-}
-
-.mobile-menu button.text-\[\#FF4B47\] svg,
-.mobile-menu a.text-\[\#FF4B47\] svg,
-.mobile-menu [class*="text-[#FF4B47]"] svg {
-  color: white !important;
-  stroke: white !important;
-}
-
-/* Consistent hover effect for all buttons */
-.mobile-menu button:hover:not(.bg-\[\#DAFF0D\]):not(.text-\[\#FF4B47\]),
-.mobile-menu a:hover:not(.bg-\[\#DAFF0D\]):not(.text-\[\#FF4B47\]) {
-  background-color: rgba(218, 255, 13, 0.1) !important;
-  border-color: rgba(218, 255, 13, 0.3) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Hover effect for Sign Out button */
-.mobile-menu button.text-\[\#FF4B47\]:hover,
-.mobile-menu a.text-\[\#FF4B47\]:hover,
-.mobile-menu [class*="text-[#FF4B47]"]:hover {
-  background-color: rgba(255, 75, 71, 1) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Ensure proper vertical spacing between button groups */
-.mobile-menu .h-px {
-  height: 1px !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
-  margin: 0.75rem 0 !important;
-  width: 100% !important;
-}
-
-/* Clean up mobile close button */
-button[aria-label="Close"] {
-  padding: 0.5rem !important;
-  border: 1px solid rgba(255, 166, 0, 0.5) !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  border-radius: 8px !important;
-}
-
-button[aria-label="Close"] svg {
-  color: orange !important;
-  stroke: orange !important;
-}
-
-/* Theme-responsive logo colors */
-.gdyup-logo {
-  filter: brightness(1.1) contrast(1.1);
-}
-
-.gdyup-theme-blue .gdyup-logo {
-  filter: brightness(1.05) contrast(1.05) saturate(0.85);
-}
-
-.gdyup-theme-pink .gdyup-logo {
-  filter: brightness(1.1) contrast(1.1) saturate(0.9);
-}
-
-/* Global styles for buttons */
-.gdyup-button {
-  background-color: var(--gdyup-button-bg);
-  color: var(--gdyup-button-text, #000000);
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.gdyup-button:hover {
-  background-color: var(--gdyup-button-hover-bg);
-}
-
-.gdyup-button:active {
-  background-color: var(--gdyup-button-active-bg);
-}
-
-/* Special button styles */
-.gdyup-button-primary {
-  background-color: var(--gdyup-primary);
-  color: #000000;
-}
-
-.gdyup-button-secondary {
-  background-color: var(--gdyup-secondary);
-  color: #000000;
-}
-
-/* Helper classes for dynamic coloring based on theme */
-.gdyup-primary {
-  color: var(--gdyup-primary);
-}
-
-.gdyup-secondary {
-  color: var(--gdyup-secondary);
-}
-
-.gdyup-bg-primary {
-  background-color: var(--gdyup-primary);
-}
-
-.gdyup-bg-secondary {
-  background-color: var(--gdyup-secondary);
-}
-
-.gdyup-border-primary {
+.gdyup-form .border-\[\#DAFF0D\] {
   border-color: var(--gdyup-primary);
 }
 
-/* Set up Tailwind class overrides - CRITICAL FOR THEME SUPPORT */
-
-/* Fix for important Tailwind color classes */
-.gdyup-theme-default .bg-\[\#DAFF0D\] {
-  background-color: #DAFF0D !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
+/* Fix X button in forms to ensure visibility */
+.gdyup-form button:has(.h-4.w-4) svg {
+  color: currentColor;
+  stroke: currentColor;
+  stroke-width: 2px;
 }
 
-.gdyup-theme-blue .bg-\[\#DAFF0D\] {
-  background-color: #F25C05 !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-.gdyup-theme-pink .bg-\[\#DAFF0D\] {
-  background-color: #F7931A !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Text color overrides for buttons with the background color class */
-.gdyup-theme-default .bg-\[\#DAFF0D\] *,
-.gdyup-theme-default button.bg-\[\#DAFF0D\] *,
-.gdyup-theme-default a.bg-\[\#DAFF0D\] * {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-.gdyup-theme-blue .bg-\[\#DAFF0D\] *,
-.gdyup-theme-blue button.bg-\[\#DAFF0D\] *,
-.gdyup-theme-blue a.bg-\[\#DAFF0D\] * {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-}
-
-.gdyup-theme-pink .bg-\[\#DAFF0D\] *,
-.gdyup-theme-pink button.bg-\[\#DAFF0D\] *,
-.gdyup-theme-pink a.bg-\[\#DAFF0D\] * {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-/* Primary button class overrides for theme support */
-.gdyup-theme-default .gdyup-primary-button {
-  background-color: #DAFF0D !important;
-  color: #000000 !important;
-}
-
-.gdyup-theme-blue .gdyup-primary-button {
-  background-color: #F25C05 !important;
-  color: #FFFFFF !important;
-}
-
-.gdyup-theme-pink .gdyup-primary-button {
-  background-color: #F7931A !important;
-  color: #000000 !important;
-}
-
-/* Ensure SVG icons in primary buttons have the right colors */
-.gdyup-theme-default .gdyup-primary-button svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-.gdyup-theme-blue .gdyup-primary-button svg {
-  color: #FFFFFF !important;
-  stroke: #FFFFFF !important;
-}
-
-.gdyup-theme-pink .gdyup-primary-button svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-/* Fix icon contrast in yellow-green buttons */
-.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] svg,
-a.bg-\[\#DAFF0D\] svg,
-.gdyup-button svg,
-.gdyup-button-primary svg,
-.bg-\[\#DAFF0D\] .lucide,
-button.bg-\[\#DAFF0D\] .lucide,
-a.bg-\[\#DAFF0D\] .lucide {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Fix text contrast in yellow-green buttons */
-.bg-\[\#DAFF0D\] span,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] span,
-.gdyup-button span,
-.gdyup-button-primary span {
-  color: black !important;
-  font-weight: 600 !important;
-  text-shadow: none !important;
-}
-
-/* Airport menu close button fix */
-.h-7.w-7 button svg,
-button.h-7.w-7 svg,
-.rounded-full svg.h-4.w-4,
-[class*="airport-popup"] button svg,
-[class*="location-menu"] button svg {
-  color: currentColor !important;
-  stroke: currentColor !important;
-  stroke-width: 2.5px !important;
-  opacity: 1 !important;
-}
-
-/* Airport search close button specific fix */
-button:has(.h-4.w-4.text-gray-400) svg,
-button:has(.h-4.w-4.text-gray-400) .lucide {
-  color: #9ca3af !important;
-  stroke: #9ca3af !important;
-  filter: none !important;
-}
-
-/* Calendar navigation button fixes */
-.nav_button svg,
-[class*="nav_button"] svg,
-[class*="calendar"] button svg,
-[class*="calendar-nav"] svg,
-.datepicker button svg {
-  color: currentColor !important;
-  stroke: currentColor !important;
-  stroke-width: 2px !important;
-}
-
-/* Star icon in airport favorites should be yellow */
-.fill-yellow-500 {
-  fill: #eab308 !important;
-  color: #eab308 !important;
-  stroke: #eab308 !important;
-}
-
-/* Close icon in airport search field */
-button:has(.h-4.w-4) .h-4.w-4.text-gray-400,
-button:has(> .h-4.w-4.text-gray-400) {
-  color: #9ca3af !important;
-  stroke: #9ca3af !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Fix for X button in location autocomplete component specifically */
-button[type="button"]:has(> .h-4.w-4.text-gray-400),
-button[type="button"] .h-4.w-4.text-gray-400,
-.rounded-full .h-4.w-4.text-gray-400,
-.h-7.w-7.rounded-full .h-4.w-4 {
-  color: #9ca3af !important;
-  stroke: #9ca3af !important;
-  fill: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  stroke-width: 2px !important;
-  filter: none !important;
-}
-
-/* Ensure Star icons are visible */
-svg.h-4.w-4.fill-yellow-500,
-svg.h-4.w-4.text-yellow-500,
-svg.h-3.w-3.fill-yellow-500,
-svg.h-3.w-3.text-yellow-500 {
-  fill: #eab308 !important;
-  color: #eab308 !important;
-  stroke: #eab308 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Fix for calendar and time picker components */
-.gdyup-app button:has(.h-5.w-5.text-\[\#DAFF0D\]) .h-5.w-5.text-\[\#DAFF0D\],
-.gdyup-app button:has(.h-4.w-4.text-\[\#DAFF0D\]) .h-4.w-4.text-\[\#DAFF0D\],
-[class*="calendar"] button svg,
-[class*="time-picker"] button svg,
-[class*="date-time"] button svg {
-  color: var(--gdyup-primary) !important;
-  stroke: var(--gdyup-primary) !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Ensure yellow-green buttons have black icons */
-.bg-\[\#DAFF0D\] button svg,
-.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] svg,
-button.bg-\[\#DAFF0D\] span,
-a.bg-\[\#DAFF0D\] svg,
-.gdyup-primary-button svg {
-  color: black !important;
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-  font-weight: 600 !important;
-}
-
-/* Fix for nav buttons in calendar */
-[class*="nav_button"] svg,
-[class*="nav-button"] svg,
-button[class*="calendar-nav"] svg,
-.calendar-header button svg {
-  color: currentColor !important;
-  stroke: currentColor !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-}
-
-/* ====== CRITICAL OVERRIDE FOR YELLOW/GREEN BUTTON ICONS ====== */
-
-/* HIGHER SPECIFICITY TARGETING FOR YELLOW BUTTON SVGs - !important flags throughout */
-.bg-\\[\\#DAFF0D\\] svg,
-button.bg-\\[\\#DAFF0D\\] svg,
-a.bg-\\[\\#DAFF0D\\] svg,
-.bg-\\[\\#DAFF0D\\] svg *,
-button.bg-\\[\\#DAFF0D\\] svg *,
-a.bg-\\[\\#DAFF0D\\] svg *,
-.bg-\\[\\#DAFF0D\\] svg path,
-button.bg-\\[\\#DAFF0D\\] svg path,
-a.bg-\\[\\#DAFF0D\\] svg path,
-.bg-\\[\\#DAFF0D\\] .h-5.w-5,
-button.bg-\\[\\#DAFF0D\\] .h-5.w-5,
-a.bg-\\[\\#DAFF0D\\] .h-5.w-5,
-.bg-\\[\\#DAFF0D\\] .lucide,
-button.bg-\\[\\#DAFF0D\\] .lucide,
-a.bg-\\[\\#DAFF0D\\] .lucide,
-.bg-\\[\\#DAFF0D\\] .lucide *,
-button.bg-\\[\\#DAFF0D\\] .lucide *,
-a.bg-\\[\\#DAFF0D\\] .lucide * {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* SVG direct path override */
-.bg-\\[\\#DAFF0D\\] svg path,
-button.bg-\\[\\#DAFF0D\\] svg path,
-a.bg-\\[\\#DAFF0D\\] svg path,
-.bg-\\[\\#DAFF0D\\] .lucide path,
-button.bg-\\[\\#DAFF0D\\] .lucide path,
-a.bg-\\[\\#DAFF0D\\] .lucide path {
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-}
-
-/* HIGHER SPECIFICITY FOR CLOSE BUTTON IN AIRPORT MENU */
-.rounded-full svg.h-4.w-4,
-.h-7.w-7.rounded-full svg.h-4.w-4,
-button.rounded-full svg.h-4.w-4,
-button:has(.h-4.w-4.text-gray-400) svg,
-button:has(.h-4.w-4.text-gray-400) .h-4.w-4.text-gray-400,
-button:has(.h-4.w-4.text-gray-400) svg path,
-button:has(.h-4.w-4.text-gray-400) svg *,
-[type="button"]:has(.h-4.w-4.text-gray-400) svg,
-[type="button"]:has(.h-4.w-4.text-gray-400) svg *,
-[type="button"] .h-4.w-4.text-gray-400,
-svg.h-4.w-4.text-gray-400,
-.text-gray-400.h-4.w-4 {
-  color: #9ca3af !important;
-  stroke: #9ca3af !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* CALENDAR AND TIME PICKER CORRECTIONS */
-[class*="calendar"] button svg,
-[class*="time-picker"] button svg,
-[class*="date-time"] button svg,
-button:has(.h-5.w-5) svg,
-button:has(.h-4.w-4) svg,
-.nav_button svg,
-.nav-button svg,
-button.nav-button svg,
-button.nav_button svg {
-  color: currentColor !important;
-  stroke: currentColor !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Calendar selector/highlight state */
-.selected svg,
-[data-selected=true] svg,
-.active svg,
-[data-active=true] svg {
-  color: black !important;
-  stroke: black !important;
-}
-
-/* AIRPORT STAR ICONS FIX */
-.fill-yellow-500,
-svg.fill-yellow-500,
-svg.text-yellow-500,
-.text-yellow-500.h-4.w-4,
-.text-yellow-500.h-3.w-3,
-svg.h-4.w-4.fill-yellow-500,
-svg.h-4.w-4.text-yellow-500,
-svg.h-3.w-3.fill-yellow-500,
-svg.h-3.w-3.text-yellow-500 {
-  fill: #eab308 !important;
-  color: #eab308 !important;
-  stroke: #eab308 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* INLINE SVG FIX FOR SPECIFIC COMPONENTS */
-button[type="button"] > svg,
-a[type="button"] > svg,
-button > svg.h-4.w-4,
-button > svg.h-5.w-5,
-a > svg.h-4.w-4,
-a > svg.h-5.w-5 {
-  color: inherit !important;
-  stroke: inherit !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* DIRECT SVG PATH MANIPULATION - HIGHEST SPECIFICITY */
-.bg-\\[\\#DAFF0D\\] path,
-button.bg-\\[\\#DAFF0D\\] path,
-a.bg-\\[\\#DAFF0D\\] path,
-.bg-\\[\\#DAFF0D\\] svg path,
-button.bg-\\[\\#DAFF0D\\] svg path,
-a.bg-\\[\\#DAFF0D\\] svg path {
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-}
-
-/* DIRECT TARGETING OF CLOSE BUTTON IN SEARCH FIELDS */
-.search-input button svg.h-4.w-4,
-div[role="combobox"] button svg.h-4.w-4,
-[role="dialog"] button svg.h-4.w-4,
-div[role="combobox"] button .lucide-x,
-header button .lucide-x,
-nav button .lucide-x,
-button .lucide-x.h-4.w-4,
-svg.lucide-x.h-4.w-4 {
-  color: #9ca3af !important;
-  stroke: #9ca3af !important;
-  stroke-width: 2px !important;
-  fill: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* DIRECT STAR ICON TARGETING */
-svg.lucide-star.fill-yellow-500,
-svg.lucide-star-off.fill-yellow-500,
-svg.lucide-star.text-yellow-500,
-svg.lucide-star-off.text-yellow-500,
-svg.lucide-star,
-svg.lucide-star-off,
-button svg.lucide-star,
-button svg.lucide-star-off,
-[class*="star"] {
-  fill: #eab308 !important;
-  color: #eab308 !important;
-  stroke: #eab308 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* SPECIFICALLY TARGET THE CALENDAR AND TIME PICKER NAVIGATION */
-[class*="calendar"] [class*="nav"] svg,
-[class*="time-picker"] [class*="nav"] svg,
-[data-testid*="calendar"] [class*="nav"] svg,
-[data-testid*="time-picker"] [class*="nav"] svg,
-[class*="calendar"] button svg,
-[class*="time-picker"] button svg,
-[class*="calendar"] .lucide-chevron-left,
-[class*="calendar"] .lucide-chevron-right,
-[class*="time-picker"] .lucide-chevron-left,
-[class*="time-picker"] .lucide-chevron-right {
-  color: #DAFF0D !important;
-  stroke: #DAFF0D !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* FINAL CATCH-ALL FOR YELLOW/GREEN BUTTON STYLING */
-body button.bg-\\[\\#DAFF0D\\] svg,
-body .bg-\\[\\#DAFF0D\\] svg,
-body button.bg-\\[\\#DAFF0D\\] .lucide,
-body .bg-\\[\\#DAFF0D\\] .lucide {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2.5px !important;
-  filter: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* SVG PATH LEVEL CONTROL - HIGHEST SPECIFICITY */
-body button.bg-\\[\\#DAFF0D\\] svg path,
-body .bg-\\[\\#DAFF0D\\] svg path,
-body button.bg-\\[\\#DAFF0D\\] .lucide path,
-body .bg-\\[\\#DAFF0D\\] .lucide path {
-  stroke: black !important;
-  stroke-width: 2.5px !important;
-}
-
-/* ===== ULTIMATE FIX FOR ALL SVG ICONS IN BUTTONS ===== */
-
-/* Direct selector for all SVG icons inside any yellow-green background buttons */
-.bg-\\[\\#DAFF0D\\] svg *, 
-.bg-\\[\\#DAFF0D\\] svg path, 
-.bg-\\[\\#DAFF0D\\] svg line, 
-.bg-\\[\\#DAFF0D\\] svg polyline, 
-.bg-\\[\\#DAFF0D\\] svg rect, 
-.bg-\\[\\#DAFF0D\\] svg circle,
-button.bg-\\[\\#DAFF0D\\] svg *, 
-button.bg-\\[\\#DAFF0D\\] svg path, 
-button.bg-\\[\\#DAFF0D\\] svg line, 
-button.bg-\\[\\#DAFF0D\\] svg polyline, 
-button.bg-\\[\\#DAFF0D\\] svg rect, 
-button.bg-\\[\\#DAFF0D\\] svg circle,
-a.bg-\\[\\#DAFF0D\\] svg *, 
-a.bg-\\[\\#DAFF0D\\] svg path, 
-a.bg-\\[\\#DAFF0D\\] svg line, 
-a.bg-\\[\\#DAFF0D\\] svg polyline, 
-a.bg-\\[\\#DAFF0D\\] svg rect, 
-a.bg-\\[\\#DAFF0D\\] svg circle {
-  stroke: black !important;
-  fill: none !important;
-  color: black !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  filter: none !important;
-}
-
-/* Force black for any hover states */
-.bg-\\[\\#DAFF0D\\]:hover svg *, 
-.bg-\\[\\#DAFF0D\\]:active svg *, 
-.bg-\\[\\#DAFF0D\\]:focus svg *,
-button.bg-\\[\\#DAFF0D\\]:hover svg *, 
-button.bg-\\[\\#DAFF0D\\]:active svg *, 
-button.bg-\\[\\#DAFF0D\\]:focus svg *,
-a.bg-\\[\\#DAFF0D\\]:hover svg *, 
-a.bg-\\[\\#DAFF0D\\]:active svg *, 
-a.bg-\\[\\#DAFF0D\\]:focus svg * {
-  stroke: black !important;
-  fill: none !important;
-  color: black !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  filter: none !important;
-}
-
-/* Force for all states and interactions */
-.bg-\\[\\#DAFF0D\\] svg, 
-.bg-\\[\\#DAFF0D\\]:hover svg, 
-.bg-\\[\\#DAFF0D\\]:active svg, 
-.bg-\\[\\#DAFF0D\\]:focus svg,
-button.bg-\\[\\#DAFF0D\\] svg, 
-button.bg-\\[\\#DAFF0D\\]:hover svg, 
-button.bg-\\[\\#DAFF0D\\]:active svg, 
-button.bg-\\[\\#DAFF0D\\]:focus svg,
-a.bg-\\[\\#DAFF0D\\] svg, 
-a.bg-\\[\\#DAFF0D\\]:hover svg, 
-a.bg-\\[\\#DAFF0D\\]:active svg, 
-a.bg-\\[\\#DAFF0D\\]:focus svg {
-  color: black !important;
-  stroke: black !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  filter: none !important;
-}
-
-/* Specific fix for close buttons in dialogs and modals */
-[role="dialog"] button svg.h-4.w-4,
-[role="dialog"] button svg.lucide-x,
-[role="combobox"] button svg.h-4.w-4,
-[role="combobox"] button svg.lucide-x,
-[class*="popup"] button svg.h-4.w-4,
-[class*="popup"] button svg.lucide-x,
-[class*="modal"] button svg.h-4.w-4,
-[class*="modal"] button svg.lucide-x,
-[class*="sheet"] button svg.h-4.w-4,
-[class*="sheet"] button svg.lucide-x {
-  color: #9ca3af !important;
-  stroke: #9ca3af !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Star icon should always be filled yellow */
-svg.fill-yellow-500, 
-svg.lucide-star.fill-yellow-500,
-button svg.fill-yellow-500, 
-button svg.lucide-star.fill-yellow-500,
-[class*="airport"] .fill-yellow-500,
-[class*="favorite"] .fill-yellow-500,
-svg.text-yellow-500, 
-svg.lucide-star.text-yellow-500,
-button svg.text-yellow-500, 
-button svg.lucide-star.text-yellow-500 {
-  fill: #eab308 !important;
-  color: #eab308 !important;
-  stroke: #eab308 !important;
-  filter: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* ICON CONTRAST FIXES - HIGH SPECIFICITY */
-
-/* High-contrast rules for icons in yellow-green buttons */
-.bg-\[#DAFF0D\] svg path,
-.bg-\[#DAFF0D\] svg line,
-.bg-\[#DAFF0D\] svg polyline,
-.bg-\[#DAFF0D\] svg circle,
-.bg-\[#DAFF0D\] svg rect,
-button.bg-\[#DAFF0D\] svg path,
-button.bg-\[#DAFF0D\] svg line,
-button.bg-\[#DAFF0D\] svg polyline,
-button.bg-\[#DAFF0D\] svg circle,
-button.bg-\[#DAFF0D\] svg rect {
-  stroke: #000000 !important;
-  stroke-width: 2px !important;
-  fill: none !important;
-}
-
-/* Calendar and time picker controls - ensure icons are black on yellow */
-[class*="calendar"] button svg,
-[class*="time-picker"] button svg,
-[class*="date-time"] button svg,
-button:has(.text-\[#DAFF0D\]) svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  fill: none !important;
-  stroke-width: 2px !important;
-}
-
-/* Ensure proper contrast for star icon in favorites */
-svg.h-3.w-3.fill-yellow-500,
-svg.h-4.w-4.fill-yellow-500,
-.fill-yellow-500,
-svg.lucide-star.fill-yellow-500,
-svg.lucide-star-off.fill-yellow-500 {
-  fill: #DAFF0D !important;
-  color: #000000 !important;
-  stroke: #000000 !important;
-  stroke-width: 1px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Fix close button (X) in search fields */
-button:has(.lucide-x),
-button:has(svg.h-4.w-4) .lucide-x, 
-.h-7.w-7.rounded-full svg.h-4.w-4 {
-  stroke: #9ca3af !important;
-  stroke-width: 2px !important;
-  color: #9ca3af !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Ensure yellow/green buttons always have black text and icons */
-.gdyup-theme-default .bg-\[#DAFF0D\],
-.gdyup-theme-default button.bg-\[#DAFF0D\],
-.gdyup-theme-default a.bg-\[#DAFF0D\] {
-  color: #000000 !important;
-}
-
-.gdyup-theme-default .bg-\[#DAFF0D\] svg,
-.gdyup-theme-default button.bg-\[#DAFF0D\] svg,
-.gdyup-theme-default a.bg-\[#DAFF0D\] svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  stroke-width: 2px !important;
-}
-
-/* Fix for time picker icon to use black */
-button:has(> .h-5.w-5.text-\[#DAFF0D\]),
-button:has(> .h-4.w-4.text-\[#DAFF0D\]),
-.CalendarIcon,
-.Clock {
-  color: #000000 !important;
-  stroke: #000000 !important;
-  stroke-width: 2px !important;
+/* Star icon in favorites should match its intended color */
+.gdyup-form .fill-yellow-500 {
+  fill: #eab308;
+  color: #eab308;
+  stroke: #eab308;
 }

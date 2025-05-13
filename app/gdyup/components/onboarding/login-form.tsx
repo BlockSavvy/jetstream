@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { useAuth } from '@/lib/auth-provider'
+import { useAuth } from '@/components/auth-provider'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -18,6 +18,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { useGdyupTheme } from '../../hooks/useGdyupTheme'
+import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -30,6 +32,7 @@ function LoginFormContent() {
   const { signIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { getThemedTextClasses, getThemedButtonClasses } = useGdyupTheme()
   
   // Get return URL from query parameter (if provided)
   const returnUrl = searchParams?.get('returnUrl') || '/gdyup/dashboard'
@@ -82,12 +85,12 @@ function LoginFormContent() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-200">Email</FormLabel>
+                <FormLabel className={getThemedTextClasses()}>Email</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="youremail@example.com" 
                     type="email" 
-                    className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                    className="h-12 bg-gdyup-bg-dark border-gdyup-border text-gdyup-text placeholder:text-gdyup-text-muted"
                     {...field} 
                   />
                 </FormControl>
@@ -100,12 +103,12 @@ function LoginFormContent() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-200">Password</FormLabel>
+                <FormLabel className={getThemedTextClasses()}>Password</FormLabel>
                 <FormControl>
                   <Input 
                     placeholder="••••••••" 
                     type="password" 
-                    className="h-12 bg-gray-800 border-gray-700 text-white placeholder:text-gray-500" 
+                    className="h-12 bg-gdyup-bg-dark border-gdyup-border text-gdyup-text placeholder:text-gdyup-text-muted"
                     {...field} 
                   />
                 </FormControl>
@@ -117,7 +120,7 @@ function LoginFormContent() {
           <div className="text-right">
             <a 
               href="/gdyup/auth/forgot-password" 
-              className="text-sm font-medium text-primary hover:text-primary/80"
+              className="text-sm font-medium text-gdyup-primary hover:text-gdyup-primary/80"
               onClick={(e) => {
                 e.preventDefault();
                 window.location.href = '/gdyup/auth/forgot-password';
@@ -129,7 +132,7 @@ function LoginFormContent() {
           
           <Button 
             type="submit" 
-            className="w-full h-12 mt-4 bg-primary text-black hover:bg-primary/90 font-medium" 
+            className={cn("w-full h-12 mt-4 font-medium", getThemedButtonClasses('primary'))}
             disabled={isLoading}
           >
             {isLoading ? (
@@ -144,10 +147,10 @@ function LoginFormContent() {
         </form>
       </Form>
       <div className="text-center text-sm mt-6">
-        <span className="text-gray-400">Don't have an account?</span>{' '}
+        <span className={getThemedTextClasses('muted')}>Don't have an account?</span>{' '}
         <a 
           href="/gdyup/auth/signup" 
-          className="font-medium text-primary hover:text-primary/80"
+          className="font-medium text-gdyup-primary hover:text-gdyup-primary/80"
           onClick={(e) => {
             e.preventDefault();
             window.location.href = '/gdyup/auth/signup';
@@ -165,7 +168,7 @@ export function LoginForm() {
   return (
     <Suspense fallback={
       <div className="w-full flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-gdyup-primary" />
       </div>
     }>
       <LoginFormContent />

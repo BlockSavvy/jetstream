@@ -11,6 +11,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/auth-provider';
+import { useGdyupTheme } from '../app/gdyup/hooks/useGdyupTheme';
 
 export interface Jet {
   id: string;
@@ -28,14 +29,16 @@ export interface Jet {
 export default function JetsList() {
   const router = useRouter();
   const { user, refreshSession } = useAuth();
+  const { 
+    getThemedButtonClasses, 
+    getThemedTextClasses, 
+    getThemedBackgroundClasses, 
+    getThemedBadgeClasses 
+  } = useGdyupTheme();
   const [jets, setJets] = useState<Jet[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-
-  // GDY UP brand colors
-  const primaryColor = "#DAFF0D"; 
-  const secondaryColor = "#FF4B47";
 
   // Create a fetchJets function that can be called multiple times
   const fetchJets = useCallback(async () => {
@@ -125,16 +128,16 @@ export default function JetsList() {
   }, [fetchJets, retryCount]);
 
   // Function to get status color based on jet status
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'secondary' | 'primary' => {
     switch (status.toLowerCase()) {
       case 'available':
-        return 'bg-green-600';
+        return 'success';
       case 'maintenance':
-        return 'bg-amber-600';
+        return 'warning';
       case 'reserved':
-        return 'bg-blue-600';
+        return 'primary';
       default:
-        return 'bg-gray-600';
+        return 'secondary';
     }
   };
 
@@ -146,7 +149,7 @@ export default function JetsList() {
           <h2 className="text-xl font-semibold">My Jets</h2>
           <Button
             disabled
-            className="bg-[#DAFF0D] hover:brightness-105 text-black opacity-50"
+            className={getThemedButtonClasses('primary', 'md') + " opacity-50"}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Jet
@@ -155,17 +158,17 @@ export default function JetsList() {
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="bg-[#0D0D0D] border-gray-800">
+            <Card key={i} className={getThemedBackgroundClasses('card')}>
               <CardHeader>
-                <Skeleton className="h-5 w-40 bg-gray-800" />
+                <Skeleton className="h-5 w-40 bg-gdyup-bg-card" />
               </CardHeader>
               <CardContent>
                 <div className="aspect-video relative mb-4">
-                  <Skeleton className="h-full w-full bg-gray-800" />
+                  <Skeleton className="h-full w-full bg-gdyup-bg-card" />
                 </div>
                 <div className="space-y-3">
-                  <Skeleton className="h-4 w-full bg-gray-800" />
-                  <Skeleton className="h-4 w-3/4 bg-gray-800" />
+                  <Skeleton className="h-4 w-full bg-gdyup-bg-card" />
+                  <Skeleton className="h-4 w-3/4 bg-gdyup-bg-card" />
                 </div>
               </CardContent>
             </Card>
@@ -183,15 +186,15 @@ export default function JetsList() {
           <h2 className="text-xl font-semibold">My Jets</h2>
           <Button
             onClick={() => router.push('/gdyup/jets/models')}
-            className="bg-[#DAFF0D] hover:brightness-105 text-black"
+            className={getThemedButtonClasses('primary')}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Jet
           </Button>
         </div>
         
-        <Card className="bg-[#0D0D0D] border-red-900 p-6">
-          <div className="flex items-center space-x-4 text-red-400">
+        <Card className={getThemedBackgroundClasses('card') + " border-gdyup-secondary p-6"}>
+          <div className="flex items-center space-x-4 gdyup-secondary">
             <AlertTriangle className="h-8 w-8" />
             <div>
               <h3 className="text-lg font-semibold">Error Loading Jets</h3>
@@ -203,7 +206,7 @@ export default function JetsList() {
               onClick={() => {
                 setRetryCount(prev => prev + 1);
               }} 
-              className="bg-red-900/60 hover:bg-red-900 text-white"
+              className={getThemedButtonClasses('destructive')}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Retry
@@ -215,7 +218,7 @@ export default function JetsList() {
                   const timestamp = Date.now();
                   router.push(`/auth/login?returnUrl=/gdyup/jets&t=${timestamp}`);
                 }}
-                className="bg-blue-900/60 hover:bg-blue-900 text-white"
+                className={getThemedButtonClasses('secondary')}
               >
                 <LogIn className="mr-2 h-4 w-4" />
                 Sign In
@@ -235,25 +238,25 @@ export default function JetsList() {
           <h2 className="text-xl font-semibold">My Jets</h2>
           <Button
             onClick={() => router.push('/gdyup/jets/models')}
-            className="bg-[#DAFF0D] hover:brightness-105 text-black"
+            className={getThemedButtonClasses('primary')}
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Jet
           </Button>
         </div>
         
-        <Card className="bg-[#0D0D0D] border-gray-800 p-6 text-center">
+        <Card className={getThemedBackgroundClasses('card') + " p-6 text-center"}>
           <div className="flex flex-col items-center py-10">
-            <div className="rounded-full bg-gray-900 p-4 mb-4">
-              <Plane className="h-10 w-10" style={{ color: primaryColor }} />
+            <div className="rounded-full bg-gdyup-bg-card p-4 mb-4">
+              <Plane className={`h-10 w-10 ${getThemedTextClasses('primary')}`} />
             </div>
             <h3 className="text-xl font-semibold mb-2">No Jets Found</h3>
-            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+            <p className={`${getThemedTextClasses('muted')} mb-6 max-w-md mx-auto`}>
               You currently don't have any jets in your fleet. Add your first jet to start managing your aircraft in GDY UP.
             </p>
             <Button
               onClick={() => router.push('/gdyup/jets/models')}
-              className="bg-[#DAFF0D] hover:brightness-105 text-black"
+              className={getThemedButtonClasses('primary')}
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               Browse Aircraft Models
@@ -271,7 +274,7 @@ export default function JetsList() {
         <h2 className="text-xl font-semibold">My Jets ({jets.length})</h2>
         <Button
           onClick={() => router.push('/gdyup/jets/models')}
-          className="bg-[#DAFF0D] hover:brightness-105 text-black"
+          className={getThemedButtonClasses('primary')}
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Add New Jet
@@ -280,7 +283,7 @@ export default function JetsList() {
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {jets.map((jet) => (
-          <Card key={jet.id} className="bg-[#0D0D0D] border-gray-800 overflow-hidden">
+          <Card key={jet.id} className={getThemedBackgroundClasses('card') + " overflow-hidden"}>
             <div className="aspect-video relative">
               {jet.image_url ? (
                 <Image
@@ -290,11 +293,11 @@ export default function JetsList() {
                   className="object-cover"
                 />
               ) : (
-                <div className="flex items-center justify-center h-full w-full bg-gray-900">
-                  <Plane className="h-12 w-12 text-gray-600" />
+                <div className="flex items-center justify-center h-full w-full bg-gdyup-bg-card">
+                  <Plane className={`h-12 w-12 ${getThemedTextClasses('muted')}`} />
                 </div>
               )}
-              <Badge className={`${getStatusColor(jet.status)} absolute top-2 right-2`}>
+              <Badge className={`${getThemedBadgeClasses(getStatusBadgeVariant(jet.status))} absolute top-2 right-2`}>
                 {jet.status}
               </Badge>
             </div>
@@ -304,7 +307,7 @@ export default function JetsList() {
                 <CardTitle className="font-bold text-lg">
                   {jet.manufacturer} {jet.model}
                 </CardTitle>
-                <Badge variant="outline" className="bg-gray-900/80 border-gray-700">
+                <Badge className={getThemedBadgeClasses('secondary')}>
                   {jet.category}
                 </Badge>
               </div>
@@ -313,39 +316,39 @@ export default function JetsList() {
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Tail Number</span>
-                  <span className="text-gray-200 font-medium">{jet.tail_number}</span>
+                  <span className={getThemedTextClasses('muted')}>Tail Number</span>
+                  <span className="gdyup-primary font-medium">{jet.tail_number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Year</span>
-                  <span className="text-gray-200 font-medium">{jet.year}</span>
+                  <span className={getThemedTextClasses('muted')}>Year</span>
+                  <span className="gdyup-primary font-medium">{jet.year}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Capacity</span>
-                  <span className="text-gray-200 font-medium">{jet.capacity} seats</span>
+                  <span className={getThemedTextClasses('muted')}>Capacity</span>
+                  <span className="gdyup-primary font-medium">{jet.capacity} seats</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Home Base</span>
-                  <span className="text-gray-200 font-medium">{jet.home_base_airport}</span>
+                  <span className={getThemedTextClasses('muted')}>Home Base</span>
+                  <span className="gdyup-primary font-medium">{jet.home_base_airport}</span>
                 </div>
               </div>
             </CardContent>
             
-            <CardFooter className="border-t border-gray-800 pt-4">
+            <CardFooter className="bg-gdyup-bg-card border-t pt-4">
               <div className="flex space-x-2 w-full">
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/gdyup/jets/${jet.id}`)}
-                  className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+                  className={'flex-1 ' + getThemedButtonClasses('outline')}
                 >
                   View Details
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/gdyup/jets/${jet.id}/edit`)}
-                  className="border-gray-700 hover:bg-gray-800"
+                  className={getThemedButtonClasses('outline')}
                 >
-                  <Settings className="h-4 w-4" style={{ color: primaryColor }} />
+                  <Settings className="h-4 w-4 gdyup-primary" />
                 </Button>
               </div>
             </CardFooter>
