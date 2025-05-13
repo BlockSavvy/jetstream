@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { JetShareOfferWithUser, JetShareTransactionWithDetails } from '@/types/jetshare';
 import { format, formatDistanceToNow } from 'date-fns';
 import { CheckCircle, Clock, AlertCircle, Plane, Users, CreditCard, Ticket, Wallet, MapPin, MessageSquare } from 'lucide-react';
@@ -16,10 +16,7 @@ import { createClient } from '@/lib/supabase';
 import { useAuth } from '@/components/auth-provider';
 import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
-
-// GDYup theme colors
-const PRIMARY_COLOR = "#DAFF0D";
-const SECONDARY_COLOR = "#FF4B47";
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 // Add props interface
 interface GDYupDashboardProps {
@@ -63,6 +60,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
   const [recentMessages, setRecentMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(errorMessage || null);
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const [stats, setStats] = useState<JetShareStats>({
     totalOffers: 0,
     totalBookings: 0, 
@@ -188,7 +186,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
           let completedOffers = [];
           
           try {
-            const offersResponse = await fetch(`/api/jetshare/getOffers?viewMode=dashboard&user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
+            const offersResponse = await fetch(`/api/gdyup/getOffers?viewMode=dashboard&user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
               headers,
               credentials: 'include',
             });
@@ -222,7 +220,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
           
           // Fetch messages
           try {
-            const messagesResponse = await fetch(`/api/jetshare/messages?limit=5&t=${timestamp}`, {
+            const messagesResponse = await fetch(`/api/gdyup/messages?limit=5&t=${timestamp}`, {
               headers,
               credentials: 'include',
             });
@@ -284,7 +282,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
       // 1. First fetch transactions
       let transactions = [];
       try {
-        const transactionsResponse = await fetch(`/api/jetshare/getTransactions?user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
+        const transactionsResponse = await fetch(`/api/gdyup/getTransactions?user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
           headers,
           credentials: 'include',
         });
@@ -313,7 +311,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
       };
       
       try {
-        const statsResponse = await fetch(`/api/jetshare/stats?user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
+        const statsResponse = await fetch(`/api/gdyup/stats?user_id=${userId}&t=${timestamp}&rid=${requestId}&instance_id=${instanceId}`, {
           headers,
           credentials: 'include',
         });
@@ -354,35 +352,35 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
-        return <Badge className="bg-blue-900/40 text-blue-300 border-blue-800">Open</Badge>;
+        return <Badge className={cn("offer-status-open")}>Open</Badge>;
       case 'accepted':
-        return <Badge className="bg-amber-900/40 text-amber-300 border-amber-800">Accepted</Badge>;
+        return <Badge className={cn("offer-status-pending")}>Accepted</Badge>;
       case 'completed':
-        return <Badge className="bg-green-900/40 text-green-300 border-green-800">Completed</Badge>;
+        return <Badge className={cn("offer-status-completed")}>Completed</Badge>;
       default:
-        return <Badge className="bg-gray-900/40 text-gray-300 border-gray-800">{status}</Badge>;
+        return <Badge className={cn(getThemedBadgeClasses('outline'))}>{status}</Badge>;
     }
   };
   
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-amber-900/40 text-amber-300 border-amber-800">
+        return <Badge className={cn("payment-status-pending")}>
           <Clock className="mr-1 h-3 w-3" />
           Pending
         </Badge>;
       case 'completed':
-        return <Badge className="bg-green-900/40 text-green-300 border-green-800">
+        return <Badge className={cn("payment-status-paid")}>
           <CheckCircle className="mr-1 h-3 w-3" />
           Completed
         </Badge>;
       case 'failed':
-        return <Badge className="bg-red-900/40 text-red-300 border-red-800">
+        return <Badge className={cn("payment-status-unpaid")}>
           <AlertCircle className="mr-1 h-3 w-3" />
           Failed
         </Badge>;
       default:
-        return <Badge className="bg-gray-900/40 text-gray-300 border-gray-800">{status}</Badge>;
+        return <Badge className={cn(getThemedBadgeClasses('outline'))}>{status}</Badge>;
     }
   };
 
@@ -414,7 +412,11 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
     return (
       <div 
         key={offer.id || `offer-${Math.random().toString(36).substring(2, 10)}`} 
-        className="relative overflow-hidden rounded-lg border border-gray-800 mb-4 bg-gray-900 cursor-pointer"
+        className={cn(
+          "relative overflow-hidden rounded-lg mb-4 cursor-pointer",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}
         onClick={() => {
           if (!offer.id) return;
           
@@ -436,11 +438,12 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
       >
         {/* Status indicator */}
         <div 
-          className={`h-1 w-full absolute top-0 left-0 ${
-            status === 'completed' ? 'bg-green-500' : 
-            status === 'accepted' ? 'bg-amber-500' : 
-            `bg-[${PRIMARY_COLOR}]`
-          }`}
+          className={cn(
+            "h-1 w-full absolute top-0 left-0",
+            status === 'completed' ? "bg-green-500" : 
+            status === 'accepted' ? "bg-amber-500" : 
+            "bg-gdyup-primary"
+          )}
         />
         
         <div className="p-4">
@@ -448,11 +451,11 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
             <div>
               {/* Flight info */}
               <div className="flex items-center mb-1">
-                <Plane className="h-4 w-4 mr-2 rotate-90" style={{ color: PRIMARY_COLOR }} />
-                <p className="font-medium text-white">{departureLocation} → {arrivalLocation}</p>
+                <Plane className={cn("h-4 w-4 mr-2 rotate-90", getThemedTextClasses('primary'))} />
+                <p className={cn("font-medium", getThemedTextClasses())}>{departureLocation} → {arrivalLocation}</p>
               </div>
               <div className="flex justify-between items-center mb-3">
-                <p className="text-sm text-gray-400">{format(flightDate, 'MMM d, yyyy')}</p>
+                <p className={cn("text-sm", getThemedTextClasses('muted'))}>{format(flightDate, 'MMM d, yyyy')}</p>
                 <div className="text-xs text-gray-500 font-mono">
                   #{offer.id?.toString().substring(0, 6)}
                 </div>
@@ -461,18 +464,18 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
               {/* Price info */}
               <div className="space-y-1 mb-3">
                 <div className="flex justify-between items-center">
-                  <span className="flex items-center text-sm text-gray-400">
+                  <span className={cn("flex items-center text-sm", getThemedTextClasses('muted'))}>
                     <CreditCard className="h-4 w-4 mr-1 text-gray-500" />
                     Total Cost
                   </span>
-                  <span className="font-medium text-white">{formatCurrency(totalFlightCost)}</span>
+                  <span className={cn("font-medium", getThemedTextClasses())}>{formatCurrency(totalFlightCost)}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="flex items-center text-sm text-gray-400">
+                  <span className={cn("flex items-center text-sm", getThemedTextClasses('muted'))}>
                     <Users className="h-4 w-4 mr-1 text-gray-500" />
                     Share Amount
                   </span>
-                  <span className="font-medium text-white">{formatCurrency(requestedShareAmount)}</span>
+                  <span className={cn("font-medium", getThemedTextClasses())}>{formatCurrency(requestedShareAmount)}</span>
                 </div>
               </div>
               
@@ -498,7 +501,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                       e.stopPropagation();
                       router.push(`/gdyup/payment/${offer.id}`);
                     }}
-                    className="w-full bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]"
+                    className={cn(getThemedButtonClasses('primary'))}
                   >
                     Complete Payment
                   </Button>
@@ -514,7 +517,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                       e.stopPropagation();
                       router.push(`/gdyup/transaction/${offer.id}`);
                     }}
-                    className="border-gray-700 text-white hover:bg-gray-800"
+                    className={cn(getThemedButtonClasses('outline'))}
                   >
                     View Details
                   </Button>
@@ -524,7 +527,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                       e.stopPropagation();
                       router.push(`/gdyup/boardingpass/${offer.id}`);
                     }}
-                    className="bg-gray-800 text-[#DAFF0D] border border-[#DAFF0D]/40 hover:bg-gray-700"
+                    className={cn(getThemedButtonClasses('outline'))}
                   >
                     <Ticket className="h-3 w-3 mr-1" />
                     Boarding Pass
@@ -555,7 +558,11 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
     return (
       <div 
         key={transaction.id || `tx-${Math.random().toString(36).substring(2, 10)}`} 
-        className="relative overflow-hidden rounded-lg border border-gray-800 mb-4 bg-gray-900 p-4 cursor-pointer"
+        className={cn(
+          "relative overflow-hidden rounded-lg mb-4 p-4 cursor-pointer",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}
         onClick={() => transaction.offer_id ? router.push(`/gdyup/transaction/${transaction.offer_id}`) : null}
       >
         <div className="flex flex-col sm:flex-row justify-between gap-3">
@@ -573,7 +580,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   Payment Received
                 </span>
               ) : (
-                <span className="flex items-center text-white">
+                <span className={cn("flex items-center", getThemedTextClasses())}>
                   <CreditCard className="h-4 w-4 mr-2" />
                   Transaction
                 </span>
@@ -582,7 +589,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
             
             {/* Flight info if available */}
             {transaction.offer && (
-              <div className="flex items-center mb-1 text-sm text-gray-400">
+              <div className={cn("flex items-center mb-1 text-sm", getThemedTextClasses('muted'))}>
                 <Plane className="h-3 w-3 mr-1 rotate-90" />
                 <span>{transaction.offer.departure_location} → {transaction.offer.arrival_location}</span>
               </div>
@@ -590,7 +597,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
             
             {/* Date and ID */}
             <div className="flex justify-between items-center mb-3">
-              <div className="text-sm text-gray-400">
+              <div className={cn("text-sm", getThemedTextClasses('muted'))}>
                 {format(transactionDate, 'MMM d, yyyy')}
               </div>
               <div className="text-xs text-gray-500 font-mono">
@@ -601,13 +608,13 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
             {/* Payment info */}
             <div className="space-y-1 mb-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-400">Amount:</span>
-                <span className="font-medium text-white">{formatCurrency(amount)}</span>
+                <span className={cn("text-sm", getThemedTextClasses('muted'))}>Amount:</span>
+                <span className={cn("font-medium", getThemedTextClasses())}>{formatCurrency(amount)}</span>
               </div>
               {handlingFee > 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Fee:</span>
-                  <span className="text-sm text-gray-300">{formatCurrency(handlingFee)}</span>
+                  <span className={cn("text-sm", getThemedTextClasses('muted'))}>Fee:</span>
+                  <span className={cn("text-sm", getThemedTextClasses())}>{formatCurrency(handlingFee)}</span>
                 </div>
               )}
             </div>
@@ -615,7 +622,9 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
             {/* Status */}
             <div className="flex items-center justify-between">
               {getPaymentStatusBadge(transaction.payment_status)}
-              <span className="text-xs text-gray-400">{transaction.payment_method === 'crypto' ? 'Crypto' : 'Credit Card'}</span>
+              <span className={cn("text-xs", getThemedTextClasses('muted'))}>
+                {transaction.payment_method === 'crypto' ? 'Crypto' : 'Credit Card'}
+              </span>
             </div>
           </div>
         </div>
@@ -625,18 +634,22 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
   
   const renderMessagePreview = (message: Message) => {
     return (
-      <div key={message.id} className="flex gap-3 p-3 rounded-lg bg-gray-850 border border-gray-800">
+      <div key={message.id} className={cn(
+        "flex gap-3 p-3 rounded-lg",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
         <div className="w-10 h-10 rounded-full bg-gray-800 flex-shrink-0 flex items-center justify-center">
           {message.sender?.first_name?.[0] || 'U'}
         </div>
         <div className="flex-1 overflow-hidden">
           <div className="flex justify-between items-start mb-1">
-            <p className="font-medium text-white">{message.sender?.first_name || 'User'}</p>
-            <span className="text-xs text-gray-400">
+            <p className={cn("font-medium", getThemedTextClasses())}>{message.sender?.first_name || 'User'}</p>
+            <span className={cn("text-xs", getThemedTextClasses('muted'))}>
               {formatMessageTime(message.created_at)}
             </span>
           </div>
-          <p className="text-sm text-gray-300 line-clamp-2">{message.message}</p>
+          <p className={cn("text-sm", getThemedTextClasses('muted'), "line-clamp-2")}>{message.message}</p>
         </div>
       </div>
     );
@@ -645,7 +658,11 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
   const renderSkeleton = () => (
     <>
       {[1, 2].map((i) => (
-        <div key={`skeleton-${i}`} className="rounded-lg border border-gray-800 mb-4 p-4 bg-gray-900">
+        <div key={`skeleton-${i}`} className={cn(
+          "rounded-lg mb-4 p-4",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <div className="space-y-3">
             <Skeleton className="h-6 w-3/4 bg-gray-800" />
             <Skeleton className="h-4 w-1/2 bg-gray-800" />
@@ -682,44 +699,62 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
       )}
 
       <div className="mb-6">
-        <div className="bg-gray-900 rounded-md p-1 grid grid-cols-5 gap-1">
+        <div className={cn(
+          "rounded-md p-1 grid grid-cols-5 gap-1",
+          getThemedBackgroundClasses('card')
+        )}>
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors ${
-              activeTab === 'dashboard' ? 'bg-[#DAFF0D] text-black' : 'text-white hover:bg-gray-800'
-            }`}
+            className={cn(
+              "py-2 px-3 rounded-md text-center text-sm font-medium transition-colors",
+              activeTab === 'dashboard' 
+                ? cn("bg-gdyup-primary text-gdyup-button-text") 
+                : cn(getThemedTextClasses(), "hover:bg-gray-800")
+            )}
           >
             Dashboard
           </button>
           <button 
             onClick={() => setActiveTab('offers')}
-            className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors ${
-              activeTab === 'offers' ? 'bg-[#DAFF0D] text-black' : 'text-white hover:bg-gray-800'
-            }`}
+            className={cn(
+              "py-2 px-3 rounded-md text-center text-sm font-medium transition-colors",
+              activeTab === 'offers' 
+                ? cn("bg-gdyup-primary text-gdyup-button-text") 
+                : cn(getThemedTextClasses(), "hover:bg-gray-800")
+            )}
           >
             Offers
           </button>
           <button 
             onClick={() => setActiveTab('bookings')}
-            className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors ${
-              activeTab === 'bookings' ? 'bg-[#DAFF0D] text-black' : 'text-white hover:bg-gray-800'
-            }`}
+            className={cn(
+              "py-2 px-3 rounded-md text-center text-sm font-medium transition-colors",
+              activeTab === 'bookings' 
+                ? cn("bg-gdyup-primary text-gdyup-button-text") 
+                : cn(getThemedTextClasses(), "hover:bg-gray-800")
+            )}
           >
             Bookings
           </button>
           <button 
             onClick={() => setActiveTab('transactions')}
-            className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors ${
-              activeTab === 'transactions' ? 'bg-[#DAFF0D] text-black' : 'text-white hover:bg-gray-800'
-            }`}
+            className={cn(
+              "py-2 px-3 rounded-md text-center text-sm font-medium transition-colors",
+              activeTab === 'transactions' 
+                ? cn("bg-gdyup-primary text-gdyup-button-text") 
+                : cn(getThemedTextClasses(), "hover:bg-gray-800")
+            )}
           >
             Payments
           </button>
           <button 
             onClick={() => setActiveTab('messages')}
-            className={`py-2 px-3 rounded-md text-center text-sm font-medium transition-colors ${
-              activeTab === 'messages' ? 'bg-[#DAFF0D] text-black' : 'text-white hover:bg-gray-800'
-            }`}
+            className={cn(
+              "py-2 px-3 rounded-md text-center text-sm font-medium transition-colors",
+              activeTab === 'messages' 
+                ? cn("bg-gdyup-primary text-gdyup-button-text") 
+                : cn(getThemedTextClasses(), "hover:bg-gray-800")
+            )}
           >
             Messages
           </button>
@@ -729,59 +764,59 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
       {activeTab === 'dashboard' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-300">Total Offers</CardTitle>
+                <CardTitle className={cn("text-sm", getThemedTextClasses('muted'))}>Total Offers</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="h-7 w-1/2 bg-gray-800" />
                 ) : (
-                  <div className="text-2xl font-bold text-white">{stats.totalOffers}</div>
+                  <div className={cn("text-2xl font-bold", getThemedTextClasses())}>{stats.totalOffers}</div>
                 )}
               </CardContent>
             </Card>
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-300">My Bookings</CardTitle>
+                <CardTitle className={cn("text-sm", getThemedTextClasses('muted'))}>My Bookings</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="h-7 w-1/2 bg-gray-800" />
                 ) : (
-                  <div className="text-2xl font-bold text-white">{stats.totalBookings}</div>
+                  <div className={cn("text-2xl font-bold", getThemedTextClasses())}>{stats.totalBookings}</div>
                 )}
               </CardContent>
             </Card>
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-300">Total Spent</CardTitle>
+                <CardTitle className={cn("text-sm", getThemedTextClasses('muted'))}>Total Spent</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="h-7 w-1/2 bg-gray-800" />
                 ) : (
-                  <div className="text-2xl font-bold text-white">{formatCurrency(stats.totalSpent)}</div>
+                  <div className={cn("text-2xl font-bold", getThemedTextClasses())}>{formatCurrency(stats.totalSpent)}</div>
                 )}
               </CardContent>
             </Card>
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-gray-300">Total Earned</CardTitle>
+                <CardTitle className={cn("text-sm", getThemedTextClasses('muted'))}>Total Earned</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <Skeleton className="h-7 w-1/2 bg-gray-800" />
                 ) : (
-                  <div className="text-2xl font-bold text-white">{formatCurrency(stats.totalEarned)}</div>
+                  <div className={cn("text-2xl font-bold", getThemedTextClasses())}>{formatCurrency(stats.totalEarned)}</div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
             <CardHeader>
-              <CardTitle className="text-white">Recent Activity</CardTitle>
+              <CardTitle className={getThemedTextClasses()}>Recent Activity</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -792,7 +827,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   {transactions.length > 3 && (
                     <Button 
                       variant="outline" 
-                      className="w-full border-gray-700 text-white hover:bg-gray-800" 
+                      className={cn(getThemedButtonClasses('outline'))}
                       onClick={() => setActiveTab('transactions')}
                     >
                       View All Transactions
@@ -800,12 +835,12 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   )}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className={cn("text-center py-6", getThemedTextClasses('muted'))}>
                   <p>No recent activity</p>
                   <div className="mt-4">
                     <Button 
                       onClick={() => router.push('/gdyup/browse')}
-                      className="bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]"
+                      className={cn(getThemedButtonClasses('primary'))}
                     >
                       Browse Flights
                     </Button>
@@ -819,13 +854,13 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
 
       {activeTab === 'offers' && (
         <div className="space-y-4">
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-white">My Posted Offers</CardTitle>
+                <CardTitle className={getThemedTextClasses()}>My Posted Offers</CardTitle>
                 <Button 
                   onClick={() => router.push('/gdyup/create')}
-                  className="bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]"
+                  className={cn(getThemedButtonClasses('primary'))}
                   size="sm"
                 >
                   Create New Offer
@@ -840,12 +875,12 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   {myOffers.map(offer => renderOffer({...offer, isOwnOffer: true}))}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className={cn("text-center py-6", getThemedTextClasses('muted'))}>
                   <p>You haven't posted any offers yet</p>
                   <div className="mt-4">
                     <Button 
                       onClick={() => router.push('/gdyup/create')}
-                      className="bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]"
+                      className={cn(getThemedButtonClasses('primary'))}
                     >
                       Create Your First Offer
                     </Button>
@@ -859,9 +894,9 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
 
       {activeTab === 'bookings' && (
         <div className="space-y-4">
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
             <CardHeader>
-              <CardTitle className="text-white">Active Bookings</CardTitle>
+              <CardTitle className={getThemedTextClasses()}>Active Bookings</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -871,12 +906,12 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   {myBookings.map(offer => renderOffer(offer))}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className={cn("text-center py-6", getThemedTextClasses('muted'))}>
                   <p>You haven't booked any flights yet</p>
                   <div className="mt-4">
                     <Button 
                       onClick={() => router.push('/gdyup/browse')}
-                      className="bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]"
+                      className={cn(getThemedButtonClasses('primary'))}
                     >
                       Browse Available Flights
                     </Button>
@@ -887,9 +922,9 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
           </Card>
 
           {completedFlights.length > 0 && (
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
               <CardHeader>
-                <CardTitle className="text-white">Completed Flights</CardTitle>
+                <CardTitle className={getThemedTextClasses()}>Completed Flights</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -903,9 +938,9 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
 
       {activeTab === 'transactions' && (
         <div className="space-y-4">
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
             <CardHeader>
-              <CardTitle className="text-white">Payment History</CardTitle>
+              <CardTitle className={getThemedTextClasses()}>Payment History</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -915,7 +950,7 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   {transactions.map(transaction => renderTransaction(transaction, user?.id))}
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className={cn("text-center py-6", getThemedTextClasses('muted'))}>
                   <p>No payment history yet</p>
                 </div>
               )}
@@ -926,13 +961,13 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
 
       {activeTab === 'messages' && (
         <div className="space-y-4">
-          <Card className="bg-gray-900 border-gray-800">
+          <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-white">Messages</CardTitle>
+                <CardTitle className={getThemedTextClasses()}>Messages</CardTitle>
                 <Button 
                   onClick={() => router.push('/gdyup/messages')}
-                  className="bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]"
+                  className={cn(getThemedButtonClasses('primary'))}
                   size="sm"
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
@@ -948,14 +983,14 @@ export default function GDYupDashboard({ initialTab = 'dashboard', errorMessage,
                   {recentMessages.map(message => renderMessagePreview(message))}
                   <Button 
                     variant="outline" 
-                    className="w-full mt-2 border-gray-700 text-white hover:bg-gray-800"
+                    className={cn("w-full mt-2", getThemedButtonClasses('outline'))}
                     onClick={() => router.push('/gdyup/messages')}
                   >
                     View All Messages
                   </Button>
                 </div>
               ) : (
-                <div className="text-center py-6 text-gray-400">
+                <div className={cn("text-center py-6", getThemedTextClasses('muted'))}>
                   <p>You don't have any messages yet.</p>
                   <p className="mt-2 text-sm">Messages will appear here when you communicate with other users.</p>
                 </div>

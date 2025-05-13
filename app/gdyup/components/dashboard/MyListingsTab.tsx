@@ -23,6 +23,7 @@ import { JetShareOfferWithUser } from '@/types/jetshare';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 // Extended interface for our local component needs
 interface ExtendedJetShareOfferWithUser extends JetShareOfferWithUser {
@@ -34,7 +35,7 @@ export default function MyListingsTab() {
   const [activeListings, setActiveListings] = useState<ExtendedJetShareOfferWithUser[]>([]);
   const [pastListings, setPastListings] = useState<ExtendedJetShareOfferWithUser[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -98,42 +99,36 @@ export default function MyListingsTab() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={getThemeClasses({
-          base: "border rounded-lg overflow-hidden mb-4",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}
+        className={cn(
+          "border rounded-lg overflow-hidden mb-4",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}
       >
         <div className="p-4">
           <div className="flex flex-col md:flex-row justify-between gap-3">
             <div className="space-y-3">
               {/* Flight route */}
               <div className="flex items-center gap-2">
-                <Plane className={getThemeClasses({
-                  base: "h-4 w-4 rotate-90",
-                  default: "text-gdyup-primary",
-                  blue: "text-gdyup-primary",
-                  pink: "text-gdyup-primary"
-                })} />
-                <h3 className="font-medium">{offer.departure_location} → {offer.arrival_location}</h3>
+                <Plane className="h-4 w-4 rotate-90 text-gdyup-primary" />
+                <h3 className={cn("font-medium", getThemedTextClasses())}>{offer.departure_location} → {offer.arrival_location}</h3>
               </div>
               
               {/* Flight details */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div className="flex items-center gap-1">
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
                   <Calendar className="h-3.5 w-3.5 opacity-70" />
                   <span>{format(flightDate, 'MMM d, yyyy')}</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
                   <Users className="h-3.5 w-3.5 opacity-70" />
                   <span>{offer.available_seats || 0} available / {offer.total_seats || 0} total</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
                   <CreditCard className="h-3.5 w-3.5 opacity-70" />
                   <span>{formatCurrency(offer.requested_share_amount || 0)} per seat</span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
                   <MapPin className="h-3.5 w-3.5 opacity-70" />
                   <span>{offer.arrival_location}</span>
                 </div>
@@ -142,45 +137,25 @@ export default function MyListingsTab() {
               {/* Listing status */}
               <div className="flex items-center gap-2">
                 {offer.status === 'open' && (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-blue-900/40 text-blue-300 border-blue-800",
-                    blue: "bg-blue-900/40 text-blue-300 border-blue-800",
-                    pink: "bg-blue-900/40 text-blue-300 border-blue-800"
-                  })}>
+                  <Badge className="bg-blue-900/40 text-blue-300 border-blue-800">
                     Active Listing
                   </Badge>
                 )}
                 
                 {hasMatched && (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-amber-900/40 text-amber-300 border-amber-800",
-                    blue: "bg-amber-900/40 text-amber-300 border-amber-800",
-                    pink: "bg-amber-900/40 text-amber-300 border-amber-800"
-                  })}>
+                  <Badge className="bg-amber-900/40 text-amber-300 border-amber-800">
                     Seat Reserved
                   </Badge>
                 )}
                 
                 {offer.status === 'completed' && (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-green-900/40 text-green-300 border-green-800",
-                    blue: "bg-green-900/40 text-green-300 border-green-800",
-                    pink: "bg-green-900/40 text-green-300 border-green-800"
-                  })}>
+                  <Badge className="bg-green-900/40 text-green-300 border-green-800">
                     Completed
                   </Badge>
                 )}
                 
                 {offer.cancelled && (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-red-900/40 text-red-300 border-red-800",
-                    blue: "bg-red-900/40 text-red-300 border-red-800",
-                    pink: "bg-red-900/40 text-red-300 border-red-800"
-                  })}>
+                  <Badge className="bg-red-900/40 text-red-300 border-red-800">
                     Cancelled
                   </Badge>
                 )}
@@ -191,12 +166,7 @@ export default function MyListingsTab() {
               <Button
                 variant="outline"
                 onClick={() => router.push(`/gdyup/offer/${offer.id}`)}
-                className={getThemeClasses({
-                  base: "",
-                  default: "border-gray-700 hover:bg-gray-800",
-                  blue: "border-blue-700 hover:bg-blue-800",
-                  pink: "border-pink-700 hover:bg-pink-800"
-                })}
+                className="border-gdyup-border hover:bg-gdyup-bg-dark"
               >
                 View Details
               </Button>
@@ -205,12 +175,7 @@ export default function MyListingsTab() {
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/gdyup/offer/${offer.id}/edit`)}
-                  className={getThemeClasses({
-                    base: "",
-                    default: "border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10",
-                    blue: "border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10",
-                    pink: "border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10"
-                  })}
+                  className="border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10"
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -228,52 +193,21 @@ export default function MyListingsTab() {
       {[1, 2, 3].map((i) => (
         <div 
           key={`skeleton-${i}`}
-          className={getThemeClasses({
-            base: "border rounded-lg overflow-hidden mb-4 p-4",
-            default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-950 border-blue-900",
-            pink: "bg-pink-950 border-pink-900"
-          })}
+          className={cn(
+            "border rounded-lg overflow-hidden mb-4 p-4",
+            getThemedBackgroundClasses('card'),
+            "border-gdyup-border"
+          )}
         >
           <div className="space-y-3">
-            <Skeleton className={getThemeClasses({
-              base: "h-5 w-2/3",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className="h-5 w-2/3 bg-gdyup-bg-dark" />
             <div className="grid grid-cols-2 gap-3">
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
+              <Skeleton className="h-4 w-full bg-gdyup-bg-dark" />
+              <Skeleton className="h-4 w-full bg-gdyup-bg-dark" />
+              <Skeleton className="h-4 w-full bg-gdyup-bg-dark" />
+              <Skeleton className="h-4 w-full bg-gdyup-bg-dark" />
             </div>
-            <Skeleton className={getThemeClasses({
-              base: "h-6 w-20",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className="h-6 w-20 bg-gdyup-bg-dark" />
           </div>
         </div>
       ))}
@@ -282,40 +216,24 @@ export default function MyListingsTab() {
 
   return (
     <div className="space-y-6">
-      <Card className={getThemeClasses({
-        base: "border",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-950 border-blue-900",
-        pink: "bg-pink-950 border-pink-900"
-      })}>
+      <Card className={cn(
+        "border",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className={getThemeClasses({
-                base: "",
-                default: "text-white",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
-              })}>
+              <CardTitle className={getThemedTextClasses()}>
                 My Listings
               </CardTitle>
-              <CardDescription className={getThemeClasses({
-                base: "",
-                default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}>
+              <CardDescription className={getThemedTextClasses('muted')}>
                 Jet shares you've posted for others
               </CardDescription>
             </div>
             <Button
               onClick={() => router.push('/gdyup/create')}
-              className={getThemeClasses({
-                base: "",
-                default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-              })}
+              className={getThemedButtonClasses('primary')}
             >
               Create New Listing
             </Button>
@@ -325,12 +243,7 @@ export default function MyListingsTab() {
           {isLoading ? (
             renderSkeletons()
           ) : error ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <p>{error}</p>
               <Button
                 variant="outline"
@@ -341,25 +254,16 @@ export default function MyListingsTab() {
               </Button>
             </div>
           ) : activeListings.length === 0 ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <div className="flex justify-center mb-2">
-                <div className={getThemeClasses({
-                  base: "w-12 h-12 rounded-full flex items-center justify-center",
-                  default: "bg-gray-800 text-gdyup-primary",
-                  blue: "bg-blue-900 text-gdyup-primary",
-                  pink: "bg-pink-900 text-gdyup-primary"
-                })}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gdyup-bg-dark text-gdyup-primary">
                   <Plane className="h-6 w-6" />
                 </div>
               </div>
               <p className="mb-4">You haven't created any jet share listings yet.</p>
               <Button
                 onClick={() => router.push('/gdyup/create')}
+                className={getThemedButtonClasses('primary')}
               >
                 Create Your First Listing
               </Button>
@@ -373,27 +277,16 @@ export default function MyListingsTab() {
       </Card>
 
       {!isLoading && pastListings.length > 0 && (
-        <Card className={getThemeClasses({
-          base: "border",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}>
+        <Card className={cn(
+          "border",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <CardHeader>
-            <CardTitle className={getThemeClasses({
-              base: "",
-              default: "text-white",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            })}>
+            <CardTitle className={getThemedTextClasses()}>
               Past Listings
             </CardTitle>
-            <CardDescription className={getThemeClasses({
-              base: "",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <CardDescription className={getThemedTextClasses('muted')}>
               Your completed and cancelled listings
             </CardDescription>
           </CardHeader>

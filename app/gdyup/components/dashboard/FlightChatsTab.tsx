@@ -42,7 +42,7 @@ export default function FlightChatsTab() {
   const [chats, setChats] = useState<FlightChat[]>([]);
   const [expandedChatId, setExpandedChatId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const router = useRouter();
   const { user } = useAuth();
   const { isConnected, isInitialized, hasNip05 } = useNostr();
@@ -94,12 +94,11 @@ export default function FlightChatsTab() {
     return (
       <div key={chat.id} className="mb-4">
         <motion.div
-          className={getThemeClasses({
-            base: "border rounded-lg overflow-hidden cursor-pointer",
-            default: "bg-gray-900 border-gray-800 hover:border-gray-700",
-            blue: "bg-blue-950 border-blue-900 hover:border-blue-800",
-            pink: "bg-pink-950 border-pink-900 hover:border-pink-800"
-          })}
+          className={cn(
+            "border rounded-lg overflow-hidden cursor-pointer",
+            getThemedBackgroundClasses('card'),
+            "border-gdyup-border hover:border-gdyup-primary/50"
+          )}
           onClick={() => toggleChat(chat.id)}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -109,38 +108,23 @@ export default function FlightChatsTab() {
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1 flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className={getThemeClasses({
-                    base: "p-1.5 rounded",
-                    default: "bg-gray-800",
-                    blue: "bg-blue-900",
-                    pink: "bg-pink-900"
-                  })}>
+                  <div className="p-1.5 rounded bg-gdyup-bg-dark">
                     <Plane className="h-4 w-4 text-gdyup-primary" />
                   </div>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted')}>
                     Flight {chat.flightNumber}
                   </div>
                   
                   {chat.unreadCount > 0 && (
-                    <Badge className={getThemeClasses({
-                      base: "",
-                      default: "bg-gdyup-primary text-black",
-                      blue: "bg-gdyup-primary text-black",
-                      pink: "bg-gdyup-primary text-black"
-                    })}>
+                    <Badge className="bg-gdyup-primary text-black">
                       {chat.unreadCount} new
                     </Badge>
                   )}
                 </div>
                 
-                <h3 className="font-medium">{chat.departureLocation} → {chat.arrivalLocation}</h3>
+                <h3 className={cn("font-medium", getThemedTextClasses())}>{chat.departureLocation} → {chat.arrivalLocation}</h3>
                 
-                <div className="flex items-center gap-2 text-xs">
+                <div className={cn("flex items-center gap-2 text-xs", getThemedTextClasses('muted'))}>
                   <span>{format(departureTime, 'MMM d, yyyy')}</span>
                   <span className="mx-1">•</span>
                   <div className="flex items-center gap-1">
@@ -150,12 +134,7 @@ export default function FlightChatsTab() {
                 </div>
                 
                 {chat.lastMessagePreview && (
-                  <div className={getThemeClasses({
-                    base: "mt-2 p-2 rounded text-sm truncate",
-                    default: "bg-gray-800 text-gray-300",
-                    blue: "bg-blue-900 text-blue-300",
-                    pink: "bg-pink-900 text-pink-300"
-                  })}>
+                  <div className="mt-2 p-2 rounded text-sm truncate bg-gdyup-bg-dark">
                     <span className="opacity-70">Last message: </span>
                     {chat.lastMessagePreview}
                   </div>
@@ -166,21 +145,11 @@ export default function FlightChatsTab() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-400 hover:text-white",
-                    blue: "text-blue-400 hover:text-blue-100",
-                    pink: "text-pink-400 hover:text-pink-100"
-                  })}
+                  className="text-gdyup-text-muted hover:text-gdyup-text"
                 >
                   <MessageSquare className="h-5 w-5" />
                 </Button>
-                <div className={getThemeClasses({
-                  base: "text-xs mt-1",
-                  default: "text-gray-500",
-                  blue: "text-blue-500",
-                  pink: "text-pink-500"
-                })}>
+                <div className={getThemedTextClasses('muted')}>
                   {isExpanded ? 'Close' : 'Expand'}
                 </div>
               </div>
@@ -212,40 +181,19 @@ export default function FlightChatsTab() {
       {[1, 2, 3].map((i) => (
         <div 
           key={`skeleton-${i}`}
-          className={getThemeClasses({
-            base: "border rounded-lg overflow-hidden mb-4 p-4",
-            default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-950 border-blue-900",
-            pink: "bg-pink-950 border-pink-900"
-          })}
+          className={cn(
+            "border rounded-lg overflow-hidden mb-4 p-4",
+            getThemedBackgroundClasses('card'),
+            "border-gdyup-border"
+          )}
         >
           <div className="flex justify-between">
             <div className="space-y-2 flex-1">
-              <Skeleton className={getThemeClasses({
-                base: "h-5 w-40",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-6 w-60",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-32",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
+              <Skeleton className="h-5 w-40 bg-gdyup-bg-dark" />
+              <Skeleton className="h-6 w-60 bg-gdyup-bg-dark" />
+              <Skeleton className="h-4 w-32 bg-gdyup-bg-dark" />
             </div>
-            <Skeleton className={getThemeClasses({
-              base: "h-10 w-10 rounded",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className="h-10 w-10 rounded bg-gdyup-bg-dark" />
           </div>
         </div>
       ))}
@@ -256,36 +204,21 @@ export default function FlightChatsTab() {
   const renderNostrStatus = () => {
     if (!isInitialized) {
       return (
-        <div className={getThemeClasses({
-          base: "p-4 rounded-lg border text-center",
-          default: "bg-gray-900 border-gray-800 text-gray-400",
-          blue: "bg-blue-950 border-blue-900 text-blue-400",
-          pink: "bg-pink-950 border-pink-900 text-pink-400"
-        })}>
+        <div className="p-4 rounded-lg border text-center bg-gdyup-bg-dark border-gdyup-border">
           <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin" />
-          <p>Initializing Nostr connectivity...</p>
+          <p className={getThemedTextClasses('muted')}>Initializing Nostr connectivity...</p>
         </div>
       );
     }
     
     if (!hasNip05) {
       return (
-        <div className={getThemeClasses({
-          base: "p-4 rounded-lg border text-center",
-          default: "bg-amber-900/20 border-amber-900/30 text-amber-300",
-          blue: "bg-amber-900/20 border-amber-900/30 text-amber-300",
-          pink: "bg-amber-900/20 border-amber-900/30 text-amber-300"
-        })}>
+        <div className="p-4 rounded-lg border text-center bg-amber-900/20 border-amber-900/30 text-amber-300">
           <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
           <p className="mb-3">You need to verify your Nostr identity to use flight chats.</p>
           <Button 
             onClick={() => router.push('/gdyup/profile')}
-            className={getThemeClasses({
-              base: "",
-              default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-              blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-              pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-            })}
+            className={getThemedButtonClasses('primary')}
           >
             Set Up Nostr Identity
           </Button>
@@ -295,22 +228,12 @@ export default function FlightChatsTab() {
     
     if (!isConnected) {
       return (
-        <div className={getThemeClasses({
-          base: "p-4 rounded-lg border text-center",
-          default: "bg-amber-900/20 border-amber-900/30 text-amber-300",
-          blue: "bg-amber-900/20 border-amber-900/30 text-amber-300",
-          pink: "bg-amber-900/20 border-amber-900/30 text-amber-300"
-        })}>
+        <div className="p-4 rounded-lg border text-center bg-amber-900/20 border-amber-900/30 text-amber-300">
           <RadioTower className="h-6 w-6 mx-auto mb-2" />
           <p className="mb-3">Connect to Nostr to access your flight chats.</p>
           <Button 
             onClick={() => router.push('/gdyup/profile')}
-            className={getThemeClasses({
-              base: "",
-              default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-              blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-              pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-            })}
+            className={getThemedButtonClasses('primary')}
           >
             <Wifi className="h-4 w-4 mr-2" />
             Connect to Nostr
@@ -324,27 +247,16 @@ export default function FlightChatsTab() {
 
   return (
     <div className="space-y-6">
-      <Card className={getThemeClasses({
-        base: "border",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-950 border-blue-900",
-        pink: "bg-pink-950 border-pink-900"
-      })}>
+      <Card className={cn(
+        "border",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
         <CardHeader>
-          <CardTitle className={getThemeClasses({
-            base: "",
-            default: "text-white",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
+          <CardTitle className={getThemedTextClasses()}>
             Flight Group Chats
           </CardTitle>
-          <CardDescription className={getThemeClasses({
-            base: "",
-            default: "text-gray-400",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}>
+          <CardDescription className={getThemedTextClasses('muted')}>
             Connect with other passengers on your flights via Nostr
           </CardDescription>
         </CardHeader>
@@ -354,12 +266,7 @@ export default function FlightChatsTab() {
           {isLoading ? (
             renderSkeletons()
           ) : error ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <p>{error}</p>
               <Button
                 variant="outline"
@@ -370,19 +277,9 @@ export default function FlightChatsTab() {
               </Button>
             </div>
           ) : hasNip05 && isConnected && chats.length === 0 ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <div className="flex justify-center mb-2">
-                <div className={getThemeClasses({
-                  base: "w-12 h-12 rounded-full flex items-center justify-center",
-                  default: "bg-gray-800 text-gdyup-primary",
-                  blue: "bg-blue-900 text-gdyup-primary",
-                  pink: "bg-pink-900 text-gdyup-primary"
-                })}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gdyup-bg-dark text-gdyup-primary">
                   <MessageSquare className="h-6 w-6" />
                 </div>
               </div>
@@ -392,6 +289,7 @@ export default function FlightChatsTab() {
               </p>
               <Button
                 onClick={() => router.push('/gdyup/browse')}
+                className={getThemedButtonClasses('primary')}
               >
                 Browse Available Flights
               </Button>

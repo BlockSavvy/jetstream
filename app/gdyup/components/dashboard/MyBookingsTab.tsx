@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { useGdyupTheme } from '../../hooks/useGdyupTheme';
 import { useAuth } from '@/components/auth-provider';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { 
   Plane, 
@@ -22,6 +22,8 @@ import { JetShareOfferWithUser } from '@/types/jetshare';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { ThemedIcon } from '../core/ThemedIcon';
+import { DashboardWrapper, DashboardCard, DashboardHeader, DashboardText } from './index';
 
 // Extended interface for our local component needs
 interface ExtendedJetShareOfferWithUser extends JetShareOfferWithUser {
@@ -34,7 +36,7 @@ export default function MyBookingsTab() {
   const [activeBookings, setActiveBookings] = useState<ExtendedJetShareOfferWithUser[]>([]);
   const [completedBookings, setCompletedBookings] = useState<ExtendedJetShareOfferWithUser[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -85,43 +87,41 @@ export default function MyBookingsTab() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={getThemeClasses({
-          base: "border rounded-lg overflow-hidden mb-4",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}
+        className={cn(
+          "border rounded-lg overflow-hidden mb-4",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}
       >
         <div className="p-4">
           <div className="flex flex-col md:flex-row justify-between gap-3">
             <div className="space-y-3">
               {/* Flight route */}
               <div className="flex items-center gap-2">
-                <Plane className={getThemeClasses({
-                  base: "h-4 w-4 rotate-90",
-                  default: "text-gdyup-primary",
-                  blue: "text-gdyup-primary",
-                  pink: "text-gdyup-primary"
-                })} />
-                <h3 className="font-medium">{offer.departure_location} → {offer.arrival_location}</h3>
+                <ThemedIcon 
+                  icon={Plane} 
+                  size={16} 
+                  className={cn("rotate-90", "text-gdyup-primary")} 
+                />
+                <h3 className={cn(getThemedTextClasses(), "font-medium")}>{offer.departure_location} → {offer.arrival_location}</h3>
               </div>
               
               {/* Flight details */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3.5 w-3.5 opacity-70" />
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
+                  <ThemedIcon icon={Calendar} size={14} />
                   <span>{format(flightDate, 'MMM d, yyyy')}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Users className="h-3.5 w-3.5 opacity-70" />
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
+                  <ThemedIcon icon={Users} size={14} />
                   <span>{offer.requested_seats || 1} {offer.requested_seats === 1 ? 'seat' : 'seats'}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <CreditCard className="h-3.5 w-3.5 opacity-70" />
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
+                  <ThemedIcon icon={CreditCard} size={14} />
                   <span>{formatCurrency(offer.requested_share_amount || 0)}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 opacity-70" />
+                <div className={cn("flex items-center gap-1", getThemedTextClasses('muted'))}>
+                  <ThemedIcon icon={MapPin} size={14} />
                   <span>{offer.arrival_location}</span>
                 </div>
               </div>
@@ -129,30 +129,15 @@ export default function MyBookingsTab() {
               {/* Booking status */}
               <div>
                 {offer.status === 'completed' ? (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-green-900/40 text-green-300 border-green-800",
-                    blue: "bg-green-900/40 text-green-300 border-green-800",
-                    pink: "bg-green-900/40 text-green-300 border-green-800"
-                  })}>
+                  <Badge className="bg-green-900/40 text-green-300 border-green-800">
                     Completed
                   </Badge>
                 ) : isPendingPayment ? (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-amber-900/40 text-amber-300 border-amber-800",
-                    blue: "bg-amber-900/40 text-amber-300 border-amber-800",
-                    pink: "bg-amber-900/40 text-amber-300 border-amber-800"
-                  })}>
+                  <Badge className="bg-amber-900/40 text-amber-300 border-amber-800">
                     Payment Required
                   </Badge>
                 ) : (
-                  <Badge className={getThemeClasses({
-                    base: "",
-                    default: "bg-blue-900/40 text-blue-300 border-blue-800",
-                    blue: "bg-blue-900/40 text-blue-300 border-blue-800",
-                    pink: "bg-blue-900/40 text-blue-300 border-blue-800"
-                  })}>
+                  <Badge className="bg-blue-900/40 text-blue-300 border-blue-800">
                     Confirmed
                   </Badge>
                 )}
@@ -163,12 +148,7 @@ export default function MyBookingsTab() {
               {isPendingPayment ? (
                 <Button
                   onClick={() => router.push(`/gdyup/payment/${offer.id}`)}
-                  className={getThemeClasses({
-                    base: "",
-                    default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                    blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                    pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-                  })}
+                  className={getThemedButtonClasses('primary')}
                 >
                   Complete Payment
                 </Button>
@@ -176,12 +156,7 @@ export default function MyBookingsTab() {
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/gdyup/offer/${offer.id}`)}
-                  className={getThemeClasses({
-                    base: "",
-                    default: "border-gray-700 hover:bg-gray-800",
-                    blue: "border-blue-700 hover:bg-blue-800",
-                    pink: "border-pink-700 hover:bg-pink-800"
-                  })}
+                  className="border-gdyup-border hover:bg-gdyup-bg-card"
                 >
                   View Details
                 </Button>
@@ -191,12 +166,7 @@ export default function MyBookingsTab() {
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/gdyup/boardingpass/${offer.id}`)}
-                  className={getThemeClasses({
-                    base: "",
-                    default: "border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10",
-                    blue: "border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10",
-                    pink: "border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10"
-                  })}
+                  className="border-gdyup-primary/50 text-gdyup-primary hover:bg-gdyup-primary/10"
                 >
                   Boarding Pass
                 </Button>
@@ -213,52 +183,21 @@ export default function MyBookingsTab() {
       {[1, 2, 3].map((i) => (
         <div 
           key={`skeleton-${i}`}
-          className={getThemeClasses({
-            base: "border rounded-lg overflow-hidden mb-4 p-4",
-            default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-950 border-blue-900",
-            pink: "bg-pink-950 border-pink-900"
-          })}
+          className={cn(
+            "border rounded-lg overflow-hidden mb-4 p-4",
+            getThemedBackgroundClasses('card'),
+            "border-gdyup-border"
+          )}
         >
           <div className="space-y-3">
-            <Skeleton className={getThemeClasses({
-              base: "h-5 w-2/3",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className={cn("h-5 w-2/3 bg-gdyup-bg-dark")} />
             <div className="grid grid-cols-2 gap-3">
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
-              <Skeleton className={getThemeClasses({
-                base: "h-4 w-full",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
+              <Skeleton className={cn("h-4 w-full bg-gdyup-bg-dark")} />
+              <Skeleton className={cn("h-4 w-full bg-gdyup-bg-dark")} />
+              <Skeleton className={cn("h-4 w-full bg-gdyup-bg-dark")} />
+              <Skeleton className={cn("h-4 w-full bg-gdyup-bg-dark")} />
             </div>
-            <Skeleton className={getThemeClasses({
-              base: "h-6 w-20",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className={cn("h-6 w-20 bg-gdyup-bg-dark")} />
           </div>
         </div>
       ))}
@@ -266,41 +205,24 @@ export default function MyBookingsTab() {
   );
 
   return (
-    <div className="space-y-6">
-      <Card className={getThemeClasses({
-        base: "border",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-950 border-blue-900",
-        pink: "bg-pink-950 border-pink-900"
-      })}>
+    <DashboardWrapper className="space-y-6">
+      <Card className={cn(
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className={getThemeClasses({
-                base: "",
-                default: "text-white",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
-              })}>
+              <CardTitle className={getThemedTextClasses()}>
                 Active Bookings
               </CardTitle>
-              <CardDescription className={getThemeClasses({
-                base: "",
-                default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}>
+              <CardDescription className={getThemedTextClasses('muted')}>
                 Your current and upcoming flights
               </CardDescription>
             </div>
             <Button
               onClick={() => router.push('/gdyup/browse')}
-              className={getThemeClasses({
-                base: "",
-                default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-              })}
+              className={getThemedButtonClasses('primary')}
             >
               Browse Flights
             </Button>
@@ -310,12 +232,7 @@ export default function MyBookingsTab() {
           {isLoading ? (
             renderSkeletons()
           ) : error ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <p>{error}</p>
               <Button
                 variant="outline"
@@ -326,12 +243,7 @@ export default function MyBookingsTab() {
               </Button>
             </div>
           ) : activeBookings.length === 0 ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <p>You don't have any active bookings.</p>
             </div>
           ) : (
@@ -343,27 +255,15 @@ export default function MyBookingsTab() {
       </Card>
 
       {!isLoading && completedBookings.length > 0 && (
-        <Card className={getThemeClasses({
-          base: "border",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}>
+        <Card className={cn(
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <CardHeader>
-            <CardTitle className={getThemeClasses({
-              base: "",
-              default: "text-white",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            })}>
+            <CardTitle className={getThemedTextClasses()}>
               Past Bookings
             </CardTitle>
-            <CardDescription className={getThemeClasses({
-              base: "",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <CardDescription className={getThemedTextClasses('muted')}>
               Your completed flights
             </CardDescription>
           </CardHeader>
@@ -374,6 +274,6 @@ export default function MyBookingsTab() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </DashboardWrapper>
   );
 } 

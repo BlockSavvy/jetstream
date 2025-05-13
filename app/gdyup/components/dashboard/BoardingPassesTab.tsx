@@ -22,6 +22,8 @@ import { motion } from 'framer-motion';
 import EnhancedBoardingPassButton from '../EnhancedBoardingPassButton';
 import NostrZapButton from '../NostrZapButton';
 import { cn } from '@/lib/utils';
+import { DashboardWrapper } from './index';
+import { ThemedIcon } from '../core/ThemedIcon';
 
 interface BoardingPass {
   id: string;
@@ -44,7 +46,7 @@ export default function BoardingPassesTab() {
   const [upcomingPasses, setUpcomingPasses] = useState<BoardingPass[]>([]);
   const [pastPasses, setPastPasses] = useState<BoardingPass[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -55,13 +57,36 @@ export default function BoardingPassesTab() {
       try {
         setIsLoading(true);
         
-        const response = await fetch(`/api/gdyup/boardingpasses?userId=${user.id}`);
+        // Add a timeout to handle stalled requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        try {
+          const response = await fetch(`/api/gdyup/boardingpasses?userId=${user.id}`, {
+            signal: controller.signal,
+            headers: {
+              'Cache-Control': 'no-cache',
+            }
+          });
+          
+          clearTimeout(timeoutId);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch boarding passes');
+            console.warn(`Boarding passes API returned status: ${response.status}`);
+            setUpcomingPasses([]);
+            setPastPasses([]);
+            return;
         }
         
         const data = await response.json();
+          
+          // Check if API returned the expected data structure
+          if (!data || !Array.isArray(data.boardingPasses)) {
+            console.warn('Boarding passes API returned unexpected data format', data);
+            setUpcomingPasses([]);
+            setPastPasses([]);
+            return;
+          }
         
         // Sort boarding passes by departure time
         const sortedPasses = data.boardingPasses.sort((a: BoardingPass, b: BoardingPass) => {
@@ -79,8 +104,18 @@ export default function BoardingPassesTab() {
         
         setUpcomingPasses(upcoming);
         setPastPasses(past);
+        } catch (fetchError: any) {
+          if (fetchError.name === 'AbortError') {
+            console.warn('Boarding passes API request timed out');
+          } else {
+            console.error('Error fetching boarding passes:', fetchError);
+          }
+          // Set empty arrays to show empty state instead of loading indefinitely
+          setUpcomingPasses([]);
+          setPastPasses([]);
+        }
       } catch (error) {
-        console.error('Error fetching boarding passes:', error);
+        console.error('Error in boarding passes tab:', error);
         setError('Unable to load your boarding passes. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -100,24 +135,18 @@ export default function BoardingPassesTab() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={getThemeClasses({
-          base: "border rounded-lg overflow-hidden mb-6",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}
+        className={cn(
+          "border rounded-lg overflow-hidden mb-4",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}
       >
         {/* Flight status bar */}
         <div className={cn(
           "h-1.5 w-full",
           isUpcoming ? 
             "bg-gdyup-primary" : 
-            getThemeClasses({
-              base: "",
-              default: "bg-gray-700",
-              blue: "bg-blue-800",
-              pink: "bg-pink-800"
-            })
+            "bg-gdyup-border"
         )}></div>
         
         <div className="p-4">
@@ -126,69 +155,45 @@ export default function BoardingPassesTab() {
             <div className="flex justify-between items-start">
               <div>
                 <div className="flex items-center gap-2">
-                  <div className={getThemeClasses({
-                    base: "p-1.5 rounded",
-                    default: "bg-gray-800",
-                    blue: "bg-blue-900",
-                    pink: "bg-pink-900"
-                  })}>
-                    <Plane className={cn("h-4 w-4", isUpcoming ? "text-gdyup-primary" : "text-gray-400")} />
+                  <div className="p-1.5 rounded bg-gdyup-bg-dark">
+                    <ThemedIcon 
+                      icon={Plane} 
+                      className={isUpcoming ? "text-gdyup-primary" : "text-gdyup-text-muted"} 
+                    />
                   </div>
-                  <div className={getThemeClasses({
-                    base: "text-xs",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted')}>
                     Flight {pass.flightNumber}
                   </div>
                 </div>
-                <h3 className="text-lg font-medium mt-2">{pass.departureLocation} → {pass.arrivalLocation}</h3>
-                <div className="flex items-center gap-2 mt-1 text-sm">
-                  <Calendar className="h-4 w-4 opacity-70" />
+                <h3 className={cn("text-lg font-medium mt-2", getThemedTextClasses())}>{pass.departureLocation} → {pass.arrivalLocation}</h3>
+                <div className={cn("flex items-center gap-2 mt-1 text-sm", getThemedTextClasses('muted'))}>
+                  <ThemedIcon 
+                    icon={Calendar} 
+                    className="text-gdyup-text-muted" 
+                  />
                   <span>{format(departureTime, 'MMMM d, yyyy')}</span>
                   <span className="mx-1">•</span>
                   <span>{format(departureTime, 'h:mm a')}</span>
                 </div>
               </div>
               
-              <div className={getThemeClasses({
-                base: "p-2 rounded-lg text-center",
-                default: "bg-black/20 border border-gray-800",
-                blue: "bg-blue-900/20 border border-blue-800",
-                pink: "bg-pink-900/20 border border-pink-800"
-              })}>
-                <div className="text-xs font-medium mb-1">Seat</div>
+              <div className="p-2 rounded-lg text-center bg-gdyup-bg-dark/50 border border-gdyup-border">
+                <div className={cn("text-xs font-medium mb-1", getThemedTextClasses('muted'))}>Seat</div>
                 <div className="text-xl font-mono">{pass.seatNumber || 'TBA'}</div>
               </div>
             </div>
             
             {/* Passenger info */}
-            <div className={getThemeClasses({
-              base: "p-3 rounded-md text-sm grid grid-cols-2 gap-4",
-              default: "bg-gray-800/50",
-              blue: "bg-blue-900/50",
-              pink: "bg-pink-900/50"
-            })}>
+            <div className="p-3 rounded-md text-sm grid grid-cols-2 gap-4 bg-gdyup-bg-dark/50">
               <div>
-                <div className={getThemeClasses({
-                  base: "text-xs mb-1",
-                  default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
-                })}>
+                <div className={cn("text-xs mb-1", getThemedTextClasses('muted'))}>
                   Passenger
                 </div>
                 <div className="font-medium">{pass.passengerName}</div>
               </div>
               
               <div>
-                <div className={getThemeClasses({
-                  base: "text-xs mb-1",
-                  default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
-                })}>
+                <div className={cn("text-xs mb-1", getThemedTextClasses('muted'))}>
                   Aircraft
                 </div>
                 <div className="font-medium">{pass.jetModel || 'Private Jet'}</div>
@@ -219,15 +224,13 @@ export default function BoardingPassesTab() {
                     onClick={() => router.push(`/gdyup/chats/${pass.offerId}`)}
                     className={cn(
                       "flex-1",
-                      getThemeClasses({
-                        base: "",
-                        default: "border-gray-700 hover:bg-gray-800",
-                        blue: "border-blue-700 hover:bg-blue-800",
-                        pink: "border-pink-700 hover:bg-pink-800"
-                      })
+                      "border-gdyup-border hover:bg-gdyup-bg-dark"
                     )}
                   >
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                    <ThemedIcon 
+                      icon={MessageSquare} 
+                      className="text-gdyup-text-muted mr-2" 
+                    />
                     Join Group Chat
                   </Button>
                 )}
@@ -253,57 +256,26 @@ export default function BoardingPassesTab() {
       {[1, 2].map((i) => (
         <div 
           key={`skeleton-${i}`}
-          className={getThemeClasses({
-            base: "border rounded-lg overflow-hidden mb-6",
-            default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-950 border-blue-900",
-            pink: "bg-pink-950 border-pink-900"
-          })}
+          className={cn(
+            "border rounded-lg overflow-hidden mb-6",
+            getThemedBackgroundClasses('card'),
+            "border-gdyup-border"
+          )}
         >
-          <div className="h-1.5 w-full bg-gray-800"></div>
+          <div className="h-1.5 w-full bg-gdyup-border"></div>
           <div className="p-4 space-y-4">
             <div className="flex justify-between">
               <div className="space-y-2">
-                <Skeleton className={getThemeClasses({
-                  base: "h-5 w-40",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-7 w-60",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-5 w-32",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
+                <Skeleton className="h-5 w-40 bg-gdyup-bg-dark" />
+                <Skeleton className="h-7 w-60 bg-gdyup-bg-dark" />
+                <Skeleton className="h-5 w-32 bg-gdyup-bg-dark" />
               </div>
-              <Skeleton className={getThemeClasses({
-                base: "h-16 w-16 rounded-lg",
-                default: "bg-gray-800",
-                blue: "bg-blue-900",
-                pink: "bg-pink-900"
-              })} />
+              <Skeleton className="h-16 w-16 rounded-lg bg-gdyup-bg-dark" />
             </div>
             
-            <Skeleton className={getThemeClasses({
-              base: "h-20 w-full rounded-md",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className="h-20 w-full rounded-md bg-gdyup-bg-dark" />
             
-            <Skeleton className={getThemeClasses({
-              base: "h-24 w-full rounded-md",
-              default: "bg-gray-800",
-              blue: "bg-blue-900",
-              pink: "bg-pink-900"
-            })} />
+            <Skeleton className="h-24 w-full rounded-md bg-gdyup-bg-dark" />
           </div>
         </div>
       ))}
@@ -311,28 +283,17 @@ export default function BoardingPassesTab() {
   );
 
   return (
-    <div className="space-y-6">
-      <Card className={getThemeClasses({
-        base: "border",
-        default: "bg-gray-900 border-gray-800",
-        blue: "bg-blue-950 border-blue-900",
-        pink: "bg-pink-950 border-pink-900"
-      })}>
+    <DashboardWrapper className="space-y-6">
+      <Card className={cn(
+        "border",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
         <CardHeader>
-          <CardTitle className={getThemeClasses({
-            base: "",
-            default: "text-white",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
+          <CardTitle className={getThemedTextClasses()}>
             Upcoming Boarding Passes
           </CardTitle>
-          <CardDescription className={getThemeClasses({
-            base: "",
-            default: "text-gray-400",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}>
+          <CardDescription className={getThemedTextClasses('muted')}>
             Download or view your boarding passes for upcoming flights
           </CardDescription>
         </CardHeader>
@@ -340,12 +301,7 @@ export default function BoardingPassesTab() {
           {isLoading ? (
             renderSkeletons()
           ) : error ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <p>{error}</p>
               <Button
                 variant="outline"
@@ -356,25 +312,19 @@ export default function BoardingPassesTab() {
               </Button>
             </div>
           ) : upcomingPasses.length === 0 ? (
-            <div className={getThemeClasses({
-              base: "text-center py-10",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <div className={cn("text-center py-10", getThemedTextClasses('muted'))}>
               <div className="flex justify-center mb-2">
-                <div className={getThemeClasses({
-                  base: "w-12 h-12 rounded-full flex items-center justify-center",
-                  default: "bg-gray-800 text-gdyup-primary",
-                  blue: "bg-blue-900 text-gdyup-primary",
-                  pink: "bg-pink-900 text-gdyup-primary"
-                })}>
-                  <Ticket className="h-6 w-6" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gdyup-bg-dark text-gdyup-primary">
+                  <ThemedIcon 
+                    icon={Ticket} 
+                    className="text-gdyup-primary" 
+                  />
                 </div>
               </div>
               <p className="mb-4">You don't have any upcoming boarding passes.</p>
               <Button
                 onClick={() => router.push('/gdyup/browse')}
+                className={getThemedButtonClasses('primary')}
               >
                 Browse Available Flights
               </Button>
@@ -388,27 +338,16 @@ export default function BoardingPassesTab() {
       </Card>
 
       {!isLoading && pastPasses.length > 0 && (
-        <Card className={getThemeClasses({
-          base: "border",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}>
+        <Card className={cn(
+          "border",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
           <CardHeader>
-            <CardTitle className={getThemeClasses({
-              base: "",
-              default: "text-white",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            })}>
+            <CardTitle className={getThemedTextClasses()}>
               Past Boarding Passes
             </CardTitle>
-            <CardDescription className={getThemeClasses({
-              base: "",
-              default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <CardDescription className={getThemedTextClasses('muted')}>
               Your boarding passes for completed flights
             </CardDescription>
           </CardHeader>
@@ -419,6 +358,6 @@ export default function BoardingPassesTab() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </DashboardWrapper>
   );
 } 
