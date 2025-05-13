@@ -7,6 +7,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ClientIdParams } from '@/lib/types/route-types';
+import { cn } from '@/lib/utils';
 
 // Page component is now a Server Component (no 'use client')
 export default function GdyupPaymentPage({ params }: ClientIdParams) {
@@ -23,7 +24,7 @@ export default function GdyupPaymentPage({ params }: ClientIdParams) {
     // Return a more user-friendly error instead of notFound()
     return (
       <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className="border border-red-800 bg-red-900/20">
+        <Card className="border-red-800 bg-red-900/20">
           <CardHeader>
             <CardTitle className="flex items-center text-red-500">
               <AlertCircle className="h-5 w-5 mr-2" />
@@ -37,7 +38,8 @@ export default function GdyupPaymentPage({ params }: ClientIdParams) {
           </CardContent>
           <CardFooter>
             <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full"
+              variant="default"
               onClick={() => window.location.href = "/gdyup/listings"}
             >
               Browse Available Flights
@@ -51,13 +53,13 @@ export default function GdyupPaymentPage({ params }: ClientIdParams) {
   return (
     <Suspense fallback={
       <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card>
+        <Card className="border-gdyup-border bg-gdyup-bg-card">
           <CardHeader>
-            <CardTitle className="text-center">Loading Payment Details...</CardTitle>
+            <CardTitle className="text-center text-gdyup-text">Loading Payment Details...</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center py-10">
-              <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
+              <Loader2 className="h-12 w-12 animate-spin text-gdyup-primary" />
             </div>
           </CardContent>
         </Card>

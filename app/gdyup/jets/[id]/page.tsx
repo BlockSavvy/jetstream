@@ -201,23 +201,23 @@ function JetDetailContent() {
         <Card className={getThemeClasses({
           base: "border shadow-sm",
           default: "bg-white border-gray-200",
-          blue: "bg-blue-950/40 border-blue-900/60",
-          pink: "bg-pink-950/40 border-pink-900/60"
+          luxury: "bg-blue-950/40 border-blue-900/60",
+          bitcoin: "bg-pink-950/40 border-pink-900/60"
         })}>
           <CardHeader>
             <CardTitle className={getThemeClasses({
               base: "text-center",
               default: "text-gray-900",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
+              luxury: "text-blue-50",
+              bitcoin: "text-pink-50"
             })}>Error</CardTitle>
           </CardHeader>
           <CardContent>
             <p className={getThemeClasses({
               base: "text-center",
               default: "text-gray-500",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
+              luxury: "text-blue-300",
+              bitcoin: "text-pink-300"
             })}>{error}</p>
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -236,23 +236,23 @@ function JetDetailContent() {
         <Card className={getThemeClasses({
           base: "border shadow-sm",
           default: "bg-white border-gray-200",
-          blue: "bg-blue-950/40 border-blue-900/60",
-          pink: "bg-pink-950/40 border-pink-900/60"
+          luxury: "bg-blue-950/40 border-blue-900/60",
+          bitcoin: "bg-pink-950/40 border-pink-900/60"
         })}>
           <CardHeader>
             <CardTitle className={getThemeClasses({
               base: "text-center",
               default: "text-gray-900",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
+              luxury: "text-blue-50",
+              bitcoin: "text-pink-50"
             })}>Jet Not Found</CardTitle>
           </CardHeader>
           <CardContent>
             <p className={getThemeClasses({
               base: "text-center",
               default: "text-gray-500",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
+              luxury: "text-blue-300",
+              bitcoin: "text-pink-300"
             })}>The jet you're looking for could not be found.</p>
           </CardContent>
           <CardFooter className="flex justify-center">
@@ -279,8 +279,8 @@ function JetDetailContent() {
         <h1 className={getThemeClasses({
           base: "text-2xl font-bold",
           default: "text-gray-900",
-          blue: "text-blue-50",
-          pink: "text-pink-50"
+          luxury: "text-blue-50",
+          bitcoin: "text-pink-50"
         })}>
           {jet.manufacturer} {jet.model}
         </h1>
@@ -289,15 +289,15 @@ function JetDetailContent() {
       <Card className={getThemeClasses({
         base: "border shadow-sm mb-6",
         default: "bg-white border-gray-200",
-        blue: "bg-blue-950/40 border-blue-900/60",
-        pink: "bg-pink-950/40 border-pink-900/60"
+        luxury: "bg-blue-950/40 border-blue-900/60",
+        bitcoin: "bg-pink-950/40 border-pink-900/60"
       })}>
         <CardHeader>
           <CardTitle className={getThemeClasses({
             base: "flex items-center",
             default: "text-gray-900",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
+            luxury: "text-blue-50",
+            bitcoin: "text-pink-50"
           })}>
             <Plane className="h-5 w-5 mr-2" />
             {jet.tail_number}
@@ -310,14 +310,14 @@ function JetDetailContent() {
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
                   default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}>Aircraft</h3>
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {jet.manufacturer} {jet.model} ({jet.year})
                 </p>
@@ -327,14 +327,14 @@ function JetDetailContent() {
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
                   default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}>Capacity</h3>
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {jet.capacity} passengers
                 </p>
@@ -346,14 +346,14 @@ function JetDetailContent() {
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
                   default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}>Home Base</h3>
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {jet.home_base_airport}
                 </p>
@@ -363,14 +363,14 @@ function JetDetailContent() {
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
                   default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}>Range</h3>
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {jet.range_nm || 'N/A'} nm
                 </p>
@@ -382,14 +382,14 @@ function JetDetailContent() {
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
                   default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}>Cruise Speed</h3>
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {jet.cruise_speed_kts || 'N/A'} kts
                 </p>
@@ -399,14 +399,14 @@ function JetDetailContent() {
                 <h3 className={getThemeClasses({
                   base: "text-sm font-medium mb-1",
                   default: "text-gray-500",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
+                  luxury: "text-blue-300",
+                  bitcoin: "text-pink-300"
                 })}>Added</h3>
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-gray-900",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {jet.created_at ? format(new Date(jet.created_at), 'MMM d, yyyy') : 'N/A'}
                 </p>
@@ -418,14 +418,14 @@ function JetDetailContent() {
             <div className={getThemeClasses({
               base: "mt-6 p-4 rounded-md",
               default: "bg-gray-50 border border-gray-100",
-              blue: "bg-blue-900/30 border border-blue-800/30",
-              pink: "bg-pink-900/30 border border-pink-800/30"
+              luxury: "bg-blue-900/30 border border-blue-800/30",
+              bitcoin: "bg-pink-900/30 border border-pink-800/30"
             })}>
               <h3 className={getThemeClasses({
                 base: "text-sm font-medium mb-2 flex items-center",
                 default: "text-gray-700",
-                blue: "text-blue-200",
-                pink: "text-pink-200"
+                luxury: "text-blue-200",
+                bitcoin: "text-pink-200"
               })}>
                 <Info className="h-4 w-4 mr-2" />
                 Notes
@@ -433,8 +433,8 @@ function JetDetailContent() {
               <p className={getThemeClasses({
                 base: "text-sm",
                 default: "text-gray-600",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
+                luxury: "text-blue-300",
+                bitcoin: "text-pink-300"
               })}>
                 {jet.notes}
               </p>

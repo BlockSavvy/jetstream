@@ -107,8 +107,8 @@ export default function OnboardingPage() {
       <Card className={getThemeClasses({
         base: "border",
         default: "bg-white border-gray-200",
-        blue: "bg-blue-950 border-blue-900 text-blue-50",
-        pink: "bg-pink-950 border-pink-900 text-pink-50"
+        luxury: "bg-blue-950 border-blue-900 text-blue-50",
+        bitcoin: "bg-pink-950 border-pink-900 text-pink-50"
       })}>
         <CardHeader>
           <div className="flex justify-center mb-6">
@@ -190,8 +190,8 @@ export default function OnboardingPage() {
                     className={getThemeClasses({
                       base: "",
                       default: "border-gray-300 hover:bg-gray-100",
-                      blue: "border-blue-800 hover:bg-blue-900",
-                      pink: "border-pink-800 hover:bg-pink-900"
+                      luxury: "border-blue-800 hover:bg-blue-900",
+                      bitcoin: "border-pink-800 hover:bg-pink-900"
                     })}
                   >
                     Back
@@ -216,16 +216,16 @@ export default function OnboardingPage() {
                   <h3 className={getThemeClasses({
                     base: "text-xl font-semibold",
                     default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
+                    luxury: "text-blue-50",
+                    bitcoin: "text-pink-50"
                   })}>
                     All Set!
                   </h3>
                   <p className={getThemeClasses({
                     base: "max-w-md",
                     default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
+                    luxury: "text-blue-300",
+                    bitcoin: "text-pink-300"
                   })}>
                     Your GDY·UP account is ready to use. You can now browse available flights, create your own listings, and connect with other jet owners and passengers.
                   </p>
@@ -235,15 +235,15 @@ export default function OnboardingPage() {
                   <div className={getThemeClasses({
                     base: "flex flex-col items-center space-y-2 p-4 rounded-lg",
                     default: "bg-gray-100",
-                    blue: "bg-blue-900/30",
-                    pink: "bg-pink-900/30"
+                    luxury: "bg-blue-900/30",
+                    bitcoin: "bg-pink-900/30"
                   })}>
                     <Plane className="h-6 w-6 text-gdyup-primary" />
                     <span className={getThemeClasses({
                       base: "text-sm text-center",
                       default: "text-gray-600",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
+                      luxury: "text-blue-300",
+                      bitcoin: "text-pink-300"
                     })}>
                       Browse Flights
                     </span>
@@ -252,15 +252,15 @@ export default function OnboardingPage() {
                   <div className={getThemeClasses({
                     base: "flex flex-col items-center space-y-2 p-4 rounded-lg",
                     default: "bg-gray-100",
-                    blue: "bg-blue-900/30",
-                    pink: "bg-pink-900/30"
+                    luxury: "bg-blue-900/30",
+                    bitcoin: "bg-pink-900/30"
                   })}>
                     <User className="h-6 w-6 text-gdyup-primary" />
                     <span className={getThemeClasses({
                       base: "text-sm text-center",
                       default: "text-gray-600",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
+                      luxury: "text-blue-300",
+                      bitcoin: "text-pink-300"
                     })}>
                       Manage Profile
                     </span>
@@ -269,15 +269,15 @@ export default function OnboardingPage() {
                   <div className={getThemeClasses({
                     base: "flex flex-col items-center space-y-2 p-4 rounded-lg",
                     default: "bg-gray-100",
-                    blue: "bg-blue-900/30",
-                    pink: "bg-pink-900/30"
+                    luxury: "bg-blue-900/30",
+                    bitcoin: "bg-pink-900/30"
                   })}>
                     <Zap className="h-6 w-6 text-gdyup-primary" />
                     <span className={getThemeClasses({
                       base: "text-sm text-center",
                       default: "text-gray-600",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
+                      luxury: "text-blue-300",
+                      bitcoin: "text-pink-300"
                     })}>
                       Bitcoin Payments
                     </span>

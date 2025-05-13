@@ -2,11 +2,13 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { ThemedIcon } from '../components/core/ThemedIcon';
 
 // Extract the component that uses searchParams to properly handle suspense
 function MessagesContent() {
@@ -14,7 +16,7 @@ function MessagesContent() {
   const router = useRouter();
   const offerId = searchParams?.get('offer');
   const [isLoading, setIsLoading] = useState(false);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedBackgroundClasses, getThemedButtonClasses } = useGdyupTheme();
 
   useEffect(() => {
     // In a real app, we would fetch messages here
@@ -25,40 +27,36 @@ function MessagesContent() {
     <div className="container mx-auto px-4 py-8">
       <Button 
         variant="ghost" 
-        className="mb-4" 
+        className={cn("mb-4", getThemedButtonClasses('ghost'))}
         onClick={() => router.back()}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ThemedIcon icon={ArrowLeft} className="mr-2" size={16} />
         Back
       </Button>
       
-      <Card className={getThemeClasses({
-        base: "border shadow-sm",
-        default: "bg-white border-gray-200",
-        blue: "bg-blue-950/40 border-blue-900/60",
-        pink: "bg-pink-950/40 border-pink-900/60"
-      })}>
+      <Card className={cn(
+        "w-full min-h-[85vh]",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
         <CardHeader>
-          <CardTitle className={getThemeClasses({
-            base: "",
-            default: "text-gray-900",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>
-            Messages
-          </CardTitle>
+          <CardTitle className={cn(
+            "text-lg md:text-xl",
+            getThemedTextClasses()
+          )}>Messages</CardTitle>
+          <CardDescription className={getThemedTextClasses('muted')}>
+            Communicate with your flight partners
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className={getThemeClasses({
-            base: "text-center py-8",
-            default: "text-gray-500",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
-          })}>
+          <p className={cn(
+            "text-center py-8",
+            getThemedTextClasses('muted')
+          )}>
             {offerId 
               ? `Messages for offer ${offerId} will appear here.` 
               : "Select a flight to view messages."}
-            </p>
+          </p>
         </CardContent>
       </Card>
     </div>
@@ -69,7 +67,7 @@ export default function MessagesPage() {
   return (
     <Suspense fallback={
       <div className="container mx-auto px-4 py-8 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <ThemedIcon icon={Loader2} className="h-8 w-8 animate-spin text-gdyup-primary" />
       </div>
     }>
       <MessagesContent />

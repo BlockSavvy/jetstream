@@ -28,109 +28,19 @@ export default function NotFound() {
   
   // Return a tailored error page based on where the user likely came from
   return (
-    <div className="container mx-auto px-4 max-w-md py-16">
-      <Card className={getThemeClasses({
-        base: "border shadow-md",
-        default: "bg-gray-900 border-gray-800 text-white",
-        blue: "bg-blue-950 border-blue-900 text-white",
-        pink: "bg-pink-950 border-pink-900 text-white",
-      })}>
-        <CardHeader>
-          <CardTitle className="text-xl text-center">Page Not Found</CardTitle>
-          <CardDescription className={getThemeClasses({
-            base: "text-center",
-            default: "text-gray-400",
-            blue: "text-blue-300",
-            pink: "text-pink-300",
-          })}>
-            Sorry, we couldn't find the page you were looking for.
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          <p className={getThemeClasses({
-            base: "text-sm",
-            default: "text-gray-300",
-            blue: "text-blue-200",
-            pink: "text-pink-200",
-          })}>
-            {offerId 
-              ? "It looks like you were trying to access an offer or payment page. We can help you navigate to the right place."
-              : "The link you followed may be broken, or the page may have been moved or removed."}
-          </p>
-          
-          {/* Show recovery options if we have an offer ID */}
-          {offerId && (
-            <div className="space-y-2 pt-2 border-t border-gray-800">
-              <p className="text-sm font-medium">Quick recovery options:</p>
-              <div className="flex flex-col gap-2">
-                <Button 
-                  variant="outline" 
-                  className={getThemeClasses({
-                    base: "w-full justify-start text-left",
-                    default: "bg-gray-800 border-gray-700 hover:bg-gray-700",
-                    blue: "bg-blue-900 border-blue-800 hover:bg-blue-800",
-                    pink: "bg-pink-900 border-pink-800 hover:bg-pink-800",
-                  })}
-                  asChild
-                >
-                  <Link href={`/gdyup/offer/redirect/${offerId}?to=view`}>
-                    <Search className="mr-2 h-4 w-4" />
-                    View Offer Details
-                  </Link>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className={getThemeClasses({
-                    base: "w-full justify-start text-left",
-                    default: "bg-gray-800 border-gray-700 hover:bg-gray-700",
-                    blue: "bg-blue-900 border-blue-800 hover:bg-blue-800",
-                    pink: "bg-pink-900 border-pink-800 hover:bg-pink-800",
-                  })}
-                  asChild
-                >
-                  <Link href={`/gdyup/offer/redirect/${offerId}?to=payment`}>
-                    <Search className="mr-2 h-4 w-4" />
-                    Go to Payment
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex flex-col space-y-2">
-          <Button 
-            className={getThemeClasses({
-              base: "w-full",
-              default: "bg-[#DAFF0D] text-black hover:bg-[#C8EA0C]",
-              blue: "bg-blue-500 text-white hover:bg-blue-600",
-              pink: "bg-pink-500 text-white hover:bg-pink-600",
-            })} 
-            asChild
-          >
-            <Link href="/gdyup/dashboard">
-              <Home className="mr-2 h-4 w-4" />
-              Go to Dashboard
-            </Link>
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className={getThemeClasses({
-              base: "w-full",
-              default: "border-gray-700 hover:bg-gray-800 text-white",
-              blue: "border-blue-700 hover:bg-blue-900 text-white",
-              pink: "border-pink-700 hover:bg-pink-900 text-white",
-            })}
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Go Back
-          </Button>
-        </CardFooter>
-      </Card>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="w-full max-w-md p-6 bg-gray-900 rounded-lg shadow-lg text-center">
+        <h2 className="text-3xl font-bold mb-4">404 Not Found</h2>
+        <p className="mb-6">
+          The page you are looking for does not exist.
+        </p>
+        <Link
+          href="/gdyup/error-fix"
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Go to Error Fix Page
+        </Link>
+      </div>
     </div>
   );
 } 

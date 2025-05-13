@@ -31,7 +31,7 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'error'>('pending');
   const [testMode, setTestMode] = useState(false);
   const supabase = createClient();
-  const { getThemeClasses, getThemedButtonClasses, theme, isMobile } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, theme, isMobile } = useGdyupTheme();
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load offer data from Supabase
@@ -269,32 +269,14 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className={getThemeClasses({
-          base: "border shadow",
-          default: "bg-white border-gray-200",
-          blue: "bg-blue-950/40 border-blue-900/60",
-          pink: "bg-pink-950/40 border-pink-900/60"
-        })}>
-          <CardHeader className={getThemeClasses({
-            base: "",
-            default: "border-b border-gray-100",
-            blue: "border-b border-blue-900/60",
-            pink: "border-b border-pink-900/60"
-          })}>
-            <CardTitle className={getThemeClasses({
-              base: "text-center",
-              default: "text-gray-900",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            })}>Loading Payment Details...</CardTitle>
+        <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border shadow")}>
+          <CardHeader className="border-b border-gdyup-border">
+            <CardTitle className={cn("text-center", getThemedTextClasses())}>
+              Loading Payment Details...
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center py-10">
-            <Loader2 className={cn("h-12 w-12 animate-spin", getThemeClasses({
-              base: "",
-              default: "text-amber-500",
-              blue: "text-amber-400",
-              pink: "text-amber-400"
-            }))} />
+            <Loader2 className={cn("h-12 w-12 animate-spin text-gdyup-primary")} />
           </CardContent>
         </Card>
       </div>
@@ -305,30 +287,15 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card className={getThemeClasses({
-          base: "border shadow",
-          default: "bg-white border-gray-200",
-          blue: "bg-blue-950/40 border-blue-900/60",
-          pink: "bg-pink-950/40 border-pink-900/60"
-        })}>
+        <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border shadow")}>
           <CardHeader>
-            <CardTitle className={cn("flex items-center justify-center gap-2", getThemeClasses({
-              base: "",
-              default: "text-red-600",
-              blue: "text-red-400",
-              pink: "text-red-400"
-            }))}>
+            <CardTitle className={cn("flex items-center justify-center gap-2 text-red-600 dark:text-red-400")}>
               <AlertCircle className="h-5 w-5" />
               Error
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className={getThemeClasses({
-              base: "mb-4",
-              default: "text-gray-700",
-              blue: "text-blue-200",
-              pink: "text-pink-200"
-            })}>{error}</p>
+            <p className={cn("mb-4", getThemedTextClasses())}>{error}</p>
             <Button 
               onClick={() => router.push('/gdyup/dashboard')}
               className={getThemedButtonClasses("primary")}
@@ -353,145 +320,66 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
         <Button 
           variant="ghost" 
           size="sm" 
-          className={getThemeClasses({
-            base: "mr-2",
-            default: "text-gray-800 hover:text-black hover:bg-gray-100",
-            blue: "text-blue-100 hover:text-white hover:bg-blue-800",
-            pink: "text-pink-100 hover:text-white hover:bg-pink-800"
-          })}
+          className={cn("mr-2", getThemedTextClasses())}
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
-        <h1 className={getThemeClasses({
-          base: "text-2xl font-bold", 
-          default: "text-gray-900",
-          blue: "text-blue-50",
-          pink: "text-pink-50"
-        })}>
+        <h1 className={cn("text-2xl font-bold", getThemedTextClasses())}>
           Flight Share Payment
         </h1>
       </div>
       
       {testMode && (
-        <div className={getThemeClasses({
-          base: "mb-4 p-3 rounded-md border text-sm",
-          default: "bg-blue-50 border-blue-200 text-blue-700",
-          blue: "bg-blue-900/40 border-blue-800/60 text-blue-200",
-          pink: "bg-pink-900/40 border-pink-800/60 text-pink-200"
-        })}>
+        <div className={cn(
+          "mb-4 p-3 rounded-md border text-sm",
+          "bg-blue-900/40 border-blue-800/60",
+          getThemedTextClasses('secondary')
+        )}>
           <div className="font-medium">Test Mode Active</div>
           <p>This is a test payment. No actual Bitcoin will be transferred.</p>
         </div>
       )}
       
-      <Card className={getThemeClasses({
-        base: "border shadow mb-6",
-        default: "bg-white border-gray-200",
-        blue: "bg-blue-950/40 border-blue-900/60",
-        pink: "bg-pink-950/40 border-pink-900/60"
-      })}>
-        <CardHeader className={getThemeClasses({
-          base: "pb-3",
-          default: "bg-gray-50 border-b border-gray-100",
-          blue: "bg-blue-950/60 border-b border-blue-900/60",
-          pink: "bg-pink-950/60 border-b border-pink-900/60"
-        })}>
-          <CardTitle className={getThemeClasses({
-            base: "",
-            default: "text-gray-900",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>Payment Details</CardTitle>
+      <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border shadow mb-6")}>
+        <CardHeader className={cn("pb-3 border-b border-gdyup-border", getThemedBackgroundClasses('card'))}>
+          <CardTitle className={getThemedTextClasses()}>Payment Details</CardTitle>
         </CardHeader>
         
         <CardContent className="pt-4">
           {offer && (
             <div className="space-y-4">
-              <div className={cn("flex justify-between items-center p-3 rounded-md", getThemeClasses({
-                base: "",
-                default: "bg-gray-50 border border-gray-100",
-                blue: "bg-blue-950/60 border border-blue-900/40",
-                pink: "bg-pink-950/60 border border-pink-900/40"
-              }))}>
+              <div className={cn(
+                "flex justify-between items-center p-3 rounded-md",
+                getThemedBackgroundClasses('card'),
+                "border border-gdyup-border/40"
+              )}>
                 <div>
-                  <p className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>Flight Share Amount</p>
-                  <p className={getThemeClasses({
-                    base: "text-xl font-bold",
-                    default: "text-gray-900",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>${offer.requested_share_amount.toLocaleString()}</p>
+                  <p className={getThemedTextClasses('muted') + " text-sm"}>Flight Share Amount</p>
+                  <p className={cn("text-xl font-bold", getThemedTextClasses())}>${offer.requested_share_amount.toLocaleString()}</p>
                 </div>
                 <div className="text-right">
-                  <p className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-500",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>Total Flight Cost</p>
-                  <p className={getThemeClasses({
-                    base: "text-lg",
-                    default: "text-gray-700",
-                    blue: "text-blue-100",
-                    pink: "text-pink-100"
-                  })}>${offer.total_flight_cost.toLocaleString()}</p>
+                  <p className={getThemedTextClasses('muted') + " text-sm"}>Total Flight Cost</p>
+                  <p className={cn("text-lg", getThemedTextClasses())}>${offer.total_flight_cost.toLocaleString()}</p>
                 </div>
               </div>
               
-              <div className={cn("flex flex-col md:flex-row gap-4 rounded-md p-3", getThemeClasses({
-                base: "",
-                default: "bg-amber-50 border border-amber-100",
-                blue: "bg-amber-900/20 border border-amber-800/50",
-                pink: "bg-amber-900/20 border border-amber-800/50"
-              }))}>
+              <div className={cn(
+                "flex flex-col md:flex-row gap-4 rounded-md p-3",
+                "bg-amber-900/20 border border-amber-800/50"
+              )}>
                 <div className="flex-grow">
-                  <p className={cn("text-sm font-medium", getThemeClasses({
-                    base: "",
-                    default: "text-amber-800",
-                    blue: "text-amber-300",
-                    pink: "text-amber-300"
-                  }))}>From</p>
-                  <p className={getThemeClasses({
-                    base: "",
-                    default: "text-amber-900",
-                    blue: "text-amber-200",
-                    pink: "text-amber-200"
-                  })}>{offer.departure_location}</p>
+                  <p className={cn("text-sm font-medium text-amber-300")}>From</p>
+                  <p className="text-amber-200">{offer.departure_location}</p>
                 </div>
                 <div className="flex-grow">
-                  <p className={cn("text-sm font-medium", getThemeClasses({
-                    base: "",
-                    default: "text-amber-800",
-                    blue: "text-amber-300",
-                    pink: "text-amber-300"
-                  }))}>To</p>
-                  <p className={getThemeClasses({
-                    base: "",
-                    default: "text-amber-900",
-                    blue: "text-amber-200",
-                    pink: "text-amber-200"
-                  })}>{offer.arrival_location}</p>
+                  <p className={cn("text-sm font-medium text-amber-300")}>To</p>
+                  <p className="text-amber-200">{offer.arrival_location}</p>
                 </div>
                 <div className="flex-grow">
-                  <p className={cn("text-sm font-medium", getThemeClasses({
-                    base: "",
-                    default: "text-amber-800",
-                    blue: "text-amber-300",
-                    pink: "text-amber-300"
-                  }))}>Date</p>
-                  <p className={getThemeClasses({
-                    base: "",
-                    default: "text-amber-900",
-                    blue: "text-amber-200",
-                    pink: "text-amber-200"
-                  })}>
+                  <p className={cn("text-sm font-medium text-amber-300")}>Date</p>
+                  <p className="text-amber-200">
                     {new Date(offer.flight_date).toLocaleDateString('en-US', { 
                       month: 'long', 
                       day: 'numeric', 
@@ -510,19 +398,9 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className={cn("p-4 rounded-md", getThemeClasses({
-                      base: "border",
-                      default: "bg-gray-50 border-gray-100",
-                      blue: "bg-blue-950/60 border-blue-900/40",
-                      pink: "bg-pink-950/60 border-pink-900/40"
-                    }))}
+                    className={cn("p-4 rounded-md", getThemedBackgroundClasses('card'))}
                   >
-                    <p className={getThemeClasses({
-                      base: "text-sm mb-4",
-                      default: "text-gray-700",
-                      blue: "text-blue-200",
-                      pink: "text-pink-200"
-                    })}>
+                    <p className={getThemedTextClasses('muted') + " mb-4"}>
                       To secure this flight share, you'll need to accept the offer and complete payment. By accepting, you agree to the terms of this flight share.
                     </p>
                     <Button 
@@ -569,16 +447,11 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className={cn("p-4 rounded-md border", getThemeClasses({
-                      base: "",
-                      default: "bg-red-50 border-red-100 text-red-700",
-                      blue: "bg-red-900/20 border-red-900/40 text-red-300",
-                      pink: "bg-red-900/20 border-red-900/40 text-red-300"
-                    }))}
+                    className={cn("p-4 rounded-md border bg-red-900/20 border-red-900/40 text-red-300")}
                   >
                     <div className="flex items-center mb-2">
                       <AlertCircle className="h-5 w-5 mr-2" />
-                      <p className="font-medium">Payment Error</p>
+                      <p className={cn(getThemedTextClasses(), "font-medium")}>Payment Error</p>
                     </div>
                     <p className="text-sm mb-4">
                       We encountered an issue processing your payment. Please try again or contact support if the problem persists.
@@ -589,12 +462,7 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
                         disabled={isRetrying}
                         className={cn(
                           "flex-1",
-                          getThemeClasses({
-                            base: "",
-                            default: "bg-amber-600 hover:bg-amber-700 text-white",
-                            blue: "bg-amber-600 hover:bg-amber-700 text-white",
-                            pink: "bg-amber-600 hover:bg-amber-700 text-white"
-                          })
+                          getThemedButtonClasses("primary")
                         )}
                       >
                         {isRetrying ? (
@@ -628,16 +496,11 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
-                    className={cn("p-4 rounded-md border", getThemeClasses({
-                      base: "",
-                      default: "bg-green-50 border-green-100 text-green-700",
-                      blue: "bg-green-900/20 border-green-900/40 text-green-300",
-                      pink: "bg-green-900/20 border-green-900/40 text-green-300"
-                    }))}
+                    className={cn("p-4 rounded-md border bg-green-900/20 border-green-900/40 text-green-300")}
                   >
                     <div className="flex items-center mb-2">
                       <CheckCircle className="h-5 w-5 mr-2" />
-                      <p className="font-medium">Payment Complete!</p>
+                      <p className={cn(getThemedTextClasses(), "font-medium")}>Payment Complete!</p>
                     </div>
                     <p className="text-sm mb-4">
                       Your payment has been successfully processed. You can now view your boarding pass.
@@ -650,14 +513,14 @@ export default function PaymentContent({ offerId }: PaymentContentProps) {
                       )}
                     >
                       View Boarding Pass
-              </Button>
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           )}
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 } 

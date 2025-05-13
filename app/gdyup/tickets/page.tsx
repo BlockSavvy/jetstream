@@ -219,16 +219,16 @@ export default function TicketsPage() {
           getThemeClasses({
             base: "overflow-hidden border",
             default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-950 border-blue-900",
-            pink: "bg-pink-950 border-pink-900"
+            luxury: "bg-blue-950 border-blue-900",
+            bitcoin: "bg-pink-950 border-pink-900"
           }),
           isPastFlight && "opacity-80"
         )}>
           <div className={getThemeClasses({
             base: "h-2 w-full",
             default: "bg-gdyup-primary",
-            blue: "bg-gdyup-primary",
-            pink: "bg-gdyup-primary"
+            luxury: "bg-gdyup-primary",
+            bitcoin: "bg-gdyup-primary"
           })}></div>
           
           <CardHeader className="pb-2">
@@ -237,8 +237,8 @@ export default function TicketsPage() {
                 <CardTitle className={getThemeClasses({
                   base: "text-xl flex items-center",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   <Plane className="h-5 w-5 mr-2 rotate-90" />
                   {ticket.departure_location_code} to {ticket.arrival_location_code}
@@ -246,8 +246,8 @@ export default function TicketsPage() {
                 <CardDescription className={getThemeClasses({
                   base: "",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>
                   {format(parseISO(ticket.flight_date || ticket.boarding_time), 'EEEE, MMMM d, yyyy')}
                 </CardDescription>
@@ -256,8 +256,8 @@ export default function TicketsPage() {
               <div className={getThemeClasses({
                 base: "px-2 py-1 rounded-full text-xs font-medium",
                 default: isPastFlight ? "bg-gray-800 text-gray-300" : "bg-green-900/30 text-green-300 border border-green-800",
-                blue: isPastFlight ? "bg-blue-900 text-blue-300" : "bg-green-900/30 text-green-300 border border-green-800",
-                pink: isPastFlight ? "bg-pink-900 text-pink-300" : "bg-green-900/30 text-green-300 border border-green-800"
+                luxury: isPastFlight ? "bg-blue-900 text-blue-300" : "bg-green-900/30 text-green-300 border border-green-800",
+                bitcoin: isPastFlight ? "bg-pink-900 text-pink-300" : "bg-green-900/30 text-green-300 border border-green-800"
               })}>
                 {isPastFlight ? 'Completed' : 'Confirmed'}
               </div>
@@ -268,27 +268,27 @@ export default function TicketsPage() {
             <div className={getThemeClasses({
               base: "flex items-center justify-between p-3 rounded-lg",
               default: "bg-black/30 border border-gray-800",
-              blue: "bg-blue-950/30 border border-blue-900",
-              pink: "bg-pink-950/30 border border-pink-900"
+              luxury: "bg-blue-950/30 border border-blue-900",
+              bitcoin: "bg-pink-950/30 border border-pink-900"
             })}>
               <div className="text-center">
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>From</p>
                 <p className={getThemeClasses({
                   base: "font-bold text-lg",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>{ticket.departure_location_code}</p>
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>{ticket.departure_location}</p>
               </div>
               
@@ -296,23 +296,23 @@ export default function TicketsPage() {
                 <div className={getThemeClasses({
                   base: "h-0.5 flex-1",
                   default: "bg-gray-700",
-                  blue: "bg-blue-700",
-                  pink: "bg-pink-700"
+                  luxury: "bg-blue-700",
+                  bitcoin: "bg-pink-700"
                 })}></div>
                 <Plane className={cn(
                   "mx-2 h-5 w-5 flex-shrink-0 rotate-90",
                   getThemeClasses({
                     base: "",
                     default: "text-gdyup-primary",
-                    blue: "text-gdyup-primary",
-                    pink: "text-gdyup-primary"
+                    luxury: "text-gdyup-primary",
+                    bitcoin: "text-gdyup-primary"
                   })
                 )} />
                 <div className={getThemeClasses({
                   base: "h-0.5 flex-1",
                   default: "bg-gray-700",
-                  blue: "bg-blue-700",
-                  pink: "bg-pink-700"
+                  luxury: "bg-blue-700",
+                  bitcoin: "bg-pink-700"
                 })}></div>
               </div>
               
@@ -320,20 +320,20 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>To</p>
                 <p className={getThemeClasses({
                   base: "font-bold text-lg",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>{ticket.arrival_location_code}</p>
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>{ticket.arrival_location}</p>
               </div>
             </div>
@@ -343,8 +343,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>
                   <Clock className="h-3 w-3 inline mr-1" />
                   Departure
@@ -352,8 +352,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {format(parseISO(ticket.boarding_time), 'h:mm a')}
                 </p>
@@ -363,8 +363,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>
                   <Calendar className="h-3 w-3 inline mr-1" />
                   Date
@@ -372,8 +372,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {format(parseISO(ticket.flight_date || ticket.boarding_time), 'MMM d, yyyy')}
                 </p>
@@ -383,8 +383,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>
                   <User className="h-3 w-3 inline mr-1" />
                   Seat
@@ -392,8 +392,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {ticket.seat || 'TBD'}
                 </p>
@@ -403,8 +403,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "text-xs",
                   default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
                 })}>
                   <Plane className="h-3 w-3 inline mr-1" />
                   Aircraft
@@ -412,8 +412,8 @@ export default function TicketsPage() {
                 <p className={getThemeClasses({
                   base: "font-medium",
                   default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
                 })}>
                   {ticket.aircraft_type || ticket.metadata?.aircraft_model || 'Private Jet'}
                 </p>
@@ -424,15 +424,15 @@ export default function TicketsPage() {
               <div className={getThemeClasses({
                 base: "flex items-center justify-between p-3 rounded-lg",
                 default: "bg-black/20 border border-gray-800",
-                blue: "bg-blue-950/20 border border-blue-900",
-                pink: "bg-pink-950/20 border border-pink-900"
+                luxury: "bg-blue-950/20 border border-blue-900",
+                bitcoin: "bg-pink-950/20 border border-pink-900"
               })}>
                 <div className="flex items-center gap-2">
                   <p className={getThemeClasses({
                     base: "text-sm font-medium",
                     default: "text-white",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
+                    luxury: "text-blue-50",
+                    bitcoin: "text-pink-50"
                   })}>
                     {creator.full_name}
                   </p>
@@ -461,8 +461,8 @@ export default function TicketsPage() {
           <CardFooter className={getThemeClasses({
             base: "flex justify-between gap-3 pt-0",
             default: "",
-            blue: "",
-            pink: ""
+            luxury: "",
+            bitcoin: ""
           })}>
             <Button
               variant="outline"
@@ -470,8 +470,8 @@ export default function TicketsPage() {
               className={getThemeClasses({
                 base: "flex-1",
                 default: "border-gray-700 hover:bg-gray-800 hover:text-gdyup-primary",
-                blue: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
-                pink: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
+                luxury: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
+                bitcoin: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
               })}
               onClick={() => handleViewBoardingPass(ticket.id)}
             >
@@ -486,8 +486,8 @@ export default function TicketsPage() {
                 className={getThemeClasses({
                   base: "flex-1",
                   default: "bg-gdyup-secondary/10 hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-                  blue: "bg-gdyup-secondary/10 hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-                  pink: "bg-gdyup-secondary/10 hover:bg-gdyup-secondary/20 text-gdyup-secondary"
+                  luxury: "bg-gdyup-secondary/10 hover:bg-gdyup-secondary/20 text-gdyup-secondary",
+                  bitcoin: "bg-gdyup-secondary/10 hover:bg-gdyup-secondary/20 text-gdyup-secondary"
                 })}
                 onClick={() => router.push(`/gdyup/boardingpass/${ticket.id}#group`)}
               >
@@ -524,8 +524,8 @@ export default function TicketsPage() {
           className={getThemeClasses({
             base: "mr-2 p-2",
             default: "text-gray-400 hover:text-white",
-            blue: "text-blue-400 hover:text-blue-50",
-            pink: "text-pink-400 hover:text-pink-50"
+            luxury: "text-blue-400 hover:text-blue-50",
+            bitcoin: "text-pink-400 hover:text-pink-50"
           })}
         >
           <ArrowLeft className="h-5 w-5" />
@@ -534,8 +534,8 @@ export default function TicketsPage() {
         <h1 className={getThemeClasses({
           base: "text-2xl font-bold",
           default: "text-white",
-          blue: "text-blue-50",
-          pink: "text-pink-50"
+          luxury: "text-blue-50",
+          bitcoin: "text-pink-50"
         })}>
           Your Flight Tickets
         </h1>
@@ -550,8 +550,8 @@ export default function TicketsPage() {
         <TabsList className={getThemeClasses({
           base: "w-full mb-6",
           default: "bg-gray-900 border-b border-gray-800",
-          blue: "bg-blue-950 border-b border-blue-900",
-          pink: "bg-pink-950 border-b border-pink-900"
+          luxury: "bg-blue-950 border-b border-blue-900",
+          bitcoin: "bg-pink-950 border-b border-pink-900"
         })}>
           <TabsTrigger 
             value="upcoming"
@@ -559,14 +559,14 @@ export default function TicketsPage() {
               getThemeClasses({
                 base: "flex-1",
                 default: "data-[state=active]:bg-gray-800 data-[state=active]:text-white",
-                blue: "data-[state=active]:bg-blue-900 data-[state=active]:text-blue-50",
-                pink: "data-[state=active]:bg-pink-900 data-[state=active]:text-pink-50"
+                luxury: "data-[state=active]:bg-blue-900 data-[state=active]:text-blue-50",
+                bitcoin: "data-[state=active]:bg-pink-900 data-[state=active]:text-pink-50"
               }) : 
               getThemeClasses({
                 base: "flex-1",
                 default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
+                luxury: "text-blue-400",
+                bitcoin: "text-pink-400"
               })
             }
           >
@@ -579,14 +579,14 @@ export default function TicketsPage() {
               getThemeClasses({
                 base: "flex-1",
                 default: "data-[state=active]:bg-gray-800 data-[state=active]:text-white",
-                blue: "data-[state=active]:bg-blue-900 data-[state=active]:text-blue-50",
-                pink: "data-[state=active]:bg-pink-900 data-[state=active]:text-pink-50"
+                luxury: "data-[state=active]:bg-blue-900 data-[state=active]:text-blue-50",
+                bitcoin: "data-[state=active]:bg-pink-900 data-[state=active]:text-pink-50"
               }) : 
               getThemeClasses({
                 base: "flex-1",
                 default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
+                luxury: "text-blue-400",
+                bitcoin: "text-pink-400"
               })
             }
           >
@@ -603,8 +603,8 @@ export default function TicketsPage() {
             <div className={getThemeClasses({
               base: "text-center py-12",
               default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
+              luxury: "text-blue-400",
+              bitcoin: "text-pink-400"
             })}>
               <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-medium mb-2">No Upcoming Flights</h3>
@@ -634,8 +634,8 @@ export default function TicketsPage() {
             <div className={getThemeClasses({
               base: "text-center py-12",
               default: "text-gray-400",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
+              luxury: "text-blue-400",
+              bitcoin: "text-pink-400"
             })}>
               <Ticket className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-medium mb-2">No Past Flights</h3>

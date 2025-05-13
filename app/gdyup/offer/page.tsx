@@ -1,16 +1,22 @@
 'use client';
 
-import JetShareOfferForm from '../components/JetShareOfferForm';
+import JetShareOfferForm from '../components/offer-form/JetShareOfferForm';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import React from 'react';
 import { Loader2 } from 'lucide-react';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { ThemedIcon } from '../components/core/ThemedIcon';
+import { ClientLayoutWrapper } from '../client-layout-wrapper';
+import { cn } from '@/lib/utils';
 
 // This page is already using Suspense correctly, but we need to make sure the component
 // that uses searchParams is properly extracted
 
 // Extract a component that uses searchParams to properly handle suspense
 function JetShareOfferContent() {
+  const { getThemedTextClasses } = useGdyupTheme();
+  
   // Use proper typing for airports array
   interface Airport {
     code: string;
@@ -75,10 +81,20 @@ function JetShareOfferContent() {
         }
         
         const data = await response.json();
-        console.log(`Airports data received: ${data.airports ? data.airports.length : 0} airports`);
+        console.log(`Airports data received:`, data);
         
-        if (data && data.airports) {
+        if (data && Array.isArray(data)) {
+          // Handle array response directly (new format)
+          console.log(`Using direct array format with ${data.length} airports`);
+          setAirports(data);
+        } else if (data && data.airports && Array.isArray(data.airports)) {
+          // Handle object with airports property (old format)
+          console.log(`Using object.airports format with ${data.airports.length} airports`);
           setAirports(data.airports);
+        } else if (data && Array.isArray(data.data)) {
+          // Handle object with data property (another possible format)
+          console.log(`Using object.data format with ${data.data.length} airports`);
+          setAirports(data.data);
         } else {
           console.error('No airports data in response:', data);
           throw new Error('No airports data received');
@@ -105,27 +121,34 @@ function JetShareOfferContent() {
   if (isLoadingAirports) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <ThemedIcon icon={Loader2} size={32} className="animate-spin" />
       </div>
     );
   }
 
   return (
         <JetShareOfferForm 
-          airportsList={airports} 
-          editOfferId={editId} 
+          airports={airports} 
+          offerId={editId || undefined} 
         />
   );
 }
 
 export default function OfferPage() {
+  const { getThemedTextClasses } = useGdyupTheme();
+  
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <ClientLayoutWrapper>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className={cn("text-3xl font-bold mb-8", getThemedTextClasses())}>Create JetShare Offer</h1>
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <ThemedIcon icon={Loader2} size={32} className="animate-spin" />
+          </div>
+        }>
+          <JetShareOfferContent />
+        </Suspense>
       </div>
-    }>
-      <JetShareOfferContent />
-    </Suspense>
+    </ClientLayoutWrapper>
   );
 } 

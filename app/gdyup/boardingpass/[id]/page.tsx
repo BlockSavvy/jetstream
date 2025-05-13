@@ -36,7 +36,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [offerData, setOfferData] = useState<any>(null);
   const [boardingPassData, setBoardingPassData] = useState<any>(null);
-  const { getThemeClasses, theme } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses, theme } = useGdyupTheme();
   const [qrType, setQrType] = useState<'standard' | 'nostr'>('standard');
   const [showNostrInfo, setShowNostrInfo] = useState(false);
   const [isWalletProcessing, setIsWalletProcessing] = useState(false);
@@ -210,12 +210,10 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
           variant={qrType === 'standard' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setQrType('standard')}
-          className={getThemeClasses({
-            base: "text-xs py-1 h-8",
-            default: qrType === 'standard' ? 'bg-gdyup-primary text-black hover:bg-gdyup-primary/90' : 'text-white',
-            blue: qrType === 'standard' ? 'bg-gdyup-primary text-white hover:bg-gdyup-primary/90' : 'text-blue-100',
-            pink: qrType === 'standard' ? 'bg-gdyup-primary text-white hover:bg-gdyup-primary/90' : 'text-pink-100'
-          })}
+          className={cn(
+            "text-xs py-1 h-8",
+            qrType === 'standard' ? getThemedButtonClasses('primary') : getThemedTextClasses()
+          )}
         >
           Standard QR
         </Button>
@@ -226,12 +224,10 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
             setQrType('nostr');
             setShowNostrInfo(true);
           }}
-          className={getThemeClasses({
-            base: "text-xs py-1 h-8",
-            default: qrType === 'nostr' ? 'bg-gdyup-secondary text-white hover:bg-gdyup-secondary/90' : 'text-white',
-            blue: qrType === 'nostr' ? 'bg-gdyup-secondary text-white hover:bg-gdyup-secondary/90' : 'text-blue-100',
-            pink: qrType === 'nostr' ? 'bg-gdyup-secondary text-white hover:bg-gdyup-secondary/90' : 'text-pink-100'
-          })}
+          className={cn(
+            "text-xs py-1 h-8",
+            qrType === 'nostr' ? getThemedButtonClasses('secondary') : getThemedTextClasses()
+          )}
         >
           Nostr QR
         </Button>
@@ -239,12 +235,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
           variant="ghost"
           size="sm"
           onClick={() => setShowNostrInfo(!showNostrInfo)}
-          className={getThemeClasses({
-            base: "text-xs py-1 h-8",
-            default: "text-gray-400",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}
+          className={cn("text-xs py-1 h-8", getThemedTextClasses('muted'))}
         >
           ?
         </Button>
@@ -262,19 +253,9 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
         >
           <Loader2 className={cn(
             "h-12 w-12 animate-spin mb-4",
-            getThemeClasses({
-              base: "",
-              default: "text-gdyup-primary",
-              blue: "text-gdyup-primary",
-              pink: "text-gdyup-primary"
-            })
+            "text-gdyup-primary"
           )} />
-          <p className={getThemeClasses({
-            base: "text-lg",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>Loading your boarding pass...</p>
+          <p className={getThemedTextClasses()}>Loading your boarding pass...</p>
         </motion.div>
       </div>
     );
@@ -287,21 +268,14 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center min-h-[50vh]"
       >
-        <div className={getThemeClasses({
-          base: "p-4 rounded-lg border text-center max-w-md",
-          default: "bg-red-950/30 border-red-900 text-red-300",
-          blue: "bg-red-950/20 border-red-800 text-red-300",
-          pink: "bg-red-950/20 border-red-800 text-red-300"
-        })}>
+        <div className={cn(
+          "p-4 rounded-lg border text-center max-w-md",
+          "bg-red-950/30 border-red-900 text-red-300"
+        )}>
           <p className="mb-4">{error}</p>
           <Button 
             onClick={handleGoBack}
-            className={getThemeClasses({
-              base: "",
-              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-            })}
+            className={getThemedButtonClasses('primary')}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Return to Dashboard
@@ -314,12 +288,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
   if (!offerData || !boardingPassData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <p className={getThemeClasses({
-          base: "text-lg",
-          default: "text-white",
-          blue: "text-blue-100",
-          pink: "text-pink-100"
-        })}>No boarding pass data available.</p>
+        <p className={getThemedTextClasses()}>No boarding pass data available.</p>
         <Button 
           onClick={handleGoBack} 
           className="mt-4"
@@ -347,22 +316,12 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
         <Button 
           variant="ghost" 
           onClick={handleGoBack}
-          className={getThemeClasses({
-            base: "mr-2",
-            default: "text-white hover:text-gdyup-primary",
-            blue: "text-blue-100 hover:text-gdyup-primary",
-            pink: "text-pink-100 hover:text-gdyup-primary"
-          })}
+          className={cn("mr-2", getThemedTextClasses())}
         >
           <ArrowLeft className="h-5 w-5 mr-1" />
           Back
         </Button>
-        <h1 className={getThemeClasses({
-          base: "text-2xl font-bold",
-          default: "text-white",
-          blue: "text-blue-100",
-          pink: "text-pink-100"
-        })}>
+        <h1 className={cn("text-2xl font-bold", getThemedTextClasses())}>
           Boarding Pass
         </h1>
       </motion.div>
@@ -373,34 +332,22 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <Card className={getThemeClasses({
-          base: "overflow-hidden border shadow-lg",
-          default: "bg-gray-900/90 border-gray-800",
-          blue: "bg-blue-950/90 border-blue-900",
-          pink: "bg-pink-950/90 border-pink-900"
-        })}>
-          <CardHeader className={getThemeClasses({
-            base: "relative pb-2",
-            default: "bg-black/40",
-            blue: "bg-blue-950/40",
-            pink: "bg-pink-950/40"
-          })}>
+        <Card className={cn(
+          "overflow-hidden border shadow-lg",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}>
+          <CardHeader className={cn(
+            "relative pb-2",
+            getThemedBackgroundClasses('card'),
+            "bg-opacity-40"
+          )}>
             <div className="flex justify-between items-center">
               <div>
-                <h2 className={getThemeClasses({
-                  base: "text-lg font-bold",
-                  default: "text-white",
-                  blue: "text-blue-100",
-                  pink: "text-pink-100"
-                })}>
+                <h2 className={cn("text-lg font-bold", getThemedTextClasses())}>
                   GDY·UP
                 </h2>
-                <p className={getThemeClasses({
-                  base: "text-sm",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted')}>
                   Private Jet Boarding Pass
                 </p>
               </div>
@@ -418,20 +365,10 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
             </div>
           </CardHeader>
           
-          <CardContent className={getThemeClasses({
-            base: "pt-6 space-y-6",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <CardContent className={cn("pt-6 space-y-6", getThemedTextClasses())}>
             <div className="flex justify-between items-center">
               <div>
-                <p className={getThemeClasses({
-                  base: "text-xs uppercase",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted') + " text-xs uppercase"}>
                   Passenger
                 </p>
                 <p className="font-medium text-lg">
@@ -439,12 +376,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 </p>
               </div>
               <div>
-                <p className={getThemeClasses({
-                  base: "text-xs uppercase",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted') + " text-xs uppercase"}>
                   Flight Date
                 </p>
                 <p className="font-medium">
@@ -453,19 +385,13 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               </div>
             </div>
             
-            <div className={getThemeClasses({
-              base: "flex items-center justify-between p-4 rounded-lg",
-              default: "bg-black/30 border border-gray-800",
-              blue: "bg-blue-950/30 border border-blue-900",
-              pink: "bg-pink-950/30 border border-pink-900"
-            })}>
+            <div className={cn(
+              "flex items-center justify-between p-4 rounded-lg",
+              getThemedBackgroundClasses('card'),
+              "border border-gdyup-border"
+            )}>
               <div className="text-center">
-                <p className={getThemeClasses({
-                  base: "text-xs uppercase",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted') + " text-xs uppercase"}>
                   From
                 </p>
                 <p className="font-bold text-xl">{offerData.departure_location_code || offerData.departure_location.substring(0, 3).toUpperCase()}</p>
@@ -473,36 +399,13 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               </div>
               
               <div className="flex-1 flex items-center justify-center px-4">
-                <div className={getThemeClasses({
-                  base: "h-0.5 flex-1",
-                  default: "bg-gray-700",
-                  blue: "bg-blue-700",
-                  pink: "bg-pink-700"
-                })}></div>
-                <Plane className={cn(
-                  "mx-2 h-5 w-5 flex-shrink-0",
-                  getThemeClasses({
-                    base: "",
-                    default: "text-gdyup-primary",
-                    blue: "text-gdyup-primary",
-                    pink: "text-gdyup-primary"
-                  })
-                )} />
-                <div className={getThemeClasses({
-                  base: "h-0.5 flex-1",
-                  default: "bg-gray-700",
-                  blue: "bg-blue-700",
-                  pink: "bg-pink-700"
-                })}></div>
+                <div className={cn("h-0.5 flex-1", "bg-gdyup-border")}></div>
+                <Plane className="mx-2 h-5 w-5 flex-shrink-0 text-gdyup-primary" />
+                <div className={cn("h-0.5 flex-1", "bg-gdyup-border")}></div>
               </div>
               
               <div className="text-center">
-                <p className={getThemeClasses({
-                  base: "text-xs uppercase",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted') + " text-xs uppercase"}>
                   To
                 </p>
                 <p className="font-bold text-xl">{offerData.arrival_location_code || offerData.arrival_location.substring(0, 3).toUpperCase()}</p>
@@ -512,12 +415,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className={getThemeClasses({
-                  base: "text-xs uppercase",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted') + " text-xs uppercase"}>
                   Seat
                 </p>
                 <p className="font-medium">
@@ -525,12 +423,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 </p>
               </div>
               <div>
-                <p className={getThemeClasses({
-                  base: "text-xs uppercase",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}>
+                <p className={getThemedTextClasses('muted') + " text-xs uppercase"}>
                   Aircraft
                 </p>
                 <p className="font-medium">
@@ -539,18 +432,12 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               </div>
             </div>
             
-            <div className={getThemeClasses({
-              base: "p-3 rounded-lg text-center",
-              default: "bg-black/30 border border-gray-800",
-              blue: "bg-blue-950/30 border border-blue-900",
-              pink: "bg-pink-950/30 border border-pink-900"
-            })}>
-              <p className={getThemeClasses({
-                base: "text-xs uppercase mb-1",
-                default: "text-gray-400",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })}>
+            <div className={cn(
+              "p-3 rounded-lg text-center",
+              getThemedBackgroundClasses('card'),
+              "border border-gdyup-border"
+            )}>
+              <p className={getThemedTextClasses('muted') + " text-xs uppercase mb-1"}>
                 Check-in Instructions
               </p>
               <p className="text-sm">
@@ -572,12 +459,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
             </motion.div>
             
             <div className="mb-6 flex flex-col items-center">
-              <h3 className={getThemeClasses({
-                base: "text-lg font-medium mb-2",
-                default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
-              })}>Boarding Pass QR Code</h3>
+              <h3 className={cn("text-lg font-medium mb-2", getThemedTextClasses())}>Boarding Pass QR Code</h3>
               
               {renderQrCodeOptions()}
               
@@ -587,12 +469,12 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className={getThemeClasses({
-                      base: "text-xs p-3 rounded-md mb-4 max-w-xs text-center",
-                      default: "bg-gray-800/70 text-gray-300 border border-gray-700",
-                      blue: "bg-blue-950/70 text-blue-200 border border-blue-900/50",
-                      pink: "bg-pink-950/70 text-pink-200 border border-pink-900/50"
-                    })}
+                    className={cn(
+                      "text-xs p-3 rounded-md mb-4 max-w-xs text-center",
+                      getThemedBackgroundClasses('card'),
+                      getThemedTextClasses('muted'),
+                      "border border-gdyup-border"
+                    )}
                   >
                     Nostr QR codes contain cryptographically verifiable boarding pass data that can be validated by any Nostr-compatible scanner without requiring a central server.
                   </motion.div>
@@ -600,12 +482,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
               </AnimatePresence>
               
               <motion.div 
-                className={getThemeClasses({
-                  base: "p-4 rounded-xl",
-                  default: "bg-white",
-                  blue: "bg-white",
-                  pink: "bg-white"
-                })}
+                className="p-4 rounded-xl bg-white"
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
@@ -647,21 +524,11 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 )}
               </motion.div>
               
-              <p className={getThemeClasses({
-                base: "mt-2 text-sm",
-                default: "text-gray-400",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })}>
+              <p className={getThemedTextClasses('muted') + " mt-2 text-sm"}>
                 {qrType === 'nostr' ? 'Nostr-compatible boarding pass' : 'Standard boarding pass'}
               </p>
               
-              <p className={getThemeClasses({
-                base: "mt-1 text-xs font-mono",
-                default: "text-gray-500",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}>
+              <p className={getThemedTextClasses('muted') + " mt-1 text-xs font-mono opacity-70"}>
                 {boardingPassData.ticket_code}
               </p>
             </div>
@@ -672,12 +539,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 size="sm"
                 onClick={handleSaveToFiles}
                 disabled={isDownloading}
-                className={getThemeClasses({
-                  base: "text-xs",
-                  default: "border-gray-700 hover:bg-gray-800",
-                  blue: "border-blue-700 hover:bg-blue-900",
-                  pink: "border-pink-700 hover:bg-pink-900"
-                })}
+                className="text-xs border-gdyup-border"
               >
                 {isDownloading ? (
                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -692,12 +554,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 size="sm"
                 onClick={handleAddToWallet}
                 disabled={isWalletProcessing}
-                className={getThemeClasses({
-                  base: "text-xs",
-                  default: "border-gray-700 hover:bg-gray-800",
-                  blue: "border-blue-700 hover:bg-blue-900",
-                  pink: "border-pink-700 hover:bg-pink-900"
-                })}
+                className="text-xs border-gdyup-border"
               >
                 {isWalletProcessing ? (
                   <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -711,12 +568,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
                 variant="outline"
                 size="sm"
                 onClick={handleShareBoardingPass}
-                className={getThemeClasses({
-                  base: "text-xs",
-                  default: "border-gray-700 hover:bg-gray-800",
-                  blue: "border-blue-700 hover:bg-blue-900",
-                  pink: "border-pink-700 hover:bg-pink-900"
-                })}
+                className="text-xs border-gdyup-border"
               >
                 <Share2 className="h-3 w-3 mr-1" />
                 Share
@@ -764,21 +616,11 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
             
             {totalZaps > 0 && (
               <motion.div
-                className={getThemeClasses({
-                  base: "mt-4 p-3 rounded-lg text-center",
-                  default: "bg-amber-900/20 border border-amber-800",
-                  blue: "bg-amber-900/20 border border-amber-800",
-                  pink: "bg-amber-900/20 border border-amber-800"
-                })}
+                className="mt-4 p-3 rounded-lg text-center bg-amber-900/20 border border-amber-800 text-amber-400"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
-                <p className={getThemeClasses({
-                  base: "text-sm",
-                  default: "text-amber-400",
-                  blue: "text-amber-400",
-                  pink: "text-amber-400"
-                })}>
+                <p className="text-sm">
                   <span className="font-bold">{totalZaps}</span> {totalZaps === 1 ? 'zap' : 'zaps'} sent for a total of <span className="font-bold">{totalZapAmount.toLocaleString()}</span> sats
                 </p>
               </motion.div>
@@ -799,12 +641,7 @@ export default function BoardingPassPage({ params }: BoardingPassPageProps) {
           </CardContent>
           
           <CardFooter className="relative z-10 pt-0 text-center justify-center">
-            <p className={getThemeClasses({
-              base: "text-xs",
-              default: "text-gray-500",
-              blue: "text-blue-400",
-              pink: "text-pink-400"
-            })}>
+            <p className={getThemedTextClasses('muted') + " text-xs opacity-70"}>
               GDY·UP Jet Services • {format(new Date(), 'yyyy')} • Boarding Pass #{boardingPassData?.id?.substring(0, 8) || '00000000'}
             </p>
           </CardFooter>

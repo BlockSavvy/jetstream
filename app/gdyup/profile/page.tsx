@@ -33,6 +33,7 @@ import NostrIdentityVerifier from '@/app/gdyup/components/NostrIdentityVerifier'
 import NostrVerificationBadge from '@/app/gdyup/components/NostrVerificationBadge';
 import { cn } from '@/lib/utils';
 import { UserProfile } from '@/hooks/useUserProfile';
+import { ClientContentWrapper } from '../components/ClientContentWrapper';
 
 // Extend the UserProfile type to include wallet properties
 interface ExtendedUserProfile extends UserProfile {
@@ -179,8 +180,8 @@ const BTCWalletSection = ({
               getThemeClasses({
                 base: "",
                 default: "bg-green-900 text-green-100",
-                blue: "bg-blue-900 text-blue-100",
-                pink: "bg-amber-900 text-amber-100",
+                luxury: "bg-blue-900 text-blue-100",
+                bitcoin: "bg-amber-900 text-amber-100",
               })
             }>
               {profile.lightningWalletType === 'custodial' ? 'Custodial' : 'Self-Custodial'}
@@ -423,299 +424,303 @@ export default function ProfilePage() {
   // Show loading state while checking auth and profile
   if (authLoading || profileLoading || !profile || !isProfileComplete) {
     return (
-      <Container className="flex flex-col min-h-screen bg-gray-900">
-        <div className="flex-grow flex flex-col justify-center items-center py-10">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-          <p className="text-gray-400">Loading your profile...</p>
-        </div>
-      </Container>
+      <ClientContentWrapper>
+        <Container className="flex flex-col min-h-screen bg-gray-900">
+          <div className="flex-grow flex flex-col justify-center items-center py-10">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+            <p className="text-gray-400">Loading your profile...</p>
+          </div>
+        </Container>
+      </ClientContentWrapper>
     );
   }
   
   // If profile exists and is complete, show profile page
   return (
-    <Container className="flex flex-col min-h-screen">
-      <div className="py-6">
-        <div className="flex items-center mb-6">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => router.push('/gdyup/dashboard')}
-            className={getThemeClasses({
-              base: "mr-4",
-              default: "text-gray-400 hover:text-white",
-              blue: "text-blue-400 hover:text-blue-100",
-              pink: "text-pink-400 hover:text-pink-100"
-            })}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <h1 className={getThemeClasses({
-            base: "text-2xl font-bold",
-            default: "text-white",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>Your Profile</h1>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Summary Card */}
-          <Card className={getThemeClasses({
-            base: "overflow-hidden",
-            default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-900 border-blue-800",
-            pink: "bg-pink-900 border-pink-800",
-          })}>
-            <CardHeader className="pb-2">
-              <CardTitle className={getThemeClasses({
-                base: "",
-                default: "text-white",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
-              })}>Profile</CardTitle>
-              <CardDescription className={getThemeClasses({
-                base: "",
-                default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}>Your personal information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20 border-2 border-primary">
-                  <AvatarImage src={profile.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/20 text-primary text-lg">
-                    {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className={getThemeClasses({
-                    base: "text-xl font-semibold",
-                    default: "text-white",
-                    blue: "text-blue-50",
-                    pink: "text-pink-50"
-                  })}>
-                    {profile.first_name} {profile.last_name}
-                  </h3>
-                  <p className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
-                    {profile.email}
-                  </p>
-                  {profile.role && (
-                    <p className={getThemeClasses({
-                      base: "text-sm mt-1",
-                      default: "text-gray-300",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
-                    })}>
-                      {profile.role}
-                      {profile.affiliation && ` · ${profile.affiliation}`}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              {profile.bio && (
-                <div className={getThemeClasses({
-                  base: "text-sm mt-4 p-3 rounded-md",
-                  default: "bg-black/30 text-gray-300",
-                  blue: "bg-blue-950/50 text-blue-300",
-                  pink: "bg-pink-950/50 text-pink-300"
-                })}>
-                  {profile.bio}
-                </div>
-              )}
-              
-              <Button
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-2" 
-                onClick={() => router.push('/gdyup/auth/profile-setup?isProfileEdit=true')}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Profile Details
-              </Button>
-            </CardContent>
-          </Card>
+    <ClientContentWrapper>
+      <Container className="flex flex-col min-h-screen">
+        <div className="py-6">
+          <div className="flex items-center mb-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => router.push('/gdyup/dashboard')}
+              className={getThemeClasses({
+                base: "mr-4",
+                default: "text-gray-400 hover:text-white",
+                luxury: "text-blue-400 hover:text-blue-100",
+                bitcoin: "text-pink-400 hover:text-pink-100"
+              })}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className={getThemeClasses({
+              base: "text-2xl font-bold",
+              default: "text-white",
+              luxury: "text-blue-50",
+              bitcoin: "text-pink-50"
+            })}>Your Profile</h1>
+          </div>
           
-          {/* Wallet and Nostr Tabs */}
-          <Card className={cn(
-            "col-span-1 lg:col-span-2",
-            getThemeClasses({
-              base: "",
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Profile Summary Card */}
+            <Card className={getThemeClasses({
+              base: "overflow-hidden",
               default: "bg-gray-900 border-gray-800",
-              blue: "bg-blue-900 border-blue-800",
-              pink: "bg-pink-900 border-pink-800",
-            })
-          )}>
-            <CardHeader className="pb-0">
-              <Tabs defaultValue="wallet" className="w-full">
-                <TabsList className={getThemeClasses({
-                  base: "grid w-full grid-cols-2",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-800",
-                  pink: "bg-pink-800",
-                })}>
-                  <TabsTrigger value="wallet" className="text-sm">
-                    <Wallet className="h-4 w-4 mr-2" />
-                    Wallet
-                  </TabsTrigger>
-                  <TabsTrigger value="nostr" className="text-sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Nostr Identity
-                  </TabsTrigger>
-                </TabsList>
+              luxury: "bg-blue-900 border-blue-800",
+              bitcoin: "bg-pink-900 border-pink-800",
+            })}>
+              <CardHeader className="pb-2">
+                <CardTitle className={getThemeClasses({
+                  base: "",
+                  default: "text-white",
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
+                })}>Profile</CardTitle>
+                <CardDescription className={getThemeClasses({
+                  base: "",
+                  default: "text-gray-400",
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
+                })}>Your personal information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-20 w-20 border-2 border-primary">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-lg">
+                      {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className={getThemeClasses({
+                      base: "text-xl font-semibold",
+                      default: "text-white",
+                      luxury: "text-blue-50",
+                      bitcoin: "text-pink-50"
+                    })}>
+                      {profile.first_name} {profile.last_name}
+                    </h3>
+                    <p className={getThemeClasses({
+                      base: "text-sm",
+                      default: "text-gray-400",
+                      luxury: "text-blue-400",
+                      bitcoin: "text-pink-400"
+                    })}>
+                      {profile.email}
+                    </p>
+                    {profile.role && (
+                      <p className={getThemeClasses({
+                        base: "text-sm mt-1",
+                        default: "text-gray-300",
+                        luxury: "text-blue-300",
+                        bitcoin: "text-pink-300"
+                      })}>
+                        {profile.role}
+                        {profile.affiliation && ` · ${profile.affiliation}`}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <TabsContent value="wallet" className="pt-4 space-y-4">
-                  <BTCWalletSection 
-                    profile={profile}
-                    handleUpdate={handleUpdateProfile}
-                    isEditing={walletEditing}
-                    setIsEditing={setWalletEditing}
-                  />
-                </TabsContent>
+                {profile.bio && (
+                  <div className={getThemeClasses({
+                    base: "text-sm mt-4 p-3 rounded-md",
+                    default: "bg-black/30 text-gray-300",
+                    luxury: "bg-blue-950/50 text-blue-300",
+                    bitcoin: "bg-pink-950/50 text-pink-300"
+                  })}>
+                    {profile.bio}
+                  </div>
+                )}
                 
-                <TabsContent value="nostr" className="pt-4 space-y-4">
-                  <NostrSection 
-                    profile={profile}
-                    handleUpdate={handleUpdateProfile}
-                  />
-                </TabsContent>
-              </Tabs>
-            </CardHeader>
-          </Card>
-          
-          {/* Status and Settings Card */}
-          <Card className={cn(
-            "col-span-1 lg:col-span-3",
-            getThemeClasses({
-              base: "",
-              default: "bg-gray-900 border-gray-800",
-              blue: "bg-blue-900 border-blue-800",
-              pink: "bg-pink-900 border-pink-800",
-            })
-          )}>
-            <CardHeader className="pb-2">
-              <CardTitle className={getThemeClasses({
+                <Button
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mt-2" 
+                  onClick={() => router.push('/gdyup/auth/profile-setup?isProfileEdit=true')}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile Details
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Wallet and Nostr Tabs */}
+            <Card className={cn(
+              "col-span-1 lg:col-span-2",
+              getThemeClasses({
                 base: "",
-                default: "text-white",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
-              })}>Account Status</CardTitle>
-              <CardDescription className={getThemeClasses({
+                default: "bg-gray-900 border-gray-800",
+                luxury: "bg-blue-900 border-blue-800",
+                bitcoin: "bg-pink-900 border-pink-800",
+              })
+            )}>
+              <CardHeader className="pb-0">
+                <Tabs defaultValue="wallet" className="w-full">
+                  <TabsList className={getThemeClasses({
+                    base: "grid w-full grid-cols-2",
+                    default: "bg-gray-800",
+                    luxury: "bg-blue-800",
+                    bitcoin: "bg-pink-800",
+                  })}>
+                    <TabsTrigger value="wallet" className="text-sm">
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Wallet
+                    </TabsTrigger>
+                    <TabsTrigger value="nostr" className="text-sm">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Nostr Identity
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="wallet" className="pt-4 space-y-4">
+                    <BTCWalletSection 
+                      profile={profile}
+                      handleUpdate={handleUpdateProfile}
+                      isEditing={walletEditing}
+                      setIsEditing={setWalletEditing}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="nostr" className="pt-4 space-y-4">
+                    <NostrSection 
+                      profile={profile}
+                      handleUpdate={handleUpdateProfile}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </CardHeader>
+            </Card>
+            
+            {/* Status and Settings Card */}
+            <Card className={cn(
+              "col-span-1 lg:col-span-3",
+              getThemeClasses({
                 base: "",
-                default: "text-gray-400",
-                blue: "text-blue-400",
-                pink: "text-pink-400"
-              })}>Integration status for your GDY·UP account</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className={getThemeClasses({
-                  base: "p-4 rounded-lg border flex items-center gap-3",
-                  default: "bg-gray-800/50 border-gray-700",
-                  blue: "bg-blue-800/50 border-blue-700",
-                  pink: "bg-pink-800/50 border-pink-700",
-                })}>
+                default: "bg-gray-900 border-gray-800",
+                luxury: "bg-blue-900 border-blue-800",
+                bitcoin: "bg-pink-900 border-pink-800",
+              })
+            )}>
+              <CardHeader className="pb-2">
+                <CardTitle className={getThemeClasses({
+                  base: "",
+                  default: "text-white",
+                  luxury: "text-blue-50",
+                  bitcoin: "text-pink-50"
+                })}>Account Status</CardTitle>
+                <CardDescription className={getThemeClasses({
+                  base: "",
+                  default: "text-gray-400",
+                  luxury: "text-blue-400",
+                  bitcoin: "text-pink-400"
+                })}>Integration status for your GDY·UP account</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className={getThemeClasses({
-                    base: "rounded-full p-2",
-                    default: profile?.btcWalletAddress ? "bg-green-900/20 text-green-500" : "bg-yellow-900/20 text-yellow-500",
-                    blue: profile?.btcWalletAddress ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                    pink: profile?.btcWalletAddress ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
+                    base: "p-4 rounded-lg border flex items-center gap-3",
+                    default: "bg-gray-800/50 border-gray-700",
+                    luxury: "bg-blue-800/50 border-blue-700",
+                    bitcoin: "bg-pink-800/50 border-pink-700",
                   })}>
-                    {profile?.btcWalletAddress ? <CheckCircle className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
-                  </div>
-                  <div>
-                    <p className={getThemeClasses({
-                      base: "font-medium",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50",
-                    })}>Wallet Status</p>
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-400",
-                      pink: "text-pink-400",
+                    <div className={getThemeClasses({
+                      base: "rounded-full p-2",
+                      default: profile?.btcWalletAddress ? "bg-green-900/20 text-green-500" : "bg-yellow-900/20 text-yellow-500",
+                      luxury: profile?.btcWalletAddress ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
+                      bitcoin: profile?.btcWalletAddress ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
                     })}>
-                      {profile?.btcWalletAddress ? 'Connected' : 'Not Connected'}
-                    </p>
+                      {profile?.btcWalletAddress ? <CheckCircle className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+                    </div>
+                    <div>
+                      <p className={getThemeClasses({
+                        base: "font-medium",
+                        default: "text-white",
+                        luxury: "text-blue-50",
+                        bitcoin: "text-pink-50",
+                      })}>Wallet Status</p>
+                      <p className={getThemeClasses({
+                        base: "text-sm",
+                        default: "text-gray-400",
+                        luxury: "text-blue-400",
+                        bitcoin: "text-pink-400",
+                      })}>
+                        {profile?.btcWalletAddress ? 'Connected' : 'Not Connected'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className={getThemeClasses({
+                    base: "p-4 rounded-lg border flex items-center gap-3",
+                    default: "bg-gray-800/50 border-gray-700",
+                    luxury: "bg-blue-800/50 border-blue-700",
+                    bitcoin: "bg-pink-800/50 border-pink-700",
+                  })}>
+                    <div className={getThemeClasses({
+                      base: "rounded-full p-2",
+                      default: profile?.nostr_pubkey ? "bg-green-900/20 text-green-500" : "bg-yellow-900/20 text-yellow-500",
+                      luxury: profile?.nostr_pubkey ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
+                      bitcoin: profile?.nostr_pubkey ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
+                    })}>
+                      {profile?.nostr_pubkey ? <CheckCircle className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+                    </div>
+                    <div>
+                      <p className={getThemeClasses({
+                        base: "font-medium",
+                        default: "text-white",
+                        luxury: "text-blue-50",
+                        bitcoin: "text-pink-50",
+                      })}>Nostr Status</p>
+                      <p className={getThemeClasses({
+                        base: "text-sm",
+                        default: "text-gray-400",
+                        luxury: "text-blue-400",
+                        bitcoin: "text-pink-400",
+                      })}>
+                        {profile?.nostr_pubkey ? (profile?.nip05 ? 'Verified' : 'Connected') : 'Not Connected'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className={getThemeClasses({
+                    base: "p-4 rounded-lg border flex items-center gap-3",
+                    default: "bg-gray-800/50 border-gray-700",
+                    luxury: "bg-blue-800/50 border-blue-700",
+                    bitcoin: "bg-pink-800/50 border-pink-700",
+                  })}>
+                    <div className={getThemeClasses({
+                      base: "rounded-full p-2",
+                      default: "bg-primary/20 text-primary",
+                      luxury: "bg-primary/20 text-primary",
+                      bitcoin: "bg-primary/20 text-primary",
+                    })}>
+                      <Settings className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className={getThemeClasses({
+                        base: "font-medium",
+                        default: "text-white",
+                        luxury: "text-blue-50",
+                        bitcoin: "text-pink-50",
+                      })}>Theme</p>
+                      <p className={getThemeClasses({
+                        base: "text-sm",
+                        default: "text-gray-400",
+                        luxury: "text-blue-400",
+                        bitcoin: "text-pink-400",
+                      })}>
+                        {profile?.theme || 'Default Theme'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                
-                <div className={getThemeClasses({
-                  base: "p-4 rounded-lg border flex items-center gap-3",
-                  default: "bg-gray-800/50 border-gray-700",
-                  blue: "bg-blue-800/50 border-blue-700",
-                  pink: "bg-pink-800/50 border-pink-700",
-                })}>
-                  <div className={getThemeClasses({
-                    base: "rounded-full p-2",
-                    default: profile?.nostr_pubkey ? "bg-green-900/20 text-green-500" : "bg-yellow-900/20 text-yellow-500",
-                    blue: profile?.nostr_pubkey ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                    pink: profile?.nostr_pubkey ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                  })}>
-                    {profile?.nostr_pubkey ? <CheckCircle className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
-                  </div>
-                  <div>
-                    <p className={getThemeClasses({
-                      base: "font-medium",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50",
-                    })}>Nostr Status</p>
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-400",
-                      pink: "text-pink-400",
-                    })}>
-                      {profile?.nostr_pubkey ? (profile?.nip05 ? 'Verified' : 'Connected') : 'Not Connected'}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className={getThemeClasses({
-                  base: "p-4 rounded-lg border flex items-center gap-3",
-                  default: "bg-gray-800/50 border-gray-700",
-                  blue: "bg-blue-800/50 border-blue-700",
-                  pink: "bg-pink-800/50 border-pink-700",
-                })}>
-                  <div className={getThemeClasses({
-                    base: "rounded-full p-2",
-                    default: "bg-primary/20 text-primary",
-                    blue: "bg-primary/20 text-primary",
-                    pink: "bg-primary/20 text-primary",
-                  })}>
-                    <Settings className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className={getThemeClasses({
-                      base: "font-medium",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50",
-                    })}>Theme</p>
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      blue: "text-blue-400",
-                      pink: "text-pink-400",
-                    })}>
-                      {profile?.theme || 'Default Theme'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-    </Container>
+      </Container>
+    </ClientContentWrapper>
   );
 } 

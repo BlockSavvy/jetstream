@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { Loader2, Clock, Check, ArrowRight, AlertCircle, Plane, Calendar, DollarSign, CreditCard, Bitcoin } from 'lucide-react';
 import { toast } from 'sonner';
+import { useGdyupTheme } from '../../../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 interface OfferDetailPageProps {
   params: {
@@ -31,6 +33,12 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [expirationTime, setExpirationTime] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>('');
+  
+  const { 
+    getThemedTextClasses, 
+    getThemedButtonClasses, 
+    getThemedBackgroundClasses
+  } = useGdyupTheme();
   
   useEffect(() => {
     // If no user, redirect to auth
@@ -125,13 +133,16 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card>
+        <Card className={cn(
+          getThemedBackgroundClasses('card'),
+          "border border-gdyup-border"
+        )}>
           <CardHeader>
-            <CardTitle className="text-center">Loading Offer...</CardTitle>
+            <CardTitle className={cn("text-center", getThemedTextClasses())}>Loading Offer...</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center py-10">
-              <Loader2 className="h-12 w-12 animate-spin text-amber-500" />
+              <Loader2 className={cn("h-12 w-12 animate-spin", getThemedTextClasses('primary'))} />
             </div>
           </CardContent>
         </Card>
@@ -142,17 +153,20 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
   if (error || !offer) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-md">
-        <Card>
+        <Card className={cn(
+          getThemedBackgroundClasses('card'),
+          "border border-gdyup-border"
+        )}>
           <CardHeader className="text-center">
-            <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-4" />
-            <CardTitle>Error Loading Offer</CardTitle>
+            <AlertCircle className={cn("h-10 w-10 mx-auto mb-4", getThemedTextClasses('destructive'))} />
+            <CardTitle className={getThemedTextClasses()}>Error Loading Offer</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center text-muted-foreground mb-4">{error || 'Offer not found'}</p>
+            <p className={cn("text-center mb-4", getThemedTextClasses('muted'))}>{error || 'Offer not found'}</p>
           </CardContent>
           <CardFooter>
             <Button 
-              className="w-full" 
+              className={cn("w-full", getThemedButtonClasses())}
               onClick={handleReturnToDashboard} 
               autoFocus
             >
@@ -172,36 +186,40 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
   
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
-      <Card>
+      <Card className={cn(
+        getThemedBackgroundClasses('card'),
+        "border border-gdyup-border"
+      )}>
         <CardHeader>
           <Button 
             variant="ghost" 
-            className="mb-2 p-0" 
+            className={cn("mb-2 p-0", getThemedButtonClasses('ghost'))} 
             onClick={handleReturnToDashboard}
           >
             ← Back to Dashboard
           </Button>
-          <CardTitle className="font-bold text-xl">
+          <CardTitle className={cn("font-bold text-xl", getThemedTextClasses())}>
             {offer.departure_location} → {offer.arrival_location}
           </CardTitle>
-          <div className="text-muted-foreground">
+          <div className={getThemedTextClasses('muted')}>
             {format(new Date(offer.flight_date), 'MMMM d, yyyy')}
           </div>
           
           {/* Status indicator */}
-          <div className={`mt-4 p-3 rounded-md ${
-            isPaid ? 'bg-green-50 border border-green-200' :
-            isAcceptedButUnpaid ? 'bg-amber-50 border border-amber-200' :
-            isExpired ? 'bg-red-50 border border-red-200' :
-            'bg-blue-50 border border-blue-200'
-          }`}>
+          <div className={cn(
+            "mt-4 p-3 rounded-md",
+            isPaid ? "border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-900" :
+            isAcceptedButUnpaid ? "border border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-900" :
+            isExpired ? "border border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-900" :
+            "border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-900"
+          )}>
             <div className="flex items-center">
-              {isPaid && <Check className="h-5 w-5 text-green-600 mr-2" />}
-              {isAcceptedButUnpaid && <Clock className="h-5 w-5 text-amber-600 mr-2" />}
-              {isExpired && <AlertCircle className="h-5 w-5 text-red-600 mr-2" />}
-              {!isPaid && !isAcceptedButUnpaid && !isExpired && <Plane className="h-5 w-5 text-blue-600 mr-2" />}
+              {isPaid && <Check className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />}
+              {isAcceptedButUnpaid && <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400 mr-2" />}
+              {isExpired && <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />}
+              {!isPaid && !isAcceptedButUnpaid && !isExpired && <Plane className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />}
               
-              <span className="font-medium">
+              <span className={cn("font-medium", getThemedTextClasses())}>
                 {isPaid ? 'Payment Complete' :
                  isAcceptedButUnpaid ? 'Payment Required' :
                  isExpired ? 'Offer Expired' :
@@ -211,7 +229,9 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
             
             {isAcceptedButUnpaid && expirationTime && (
               <div className="mt-1 text-sm">
-                <p className="text-amber-700">
+                <p className={cn(
+                  isExpired ? getThemedTextClasses('destructive') : getThemedTextClasses('secondary')
+                )}>
                   {isExpired ? 
                     'This offer has expired. The seat is no longer reserved.' :
                     `Time remaining: ${timeLeft}`
@@ -222,7 +242,7 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
             
             {isPaid && (
               <div className="mt-1 text-sm">
-                <p className="text-green-700">
+                <p className={getThemedTextClasses('success')}>
                   Your seat is confirmed. Access your boarding pass below.
                 </p>
               </div>
@@ -234,18 +254,18 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Flight Date</span>
+                <Calendar className={cn("h-4 w-4 mr-2", getThemedTextClasses('muted'))} />
+                <span className={cn("text-sm", getThemedTextClasses('muted'))}>Flight Date</span>
               </div>
-              <p className="font-medium">{format(new Date(offer.flight_date), 'MMMM d, yyyy')}</p>
+              <p className={cn("font-medium", getThemedTextClasses())}>{format(new Date(offer.flight_date), 'MMMM d, yyyy')}</p>
             </div>
             
             <div>
               <div className="flex items-center">
-                <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Price</span>
+                <DollarSign className={cn("h-4 w-4 mr-2", getThemedTextClasses('muted'))} />
+                <span className={cn("text-sm", getThemedTextClasses('muted'))}>Price</span>
               </div>
-              <p className="font-medium">${offer.requested_share_amount.toLocaleString()}</p>
+              <p className={cn("font-medium", getThemedTextClasses())}>${offer.requested_share_amount.toLocaleString()}</p>
             </div>
           </div>
           
@@ -256,11 +276,11 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
                 {offer?.payment_method === 'btcpay' ? (
                   <Bitcoin className="h-4 w-4 mr-2 text-amber-500" />
                 ) : (
-                  <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <CreditCard className={cn("h-4 w-4 mr-2", getThemedTextClasses('muted'))} />
                 )}
-                <span className="text-sm text-muted-foreground">Payment Method</span>
+                <span className={cn("text-sm", getThemedTextClasses('muted'))}>Payment Method</span>
               </div>
-              <p className="font-medium">
+              <p className={cn("font-medium", getThemedTextClasses())}>
                 {offer?.payment_method === 'btcpay' ? 'Bitcoin' : 'Credit Card'}
               </p>
             </div>
@@ -270,10 +290,10 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
           {offer.aircraft_model && (
             <div className="mt-2">
               <div className="flex items-center">
-                <Plane className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Aircraft</span>
+                <Plane className={cn("h-4 w-4 mr-2", getThemedTextClasses('muted'))} />
+                <span className={cn("text-sm", getThemedTextClasses('muted'))}>Aircraft</span>
               </div>
-              <p className="font-medium">{offer.aircraft_model}</p>
+              <p className={cn("font-medium", getThemedTextClasses())}>{offer.aircraft_model}</p>
             </div>
           )}
           
@@ -281,7 +301,7 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
           <div className="space-y-3 mt-6">
             {isAcceptedButUnpaid && !isExpired && (
               <Button
-                className="w-full"
+                className={cn("w-full", getThemedButtonClasses())}
                 onClick={handleCompletePayment}
               >
                 Complete Payment
@@ -292,14 +312,14 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
             {isPaid && (
               <>
                 <Button
-                  className="w-full"
+                  className={cn("w-full", getThemedButtonClasses())}
                   onClick={handleViewBoardingPass}
                 >
                   View Boarding Pass
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className={cn("w-full", getThemedButtonClasses('outline'))}
                   onClick={handleViewMessages}
                 >
                   Message {isCreator ? 'Passenger' : 'Jet Owner'}
@@ -308,7 +328,7 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
             )}
             
             {isExpired && (
-              <div className="text-center text-red-600 mb-4">
+              <div className={cn("text-center mb-4", getThemedTextClasses('destructive'))}>
                 This offer has expired. The seat is no longer reserved.
               </div>
             )}
@@ -318,7 +338,7 @@ export default function OfferDetailPage({ params }: OfferDetailPageProps) {
         <CardFooter>
           <Button 
             variant="outline" 
-            className="w-full" 
+            className={cn("w-full", getThemedButtonClasses('outline'))}
             onClick={handleReturnToDashboard}
           >
             Return to Dashboard

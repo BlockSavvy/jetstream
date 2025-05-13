@@ -12,7 +12,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/components/auth-provider';
-import GdyupHeader from '@/app/gdyup/components/GdyupHeader';
+import { ClientLayoutWrapper } from '@/app/gdyup/client-layout-wrapper';
 import { createClient } from '@/lib/supabase';
 import '../gdyup.css';
 
@@ -418,160 +418,162 @@ export default function GdyupJets() {
 
   // Show empty state - No jets
   return (
-    <div className="bg-black min-h-screen text-white">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-white">My Jets</h2>
-          <Button
-            onClick={() => navigateTo('/gdyup/jets/models')}
-            className="bg-[#DAFF0D] hover:brightness-105 text-black"
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add New Jet
-          </Button>
-        </div>
-        
-        {/* Auth loading state */}
-        {(authLoading || isRetryingAuth) && (
-          <div>
-            <div className="flex flex-col justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mb-4" style={{ borderColor: primaryColor }}></div>
-              <p className="text-gray-400 text-sm">
-                {isRetryingAuth ? "Refreshing authentication..." : "Checking authentication..."}
-              </p>
-            </div>
+    <ClientLayoutWrapper>
+      <div className="bg-black min-h-screen text-white">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-white">My Jets</h2>
+            <Button
+              onClick={() => navigateTo('/gdyup/jets/models')}
+              className="bg-[#DAFF0D] hover:brightness-105 text-black"
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Jet
+            </Button>
           </div>
-        )}
-
-        {/* Error state (not auth related) - only for network issues */}
-        {error && user && shouldShowErrorPage(error) && (
-          <div className="bg-[#0D0D0D] border-gray-800 p-6 text-center rounded-lg">
-            <div className="flex flex-col items-center py-10">
-              <div className="rounded-full bg-red-900/30 p-4 mb-4">
-                <AlertTriangle className="h-10 w-10 text-red-500" />
+          
+          {/* Auth loading state */}
+          {(authLoading || isRetryingAuth) && (
+            <div>
+              <div className="flex flex-col justify-center items-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 mb-4" style={{ borderColor: primaryColor }}></div>
+                <p className="text-gray-400 text-sm">
+                  {isRetryingAuth ? "Refreshing authentication..." : "Checking authentication..."}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-red-400">Connection Error</h3>
-              <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                {error}
-              </p>
-              <Button
-                onClick={() => {
-                  // Reset flags so we don't trigger fallbacks
-                  localStorage.setItem('gdyup_jets_fetch_count', '0');
-                  setRetryCount(0);
-                  fetchJets();
-                }}
-                className="bg-[#DAFF0D] hover:brightness-105 text-black"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
-              </Button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Empty state - No jets */}
-        {!authLoading && !isRetryingAuth && user && !loading && (!error || !shouldShowErrorPage(error)) && jets.length === 0 && (
-          <div>
-            <Card className="bg-[#0D0D0D] border-gray-800 p-6 text-center">
+          {/* Error state (not auth related) - only for network issues */}
+          {error && user && shouldShowErrorPage(error) && (
+            <div className="bg-[#0D0D0D] border-gray-800 p-6 text-center rounded-lg">
               <div className="flex flex-col items-center py-10">
-                <div className="rounded-full bg-gray-900 p-4 mb-4">
-                  <Plane className="h-10 w-10" style={{ color: primaryColor }} />
+                <div className="rounded-full bg-red-900/30 p-4 mb-4">
+                  <AlertTriangle className="h-10 w-10 text-red-500" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">No Jets Added Yet</h3>
+                <h3 className="text-xl font-semibold mb-2 text-red-400">Connection Error</h3>
                 <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                  You haven't added any jets to your profile. Add your first jet to start managing your aircraft in GDY UP.
+                  {error}
                 </p>
                 <Button
-                  onClick={() => navigateTo('/gdyup/jets/models')}
+                  onClick={() => {
+                    // Reset flags so we don't trigger fallbacks
+                    localStorage.setItem('gdyup_jets_fetch_count', '0');
+                    setRetryCount(0);
+                    fetchJets();
+                  }}
                   className="bg-[#DAFF0D] hover:brightness-105 text-black"
                 >
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Browse Aircraft Models
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Retry
                 </Button>
               </div>
-            </Card>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Jets list */}
-        {!authLoading && !isRetryingAuth && user && !loading && (!error || !shouldShowErrorPage(error)) && jets.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {jets.map((jet) => (
-              <Card key={jet.id} className="bg-[#0D0D0D] border-gray-800 overflow-hidden">
-                <div className="aspect-video relative">
-                  {jet.image_url ? (
-                    <Image
-                      src={jet.image_url}
-                      alt={`${jet.manufacturer} ${jet.model}`}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full w-full bg-gray-900">
-                      <Plane className="h-12 w-12 text-gray-600" />
-                    </div>
-                  )}
-                  <Badge className={`${getStatusColor(jet.status)} absolute top-2 right-2`}>
-                    {jet.status}
-                  </Badge>
+          {/* Empty state - No jets */}
+          {!authLoading && !isRetryingAuth && user && !loading && (!error || !shouldShowErrorPage(error)) && jets.length === 0 && (
+            <div>
+              <Card className="bg-[#0D0D0D] border-gray-800 p-6 text-center">
+                <div className="flex flex-col items-center py-10">
+                  <div className="rounded-full bg-gray-900 p-4 mb-4">
+                    <Plane className="h-10 w-10" style={{ color: primaryColor }} />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No Jets Added Yet</h3>
+                  <p className="text-gray-400 mb-6 max-w-md mx-auto">
+                    You haven't added any jets to your profile. Add your first jet to start managing your aircraft in GDY UP.
+                  </p>
+                  <Button
+                    onClick={() => navigateTo('/gdyup/jets/models')}
+                    className="bg-[#DAFF0D] hover:brightness-105 text-black"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Browse Aircraft Models
+                  </Button>
                 </div>
-                
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="font-bold text-lg">
-                      {jet.manufacturer} {jet.model}
-                    </CardTitle>
-                    <Badge variant="outline" className="bg-gray-900/80 border-gray-700">
-                      {jet.category}
+              </Card>
+            </div>
+          )}
+
+          {/* Jets list */}
+          {!authLoading && !isRetryingAuth && user && !loading && (!error || !shouldShowErrorPage(error)) && jets.length > 0 && (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {jets.map((jet) => (
+                <Card key={jet.id} className="bg-[#0D0D0D] border-gray-800 overflow-hidden">
+                  <div className="aspect-video relative">
+                    {jet.image_url ? (
+                      <Image
+                        src={jet.image_url}
+                        alt={`${jet.manufacturer} ${jet.model}`}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full w-full bg-gray-900">
+                        <Plane className="h-12 w-12 text-gray-600" />
+                      </div>
+                    )}
+                    <Badge className={`${getStatusColor(jet.status)} absolute top-2 right-2`}>
+                      {jet.status}
                     </Badge>
                   </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Tail Number</span>
-                      <span className="text-gray-200 font-medium">{jet.tail_number}</span>
+                  
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="font-bold text-lg">
+                        {jet.manufacturer} {jet.model}
+                      </CardTitle>
+                      <Badge variant="outline" className="bg-gray-900/80 border-gray-700">
+                        {jet.category}
+                      </Badge>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Year</span>
-                      <span className="text-gray-200 font-medium">{jet.year}</span>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Tail Number</span>
+                        <span className="text-gray-200 font-medium">{jet.tail_number}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Year</span>
+                        <span className="text-gray-200 font-medium">{jet.year}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Capacity</span>
+                        <span className="text-gray-200 font-medium">{jet.capacity} seats</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Home Base</span>
+                        <span className="text-gray-200 font-medium">{jet.home_base_airport}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Capacity</span>
-                      <span className="text-gray-200 font-medium">{jet.capacity} seats</span>
+                  </CardContent>
+                  
+                  <CardFooter className="border-t border-gray-800 pt-4">
+                    <div className="flex space-x-2 w-full">
+                      <Button
+                        variant="outline"
+                        onClick={() => navigateTo(`/gdyup/jets/${jet.id}`)}
+                        className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
+                      >
+                        View Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigateTo(`/gdyup/jets/${jet.id}/edit`)}
+                        className="border-gray-700 hover:bg-gray-800"
+                      >
+                        <Settings className="h-4 w-4" style={{ color: primaryColor }} />
+                      </Button>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Home Base</span>
-                      <span className="text-gray-200 font-medium">{jet.home_base_airport}</span>
-                    </div>
-                  </div>
-                </CardContent>
-                
-                <CardFooter className="border-t border-gray-800 pt-4">
-                  <div className="flex space-x-2 w-full">
-                    <Button
-                      variant="outline"
-                      onClick={() => navigateTo(`/gdyup/jets/${jet.id}`)}
-                      className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => navigateTo(`/gdyup/jets/${jet.id}/edit`)}
-                      className="border-gray-700 hover:bg-gray-800"
-                    >
-                      <Settings className="h-4 w-4" style={{ color: primaryColor }} />
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        )}
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ClientLayoutWrapper>
   );
 } 

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 export default function AuthTestPage() {
   const { user, loading, refreshSession } = useAuth();
@@ -13,6 +15,13 @@ export default function AuthTestPage() {
   const [instanceId, setInstanceId] = useState<string>('');
   const [logs, setLogs] = useState<string[]>([]);
   const router = useRouter();
+  
+  // Theme helpers
+  const { 
+    getThemedTextClasses, 
+    getThemedButtonClasses, 
+    getThemedBackgroundClasses
+  } = useGdyupTheme();
   
   const addLog = (message: string) => {
     setLogs(prev => [...prev, `[${new Date().toISOString()}] ${message}`]);
@@ -122,10 +131,13 @@ export default function AuthTestPage() {
   if (loading) {
     return (
       <div className="container mx-auto py-6">
-        <Card>
+        <Card className={cn(
+          getThemedBackgroundClasses('card'),
+          "border border-gdyup-border"
+        )}>
           <CardHeader>
-            <CardTitle>Authentication Test</CardTitle>
-            <CardDescription>Loading authentication state...</CardDescription>
+            <CardTitle className={getThemedTextClasses()}>Authentication Test</CardTitle>
+            <CardDescription className={getThemedTextClasses('muted')}>Loading authentication state...</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -134,67 +146,83 @@ export default function AuthTestPage() {
   
   return (
     <div className="container mx-auto py-6">
-      <Card className="mb-6">
+      <Card className={cn(
+        "mb-6",
+        getThemedBackgroundClasses('card'),
+        "border border-gdyup-border"
+      )}>
         <CardHeader>
-          <CardTitle>Authentication Test</CardTitle>
-          <CardDescription>
+          <CardTitle className={getThemedTextClasses()}>Authentication Test</CardTitle>
+          <CardDescription className={getThemedTextClasses('muted')}>
             Test and debug authentication mechanisms for JetShare
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-4 border rounded-md">
-              <h3 className="font-medium mb-2">User Status</h3>
+            <div className={cn(
+              "p-4 rounded-md",
+              getThemedBackgroundClasses('secondary'),
+              "border border-gdyup-border"
+            )}>
+              <h3 className={cn("font-medium mb-2", getThemedTextClasses())}>User Status</h3>
               {user ? (
                 <div className="space-y-2">
-                  <p className="text-green-600">✅ Authenticated</p>
-                  <p>User ID: {user.id}</p>
-                  <p>Email: {user.email}</p>
+                  <p className={getThemedTextClasses('success')}>✅ Authenticated</p>
+                  <p className={getThemedTextClasses()}>User ID: {user.id}</p>
+                  <p className={getThemedTextClasses()}>Email: {user.email}</p>
                 </div>
               ) : (
-                <p className="text-red-600">❌ Not authenticated</p>
+                <p className={getThemedTextClasses('destructive')}>❌ Not authenticated</p>
               )}
             </div>
             
-            <div className="p-4 border rounded-md">
-              <h3 className="font-medium mb-2">Instance ID</h3>
-              <p>{instanceId}</p>
+            <div className={cn(
+              "p-4 rounded-md",
+              getThemedBackgroundClasses('secondary'),
+              "border border-gdyup-border"
+            )}>
+              <h3 className={cn("font-medium mb-2", getThemedTextClasses())}>Instance ID</h3>
+              <p className={getThemedTextClasses()}>{instanceId}</p>
               <Button 
                 onClick={handleGenerateNewInstanceId}
                 variant="outline" 
                 size="sm"
-                className="mt-2"
+                className={cn("mt-2", getThemedButtonClasses('outline'))}
               >
                 Generate New Instance ID
               </Button>
             </div>
             
-            <div className="p-4 border rounded-md">
-              <h3 className="font-medium mb-2">Auth Token Status</h3>
+            <div className={cn(
+              "p-4 rounded-md",
+              getThemedBackgroundClasses('secondary'),
+              "border border-gdyup-border"
+            )}>
+              <h3 className={cn("font-medium mb-2", getThemedTextClasses())}>Auth Token Status</h3>
               {tokenData ? (
                 <div className="space-y-2">
-                  <p className="text-green-600">✅ Token found in localStorage</p>
-                  <p>Expires at: {tokenData.expires_at ? new Date(tokenData.expires_at * 1000).toISOString() : 'Unknown'}</p>
+                  <p className={getThemedTextClasses('success')}>✅ Token found in localStorage</p>
+                  <p className={getThemedTextClasses()}>Expires at: {tokenData.expires_at ? new Date(tokenData.expires_at * 1000).toISOString() : 'Unknown'}</p>
                 </div>
               ) : (
-                <p className="text-red-600">❌ No token in localStorage</p>
+                <p className={getThemedTextClasses('destructive')}>❌ No token in localStorage</p>
               )}
             </div>
             
             <div className="flex flex-wrap gap-2">
-              <Button onClick={handleRefreshSession}>
+              <Button className={getThemedButtonClasses()} onClick={handleRefreshSession}>
                 Refresh Session
               </Button>
-              <Button onClick={handleDirectSessionCheck} variant="outline">
+              <Button className={getThemedButtonClasses('outline')} onClick={handleDirectSessionCheck} variant="outline">
                 Check Session
               </Button>
-              <Button onClick={handleTestApiCall} variant="outline">
+              <Button className={getThemedButtonClasses('outline')} onClick={handleTestApiCall} variant="outline">
                 Test API Call
               </Button>
-              <Button onClick={() => router.push('/jetshare/dashboard')} variant="secondary">
+              <Button className={getThemedButtonClasses('secondary')} onClick={() => router.push('/jetshare/dashboard')} variant="secondary">
                 Go to Dashboard
               </Button>
-              <Button onClick={() => router.push('/auth/login')} variant="secondary">
+              <Button className={getThemedButtonClasses('secondary')} onClick={() => router.push('/auth/login')} variant="secondary">
                 Go to Login
               </Button>
             </div>
@@ -202,18 +230,24 @@ export default function AuthTestPage() {
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className={cn(
+        getThemedBackgroundClasses('card'),
+        "border border-gdyup-border"
+      )}>
         <CardHeader>
-          <CardTitle>Logs</CardTitle>
-          <CardDescription>Action history and debug information</CardDescription>
+          <CardTitle className={getThemedTextClasses()}>Logs</CardTitle>
+          <CardDescription className={getThemedTextClasses('muted')}>Action history and debug information</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] overflow-y-auto bg-slate-50 dark:bg-slate-900 p-4 rounded-md font-mono text-sm">
+          <div className={cn(
+            "h-[300px] overflow-y-auto p-4 rounded-md font-mono text-sm",
+            getThemedBackgroundClasses('secondary')
+          )}>
             {logs.length === 0 ? (
-              <p className="text-muted-foreground">No logs yet</p>
+              <p className={getThemedTextClasses('muted')}>No logs yet</p>
             ) : (
               logs.map((log, index) => (
-                <div key={index} className="pb-1">
+                <div key={index} className={cn("pb-1", getThemedTextClasses())}>
                   {log}
                 </div>
               ))
