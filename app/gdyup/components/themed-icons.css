@@ -1,0 +1,243 @@
+/* 
+   GDY·UP Themed Icons
+   This file contains styling fixes for icons in various contexts
+   to ensure proper visibility across themes.
+*/
+
+/* CRITICAL FIX: Ensure header navigation buttons have matching text and icon colors */
+.gdyup-primary svg,
+button.bg-gdyup-primary svg,
+[class*="bg-gdyup-primary"] svg,
+a.bg-gdyup-primary svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+}
+
+/* Fix for dashboard tabs with primary background - enforce button text color for both text and icons */
+[data-state="active"].bg-gdyup-primary,
+[data-state="active"].bg-gdyup-primary svg,
+[data-state="active"][class*="bg-gdyup-primary"] svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+}
+
+/* Improved force visibility for menu icons */
+.mobile-menu button svg,
+.mobile-menu a svg,
+header nav button svg,
+header nav a svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Explicit fix for profile menu in header */
+[id="profile-menu"] svg,
+.profile-menu svg,
+header button svg,
+header a svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+  stroke-width: 2px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure active state buttons have proper icon color */
+.bg-gdyup-primary svg,
+button.bg-gdyup-primary svg,
+a.bg-gdyup-primary svg,
+[data-state="active"] svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix specifically for menu button in the header */
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for theme switcher dropdown and other menus */
+[role="menuitem"] svg,
+.fixed-dropdown [role="menuitem"] svg,
+[data-radix-menu-content] svg,
+[data-state="open"] [role="menuitem"] svg {
+  color: inherit !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 1.75px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fix for dropdown menu icons to ensure visibility on light backgrounds */
+.gdyup-theme-default [role="menuitem"] svg,
+.gdyup-theme-pink [role="menuitem"] svg,
+.gdyup-theme-blue [role="menuitem"] svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+  stroke-width: 1.75px !important;
+  visibility: visible !important;
+}
+
+/* Fix for icons in popup menus */
+.radix-dropdown-menu svg,
+.radix-popover svg,
+[role="menu"] svg,
+[role="dialog"] svg {
+  color: var(--gdyup-text) !important;
+  stroke-width: 1.75px !important;
+  fill: none !important;
+  visibility: visible !important;
+}
+
+/* Fix for dashboard text and icons */
+.dashboard-content {
+  color: var(--gdyup-text) !important;
+}
+
+.dashboard-content svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+}
+
+/* More aggressive fixes for dashboard content */
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3,
+.dashboard-content h4,
+.dashboard-content h5,
+.dashboard-content h6,
+.dashboard-content p,
+.dashboard-content span,
+.dashboard-content div:not([class*="bg-"]):not([class*="border-"]) {
+  color: var(--gdyup-text) !important;
+}
+
+/* Fix for dashboard cards */
+.dashboard-content .card,
+.dashboard-content [class*="Card"] {
+  background-color: var(--gdyup-bg-card) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+/* Fix for tab indicators in dashboards */
+.dashboard-tabs [data-state="active"] {
+  color: var(--gdyup-primary) !important;
+}
+
+.dashboard-tabs [data-state="active"] svg {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+}
+
+/* Mobile menu icon fixes */
+.mobile-menu svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+}
+
+.mobile-menu .active svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+  fill: none !important;
+}
+
+/* Ensure all ThemedIcon components have consistent stroke width */
+.themed-icon {
+  stroke-width: 1.75px !important;
+  fill: none !important;
+  visibility: visible !important;
+}
+
+/* Fix for calendar/datepicker icons */
+button svg.lucide-calendar, 
+button svg.lucide-clock,
+.date-picker-icon,
+.time-picker-icon {
+  color: var(--gdyup-primary) !important;
+  stroke: var(--gdyup-primary) !important;
+  fill: none !important;
+  visibility: visible !important;
+}
+
+/* Global fix for all Lucide icons */
+.lucide, 
+.lucide-icon,
+svg[data-lucide] {
+  color: currentColor !important;
+  stroke: currentColor !important;
+  fill: none !important;
+  stroke-width: 1.75px !important;
+  visibility: visible !important;
+}
+
+/* Dashboard text visibility fixes */
+.gdyup-app h1, 
+.gdyup-app h2, 
+.gdyup-app h3, 
+.gdyup-app h4, 
+.gdyup-app p, 
+.gdyup-app span, 
+.gdyup-app div {
+  color: var(--gdyup-text);
+}
+
+/* Override text-white in dashboard */
+.gdyup-app .text-white {
+  color: var(--gdyup-text) !important;
+}
+
+/* Card content text visibility fixes */
+.card h1,
+.card h2,
+.card h3,
+.card h4,
+.card p,
+.card span {
+  color: var(--gdyup-text) !important;
+}
+
+/* Card content text visibility for blue theme */
+.gdyup-theme-blue .card {
+  color: var(--gdyup-text) !important;
+}
+
+/* Fix for card titles and headers */
+.card-title,
+.card-header {
+  color: var(--gdyup-text) !important;
+}
+
+/* Dashboard card fixes */
+.gdyup-card {
+  background-color: var(--gdyup-bg-card);
+  border-color: var(--gdyup-border);
+}
+
+/* Fix specifically for the active tabs */
+button[data-state="active"] {
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Fix for menu items */
+[role="menuitem"] {
+  color: var(--gdyup-text) !important;
+} 
