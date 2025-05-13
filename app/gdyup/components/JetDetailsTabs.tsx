@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Users, Map, Plane, ThermometerSun, CalendarIcon, 
   Wifi, Bed, Bath, Utensils, Tv, 
-  ArrowDownUp, Ruler, Globe, Gauge, Crown
+  ArrowDownUp, Ruler, Globe, Gauge, Crown, ArrowUp, Calendar, Home
 } from 'lucide-react';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 interface JetDetailsTabsProps {
   jetData: {
@@ -29,240 +30,337 @@ interface JetDetailsTabsProps {
     entertainment?: string;
     wifi?: boolean;
     interior_type?: string;
+    home_base_airport?: string;
   };
   selectedTab: string;
   onTabChange: (tab: string) => void;
 }
 
 const JetDetailsTabs = ({ jetData, selectedTab, onTabChange }: JetDetailsTabsProps) => {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
+
+  // Debug jet data more thoroughly
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('JetDetailsTabs received data:', {
+        id: jetData?.id,
+        manufacturer: jetData?.manufacturer,
+        model: jetData?.model,
+        tail_number: jetData?.tail_number,
+        capacity: jetData?.capacity,
+        year: jetData?.year,
+        range_nm: jetData?.range_nm,
+        has_interior_data: !!(jetData?.berths !== undefined || jetData?.lavatory !== undefined)
+      });
+    }
+  }, [jetData]);
 
   // Define a consistent style for info items
   const renderInfoItem = (icon: React.ReactNode, label: string, value: React.ReactNode) => (
-    <div className="flex items-center gap-4">
-      <div className={getThemeClasses({
-        base: "flex items-center justify-center rounded-full p-2.5 w-11 h-11 shadow-sm",
-        default: "bg-[#DAFF0D]/20 text-[#DAFF0D]",
-        blue: "bg-blue-500/20 text-blue-400",
-        pink: "bg-pink-500/20 text-pink-400"
-      })}>
+    <div className={cn(
+      "flex items-center gap-4 bg-black/30 rounded-lg p-3 hover:bg-black/40 transition-colors border border-gdyup-border/30",
+      "hover:border-gdyup-primary/20"
+    )}>
+      <div className={cn(
+        "flex items-center justify-center rounded-full p-2.5 w-11 h-11 shadow-md",
+        "bg-gdyup-primary/20 text-gdyup-primary"
+      )}>
         {icon}
       </div>
       <div className="flex flex-col">
-        <span className={getThemeClasses({
-          base: "text-xs uppercase tracking-wide font-medium mb-0.5",
-          default: "text-gray-400",
-          blue: "text-blue-300/70",
-          pink: "text-pink-300/70"
-        })}>
+        <span className={cn("text-xs uppercase tracking-wide font-medium mb-0.5", getThemedTextClasses('muted'))}>
           {label}
         </span>
-        <span className={getThemeClasses({
-          base: "font-semibold text-base",
-          default: "text-white",
-          blue: "text-blue-100",
-          pink: "text-pink-100"
-        })}>
+        <span className={cn("font-semibold text-base", getThemedTextClasses())}>
           {value}
         </span>
       </div>
     </div>
   );
 
-  // Render the specs tab content
-  const renderSpecsTab = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-5">
-      {jetData.capacity !== undefined && (
-        renderInfoItem(
-          <Users className="h-5 w-5" />,
-          "Capacity",
-          `${jetData.capacity || 'N/A'} seats`
-        )
-      )}
-      
-      {(jetData.range_nm !== undefined || true) && (
-        renderInfoItem(
-          <Map className="h-5 w-5" />,
-          "Range",
-          `${(jetData.range_nm || 0).toLocaleString()} nm`
-        )
-      )}
-      
-      {(jetData.cruise_speed_kts !== undefined || true) && (
-        renderInfoItem(
-          <Gauge className="h-5 w-5" />,
-          "Cruise Speed",
-          `${jetData.cruise_speed_kts || 'N/A'} kts`
-        )
-      )}
-      
-      {(jetData.max_altitude !== undefined || true) && (
-        renderInfoItem(
-          <ArrowDownUp className="h-5 w-5" />,
-          "Max Altitude",
-          `${(jetData.max_altitude || 0).toLocaleString() || "N/A"} ft`
-        )
-      )}
-      
-      {jetData.year !== undefined && (
-        renderInfoItem(
-          <CalendarIcon className="h-5 w-5" />,
-          "Year",
-          `${jetData.year || 'N/A'}`
-        )
-      )}
-      
-      {jetData.tail_number && (
-        renderInfoItem(
-          <Plane className="h-5 w-5" />,
-          "Registration",
-          jetData.tail_number
-        )
-      )}
+  // Helper to render a section title
+  const renderSectionTitle = (title: string) => (
+    <div className="col-span-full mb-2 mt-1">
+      <h3 className={cn("text-sm font-medium border-b border-gdyup-border/30 pb-1",
+        getThemedTextClasses('secondary')
+      )}>
+        {title}
+      </h3>
     </div>
   );
+
+  // Render the specs tab content
+  const renderSpecsTab = () => {
+    // Debug log the available data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('JetDetailsTabs rendering with data:', 
+        jetData ? {
+          id: jetData.id,
+          manufacturer: jetData.manufacturer,
+          model: jetData.model,
+          capacity: jetData.capacity,
+          tail_number: jetData.tail_number
+        } : 'No jet data available'
+      );
+    }
+    
+    // Check if we have valid jet data
+    if (!jetData || !jetData.id) {
+      return (
+        <div className="p-5 text-center">
+          <span className={cn("italic", getThemedTextClasses('muted'))}>
+            Jet data is not available
+          </span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="p-5 space-y-4">
+        {/* Aircraft Overview Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderSectionTitle("Aircraft Overview")}
+          
+          {/* Registration & Year */}
+          <div className="flex flex-col space-y-3">
+            {jetData?.capacity !== undefined && renderInfoItem(
+              <Users className="h-5 w-5" />,
+              "Capacity",
+              `${jetData.capacity} seats`
+            )}
+            
+            {jetData?.tail_number && renderInfoItem(
+              <Plane className="h-5 w-5" />,
+              "Registration",
+              jetData.tail_number
+            )}
+          </div>
+          
+          <div className="flex flex-col space-y-3">
+            {jetData?.year !== undefined && renderInfoItem(
+              <Calendar className="h-5 w-5" />,
+              "Year",
+              `${jetData.year || 'N/A'}`
+            )}
+            
+            {jetData?.home_base_airport && renderInfoItem(
+              <Home className="h-5 w-5" />,
+              "Home Base",
+              jetData.home_base_airport
+            )}
+          </div>
+        </div>
+        
+        {/* Performance Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderSectionTitle("Performance")}
+          
+          <div className="flex flex-col space-y-3">
+            {jetData?.range_nm !== undefined && renderInfoItem(
+              <Map className="h-5 w-5" />,
+              "Range",
+              `${jetData.range_nm && typeof jetData.range_nm === 'number' ? jetData.range_nm.toLocaleString() : jetData.range_nm || 'N/A'} nm`
+            )}
+            
+            {jetData?.max_altitude !== undefined && jetData.max_altitude && renderInfoItem(
+              <ArrowUp className="h-5 w-5" />,
+              "Max Altitude",
+              `${typeof jetData.max_altitude === 'number' ? jetData.max_altitude.toLocaleString() : jetData.max_altitude} ft`
+            )}
+          </div>
+          
+          <div className="flex flex-col space-y-3">
+            {jetData?.cruise_speed_kts !== undefined && renderInfoItem(
+              <Gauge className="h-5 w-5" />,
+              "Cruise Speed",
+              `${jetData.cruise_speed_kts && typeof jetData.cruise_speed_kts === 'number' ? jetData.cruise_speed_kts.toLocaleString() : jetData.cruise_speed_kts || 'N/A'} kts`
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render the interior tab content
-  const renderInteriorTab = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-5">
-      {(jetData.interior_type || true) && (
-        renderInfoItem(
-          <Crown className="h-5 w-5" />,
-          "Interior Type",
-          jetData.interior_type || "Standard Executive"
-        )
-      )}
-      
-      {(jetData.cabin_width !== undefined || true) && (
-        renderInfoItem(
-          <Ruler className="h-5 w-5" />,
-          "Cabin Width",
-          `${jetData.cabin_width || 'N/A'} ft`
-        )
-      )}
-      
-      {(jetData.cabin_height !== undefined || true) && (
-        renderInfoItem(
-          <Ruler className="h-5 w-5 rotate-90" />,
-          "Cabin Height",
-          `${jetData.cabin_height || 'N/A'} ft`
-        )
-      )}
-      
-      {(jetData.cabin_length !== undefined || true) && (
-        renderInfoItem(
-          <Ruler className="h-5 w-5 -rotate-45" />,
-          "Cabin Length",
-          `${jetData.cabin_length || 'N/A'} ft`
-        )
-      )}
-      
-      {(jetData.berths !== undefined || true) && (
-        renderInfoItem(
-          <Bed className="h-5 w-5" />,
-          "Sleeping Berths",
-          jetData.berths ? "Available" : "Not Available"
-        )
-      )}
-      
-      {jetData.capacity !== undefined && (
-        renderInfoItem(
-          <Users className="h-5 w-5" />,
-          "Passenger Capacity",
-          `${jetData.capacity || 'N/A'} passengers`
-        )
-      )}
-    </div>
-  );
+  const renderInteriorTab = () => {
+    // Check if we have valid jet data
+    if (!jetData || !jetData.id) {
+      return (
+        <div className="p-5 text-center">
+          <span className={cn("italic", getThemedTextClasses('muted'))}>
+            Interior data is not available
+          </span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="p-5 space-y-4">
+        {/* Cabin Overview Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderSectionTitle("Cabin Overview")}
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.interior_type && renderInfoItem(
+              <Crown className="h-5 w-5" />,
+              "Interior Type",
+              jetData.interior_type
+            )}
+            
+            {jetData.capacity !== undefined && renderInfoItem(
+              <Users className="h-5 w-5" />,
+              "Passenger Capacity",
+              `${jetData.capacity} passengers`
+            )}
+          </div>
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.berths !== undefined && renderInfoItem(
+              <Bed className="h-5 w-5" />,
+              "Sleeping Berths",
+              jetData.berths ? "Available" : "Not Available"
+            )}
+          </div>
+        </div>
+        
+        {/* Cabin Dimensions Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderSectionTitle("Cabin Dimensions")}
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.cabin_width !== undefined && renderInfoItem(
+              <Ruler className="h-5 w-5" />,
+              "Cabin Width",
+              `${jetData.cabin_width || 'N/A'} in`
+            )}
+            
+            {jetData.cabin_height !== undefined && renderInfoItem(
+              <Ruler className="h-5 w-5 rotate-90" />,
+              "Cabin Height",
+              `${jetData.cabin_height || 'N/A'} in`
+            )}
+          </div>
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.cabin_length !== undefined && renderInfoItem(
+              <Ruler className="h-5 w-5 -rotate-45" />,
+              "Cabin Length",
+              `${jetData.cabin_length || 'N/A'} in`
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render the amenities tab content
-  const renderAmenitiesTab = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 p-5">
-      {(jetData.wifi !== undefined || true) && (
-        renderInfoItem(
-          <Wifi className="h-5 w-5" />,
-          "WiFi",
-          jetData.wifi ? "Available" : "Not Available"
-        )
-      )}
-      
-      {(jetData.lavatory !== undefined || true) && (
-        renderInfoItem(
-          <Bath className="h-5 w-5" />,
-          "Lavatory",
-          jetData.lavatory ? "Available" : "Not Available"
-        )
-      )}
-      
-      {(jetData.galley !== undefined || true) && (
-        renderInfoItem(
-          <Utensils className="h-5 w-5" />,
-          "Galley",
-          jetData.galley ? "Available" : "Not Available"
-        )
-      )}
-      
-      {(jetData.entertainment || true) && (
-        renderInfoItem(
-          <Tv className="h-5 w-5" />,
-          "Entertainment",
-          jetData.entertainment || "Standard System"
-        )
-      )}
-      
-      {(jetData.berths !== undefined || true) && (
-        renderInfoItem(
-          <Bed className="h-5 w-5" />,
-          "Sleeping Berths",
-          jetData.berths ? "Available" : "Not Available"
-        )
-      )}
-      
-      {(jetData.range_nm !== undefined || true) && (
-        renderInfoItem(
-          <Globe className="h-5 w-5" />,
-          "Flight Range",
-          `${(jetData.range_nm || 0).toLocaleString()} nautical miles`
-        )
-      )}
-    </div>
-  );
+  const renderAmenitiesTab = () => {
+    // Check if we have valid jet data
+    if (!jetData || !jetData.id) {
+      return (
+        <div className="p-5 text-center">
+          <span className={cn("italic", getThemedTextClasses('muted'))}>
+            Amenities data is not available
+          </span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="p-5 space-y-4">
+        {/* Connectivity Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderSectionTitle("Connectivity & Entertainment")}
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.wifi !== undefined && renderInfoItem(
+              <Wifi className="h-5 w-5" />,
+              "WiFi",
+              jetData.wifi ? "Available" : "Not Available"
+            )}
+            
+            {jetData.entertainment && renderInfoItem(
+              <Tv className="h-5 w-5" />,
+              "Entertainment",
+              jetData.entertainment
+            )}
+          </div>
+        </div>
+        
+        {/* Comfort & Conveniences Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {renderSectionTitle("Comfort & Conveniences")}
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.lavatory !== undefined && renderInfoItem(
+              <Bath className="h-5 w-5" />,
+              "Lavatory",
+              jetData.lavatory ? "Available" : "Not Available"
+            )}
+            
+            {jetData.berths !== undefined && renderInfoItem(
+              <Bed className="h-5 w-5" />,
+              "Sleeping Berths",
+              jetData.berths ? "Available" : "Not Available"
+            )}
+          </div>
+          
+          <div className="flex flex-col space-y-3">
+            {jetData.galley !== undefined && renderInfoItem(
+              <Utensils className="h-5 w-5" />,
+              "Galley",
+              jetData.galley ? "Available" : "Not Available"
+            )}
+            
+            {jetData.range_nm !== undefined && renderInfoItem(
+              <Globe className="h-5 w-5" />,
+              "Flight Range",
+              `${jetData.range_nm && typeof jetData.range_nm === 'number' ? jetData.range_nm.toLocaleString() : jetData.range_nm || 'N/A'} nm`
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full">
       {/* Tab buttons */}
-      <div className="bg-black/40 rounded-xl p-1.5 mb-6 shadow-inner">
+      <div className="bg-black/40 rounded-xl p-1.5 mb-4 shadow-inner">
         <div className="grid grid-cols-3 gap-1.5">
           <button
             type="button"
             onClick={() => onTabChange('specs')}
-            className={`py-3.5 rounded-lg text-center font-medium transition-all duration-300 ${
+            className={cn(
+              "py-3.5 rounded-lg text-center font-medium transition-all duration-300",
               selectedTab === 'specs'
-                ? 'bg-[#DAFF0D] text-black shadow-md transform scale-102'
-                : 'bg-black/50 text-white/80 hover:bg-black/70 hover:text-white'
-            }`}
+                ? "bg-gdyup-primary " + getThemedTextClasses('inverse') + " shadow-md transform scale-102" 
+                : "bg-black/50 " + getThemedTextClasses() + " hover:bg-black/70"
+            )}
           >
             Jet Specs
           </button>
           <button
             type="button"
             onClick={() => onTabChange('interior')}
-            className={`py-3.5 rounded-lg text-center font-medium transition-all duration-300 ${
+            className={cn(
+              "py-3.5 rounded-lg text-center font-medium transition-all duration-300",
               selectedTab === 'interior'
-                ? 'bg-[#DAFF0D] text-black shadow-md transform scale-102'
-                : 'bg-black/50 text-white/80 hover:bg-black/70 hover:text-white'
-            }`}
+                ? "bg-gdyup-primary " + getThemedTextClasses('inverse') + " shadow-md transform scale-102" 
+                : "bg-black/50 " + getThemedTextClasses() + " hover:bg-black/70"
+            )}
           >
             Interior
           </button>
           <button
             type="button"
             onClick={() => onTabChange('amenities')}
-            className={`py-3.5 rounded-lg text-center font-medium transition-all duration-300 ${
+            className={cn(
+              "py-3.5 rounded-lg text-center font-medium transition-all duration-300",
               selectedTab === 'amenities'
-                ? 'bg-[#DAFF0D] text-black shadow-md transform scale-102'
-                : 'bg-black/50 text-white/80 hover:bg-black/70 hover:text-white'
-            }`}
+                ? "bg-gdyup-primary " + getThemedTextClasses('inverse') + " shadow-md transform scale-102" 
+                : "bg-black/50 " + getThemedTextClasses() + " hover:bg-black/70"
+            )}
           >
             Amenities
           </button>
@@ -270,12 +368,10 @@ const JetDetailsTabs = ({ jetData, selectedTab, onTabChange }: JetDetailsTabsPro
       </div>
 
       {/* Tab content */}
-      <div className={getThemeClasses({
-        base: "rounded-xl shadow-md border bg-gradient-to-b",
-        default: "from-black to-gray-900/90 border-gray-800",
-        blue: "from-black to-blue-950/90 border-blue-900",
-        pink: "from-black to-pink-950/90 border-pink-900"
-      })}>
+      <div className={cn(
+        "rounded-xl shadow-md border bg-gradient-to-b from-black to-gdyup-bg-dark",
+        "border-gdyup-border"
+      )}>
         {selectedTab === 'specs' && renderSpecsTab()}
         {selectedTab === 'interior' && renderInteriorTab()}
         {selectedTab === 'amenities' && renderAmenitiesTab()}

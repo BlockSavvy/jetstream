@@ -38,7 +38,7 @@ interface JetSharePaymentFormProps {
 export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymentError, testMode = false }: JetSharePaymentFormProps) {
   const router = useRouter();
   const { user, refreshSession } = useAuth();
-  const { getThemeClasses, theme } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'btc'>('card');
   const [currentStep, setCurrentStep] = useState<'confirmation' | 'method' | 'details' | 'processing' | 'auth_error'>('confirmation');
@@ -724,95 +724,59 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
   const renderCryptoPaymentSection = () => {
     const isDevMode = process.env.NODE_ENV === 'development';
     const hasFallback = Boolean(localStorage.getItem('btcpay_dev_fallback_url'));
-    
+
     return (
       <motion.div 
-        className={getThemeClasses({
-          base: "space-y-6 p-6 rounded-lg border transition-colors",
-          default: "bg-black/20 border-gray-800",
-          blue: "bg-blue-950/20 border-blue-900",
-          pink: "bg-pink-950/20 border-pink-900"
-        })}
+        className={cn(
+          getThemedBackgroundClasses('card'),
+          "space-y-6 p-6 rounded-lg border transition-colors border-gdyup-border"
+        )}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         <div className="text-center space-y-3">
           <motion.div 
-            className={getThemeClasses({
-              base: "inline-flex items-center justify-center w-16 h-16 rounded-full mb-2",
-              default: "bg-gdyup-primary/10",
-              blue: "bg-gdyup-primary/10",
-              pink: "bg-gdyup-primary/10"
-            })}
+            className={cn(
+              "inline-flex items-center justify-center w-16 h-16 rounded-full mb-2",
+              "bg-gdyup-primary/10"
+            )}
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
           >
-            <Bitcoin className={getThemeClasses({
-              base: "h-8 w-8",
-              default: "text-gdyup-primary",
-              blue: "text-gdyup-primary",
-              pink: "text-gdyup-primary"
-            })} />
+            <Bitcoin className="h-8 w-8 text-gdyup-primary" />
           </motion.div>
           
-          <h3 className={getThemeClasses({
-            base: "text-xl font-bold",
-            default: "text-white",
-            blue: "text-blue-50",
-            pink: "text-pink-50"
-          })}>Pay with Bitcoin</h3>
+          <h3 className={getThemedTextClasses()}>Pay with Bitcoin</h3>
           
-          <p className={getThemeClasses({
-            base: "text-sm",
-            default: "text-gray-400",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
-          })}>
+          <p className={getThemedTextClasses('muted')}>
             Secure, private, and borderless payments
           </p>
         </div>
-        
-        <div className={getThemeClasses({
-          base: "grid gap-4 p-4 rounded-lg border",
-          default: "bg-black/30 border-gray-800",
-          blue: "bg-blue-900/30 border-blue-800",
-          pink: "bg-pink-900/30 border-pink-800"
-        })}>
+
+        <div className={cn(
+          getThemedBackgroundClasses('secondary'),
+          "grid gap-4 p-4 rounded-lg border border-gdyup-border"
+        )}>
           <div className="flex items-start space-x-3">
-            <Zap className={getThemeClasses({
-              base: "h-5 w-5 mt-0.5 flex-shrink-0",
-              default: "text-gdyup-primary",
-              blue: "text-gdyup-primary",
-              pink: "text-gdyup-primary"
-            })} />
+            <Zap className="h-5 w-5 mt-0.5 flex-shrink-0 text-gdyup-primary" />
             <div>
               <span className="font-semibold">Lightning Network</span>
               <p className="text-sm opacity-80">Instant payments with minimal fees</p>
             </div>
-          </div>
-          
+        </div>
+
           <div className="flex items-start space-x-3">
-            <CheckCircle className={getThemeClasses({
-              base: "h-5 w-5 mt-0.5 flex-shrink-0",
-              default: "text-gdyup-primary",
-              blue: "text-gdyup-primary",
-              pink: "text-gdyup-primary"
-            })} />
+            <CheckCircle className="h-5 w-5 mt-0.5 flex-shrink-0 text-gdyup-primary" />
             <div>
               <span className="font-semibold">On-Chain Security</span>
               <p className="text-sm opacity-80">1-2 confirmations for settlement</p>
-            </div>
+          </div>
           </div>
           
           <div className="flex items-start space-x-3">
-            <Plane className={getThemeClasses({
-              base: "h-5 w-5 mt-0.5 flex-shrink-0",
-              default: "text-gdyup-primary",
-              blue: "text-gdyup-primary",
-              pink: "text-gdyup-primary"
-            })} />
+            <Plane className="h-5 w-5 mt-0.5 flex-shrink-0 text-gdyup-primary" />
             <div>
               <span className="font-semibold">Instant Boarding Pass</span>
               <p className="text-sm opacity-80">Generated immediately after confirmation</p>
@@ -822,12 +786,10 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         
         {/* Amount Display */}
         <motion.div 
-          className={getThemeClasses({
-            base: "p-4 rounded-lg border text-center",
-            default: "bg-black/30 border-gray-800",
-            blue: "bg-blue-900/30 border-blue-800",
-            pink: "bg-pink-900/30 border-pink-800"
-          })}
+          className={cn(
+            getThemedBackgroundClasses('secondary'),
+            "p-4 rounded-lg border text-center border-gdyup-border"
+          )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
@@ -844,16 +806,14 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Button
+           <Button
             type="button"
             onClick={handleCryptoPayment}
             disabled={isProcessing}
-            className={getThemeClasses({
-              base: "w-full py-6 text-base font-bold relative transition-all duration-200",
-              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-            })}
+            className={cn(
+              getThemedButtonClasses('primary'),
+              "w-full py-6 text-base font-bold relative transition-all duration-200"
+            )}
           >
             {isProcessing ? (
               <motion.div
@@ -887,12 +847,10 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
             <Button
               type="button"
               onClick={handleDevSimulation}
-              className={getThemeClasses({
-                base: "w-full mt-2",
-                default: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
-                blue: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
-                pink: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white"
-              })}
+              className={cn(
+                getThemedButtonClasses('secondary'),
+                "w-full mt-2"
+              )}
             >
               <Info className="h-4 w-4 mr-2" />
               Use Development Simulation
@@ -904,12 +862,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         <AnimatePresence>
           {error && (
             <motion.div 
-              className={getThemeClasses({
-                base: "p-4 rounded-lg border space-y-2",
-                default: "bg-red-950/30 border-red-900",
-                blue: "bg-red-950/20 border-red-800",
-                pink: "bg-red-950/20 border-red-800"
-              })}
+              className="p-4 rounded-lg border space-y-2 bg-red-950/30 border-red-900"
               initial={{ opacity: 0, height: 0, marginTop: 0 }}
               animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
               exit={{ opacity: 0, height: 0, marginTop: 0 }}
@@ -918,19 +871,14 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               <div className="flex items-center space-x-2 text-red-400">
                 <AlertCircle className="h-5 w-5 flex-shrink-0" />
                 <p className="font-medium">Payment Error</p>
-              </div>
+        </div>
               <p className="text-sm text-red-300">{error}</p>
             </motion.div>
           )}
         </AnimatePresence>
         
         <div className="text-center">
-          <p className={getThemeClasses({
-            base: "text-xs",
-            default: "text-gray-500",
-            blue: "text-blue-400",
-            pink: "text-pink-400"
-          })}>
+          <p className={getThemedTextClasses('muted')}>
             Powered by self-custodial BTCPay Server
           </p>
         </div>
@@ -957,41 +905,19 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
             <div
               onClick={() => setPaymentMethod('card')}
               className={cn(
-                "p-4 rounded-lg border cursor-pointer transition-all",
-                getThemeClasses({
-                  base: "relative",
-                  default: paymentMethod === 'card' 
-                    ? "border-gdyup-primary bg-black/30" 
-                    : "border-gray-700 bg-black/20 hover:border-gray-600",
-                  blue: paymentMethod === 'card' 
-                    ? "border-gdyup-primary bg-blue-950/30" 
-                    : "border-blue-800 bg-blue-950/20 hover:border-blue-700",
-                  pink: paymentMethod === 'card' 
-                    ? "border-gdyup-primary bg-pink-950/30" 
-                    : "border-pink-800 bg-pink-950/20 hover:border-pink-700"
-                })
+                "p-4 rounded-lg border cursor-pointer transition-all relative",
+                paymentMethod === 'card' 
+                  ? cn("border-gdyup-primary", getThemedBackgroundClasses('secondary'))
+                  : cn("border-gdyup-border", getThemedBackgroundClasses('primary'), "hover:border-gdyup-border/60")
               )}
             >
               <div className="flex items-center">
                 <div className="mr-3">
-                  <CreditCard className={cn(
-                    "h-6 w-6",
-                    getThemeClasses({
-                      base: "",
-                      default: "text-white",
-                      blue: "text-blue-300",
-                      pink: "text-pink-300"
-                    })
-                  )} />
+                  <CreditCard className={cn("h-6 w-6", getThemedTextClasses())} />
                 </div>
                 <div>
                   <div className="font-medium">Credit Card</div>
-                  <div className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted')}>
                     Visa, Mastercard, Amex
                   </div>
                 </div>
@@ -1002,12 +928,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   >
-                    <CheckCircle className={getThemeClasses({
-                      base: "h-5 w-5",
-                      default: "text-gdyup-primary",
-                      blue: "text-gdyup-primary",
-                      pink: "text-gdyup-primary"
-                    })} />
+                    <CheckCircle className="h-5 w-5 text-gdyup-primary" />
                   </motion.div>
                 )}
               </div>
@@ -1021,41 +942,19 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
             <div
               onClick={() => setPaymentMethod('btc')}
               className={cn(
-                "p-4 rounded-lg border cursor-pointer transition-all",
-                getThemeClasses({
-                  base: "relative",
-                  default: paymentMethod === 'btc' 
-                    ? "border-gdyup-primary bg-black/30" 
-                    : "border-gray-700 bg-black/20 hover:border-gray-600",
-                  blue: paymentMethod === 'btc' 
-                    ? "border-gdyup-primary bg-blue-950/30" 
-                    : "border-blue-800 bg-blue-950/20 hover:border-blue-700",
-                  pink: paymentMethod === 'btc' 
-                    ? "border-gdyup-primary bg-pink-950/30" 
-                    : "border-pink-800 bg-pink-950/20 hover:border-pink-700"
-                })
+                "p-4 rounded-lg border cursor-pointer transition-all relative",
+                paymentMethod === 'btc' 
+                  ? cn("border-gdyup-primary", getThemedBackgroundClasses('secondary'))
+                  : cn("border-gdyup-border", getThemedBackgroundClasses('primary'), "hover:border-gdyup-border/60")
               )}
             >
               <div className="flex items-center">
                 <div className="mr-3">
-                  <Bitcoin className={cn(
-                    "h-6 w-6",
-                    getThemeClasses({
-                      base: "",
-                      default: "text-orange-500",
-                      blue: "text-orange-500",
-                      pink: "text-orange-500"
-                    })
-                  )} />
+                  <Bitcoin className="h-6 w-6 text-orange-500" />
                 </div>
                 <div>
                   <div className="font-medium">Bitcoin</div>
-                  <div className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted')}>
                     Pay with BTC
                   </div>
                 </div>
@@ -1066,12 +965,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   >
-                    <CheckCircle className={getThemeClasses({
-                      base: "h-5 w-5",
-                      default: "text-gdyup-primary",
-                      blue: "text-gdyup-primary",
-                      pink: "text-gdyup-primary"
-                    })} />
+                    <CheckCircle className="h-5 w-5 text-gdyup-primary" />
                   </motion.div>
                 )}
               </div>
@@ -1086,15 +980,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
           >
             <Button
               onClick={() => setCurrentStep('details')}
-              className={cn(
-                "rounded-md font-medium transition-colors",
-                getThemeClasses({
-                  base: "",
-                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  blue: "bg-blue-500 hover:bg-blue-600 text-white",
-                  pink: "bg-pink-500 hover:bg-pink-600 text-white"
-                })
-              )}
+              className={getThemedButtonClasses('primary')}
             >
               Continue
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -1104,7 +990,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
       </motion.div>
     );
   };
-  
+
   // Function to render the card details form UI
   const renderCardDetailsForm = () => {
     return (
@@ -1113,51 +999,31 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className={getThemeClasses({
-          base: "w-full max-w-md mx-auto border shadow-lg",
-          default: "bg-gray-900/90 border-gray-800",
-          blue: "bg-blue-950/90 border-blue-900",
-          pink: "bg-pink-950/90 border-pink-900"
-        })}>
+        <Card className={cn(
+          getThemedBackgroundClasses('card'),
+          "w-full max-w-md mx-auto border shadow-lg border-gdyup-border"
+        )}>
           <CardHeader className="pb-0">
             <motion.div
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1, duration: 0.3 }}
             >
-              <CardTitle className={getThemeClasses({
-                base: "",
-                default: "text-white",
-                blue: "text-blue-50",
-                pink: "text-pink-50"
-              })}>
+              <CardTitle className={getThemedTextClasses()}>
                 Complete Your Booking
                 {process.env.NODE_ENV === 'development' && (
-                  <span className={getThemeClasses({
-                    base: "ml-2 text-sm font-normal",
-                    default: "text-blue-500",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <span className={getThemedTextClasses('muted')}>
                     (Test Mode)
                   </span>
                 )}
               </CardTitle>
-              <CardDescription className={getThemeClasses({
-                base: "",
-                default: "text-gray-400",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })}>
+              <CardDescription className={getThemedTextClasses('muted')}>
                 Pay your share and secure your seat
                 {process.env.NODE_ENV === 'development' && (
                   <motion.div 
-                    className={getThemeClasses({
-                      base: "mt-1 text-xs p-1 rounded-sm",
-                      default: "bg-blue-950 text-blue-300 border border-blue-800",
-                      blue: "bg-blue-950 text-blue-300 border border-blue-800",
-                      pink: "bg-pink-950 text-pink-300 border border-pink-800"
-                    })}
+                    className={cn(
+                      "mt-1 text-xs p-1 rounded-sm bg-blue-950 text-blue-300 border border-blue-800"
+                    )}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 }}
@@ -1167,15 +1033,13 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                 )}
               </CardDescription>
             </motion.div>
-          </CardHeader>
+        </CardHeader>
           <Button 
             variant="ghost" 
-            className={getThemeClasses({
-              base: "p-0 ml-6 mb-2",
-              default: "text-white hover:text-gdyup-primary hover:bg-transparent",
-              blue: "text-blue-100 hover:text-gdyup-primary hover:bg-transparent",
-              pink: "text-pink-100 hover:text-gdyup-primary hover:bg-transparent"
-            })}
+            className={cn(
+              getThemedTextClasses(),
+              "p-0 ml-6 mb-2 hover:text-gdyup-primary hover:bg-transparent"
+            )}
             onClick={() => setCurrentStep('method')}
             disabled={isProcessing}
           >
@@ -1196,39 +1060,21 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               {/* Test mode message */}
               {process.env.NODE_ENV === 'development' && (
                 <motion.div 
-                  className={getThemeClasses({
-                    base: "rounded-md p-4 mb-4",
-                    default: "bg-blue-950/50 border border-blue-800",
-                    blue: "bg-blue-950/50 border border-blue-800",
-                    pink: "bg-pink-950/50 border border-pink-800"
-                  })}
+                  className={cn(
+                    "rounded-md p-4 mb-4 bg-blue-950/50 border border-blue-800"
+                  )}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      <Info className={getThemeClasses({
-                        base: "h-5 w-5",
-                        default: "text-blue-400",
-                        blue: "text-blue-400",
-                        pink: "text-pink-400"
-                      })} aria-hidden="true" />
+                      <Info className="h-5 w-5 text-blue-400" aria-hidden="true" />
                     </div>
                     <div className="ml-3">
-                      <h3 className={getThemeClasses({
-                        base: "text-sm font-medium",
-                        default: "text-blue-300",
-                        blue: "text-blue-300",
-                        pink: "text-pink-300"
-                      })}>Test Mode Active</h3>
+                      <h3 className="text-sm font-medium text-blue-300">Test Mode Active</h3>
                       <div className="mt-2 text-sm">
-                        <p className={getThemeClasses({
-                          base: "",
-                          default: "text-blue-400",
-                          blue: "text-blue-400",
-                          pink: "text-pink-400"
-                        })}>Using test payment cards. Any card details will work in test mode.</p>
+                        <p className="text-blue-400">Using test payment cards. Any card details will work in test mode.</p>
                       </div>
                     </div>
                   </div>
@@ -1244,12 +1090,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                       onCheckedChange={setUseSavedMethod}
                       autoFocus // Auto-focus this switch for better keyboard navigation
                     />
-                    <Label htmlFor="use-saved-method" className={getThemeClasses({
-                      base: "",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50"
-                    })}>Use a saved card</Label>
+                    <Label htmlFor="use-saved-method" className={getThemedTextClasses()}>Use a saved card</Label>
                   </div>
                   
                   {useSavedMethod && (
@@ -1261,22 +1102,18 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                       {savedPaymentMethods.map((method) => (
                         <motion.div 
                           key={method.id} 
-                          className={getThemeClasses({
-                            base: "flex items-center space-x-2 p-2 rounded-md",
-                            default: "hover:bg-gray-800/50",
-                            blue: "hover:bg-blue-900/50",
-                            pink: "hover:bg-pink-900/50"
-                          })}
+                          className={cn(
+                            "flex items-center space-x-2 p-2 rounded-md",
+                            "hover:bg-gdyup-bg-card/50"
+                          )}
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
                         >
                           <RadioGroupItem value={method.id} id={method.id} />
-                          <Label htmlFor={method.id} className={getThemeClasses({
-                            base: "flex items-center cursor-pointer",
-                            default: "text-white",
-                            blue: "text-blue-50",
-                            pink: "text-pink-50"
-                          })}>
+                          <Label htmlFor={method.id} className={cn(
+                            getThemedTextClasses(),
+                            "flex items-center cursor-pointer"
+                          )}>
                             <CreditCard className="mr-2 h-4 w-4" />
                             {method.brand.charAt(0).toUpperCase() + method.brand.slice(1)} •••• {method.last4}
                           </Label>
@@ -1290,12 +1127,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               {(!useSavedMethod || savedPaymentMethods.length === 0) && (
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label htmlFor="cardNumber" className={getThemeClasses({
-                      base: "",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50"
-                    })}>Card Number</Label>
+                    <Label htmlFor="cardNumber" className={getThemedTextClasses()}>Card Number</Label>
                     <UIInput
                       id="cardNumber"
                       name="cardNumber"
@@ -1304,12 +1136,12 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                       placeholder="4242 4242 4242 4242" 
                       autoComplete="cc-number"
                       data-testid="card-number-input"
-                      className={cn("font-mono", getThemeClasses({
-                        base: "",
-                        default: "bg-gray-800 border-gray-700 text-white",
-                        blue: "bg-blue-900 border-blue-800 text-blue-50",
-                        pink: "bg-pink-900 border-pink-800 text-pink-50"
-                      }))}
+                      className={cn(
+                        "font-mono",
+                        getThemedBackgroundClasses('card'),
+                        getThemedTextClasses(),
+                        "border-gdyup-border"
+                      )}
                       autoFocus={savedPaymentMethods.length === 0}
                       onClick={() => process.env.NODE_ENV === 'development' && !cardDetails.cardNumber && insertTestCardData()}
                     />
@@ -1324,12 +1156,11 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                           type="button" 
                           size="sm" 
                           variant="outline" 
-                          className={cn("text-xs h-6 py-0 px-2", getThemeClasses({
-                            base: "",
-                            default: "border-gray-700 text-gray-300 hover:bg-gray-800",
-                            blue: "border-blue-700 text-blue-300 hover:bg-blue-900",
-                            pink: "border-pink-700 text-pink-300 hover:bg-pink-900"
-                          }))}
+                          className={cn(
+                            "text-xs h-6 py-0 px-2",
+                            getThemedButtonClasses('secondary'),
+                            "border-gdyup-border text-gdyup-text-muted"
+                          )}
                           onClick={insertTestCardData}
                         >
                           Insert Test Data
@@ -1339,12 +1170,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="cardName" className={getThemeClasses({
-                      base: "",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50"
-                    })}>Name on Card</Label>
+                    <Label htmlFor="cardName" className={getThemedTextClasses()}>Name on Card</Label>
                     <UIInput
                       id="cardName"
                       name="cardName"
@@ -1353,23 +1179,17 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                       placeholder="John Doe"
                       autoComplete="cc-name"
                       data-testid="card-name-input"
-                      className={getThemeClasses({
-                        base: "",
-                        default: "bg-gray-800 border-gray-700 text-white",
-                        blue: "bg-blue-900 border-blue-800 text-blue-50",
-                        pink: "bg-pink-900 border-pink-800 text-pink-50"
-                      })}
+                      className={cn(
+                        getThemedBackgroundClasses('card'),
+                        getThemedTextClasses(),
+                        "border-gdyup-border"
+                      )}
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="expiry" className={getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-blue-50",
-                        pink: "text-pink-50"
-                      })}>Expiry Date</Label>
+                      <Label htmlFor="expiry" className={getThemedTextClasses()}>Expiry Date</Label>
                       <UIInput
                         id="expiry"
                         name="expiry"
@@ -1378,22 +1198,17 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                         placeholder="MM/YY"
                         autoComplete="cc-exp"
                         data-testid="card-expiry-input"
-                        className={cn("font-mono", getThemeClasses({
-                          base: "",
-                          default: "bg-gray-800 border-gray-700 text-white",
-                          blue: "bg-blue-900 border-blue-800 text-blue-50",
-                          pink: "bg-pink-900 border-pink-800 text-pink-50"
-                        }))}
+                        className={cn(
+                          "font-mono",
+                          getThemedBackgroundClasses('card'),
+                          getThemedTextClasses(),
+                          "border-gdyup-border"
+                        )}
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="cvc" className={getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-blue-50",
-                        pink: "text-pink-50"
-                      })}>CVC</Label>
+                      <Label htmlFor="cvc" className={getThemedTextClasses()}>CVC</Label>
                       <UIInput
                         id="cvc"
                         name="cvc"
@@ -1402,12 +1217,12 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                         placeholder="123"
                         autoComplete="cc-csc"
                         data-testid="card-cvc-input"
-                        className={cn("font-mono", getThemeClasses({
-                          base: "",
-                          default: "bg-gray-800 border-gray-700 text-white",
-                          blue: "bg-blue-900 border-blue-800 text-blue-50",
-                          pink: "bg-pink-900 border-pink-800 text-pink-50"
-                        }))}
+                        className={cn(
+                          "font-mono",
+                          getThemedBackgroundClasses('card'),
+                          getThemedTextClasses(),
+                          "border-gdyup-border"
+                        )}
                         inputMode="numeric"
                         maxLength={4}
                       />
@@ -1422,12 +1237,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                         setSaveThisCard(checked === true)
                       }
                     />
-                    <Label htmlFor="save-card" className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-300",
-                      blue: "text-blue-200",
-                      pink: "text-pink-200"
-                    })}>
+                    <Label htmlFor="save-card" className={getThemedTextClasses('muted')}>
                       Save this card for future payments
                     </Label>
                   </div>
@@ -1436,31 +1246,19 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               
               {/* Pay Later option - only show in card details view */}
               {showPayLater && !isProcessing && (
-                <motion.div 
-                  className={cn("mt-6 pt-4 border-t", getThemeClasses({
-                    base: "",
-                    default: "border-gray-800",
-                    blue: "border-blue-900",
-                    pink: "border-pink-900"
-                  }))}
+                <motion.div
+                  className={cn(
+                    "mt-6 pt-4 border-t",
+                    "border-gdyup-border"
+                  )}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Clock className={getThemeClasses({
-                        base: "h-4 w-4",
-                        default: "text-gray-500",
-                        blue: "text-blue-400",
-                        pink: "text-pink-400"
-                      })} />
-                      <p className={getThemeClasses({
-                        base: "text-sm font-medium",
-                        default: "text-white",
-                        blue: "text-blue-50",
-                        pink: "text-pink-50"
-                      })}>Pay later (1 hour hold)</p>
+                      <Clock className={getThemedTextClasses('muted')} />
+                      <p className={getThemedTextClasses()}>Pay later (1 hour hold)</p>
                     </div>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button 
@@ -1468,29 +1266,22 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                         size="sm"
                         onClick={handlePayLater}
                         disabled={isProcessing}
-                        className={getThemeClasses({
-                          base: "",
-                          default: "border-gray-700 hover:bg-gray-800",
-                          blue: "border-blue-700 hover:bg-blue-900",
-                          pink: "border-pink-700 hover:bg-pink-900"
-                        })}
+                        className={cn(
+                          getThemedButtonClasses('secondary'),
+                          "border-gdyup-border"
+                        )}
                       >
                         Hold My Seat
                       </Button>
                     </motion.div>
                   </div>
-                  <p className={getThemeClasses({
-                    base: "text-xs mt-1",
-                    default: "text-gray-500",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <p className={getThemedTextClasses('muted')}>
                     Locks your seat for 1 hour. You must complete payment before expiration.
                   </p>
                 </motion.div>
               )}
             </motion.form>
-          </CardContent>
+        </CardContent>
           <CardFooter className="flex justify-center pt-2">
             <motion.div 
               className="w-full"
@@ -1500,12 +1291,10 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               <Button 
                 type="submit"
                 form="payment-form"
-                className={cn("w-full py-6 text-base font-medium", getThemeClasses({
-                  base: "",
-                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-                }))}
+                className={cn(
+                  "w-full py-6 text-base font-medium",
+                  getThemedButtonClasses('primary')
+                )}
                 disabled={isProcessing}
                 data-testid="complete-payment-button"
               >
@@ -1552,17 +1341,12 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         >
           <Loader2 className={cn(
             "h-12 w-12 animate-spin mb-4",
-            getThemeClasses({
-              base: "",
-              default: "text-gdyup-primary",
-              blue: "text-gdyup-primary",
-              pink: "text-gdyup-primary"
-            })
+            "text-gdyup-primary"
           )} />
         </motion.div>
         
         <motion.h3 
-          className="text-xl font-semibold mb-2"
+          className={cn("text-xl font-semibold mb-2", getThemedTextClasses())}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
@@ -1573,12 +1357,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         <motion.p 
           className={cn(
             "text-center max-w-md",
-            getThemeClasses({
-              base: "",
-              default: "text-gray-400",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            })
+            getThemedTextClasses('muted')
           )}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -1597,12 +1376,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
         >
           <div className={cn(
             "h-1 rounded-full",
-            getThemeClasses({
-              base: "",
-              default: "bg-gdyup-primary",
-              blue: "bg-gdyup-primary",
-              pink: "bg-gdyup-primary"
-            })
+            "bg-gdyup-primary"
           )}>
             <motion.div 
               className="h-full w-full bg-gdyup-primary rounded-full"
@@ -1632,12 +1406,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
       >
         <CardContent className="flex flex-col items-center py-6">
           <motion.div 
-            className={getThemeClasses({
-              base: "rounded-full p-3 mb-4",
-              default: "bg-red-950/30 text-red-500",
-              blue: "bg-red-950/20 text-red-400",
-              pink: "bg-red-950/20 text-red-400"
-            })}
+            className="rounded-full p-3 mb-4 bg-red-950/30 text-red-500"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
@@ -1645,12 +1414,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
             <AlertCircle className="h-12 w-12" />
           </motion.div>
           <motion.p 
-            className={cn("text-center font-medium text-lg mb-2", getThemeClasses({
-              base: "",
-              default: "text-white",
-              blue: "text-blue-50",
-              pink: "text-pink-50"
-            }))}
+            className={cn("text-center font-medium text-lg mb-2", getThemedTextClasses())}
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.3 }}
@@ -1658,12 +1422,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
             Your session has expired
           </motion.p>
           <motion.p 
-            className={cn("text-center mb-6", getThemeClasses({
-              base: "",
-              default: "text-gray-400",
-              blue: "text-blue-300",
-              pink: "text-pink-300"
-            }))}
+            className={cn("text-center mb-6", getThemedTextClasses('muted'))}
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.3 }}
@@ -1719,12 +1478,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                   // Redirect to login with return URL
                   window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
                 }}
-                className={getThemeClasses({
-                  base: "",
-                  default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                  pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-                })}
+                className={getThemedButtonClasses('primary')}
                 autoFocus
               >
                 Try to Restore Session
@@ -1745,12 +1499,10 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                   // Redirect to login with return URL
                   window.location.href = `/auth/login?returnUrl=${encodeURIComponent(`/gdyup/payment/${offer.id}`)}&t=${Date.now()}`;
                 }}
-                className={getThemeClasses({
-                  base: "",
-                  default: "border-gray-700 text-white hover:bg-gray-800",
-                  blue: "border-blue-700 text-blue-100 hover:bg-blue-900",
-                  pink: "border-pink-700 text-pink-100 hover:bg-pink-900"
-                })}
+                className={cn(
+                  getThemedButtonClasses('secondary'),
+                  "border-gdyup-border"
+                )}
               >
                 Sign In Again
               </Button>
@@ -1759,12 +1511,10 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               <Button 
                 variant="ghost"
                 onClick={() => setCurrentStep('details')}
-                className={getThemeClasses({
-                  base: "",
-                  default: "text-gray-400 hover:text-white hover:bg-gray-800/50",
-                  blue: "text-blue-400 hover:text-blue-200 hover:bg-blue-900/50",
-                  pink: "text-pink-400 hover:text-pink-200 hover:bg-pink-900/50"
-                })}
+                className={cn(
+                  getThemedTextClasses('muted'),
+                  "hover:text-gdyup-text hover:bg-gdyup-bg-hover"
+                )}
               >
                 Try Again Without Signing In
               </Button>
@@ -1798,20 +1548,12 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 500, damping: 30 }}
                 >
-                  <CheckCircle className={cn(
-                    "h-12 w-12",
-                    getThemeClasses({
-                      base: "",
-                      default: "text-green-500",
-                      blue: "text-green-400",
-                      pink: "text-green-400"
-                    })
-                  )} />
+                  <CheckCircle className="h-12 w-12 text-green-500" />
                 </motion.div>
-              </div>
+                </div>
               
               <motion.h3 
-                className="text-xl font-semibold mb-2"
+                className={cn("text-xl font-semibold mb-2", getThemedTextClasses())}
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.4 }}
@@ -1820,12 +1562,10 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
               </motion.h3>
               
               <motion.p 
-                className={getThemeClasses({
-                  base: "text-center max-w-md mb-6",
-                  default: "text-gray-400",
-                  blue: "text-blue-300",
-                  pink: "text-pink-300"
-                })}
+                className={cn(
+                  "text-center max-w-md mb-6",
+                  getThemedTextClasses('muted')
+                )}
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4, duration: 0.4 }}
@@ -1842,12 +1582,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                   onClick={() => window.location.href = `/gdyup/boardingpass/${offer.id}`}
                   className={cn(
                     "px-6 rounded-md font-medium transition-colors",
-                    getThemeClasses({
-                      base: "",
-                      default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                      blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                      pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-                    })
+                    getThemedButtonClasses('primary')
                   )}
                 >
                   <Ticket className="mr-2 h-4 w-4" />
@@ -1858,116 +1593,55 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
           ) : (
             <div>
               <div className="space-y-4">
-                <div className="text-lg font-semibold mb-2">Confirm Your Payment</div>
+                <div className={cn("text-lg font-semibold mb-2", getThemedTextClasses())}>Confirm Your Payment</div>
                 
-                <div className={getThemeClasses({
-                  base: "p-4 rounded-lg border mb-4 text-left relative",
-                  default: "bg-gray-800/80 border-gray-700",
-                  blue: "bg-blue-900/80 border-blue-800",
-                  pink: "bg-pink-900/80 border-pink-800"
-                })}>
+                <div className={cn(
+                  getThemedBackgroundClasses('secondary'),
+                  "p-4 rounded-lg border mb-4 text-left relative border-gdyup-border"
+                )}>
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div>
-                      <p className={getThemeClasses({
-                        base: "text-xs font-medium uppercase",
-                        default: "text-gray-300",
-                        blue: "text-blue-200",
-                        pink: "text-pink-200"
-                      })}>
+                      <p className={getThemedTextClasses('muted')}>
                         Flight Share Amount
                       </p>
-                      <p className={cn("text-xl font-bold", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>
+                      <p className={cn("text-xl font-bold", getThemedTextClasses())}>
                         ${offer.requested_share_amount.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <p className={getThemeClasses({
-                        base: "text-xs font-medium uppercase",
-                        default: "text-gray-300",
-                        blue: "text-blue-200",
-                        pink: "text-pink-200"
-                      })}>
+                      <p className={getThemedTextClasses('muted')}>
                         Total Flight Cost
                       </p>
-                      <p className={cn("text-xl", getThemeClasses({
-                        base: "",
-                        default: "text-gray-300",
-                        blue: "text-blue-200",
-                        pink: "text-pink-200"
-                      }))}>
+                      <p className={cn("text-xl", getThemedTextClasses('muted'))}>
                         ${offer.total_flight_cost.toLocaleString()}
                       </p>
                     </div>
                   </div>
 
-                  <div className={getThemeClasses({
-                    base: "text-center p-3 rounded-lg",
-                    default: "bg-gray-900/70",
-                    blue: "bg-blue-950/70",
-                    pink: "bg-pink-950/70"
-                  })}>
-                    <p className={getThemeClasses({
-                      base: "text-xs uppercase mb-1 font-medium",
-                      default: "text-gray-300",
-                      blue: "text-blue-200",
-                      pink: "text-pink-200"
-                    })}>
+                  <div className={cn(
+                    getThemedBackgroundClasses('card'),
+                    "text-center p-3 rounded-lg"
+                  )}>
+                    <p className={getThemedTextClasses('muted')}>
                       Payment Summary
                     </p>
                     <div className="grid grid-cols-2 gap-1 text-sm mb-2">
-                      <div className={cn("text-left font-medium", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>Share Amount:</div>
-                      <div className={cn("text-right", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>
+                      <div className={cn("text-left font-medium", getThemedTextClasses())}>Share Amount:</div>
+                      <div className={cn("text-right", getThemedTextClasses())}>
                         ${offer.requested_share_amount.toLocaleString()}
                       </div>
                       
-                      <div className={cn("text-left font-medium", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>Handling Fee:</div>
-                      <div className={cn("text-right", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>
+                      <div className={cn("text-left font-medium", getThemedTextClasses())}>Handling Fee:</div>
+                      <div className={cn("text-right", getThemedTextClasses())}>
                         ${(offer.requested_share_amount * 0.075).toLocaleString()}
                       </div>
                     </div>
-                    <div className={cn("border-t border-opacity-20 pt-2 mt-2 grid grid-cols-2", getThemeClasses({
-                      base: "",
-                      default: "border-gray-600",
-                      blue: "border-blue-600",
-                      pink: "border-pink-600"
-                    }))}>
-                      <div className={cn("text-left font-semibold", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>Total:</div>
-                      <div className={cn("text-right font-semibold", getThemeClasses({
-                        base: "",
-                        default: "text-white",
-                        blue: "text-white",
-                        pink: "text-white"
-                      }))}>
+                    <div className={cn(
+                      "border-t border-opacity-20 pt-2 mt-2 grid grid-cols-2",
+                      "border-gdyup-border"
+                    )}>
+                      <div className={cn("text-left font-semibold", getThemedTextClasses())}>Total:</div>
+                      <div className={cn("text-right font-semibold", getThemedTextClasses())}>
                         ${(offer.requested_share_amount * 1.075).toLocaleString()}
                       </div>
                     </div>
@@ -1984,12 +1658,7 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                       disabled={isProcessing}
                       className={cn(
                         "w-full rounded-md font-medium transition-colors",
-                        getThemeClasses({
-                          base: "",
-                          default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                          blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                          pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-                        })
+                        getThemedButtonClasses('primary')
                       )}
                     >
                       {isProcessing ? (
@@ -2026,12 +1695,8 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                         variant="outline"
                         className={cn(
                           "w-full",
-                          getThemeClasses({
-                            base: "",
-                            default: "border-gray-700 text-gray-300 hover:bg-gray-800",
-                            blue: "border-blue-700 text-blue-300 hover:bg-blue-900/50",
-                            pink: "border-pink-700 text-pink-300 hover:bg-pink-900/50"
-                          })
+                          getThemedButtonClasses('secondary'),
+                          "border-gdyup-border"
                         )}
                       >
                         Pay Later
@@ -2049,12 +1714,8 @@ export default function JetSharePaymentForm({ offer, onPaymentComplete, onPaymen
                       variant="ghost"
                       className={cn(
                         "w-full",
-                        getThemeClasses({
-                          base: "",
-                          default: "text-gray-400 hover:text-gray-300 hover:bg-gray-800/50",
-                          blue: "text-blue-400 hover:text-blue-300 hover:bg-blue-900/30",
-                          pink: "text-pink-400 hover:text-pink-300 hover:bg-pink-900/30"
-                        })
+                        getThemedTextClasses('muted'),
+                        "hover:text-gdyup-text hover:bg-gdyup-bg-hover"
                       )}
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />

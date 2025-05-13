@@ -79,7 +79,7 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
   const userId = user ? user.id : null;
   
   // Get theme functionality
-  const { getThemeClasses, isMobile } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses, isMobile } = useGdyupTheme();
   
   // Format the display name of a jet
   const formatJetDisplay = useCallback((jet: Jet): string => {
@@ -282,22 +282,20 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
     return (
       <div
         key={`${jet.id}-${index}`}
-        className={getThemeClasses({
-          base: "px-3 py-3 hover:bg-opacity-70 cursor-pointer flex items-center justify-between border-b last:border-b-0 group",
-          default: "hover:bg-gray-700 border-gray-700/70",
-          blue: "hover:bg-blue-800 border-blue-800/70",
-          pink: "hover:bg-pink-800 border-pink-800/70"
-        })}
+        className={cn(
+          "px-3 py-3 hover:bg-opacity-70 cursor-pointer flex items-center justify-between border-b last:border-b-0 group",
+          "hover:bg-gdyup-bg-card/80",
+          "border-gdyup-border"
+        )}
         onClick={() => handleSelect(jet)}
       >
         <div className="flex items-center space-x-3">
           <div className="relative w-12 h-12 rounded overflow-hidden border flex-shrink-0">
-            <div className={getThemeClasses({
-              base: "absolute inset-0",
-              default: "border-gray-700 bg-gray-800",
-              blue: "border-blue-800 bg-blue-900",
-              pink: "border-pink-800 bg-pink-900"
-            })}>
+            <div className={cn(
+              "absolute inset-0",
+              getThemedBackgroundClasses('card'),
+              "border-gdyup-border"
+            )}>
               {jet.image_url ? (
                 <img 
                   src={jet.image_url}
@@ -309,19 +307,19 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Plane className="h-5 w-5 text-[#DAFF0D]" />
+                  <Plane className={cn("h-5 w-5", getThemedTextClasses('primary'))} />
                 </div>
               )}
             </div>
           </div>
           
           <div>
-            <p className="font-medium text-sm text-white">
+            <p className={cn("font-medium text-sm", getThemedTextClasses())}>
               {`${jet.manufacturer} ${jet.model}`}
             </p>
             
             {jet.tail_number && (
-              <p className="text-xs text-gray-400">
+              <p className={cn("text-xs", getThemedTextClasses('muted'))}>
                 Tail: {jet.tail_number}
               </p>
             )}
@@ -336,29 +334,36 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
               e.stopPropagation();
               toggleFavorite(jet);
             }}
-            className={`p-1.5 rounded-full transition-colors ${
+            className={cn(
+              "p-1.5 rounded-full transition-colors",
               isFavorited 
-                ? 'bg-black/60 shadow-md text-[#DAFF0D] ring-1 ring-[#DAFF0D]/50' 
-                : 'bg-black/50 text-gray-400 hover:text-[#DAFF0D] hover:bg-black/70'
-            }`}
+                ? "bg-black/60 shadow-md ring-1" 
+                : "bg-black/50 hover:bg-black/70",
+              isFavorited ? getThemedTextClasses('primary') : getThemedTextClasses('muted'),
+              isFavorited ? "ring-gdyup-primary/50" : ""
+            )}
           >
-            <Star className={`h-4 w-4 ${isFavorited ? 'fill-[#DAFF0D] stroke-[#DAFF0D]' : 'fill-none stroke-current'}`} strokeWidth={isFavorited ? 1.5 : 2} />
+            <Star className={cn(
+              "h-4 w-4",
+              isFavorited ? "fill-gdyup-primary stroke-gdyup-primary" : "fill-none stroke-current"
+            )} 
+            strokeWidth={isFavorited ? 1.5 : 2} />
           </button>
           
           {/* Show owned jet badge */}
           {isOwned && (
-            <Badge className={getThemeClasses({
-              base: "text-xs font-semibold px-2 shadow-md border",
-              default: "border-[#DAFF0D] text-[#DAFF0D] bg-black",
-              blue: "border-blue-400 text-blue-400 bg-black", 
-              pink: "border-pink-400 text-pink-400 bg-black"
-            })}>
+            <Badge className={cn(
+              "text-xs font-semibold px-2 shadow-md border",
+              getThemedBadgeClasses('outline'),
+              getThemedTextClasses('primary'),
+              "border-gdyup-primary bg-black"
+            )}>
               My Jet
             </Badge>
           )}
           
           {/* Show capacity */}
-          <span className="text-xs text-gray-400">
+          <span className={cn("text-xs", getThemedTextClasses('muted'))}>
             {formatCapacity(jet.capacity)} seats
           </span>
         </div>
@@ -372,16 +377,21 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={getThemeClasses({
-          base: "w-full relative rounded-md border p-2 text-left shadow-sm flex items-center justify-between h-14",
-          default: "bg-gray-800 border-gray-700 hover:bg-gray-700/80 text-white",
-          blue: "bg-blue-900 border-blue-800 hover:bg-blue-800/80 text-white",
-          pink: "bg-pink-900 border-pink-800 hover:bg-pink-800/80 text-white"
-        })}
+        className={cn(
+          "w-full relative rounded-md border p-2 text-left shadow-sm flex items-center justify-between h-14",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border",
+          "hover:bg-gdyup-bg-card",
+          getThemedTextClasses()
+        )}
       >
         {selectedJet ? (
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800 border border-gray-700">
+            <div className={cn(
+              "w-10 h-10 rounded overflow-hidden flex-shrink-0",
+              getThemedBackgroundClasses('card'),
+              "border-gdyup-border"
+            )}>
               <img 
                 alt={formatJetDisplay(selectedJet)}
                 src={selectedJet.image_url || '/images/placeholder-jet.jpg'}
@@ -392,27 +402,26 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
               />
             </div>
             <div className="flex flex-col truncate">
-              <span className="font-medium truncate text-white">
+              <span className={cn("font-medium truncate", getThemedTextClasses())}>
                 {`${selectedJet.manufacturer} ${selectedJet.model}`}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className={cn("text-xs", getThemedTextClasses('muted'))}>
                 {formatCapacity(selectedJet.capacity)} seats • {selectedJet.range_nm} nm range
               </span>
             </div>
           </div>
         ) : (
-          <span className="text-gray-500">Select aircraft model</span>
+          <span className={getThemedTextClasses('muted')}>Select aircraft model</span>
         )}
         
         <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         
         {selectedJet && (
-          <div className={getThemeClasses({
-            base: "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/4",
-            default: "bg-[#DAFF0D] text-black",
-            blue: "bg-blue-500 text-white",
-            pink: "bg-pink-500 text-white"
-          })}>
+          <div className={cn(
+            "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent hover:bg-primary/80 absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/4",
+            getThemedBackgroundClasses('primary'),
+            "text-gdyup-button-text"
+          )}>
             Selected
           </div>
         )}
@@ -420,37 +429,37 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
       
       {/* Mobile full-screen sheet */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="bottom" className={getThemeClasses({
-          base: "h-[85vh] p-0 pt-6",
-          default: "bg-gray-900 text-white border-t border-gray-700",
-          blue: "bg-blue-950 text-white border-t border-blue-800",
-          pink: "bg-pink-950 text-white border-t border-pink-800" 
-        })}>
+        <SheetContent side="bottom" className={cn(
+          "h-[85vh] p-0 pt-6",
+          "bg-gdyup-bg-dark",
+          getThemedTextClasses(),
+          "border-t border-gdyup-border"
+        )}>
           <SheetHeader className="px-4 mb-2">
-            <SheetTitle className={getThemeClasses({
-              base: "text-lg font-bold",
-              default: "text-white",
-              blue: "text-white",
-              pink: "text-white"
-            })}>
+            <SheetTitle className={cn(
+              "text-lg font-bold",
+              getThemedTextClasses()
+            )}>
               Select Aircraft
             </SheetTitle>
           </SheetHeader>
           
           <div className="px-4 pb-2">
-            <div className={getThemeClasses({
-              base: "flex items-center rounded-full overflow-hidden border",
-              default: "bg-black text-white border-gray-700",
-              blue: "bg-blue-950 text-white border-blue-800",
-              pink: "bg-pink-950 text-white border-pink-800"
-            })}>
-              <Search className="h-4 w-4 ml-3 mr-2 text-gray-400" />
+            <div className={cn(
+              "flex items-center rounded-full overflow-hidden border",
+              "bg-gdyup-bg-dark border-gdyup-border",
+              getThemedTextClasses()
+            )}>
+              <Search className={cn("h-4 w-4 ml-3 mr-2", getThemedTextClasses('muted'))} />
               <Input
                 type="text"
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search aircraft model, manufacturer, or tail #"
-                className="border-0 bg-transparent h-12 pl-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white"
+                className={cn(
+                  "border-0 bg-transparent h-12 pl-0 focus-visible:ring-0 focus-visible:ring-offset-0", 
+                  getThemedTextClasses()
+                )}
                 autoFocus
               />
               {search && (
@@ -460,20 +469,18 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
                     setSearch('');
                     handleSearch('');
                   }}
-                  className="h-7 w-7 mr-3 rounded-full bg-gray-900/40 flex items-center justify-center hover:bg-gray-800/60 transition-colors border border-gray-700/30"
+                  className="h-7 w-7 mr-3 rounded-full bg-gdyup-bg-dark/40 flex items-center justify-center hover:bg-gdyup-bg-card/60 transition-colors border border-gdyup-border/30"
                 >
-                  <X className="h-4 w-4 text-gray-400" style={{ color: '#9ca3af', stroke: '#9ca3af', strokeWidth: 2 }} />
+                  <X className={cn("h-4 w-4", getThemedTextClasses('muted'))} style={{ strokeWidth: 2 }} />
                 </button>
               )}
             </div>
           </div>
           
-          <div className={getThemeClasses({
-            base: "flex px-4 border-b py-2 overflow-x-auto space-x-2 scrollbar-thin scrollbar-thumb-gray-600",
-            default: "border-gray-800",
-            blue: "border-blue-900",
-            pink: "border-pink-900"
-          })}>
+          <div className={cn(
+            "flex px-4 border-b py-2 overflow-x-auto space-x-2 scrollbar-thin",
+            "border-gdyup-border"
+          )}>
             {/* My Jets filter */}
             <Button
               size="sm"
@@ -481,8 +488,8 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
               className={cn(
                 "text-xs h-7 px-2",
                 showOnlyMyJets 
-                  ? "bg-[#DAFF0D] text-black hover:bg-[#E8FF4D] font-semibold" 
-                  : "bg-black/70 text-white hover:bg-gray-800 border border-gray-600 shadow-md"
+                  ? getThemedButtonClasses('primary')
+                  : "bg-gdyup-bg-dark/70 text-gdyup-text hover:bg-gdyup-bg-card border border-gdyup-border shadow-md"
               )}
               onClick={toggleMyJetsFilter}
             >
@@ -501,7 +508,7 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
                 key={filter.label}
                 size="sm"
                 variant="outline"
-                className="text-xs h-7 px-2 bg-black/70 text-white hover:bg-gray-800 border border-gray-600 shadow-md"
+                className="text-xs h-7 px-2 bg-gdyup-bg-dark/70 text-gdyup-text hover:bg-gdyup-bg-card border border-gdyup-border shadow-md"
               >
                 {filter.label}
               </Button>
@@ -512,7 +519,7 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
             {/* Favorites section */}
             {favoriteJets.length > 0 && (
               <div className="py-2">
-                <div className="px-4 py-1 text-sm text-gray-500 font-medium">
+                <div className={cn("px-4 py-1 text-sm font-medium", getThemedTextClasses('muted'))}>
                   Favorites
                 </div>
                 {favoriteJets.map((jet: Jet, idx: number) => 
@@ -524,14 +531,14 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
             {/* Main jet list based on filters */}
             {isLoading ? (
               <div className="p-8 flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#DAFF0D]" />
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-gdyup-primary" />
               </div>
             ) : filteredJets.length > 0 ? (
               filteredJets
                 .filter(jet => !favoriteJets.some((fav: Jet) => fav.id === jet.id))
                 .map((jet: Jet, idx: number) => renderJetItem(jet, idx, false))
             ) : search.length >= 2 ? (
-              <div className="p-4 text-center">
+              <div className={cn("p-4 text-center", getThemedTextClasses())}>
                 No jets found for &quot;{search}&quot;
               </div>
             ) : recentJets.length > 0 ? (
@@ -539,7 +546,7 @@ export default function MobileJetSelector({ value, className, onChangeValue }: M
                 .filter((jet: Jet) => !favoriteJets.some((fav: Jet) => fav.id === jet.id))
                 .map((jet: Jet, idx: number) => renderJetItem(jet, idx, false))
             ) : (
-              <div className="p-4 text-center">
+              <div className={cn("p-4 text-center", getThemedTextClasses())}>
                 No jets found. Please try again later.
               </div>
             )}

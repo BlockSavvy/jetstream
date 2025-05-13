@@ -19,6 +19,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import JetSelector from './JetSelector';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 interface JetShareOfferEditFormProps {
   offer: JetShareOfferWithUser;
@@ -57,6 +58,8 @@ const formSchema = z.object({
 
 export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEditFormProps) {
   const router = useRouter();
+  
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
   const [selectedJetId, setSelectedJetId] = useState<string>(
     offer.jet_id || 'default'
@@ -207,12 +210,12 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
   }, [form]);
   
   return (
-    <Card className="p-6">
+    <Card className={cn("p-6", getThemedBackgroundClasses('card'), "border-gdyup-border")}>
       <div className="mb-6">
         <Button 
           variant="ghost" 
           size="sm" 
-          className="mb-4" 
+          className={cn("mb-4", getThemedTextClasses())} 
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
@@ -223,14 +226,21 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="departure_location">Departure Location</Label>
+            <Label htmlFor="departure_location" className={getThemedTextClasses()}>
+              Departure Location
+            </Label>
             <Input
               id="departure_location"
               name="departure_location"
               value={form.getValues('departure_location')}
               onChange={(e) => updateDepartureLocation(e.target.value)}
               placeholder="e.g., New York (JFK)"
-              className={errors.departure_location ? 'border-red-500' : ''}
+              className={cn(
+                getThemedBackgroundClasses('card'),
+                "border-gdyup-border focus:border-gdyup-primary",
+                getThemedTextClasses(),
+                errors.departure_location ? 'border-red-500' : ''
+              )}
             />
             {errors.departure_location && (
               <p className="text-red-500 text-sm">{errors.departure_location}</p>
@@ -238,14 +248,21 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="arrival_location">Arrival Location</Label>
+            <Label htmlFor="arrival_location" className={getThemedTextClasses()}>
+              Arrival Location
+            </Label>
             <Input
               id="arrival_location"
               name="arrival_location"
               value={form.getValues('arrival_location')}
               onChange={(e) => updateArrivalLocation(e.target.value)}
               placeholder="e.g., Los Angeles (LAX)"
-              className={errors.arrival_location ? 'border-red-500' : ''}
+              className={cn(
+                getThemedBackgroundClasses('card'),
+                "border-gdyup-border focus:border-gdyup-primary",
+                getThemedTextClasses(),
+                errors.arrival_location ? 'border-red-500' : ''
+              )}
             />
             {errors.arrival_location && (
               <p className="text-red-500 text-sm">{errors.arrival_location}</p>
@@ -253,7 +270,9 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="flight_date">Flight Date</Label>
+            <Label htmlFor="flight_date" className={getThemedTextClasses()}>
+              Flight Date
+            </Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -261,6 +280,8 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
                   variant={"outline"}
                   className={cn(
                     "w-full justify-start text-left font-normal",
+                    getThemedTextClasses(),
+                    "border-gdyup-border",
                     !form.getValues('flight_date') && "text-muted-foreground",
                     errors.flight_date ? 'border-red-500' : ''
                   )}
@@ -269,13 +290,14 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
                   {form.getValues('flight_date') ? format(form.getValues('flight_date'), "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className={cn("w-auto p-0", getThemedBackgroundClasses('card'), "border-gdyup-border")}>
                 <Calendar
                   mode="single"
                   selected={form.getValues('flight_date')}
                   onSelect={handleDateChange}
                   initialFocus
                   disabled={(date) => date < new Date()}
+                  className={getThemedTextClasses()}
                 />
               </PopoverContent>
             </Popover>
@@ -285,7 +307,9 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="aircraft_model">Aircraft Model</Label>
+            <Label htmlFor="aircraft_model" className={getThemedTextClasses()}>
+              Aircraft Model
+            </Label>
             <FormField
               control={form.control}
               name="aircraft_model"
@@ -294,7 +318,11 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
                   <FormControl>
                     <JetSelector
                       value={field.value}
-                      className="w-full"
+                      className={cn(
+                        "w-full",
+                        getThemedBackgroundClasses('card'),
+                        "border-gdyup-border focus:border-gdyup-primary"
+                      )}
                     />
                   </FormControl>
                   <FormMessage />
@@ -304,7 +332,9 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="total_flight_cost">Total Flight Cost ($)</Label>
+            <Label htmlFor="total_flight_cost" className={getThemedTextClasses()}>
+              Total Flight Cost ($)
+            </Label>
             <Input
               id="total_flight_cost"
               name="total_flight_cost"
@@ -312,7 +342,12 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
               value={form.getValues('total_flight_cost')}
               onChange={(e) => updateTotalFlightCost(e.target.value)}
               placeholder="e.g., 25000"
-              className={errors.total_flight_cost ? 'border-red-500' : ''}
+              className={cn(
+                getThemedBackgroundClasses('card'),
+                "border-gdyup-border focus:border-gdyup-primary",
+                getThemedTextClasses(),
+                errors.total_flight_cost ? 'border-red-500' : ''
+              )}
             />
             {errors.total_flight_cost && (
               <p className="text-red-500 text-sm">{errors.total_flight_cost}</p>
@@ -320,7 +355,9 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="requested_share_amount">Requested Share Amount ($)</Label>
+            <Label htmlFor="requested_share_amount" className={getThemedTextClasses()}>
+              Requested Share Amount ($)
+            </Label>
             <Input
               id="requested_share_amount"
               name="requested_share_amount"
@@ -328,24 +365,41 @@ export default function JetShareOfferEditForm({ offer, userId }: JetShareOfferEd
               value={form.getValues('requested_share_amount')}
               onChange={(e) => updateRequestedShareAmount(e.target.value)}
               placeholder="e.g., 12500"
-              className={errors.requested_share_amount ? 'border-red-500' : ''}
+              className={cn(
+                getThemedBackgroundClasses('card'),
+                "border-gdyup-border focus:border-gdyup-primary",
+                getThemedTextClasses(),
+                errors.requested_share_amount ? 'border-red-500' : ''
+              )}
             />
             {errors.requested_share_amount && (
               <p className="text-red-500 text-sm">{errors.requested_share_amount}</p>
             )}
             {form.getValues('total_flight_cost') > 0 && form.getValues('requested_share_amount') > 0 && (
-              <p className="text-sm text-muted-foreground">
-                Share percentage: {((form.getValues('requested_share_amount') / form.getValues('total_flight_cost')) * 100).toFixed(0)}
+              <p className={cn("text-sm", getThemedTextClasses('muted'))}>
+                Share percentage: {((form.getValues('requested_share_amount') / form.getValues('total_flight_cost')) * 100).toFixed(0)}%
               </p>
             )}
           </div>
         </div>
         
         <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={() => router.back()}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => router.back()}
+            className={cn(
+              getThemedButtonClasses('outline'),
+              getThemedTextClasses()
+            )}
+          >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={getThemedButtonClasses()}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

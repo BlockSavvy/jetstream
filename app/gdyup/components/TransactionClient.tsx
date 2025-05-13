@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ArrowLeft, CheckCircle, Clock, AlertCircle, Plane, Download, ExternalLink, RefreshCw, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import BoardingPassButton from './BoardingPassButton';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 interface TransactionClientProps {
   offer: JetShareOfferWithUser;
@@ -32,6 +33,9 @@ export default function TransactionClient({
   const router = useRouter();
   const [isDownloading, setIsDownloading] = useState(false);
   
+  // Get theme helpers
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
+  
   const transaction = transactions.length > 0 ? transactions[0] : null;
 
   // Simplify the test mode useEffect to avoid TypeScript issues
@@ -48,27 +52,36 @@ export default function TransactionClient({
     switch (status) {
       case 'pending':
         return (
-          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-900 dark:text-amber-100 dark:border-amber-600">
+          <Badge variant="outline" className={cn(
+            "payment-status-pending",
+            getThemedBadgeClasses('warning')
+          )}>
             <Clock className="mr-1 h-3 w-3" />
             Pending
           </Badge>
         );
       case 'completed':
         return (
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-100 dark:border-green-600">
+          <Badge variant="outline" className={cn(
+            "payment-status-paid",
+            getThemedBadgeClasses('success')
+          )}>
             <CheckCircle className="mr-1 h-3 w-3" />
             Completed
           </Badge>
         );
       case 'failed':
         return (
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 dark:bg-red-900 dark:text-red-100 dark:border-red-600">
+          <Badge variant="outline" className={cn(
+            "payment-status-unpaid",
+            getThemedBadgeClasses('warning')
+          )}>
             <AlertCircle className="mr-1 h-3 w-3" />
             Failed
           </Badge>
         );
       default:
-        return <Badge variant="outline" className="dark:border-gray-600">{status}</Badge>;
+        return <Badge variant="outline" className="border-gdyup-border">{status}</Badge>;
     }
   };
 
@@ -113,49 +126,71 @@ export default function TransactionClient({
   // Also simplify the test mode display in the empty transaction card
   if (!transaction) {
     return (
-      <Card className="border-amber-200 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/30 jetstream-card">
+      <Card className={cn(
+        "gdyup-card",
+        getThemedBackgroundClasses('card')
+      )}>
         <CardContent className="pt-6">
-          <div className="flex items-center text-amber-700 dark:text-amber-100 mb-2">
-            <AlertCircle className="h-5 w-5 mr-2" />
-            <h2 className="text-lg font-medium">Transaction Details Processing</h2>
-            <div className="ml-auto text-xs text-amber-500 dark:text-amber-300 font-mono">
+          <div className="flex items-center mb-2">
+            <AlertCircle className={cn("h-5 w-5 mr-2", getThemedTextClasses('primary'))} />
+            <h2 className={cn("text-lg font-medium", getThemedTextClasses())}>Transaction Details Processing</h2>
+            <div className={cn("ml-auto text-xs font-mono", getThemedTextClasses('muted'))}>
               Flight #{offer.id?.toString().substring(0, 6)}
             </div>
           </div>
-          <p className="text-amber-600 dark:text-amber-200 mb-3">Your payment has been received, but transaction details are still being processed.</p>
+          <p className={cn("mb-3", getThemedTextClasses('secondary'))}>Your payment has been received, but transaction details are still being processed.</p>
           
           {isTestMode && (
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md text-blue-700 dark:text-blue-200 text-sm mb-3 border border-blue-200 dark:border-blue-700">
-              <p className="font-medium">Test Mode Active</p>
-              <p>Transaction details are simulated and may not show complete information.</p>
+            <div className={cn(
+              "p-3 rounded-md text-sm mb-3",
+              getThemedBackgroundClasses('card'),
+              "border-gdyup-border"
+            )}>
+              <p className={cn("font-medium", getThemedTextClasses())}>Test Mode Active</p>
+              <p className={getThemedTextClasses('secondary')}>Transaction details are simulated and may not show complete information.</p>
             </div>
           )}
           
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md border border-gray-100 dark:border-gray-700">
-            <h3 className="font-medium mb-2 dark:text-high-contrast">Offer Details</h3>
+          <div className={cn(
+            "p-4 rounded-md",
+            getThemedBackgroundClasses('card'),
+            "border-gdyup-border"
+          )}>
+            <h3 className={cn("font-medium mb-2", getThemedTextClasses())}>Offer Details</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-gray-500 dark:text-gray-400">From</p>
-                <p className="font-medium dark:text-high-contrast">{offer.departure_location}</p>
+                <p className={getThemedTextClasses('muted')}>From</p>
+                <p className={cn("font-medium", getThemedTextClasses())}>
+                  {offer.departure_location}
+                </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">To</p>
-                <p className="font-medium dark:text-high-contrast">{offer.arrival_location}</p>
+                <p className={getThemedTextClasses('muted')}>To</p>
+                <p className={cn("font-medium", getThemedTextClasses())}>
+                  {offer.arrival_location}
+                </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Flight Date</p>
-                <p className="font-medium dark:text-high-contrast">{format(new Date(offer.flight_date), 'MMM d, yyyy')}</p>
+                <p className={getThemedTextClasses('muted')}>Flight Date</p>
+                <p className={cn("font-medium", getThemedTextClasses())}>
+                  {format(new Date(offer.flight_date), 'MMM d, yyyy')}
+                </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-gray-400">Status</p>
-                <p className="font-medium dark:text-high-contrast capitalize">{offer.status}</p>
+                <p className={getThemedTextClasses('muted')}>Status</p>
+                <p className={cn("font-medium capitalize", getThemedTextClasses())}>
+                  {offer.status}
+                </p>
               </div>
             </div>
           </div>
           
           <Button 
-            className="mt-4 bg-amber-500 hover:bg-amber-600 text-white" 
-            onClick={() => router.push('/jetshare/dashboard')}
+            className={cn(
+              "mt-4",
+              getThemedButtonClasses('primary')
+            )}
+            onClick={() => router.push('/gdyup/dashboard')}
           >
             Go to Dashboard
           </Button>
@@ -174,25 +209,28 @@ export default function TransactionClient({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold dark:text-high-contrast">Transaction Details</h1>
+        <h1 className={cn("text-2xl font-bold", getThemedTextClasses())}>Transaction Details</h1>
       </div>
       
-      <Card className="mb-6 jetstream-card dark:futuristic-border">
+      <Card className={cn(
+        "mb-6 gdyup-card",
+        getThemedBackgroundClasses('card')
+      )}>
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-xl dark:text-high-contrast">
+              <CardTitle className={cn("text-xl", getThemedTextClasses())}>
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
-                    <Plane className="h-5 w-5 mr-2 rotate-90" />
+                    <Plane className={cn("h-5 w-5 mr-2 rotate-90", getThemedTextClasses())} />
                     {offer?.departure_location} → {offer?.arrival_location}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  <div className={cn("text-xs font-mono", getThemedTextClasses('muted'))}>
                     Flight #{offer?.id?.toString().substring(0, 6)}
                   </div>
                 </div>
               </CardTitle>
-              <CardDescription className="mt-1 dark:text-medium-contrast">
+              <CardDescription className={cn("mt-1", getThemedTextClasses('secondary'))}>
                 {offer ? format(new Date(offer.flight_date), 'EEEE, MMMM d, yyyy') : ''}
               </CardDescription>
             </div>
@@ -203,64 +241,79 @@ export default function TransactionClient({
         <CardContent>
           <div className="space-y-5">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">PAYMENT DETAILS</h3>
+              <h3 className={cn("text-sm font-medium mb-2", getThemedTextClasses('secondary'))}>PAYMENT DETAILS</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Amount</p>
-                  <p className="font-medium dark:text-high-contrast">{formatCurrency(transaction.amount)}</p>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Amount</p>
+                  <p className={cn("font-medium", getThemedTextClasses())}>
+                    {formatCurrency(transaction.amount)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Handling Fee</p>
-                  <p className="font-medium dark:text-high-contrast">{formatCurrency(transaction.handling_fee || 0)}</p>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Handling Fee</p>
+                  <p className={cn("font-medium", getThemedTextClasses())}>
+                    {formatCurrency(transaction.handling_fee || 0)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Payment Method</p>
-                  <p className="font-medium dark:text-high-contrast capitalize">{transaction.payment_method}</p>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Payment Method</p>
+                  <p className={cn("font-medium capitalize", getThemedTextClasses())}>
+                    {transaction.payment_method}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Transaction Date</p>
-                  <p className="font-medium dark:text-high-contrast">{format(new Date(transaction.transaction_date), 'MMM d, yyyy')}</p>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Transaction Date</p>
+                  <p className={cn("font-medium", getThemedTextClasses())}>
+                    {format(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                  </p>
                 </div>
               </div>
             </div>
             
-            <Separator className="dark:bg-gray-700" />
+            <Separator className="bg-gdyup-border" />
             
             <div>
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2 flex justify-between items-center">
+              <h3 className={cn(
+                "text-sm font-medium mb-2 flex justify-between items-center",
+                getThemedTextClasses('secondary')
+              )}>
                 <span>TRANSACTION DETAILS</span>
-                <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+                <span className={cn("text-xs font-mono", getThemedTextClasses('muted'))}>
                   Txn #{transaction.id?.toString().substring(0, 6)}
                 </span>
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Transaction ID</p>
-                  <p className="font-medium text-sm font-mono dark:text-high-contrast">{transaction.id}</p>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Transaction ID</p>
+                  <p className={cn("font-medium text-sm font-mono", getThemedTextClasses())}>
+                    {transaction.id}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Payment Reference</p>
-                  <p className="font-medium text-sm font-mono truncate dark:text-high-contrast">{transaction.transaction_reference || 'N/A'}</p>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Payment Reference</p>
+                  <p className={cn("font-medium text-sm font-mono truncate", getThemedTextClasses())}>
+                    {transaction.transaction_reference || 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>
             
             {transaction.payment_status === 'completed' && (
               <>
-                <Separator className="dark:bg-gray-700" />
+                <Separator className="bg-gdyup-border" />
                 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">USERS</h3>
+                  <h3 className={cn("text-sm font-medium mb-2", getThemedTextClasses('secondary'))}>USERS</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Payer</p>
-                      <p className="font-medium dark:text-high-contrast">
+                      <p className={cn("text-sm", getThemedTextClasses('muted'))}>Payer</p>
+                      <p className={cn("font-medium", getThemedTextClasses())}>
                         {transaction.payer?.first_name} {transaction.payer?.last_name}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Recipient</p>
-                      <p className="font-medium dark:text-high-contrast">
+                      <p className={cn("text-sm", getThemedTextClasses('muted'))}>Recipient</p>
+                      <p className={cn("font-medium", getThemedTextClasses())}>
                         {transaction.recipient?.first_name} {transaction.recipient?.last_name}
                       </p>
                     </div>
@@ -271,11 +324,15 @@ export default function TransactionClient({
           </div>
         </CardContent>
         
-        <CardFooter className="flex flex-col sm:flex-row sm:justify-between border-t dark:border-gray-700 pt-6 gap-4">
+        <CardFooter className="flex flex-col sm:flex-row sm:justify-between border-t border-gdyup-border pt-6 gap-4">
           <Button 
             variant="outline" 
-            className="text-sm dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 w-full sm:w-auto"
-            onClick={() => router.push('/jetshare/dashboard')}
+            className={cn(
+              "text-sm border-gdyup-border",
+              getThemedTextClasses(),
+              "hover:bg-gdyup-bg-card w-full sm:w-auto"
+            )}
+            onClick={() => router.push('/gdyup/dashboard')}
           >
             Back to Dashboard
           </Button>
@@ -283,7 +340,10 @@ export default function TransactionClient({
           {transaction.payment_status === 'completed' && (
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <Button 
-                className="text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800"
+                className={cn(
+                  "text-sm",
+                  getThemedButtonClasses('primary')
+                )}
                 disabled={isDownloading}
                 onClick={() => downloadReceipt(transaction.id)}
               >
@@ -310,7 +370,10 @@ export default function TransactionClient({
           
           {transaction.payment_status === 'pending' && transaction.payment_method === 'fiat' && (
             <Button 
-              className="text-sm bg-amber-500 hover:bg-amber-600 text-white w-full sm:w-auto"
+              className={cn(
+                "text-sm w-full sm:w-auto",
+                getThemedButtonClasses('primary')
+              )}
               onClick={() => router.push(`/gdyup/payment/${offer.id}`)}
             >
               Complete Payment
@@ -332,17 +395,26 @@ export default function TransactionClient({
       
       {transactions.length > 1 && (
         <div className="mt-8">
-          <h2 className="text-lg font-medium mb-4 dark:text-high-contrast">Transaction History</h2>
+          <h2 className={cn("text-lg font-medium mb-4", getThemedTextClasses())}>Transaction History</h2>
           {transactions.slice(1).map(tx => (
-            <Card key={tx.id} className="mb-4 jetstream-card dark:border-gray-700">
+            <Card key={tx.id} className={cn(
+              "mb-4 gdyup-card",
+              getThemedBackgroundClasses('card')
+            )}>
               <CardContent className="py-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-medium dark:text-high-contrast">{format(new Date(tx.transaction_date), 'MMM d, yyyy')}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{tx.transaction_reference || tx.id}</p>
+                    <p className={cn("font-medium", getThemedTextClasses())}>
+                      {format(new Date(tx.transaction_date), 'MMM d, yyyy')}
+                    </p>
+                    <p className={cn("text-sm", getThemedTextClasses('muted'))}>
+                      {tx.transaction_reference || tx.id}
+                    </p>
                   </div>
                   <div className="flex items-center">
-                    <span className="mr-3 text-sm font-medium dark:text-high-contrast">{formatCurrency(tx.amount)}</span>
+                    <span className={cn("mr-3 text-sm font-medium", getThemedTextClasses())}>
+                      {formatCurrency(tx.amount)}
+                    </span>
                     {getPaymentStatusBadge(tx.payment_status)}
                   </div>
                 </div>

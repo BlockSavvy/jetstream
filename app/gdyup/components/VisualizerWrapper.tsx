@@ -2,15 +2,21 @@
 
 import dynamic from 'next/dynamic';
 import { useRef, useState, useEffect } from 'react';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 // Dynamic import of JetSeatVisualizer with SSR disabled
 const JetSeatVisualizer = dynamic(() => import('./JetSeatVisualizer'), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-48 bg-gray-800 rounded-md animate-pulse flex items-center justify-center">
-      <p className="text-gray-500">Loading visualizer...</p>
-    </div>
-  ),
+  loading: () => {
+    // We can't use the hook in this loading component (outside the main component body)
+    // so we use the variables directly
+    return (
+      <div className="w-full h-48 bg-gdyup-bg-card rounded-md animate-pulse flex items-center justify-center">
+        <p className="text-gdyup-text-subtle">Loading visualizer...</p>
+      </div>
+    );
+  },
 });
 
 interface VisualizerWrapperProps {
@@ -36,16 +42,23 @@ export default function VisualizerWrapper({
   const visualizerRef = useRef(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
+  
+  // Log totalSeats prop for debugging
+  useEffect(() => {
+    console.log(`[VisualizerWrapper] Received totalSeats: ${totalSeats} (${typeof totalSeats})`);
+  }, [totalSeats]);
   
   // Set ready state after component mounts
   useEffect(() => {
     // Short timeout to ensure client-side hydration is complete
     const timer = setTimeout(() => {
       setIsReady(true);
+      console.log(`[VisualizerWrapper] Component ready with totalSeats: ${totalSeats}`);
     }, 100);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [totalSeats]);
 
   // Handle errors from the visualizer
   const handleError = (error: Error | string) => {
@@ -80,11 +93,16 @@ export default function VisualizerWrapper({
     });
   }
 
+  console.log(`[VisualizerWrapper] About to render with totalSeats=${totalSeats}, jet_id=${jet_id}, isReady=${isReady}`);
+
   // Fallback for client-side rendering
   if (!isReady) {
     return (
-      <div className="w-full h-48 bg-gray-800 rounded-md flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#DAFF0D]"></div>
+      <div className={cn(
+        "w-full h-48 rounded-md flex items-center justify-center",
+        getThemedBackgroundClasses('card')
+      )}>
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-gdyup-primary"></div>
       </div>
     );
   }
@@ -92,8 +110,11 @@ export default function VisualizerWrapper({
   // Error state
   if (error) {
     return (
-      <div className="w-full h-48 bg-gray-800 rounded-md flex items-center justify-center">
-        <p className="text-red-400">Error: {error}</p>
+      <div className={cn(
+        "w-full h-48 rounded-md flex items-center justify-center",
+        getThemedBackgroundClasses('card')
+      )}>
+        <p className={cn(getThemedTextClasses('destructive'))}>Error: {error}</p>
       </div>
     );
   }

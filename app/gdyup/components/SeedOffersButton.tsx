@@ -9,6 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, DatabaseIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 export default function SeedOffersButton() {
   const router = useRouter();
@@ -22,6 +24,14 @@ export default function SeedOffersButton() {
     completedOffers: true,
     deleteExisting: false
   });
+  
+  // Theme helpers
+  const { 
+    getThemedTextClasses, 
+    getThemedButtonClasses, 
+    getThemedBackgroundClasses,
+    getThemedBadgeClasses
+  } = useGdyupTheme();
   
   const handleSeedOffers = async () => {
     if (!userId.trim()) {
@@ -72,7 +82,7 @@ export default function SeedOffersButton() {
         variant="ghost" 
         size="sm" 
         onClick={() => setShowForm(true)}
-        className="text-xs text-muted-foreground"
+        className={cn("text-xs", getThemedTextClasses('muted'))}
       >
         <DatabaseIcon className="h-3 w-3 mr-1" />
         Seed Test Data
@@ -81,10 +91,14 @@ export default function SeedOffersButton() {
   }
   
   return (
-    <Card className="max-w-md mx-auto">
+    <Card className={cn(
+      "max-w-md mx-auto",
+      getThemedBackgroundClasses('card'),
+      "border border-gdyup-border"
+    )}>
       <CardHeader>
-        <CardTitle className="text-lg">Seed Test Offers</CardTitle>
-        <CardDescription>
+        <CardTitle className={cn("text-lg", getThemedTextClasses())}>Seed Test Offers</CardTitle>
+        <CardDescription className={getThemedTextClasses('muted')}>
           Create sample JetShare offers for testing purposes. This will create a variety of offers with different statuses.
         </CardDescription>
       </CardHeader>
@@ -97,33 +111,43 @@ export default function SeedOffersButton() {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="userId">Primary User ID</Label>
+          <Label htmlFor="userId" className={getThemedTextClasses()}>Primary User ID</Label>
           <Input 
             id="userId" 
             placeholder="Enter user ID for offer creation" 
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
+            className={cn(
+              getThemedBackgroundClasses('card'),
+              "border border-gdyup-border",
+              getThemedTextClasses()
+            )}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className={cn("text-xs", getThemedTextClasses('muted'))}>
             This user will be the creator of the offers.
           </p>
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="secondUserId">Second User ID (Optional)</Label>
+          <Label htmlFor="secondUserId" className={getThemedTextClasses()}>Second User ID (Optional)</Label>
           <Input 
             id="secondUserId" 
             placeholder="Enter second user ID for matched user" 
             value={secondUserId}
             onChange={(e) => setSecondUserId(e.target.value)}
+            className={cn(
+              getThemedBackgroundClasses('card'),
+              "border border-gdyup-border",
+              getThemedTextClasses()
+            )}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className={cn("text-xs", getThemedTextClasses('muted'))}>
             This user will be used as the matched user for accepted and completed offers.
           </p>
         </div>
         
         <div className="space-y-2 pt-2">
-          <Label className="block mb-2">Data Options</Label>
+          <Label className={cn("block mb-2", getThemedTextClasses())}>Data Options</Label>
           
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -132,8 +156,9 @@ export default function SeedOffersButton() {
                 checked={seedOptions.openOffers}
                 onCheckedChange={(checked) => 
                   setSeedOptions(prev => ({ ...prev, openOffers: checked === true }))}
+                className="data-[state=checked]:bg-gdyup-primary data-[state=checked]:border-gdyup-primary"
               />
-              <Label htmlFor="openOffers" className="text-sm">Create open offers</Label>
+              <Label htmlFor="openOffers" className={cn("text-sm", getThemedTextClasses())}>Create open offers</Label>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -142,8 +167,9 @@ export default function SeedOffersButton() {
                 checked={seedOptions.acceptedOffers}
                 onCheckedChange={(checked) => 
                   setSeedOptions(prev => ({ ...prev, acceptedOffers: checked === true }))}
+                className="data-[state=checked]:bg-gdyup-primary data-[state=checked]:border-gdyup-primary"
               />
-              <Label htmlFor="acceptedOffers" className="text-sm">Create accepted offers</Label>
+              <Label htmlFor="acceptedOffers" className={cn("text-sm", getThemedTextClasses())}>Create accepted offers</Label>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -152,8 +178,9 @@ export default function SeedOffersButton() {
                 checked={seedOptions.completedOffers}
                 onCheckedChange={(checked) => 
                   setSeedOptions(prev => ({ ...prev, completedOffers: checked === true }))}
+                className="data-[state=checked]:bg-gdyup-primary data-[state=checked]:border-gdyup-primary"
               />
-              <Label htmlFor="completedOffers" className="text-sm">Create completed offers</Label>
+              <Label htmlFor="completedOffers" className={cn("text-sm", getThemedTextClasses())}>Create completed offers</Label>
             </div>
             
             <div className="flex items-center space-x-2 pt-2">
@@ -162,8 +189,9 @@ export default function SeedOffersButton() {
                 checked={seedOptions.deleteExisting}
                 onCheckedChange={(checked) => 
                   setSeedOptions(prev => ({ ...prev, deleteExisting: checked === true }))}
+                className="data-[state=checked]:bg-gdyup-secondary data-[state=checked]:border-gdyup-secondary"
               />
-              <Label htmlFor="deleteExisting" className="text-sm text-destructive">Delete existing offers for these users</Label>
+              <Label htmlFor="deleteExisting" className={cn("text-sm", getThemedTextClasses('destructive'))}>Delete existing offers for these users</Label>
             </div>
           </div>
         </div>
@@ -173,12 +201,14 @@ export default function SeedOffersButton() {
           variant="outline" 
           onClick={() => setShowForm(false)}
           disabled={isLoading}
+          className={getThemedButtonClasses('outline')}
         >
           Cancel
         </Button>
         <Button 
           onClick={handleSeedOffers}
           disabled={isLoading}
+          className={getThemedButtonClasses()}
         >
           {isLoading ? (
             <>

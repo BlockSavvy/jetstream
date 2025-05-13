@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { QrCode, Plane, ArrowRight, Download, Calendar, Clock, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 interface JetShareTicketProps {
   ticket: {
@@ -31,6 +33,13 @@ interface JetShareTicketProps {
 }
 
 export function JetShareTicket({ ticket, offer, className }: JetShareTicketProps) {
+  // Initialize theming helpers
+  const { 
+    getThemedTextClasses, 
+    getThemedButtonClasses, 
+    getThemedBackgroundClasses 
+  } = useGdyupTheme();
+
   // Use metadata from ticket if offer is not provided
   const departure = offer?.departure_location || ticket.metadata?.departure_location || 'Departure';
   const arrival = offer?.arrival_location || ticket.metadata?.arrival_location || 'Arrival';
@@ -42,8 +51,17 @@ export function JetShareTicket({ ticket, offer, className }: JetShareTicketProps
   const formattedTime = format(new Date(ticket.boarding_time), 'h:mm a');
   
   return (
-    <Card className={`max-w-md mx-auto overflow-hidden ${className || ''}`}>
-      <CardHeader className="pb-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+    <Card className={cn(
+      "max-w-md mx-auto overflow-hidden",
+      getThemedBackgroundClasses('card'),
+      "border-gdyup-border",
+      className
+    )}>
+      <CardHeader className={cn(
+        "pb-0",
+        getThemedBackgroundClasses('primary'),
+        getThemedTextClasses('inverse')
+      )}>
         <div className="flex justify-between items-center">
           <CardTitle className="text-xl font-bold">Boarding Pass</CardTitle>
           <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded">
@@ -66,63 +84,95 @@ export function JetShareTicket({ ticket, offer, className }: JetShareTicketProps
       <CardContent className="pt-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-gray-500 flex items-center mb-1">
+            <p className={cn("flex items-center mb-1", getThemedTextClasses('muted'))}>
               <Calendar className="h-3 w-3 mr-1" />
               Date
             </p>
-            <p className="font-medium">{formattedDate}</p>
+            <p className={cn("font-medium", getThemedTextClasses())}>
+              {formattedDate}
+            </p>
           </div>
           <div>
-            <p className="text-gray-500 flex items-center mb-1">
+            <p className={cn("flex items-center mb-1", getThemedTextClasses('muted'))}>
               <Clock className="h-3 w-3 mr-1" />
               Boarding Time
             </p>
-            <p className="font-medium">{formattedTime}</p>
+            <p className={cn("font-medium", getThemedTextClasses())}>
+              {formattedTime}
+            </p>
           </div>
           <div>
-            <p className="text-gray-500 flex items-center mb-1">
+            <p className={cn("flex items-center mb-1", getThemedTextClasses('muted'))}>
               <MapPin className="h-3 w-3 mr-1" />
               Gate
             </p>
-            <p className="font-medium">{ticket.gate}</p>
+            <p className={cn("font-medium", getThemedTextClasses())}>
+              {ticket.gate}
+            </p>
           </div>
           <div>
-            <p className="text-gray-500 flex items-center mb-1">
+            <p className={cn("flex items-center mb-1", getThemedTextClasses('muted'))}>
               <Plane className="h-3 w-3 mr-1" />
               Seat
             </p>
-            <p className="font-medium">{ticket.seat_number}</p>
+            <p className={cn("font-medium", getThemedTextClasses())}>
+              {ticket.seat_number}
+            </p>
           </div>
         </div>
         
-        <Separator className="my-4" />
+        <Separator className={cn("my-4", "bg-gdyup-border")} />
         
         <div className="pt-2">
-          <p className="text-gray-500 text-xs mb-1">Passenger</p>
-          <p className="font-medium">{ticket.passenger_name}</p>
+          <p className={cn("text-xs mb-1", getThemedTextClasses('muted'))}>
+            Passenger
+          </p>
+          <p className={cn("font-medium", getThemedTextClasses())}>
+            {ticket.passenger_name}
+          </p>
         </div>
         
         <div className="pt-2">
-          <p className="text-gray-500 text-xs mb-1">Aircraft</p>
-          <p className="font-medium">{aircraftModel}</p>
+          <p className={cn("text-xs mb-1", getThemedTextClasses('muted'))}>
+            Aircraft
+          </p>
+          <p className={cn("font-medium", getThemedTextClasses())}>
+            {aircraftModel}
+          </p>
         </div>
         
         <div className="flex justify-center mt-4">
-          <div className="bg-gray-50 p-4 rounded-md inline-block">
-            <QrCode className="h-32 w-32 mx-auto text-gray-800" />
-            <p className="text-center text-xs text-gray-500 mt-2">
+          <div className={cn(
+            "p-4 rounded-md inline-block",
+            getThemedBackgroundClasses('card'),
+            "border border-gdyup-border"
+          )}>
+            <QrCode className={cn("h-32 w-32 mx-auto", getThemedTextClasses())} />
+            <p className={cn("text-center text-xs mt-2", getThemedTextClasses('muted'))}>
               Scan at the gate
             </p>
           </div>
         </div>
       </CardContent>
       
-      <CardFooter className="flex justify-between bg-gray-50 border-t">
-        <Button variant="outline" size="sm">
+      <CardFooter className={cn(
+        "flex justify-between border-t",
+        getThemedBackgroundClasses('card'),
+        "border-gdyup-border"
+      )}>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className={getThemedButtonClasses('outline')}
+        >
           <Download className="h-4 w-4 mr-1" />
           Download
         </Button>
-        <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
+        <Button 
+          variant="default" 
+          size="sm" 
+          className={getThemedButtonClasses()}
+        >
           View Details
           <ArrowRight className="h-4 w-4 ml-1" />
         </Button>

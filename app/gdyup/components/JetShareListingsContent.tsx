@@ -26,7 +26,8 @@ import {
   LoaderCircle,
   RefreshCw,
   Clock,
-  Pencil
+  Pencil,
+  PlaneTakeoff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +73,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { User } from '@supabase/supabase-js';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { formatCurrency, formatTime } from '@/lib/utils';
+import { formatCurrency, formatTime, cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -87,6 +88,8 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/components/auth-provider';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { ThemedIcon } from '../components/core/ThemedIcon';
 
 // Update the JetShareOfferWithUser type to include the isOwnOffer flag
 interface EnhancedJetShareOfferWithUser extends JetShareOfferWithUser {
@@ -123,56 +126,15 @@ interface JetShareListingsContentProps {
   // User is already provided by useAuth(), so no need to pass it in
 }
 
-// Placeholder component for empty state
-const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center py-12 text-center">
-    <div className="bg-black rounded-full w-20 h-20 flex items-center justify-center mb-6 border-2 border-gdyup-primary shadow-[0_0_20px_rgba(218,255,13,0.3)]">
-      <Plane className="h-10 w-10 gdyup-primary" />
-    </div>
-    <h3 className="text-xl font-bold mb-3 text-white">No Flight Shares Available</h3>
-    <p className="text-white max-w-md mb-6">
-      There are no flight shares available that match your criteria. Try adjusting your filters or check back later.
-    </p>
-    <Button 
-      onClick={() => window.location.reload()} 
-      className="bg-gdyup-primary text-black hover:bg-gdyup-primary/90 border-0 font-medium shadow-md"
-    >
-      <RefreshCw className="h-4 w-4 mr-2" />
-      Refresh Listings
-    </Button>
-  </div>
-);
-
-// Skeleton loader for cards
-const SkeletonCard = () => (
-  <Card className="overflow-hidden bg-gray-900 border border-gray-800">
-    <CardHeader className="pb-2">
-      <Skeleton className="h-6 w-3/4 mb-2 bg-gray-800" />
-      <Skeleton className="h-4 w-1/2 bg-gray-800" />
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-4 w-4 rounded-full bg-gray-800" />
-          <Skeleton className="h-4 w-1/3 bg-gray-800" />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-4 w-4 rounded-full bg-gray-800" />
-          <Skeleton className="h-4 w-1/3 bg-gray-800" />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Skeleton className="h-4 w-4 rounded-full bg-gray-800" />
-          <Skeleton className="h-4 w-1/3 bg-gray-800" />
-        </div>
-      </div>
-    </CardContent>
-    <CardFooter>
-      <Skeleton className="h-10 w-full rounded-md bg-gray-800" />
-    </CardFooter>
-  </Card>
-);
-
 export default function JetShareListingsContent() {
+  // Theme helpers
+  const { 
+    getThemedTextClasses, 
+    getThemedButtonClasses, 
+    getThemedBackgroundClasses,
+    getThemedBadgeClasses
+  } = useGdyupTheme();
+
   const router = useRouter();
   const { user, refreshSession } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
@@ -196,40 +158,86 @@ export default function JetShareListingsContent() {
   
   const supabase = createClient();
   
-  // Add a new effect to check for offer status changes when the component gains focus
-  useEffect(() => {
-    // Function to check if page visibility changes (user returns to the tab)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Page became visible, refreshing offers');
-        fetchOffers();
-      }
-    };
+  // Placeholder component for empty state
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className={cn(
+        "rounded-full w-20 h-20 flex items-center justify-center mb-6", 
+        getThemedBackgroundClasses('secondary'),
+        "border-2 border-gdyup-primary shadow-[0_0_25px_rgba(var(--gdyup-primary-rgb),0.4)]"
+      )}>
+        <Plane className={cn("h-10 w-10", getThemedTextClasses(), "opacity-90")} />
+      </div>
+      <h3 className={cn("text-xl font-bold mb-3", getThemedTextClasses(), "text-gdyup-primary")}>No Flight Shares Available</h3>
+      <p className={cn("max-w-md mb-6 text-lg", getThemedTextClasses(), "opacity-90")}>
+        There are no flight shares available that match your criteria. Try adjusting your filters or check back later.
+      </p>
+      <Button 
+        onClick={() => window.location.reload()} 
+        className={cn(
+          getThemedButtonClasses(),
+          "px-6 py-5 text-base font-semibold shadow-lg"
+        )}
+      >
+        <RefreshCw className={cn("h-5 w-5 mr-2", getThemedTextClasses())} />
+        Refresh Listings
+      </Button>
+    </div>
+  );
 
-    // Function to handle when user navigates back to this page
-    const handleFocus = () => {
-      console.log('Window regained focus, refreshing offers');
-      fetchOffers();
-    };
+  // Skeleton loader for cards
+  const SkeletonCard = () => (
+    <Card className={cn(
+      "overflow-hidden h-[280px]",
+      getThemedBackgroundClasses('card'),
+      "border border-gdyup-border shadow-lg"
+    )}>
+      <div className="h-40 bg-gray-800/40 animate-pulse"></div>
+      <CardHeader className="pb-2">
+        <Skeleton className="h-6 w-3/4 mb-2 bg-gray-700/50" />
+        <Skeleton className="h-4 w-1/2 bg-gray-700/50" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Skeleton className="h-4 w-4 rounded-full bg-gray-700/50" />
+            <Skeleton className="h-4 w-1/3 bg-gray-700/50" />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Skeleton className="h-4 w-4 rounded-full bg-gray-700/50" />
+            <Skeleton className="h-4 w-1/3 bg-gray-700/50" />
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Skeleton className="h-10 w-full rounded-md bg-gray-700/50" />
+      </CardFooter>
+    </Card>
+  );
 
-    // Add event listeners
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    // Clean up event listeners
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, []);
-  
-  // Fetch offers from API
-  const fetchOffers = async (
+  // Fetch offers from API - wrap in useCallback with proper dependencies
+  const fetchOffers = useCallback(async (
     status = 'open', 
     viewMode: 'marketplace' | 'dashboard' = 'marketplace',
     userId?: string,
     retry = 0
   ) => {
+    // Prevent excessive fetching
+    const now = Date.now();
+    const lastFetch = localStorage.getItem('jetshare_last_fetch_time');
+    
+    if (lastFetch) {
+      const timeSinceLastFetch = now - parseInt(lastFetch);
+      // If fetched in the last 5 seconds, don't fetch again
+      if (timeSinceLastFetch < 5000 && retry === 0) {
+        console.log(`Skipping fetch - last fetch was ${timeSinceLastFetch}ms ago`);
+        return;
+      }
+    }
+    
+    // Update fetch time in localStorage
+    localStorage.setItem('jetshare_last_fetch_time', now.toString());
+    
     console.log(`Fetching ${status} offers for ${viewMode} view (retry: ${retry})`);
     if (retry > 3) {
       console.error('Max retries reached, giving up');
@@ -238,7 +246,10 @@ export default function JetShareListingsContent() {
       return;
     }
     
-    setIsLoading(true);
+    // Only set loading on initial fetch, not retries
+    if (retry === 0) {
+      setIsLoading(true);
+    }
     
     try {
       // Get auth token for API calls
@@ -482,20 +493,56 @@ export default function JetShareListingsContent() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setError, setIsLoading, setOffers]);
   
-  // Fetch offers on mount and at intervals
+  // Fetch offers on mount only once
   useEffect(() => {
-    // Execute fetch on component mount
-    fetchOffers();
+    let isActive = true;
     
-    // Set up a refresh interval to occasionally reload the offers
-    const interval = setInterval(() => {
+    // Only fetch if component is mounted
+    if (isActive) {
       fetchOffers();
-    }, 60000); // Refresh every minute
+    }
     
-    return () => clearInterval(interval);
-  }, [user, router]);
+    // Set up a refresh interval at a reasonable rate (once per minute)
+    const interval = setInterval(() => {
+      if (isActive) {
+        fetchOffers();
+      }
+    }, 60000);
+    
+    return () => {
+      isActive = false;
+      clearInterval(interval);
+    };
+  }, [fetchOffers]);
+  
+  // Add a new effect to check for offer status changes when the component gains focus
+  useEffect(() => {
+    // Function to check if page visibility changes (user returns to the tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, refreshing offers');
+        fetchOffers();
+      }
+    };
+
+    // Function to handle when user navigates back to this page
+    const handleFocus = () => {
+      console.log('Window regained focus, refreshing offers');
+      fetchOffers();
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // Clean up event listeners
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [fetchOffers]); // Add fetchOffers as dependency
   
   // Check for resumed offer acceptance after login
   useEffect(() => {
@@ -527,71 +574,94 @@ export default function JetShareListingsContent() {
     }
   }, [user, offers]);
   
-  // Filter and sort offers
+  // Filter and sort offers - memoize to prevent excessive re-renders
   useEffect(() => {
+    // Don't run this effect if offers array is empty
+    if (offers.length === 0) return;
+    
     console.log('Filter/sort effect running, offers length:', offers.length);
-    let result = [...offers];
     
-    // Apply search term filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(offer => 
-        offer.departure_location.toLowerCase().includes(term) ||
-        offer.arrival_location.toLowerCase().includes(term)
-      );
-    }
-    
-    // Apply departure filter
-    if (departureFilter) {
-      result = result.filter(offer => 
-        offer.departure_location.toLowerCase().includes(departureFilter.toLowerCase())
-      );
-    }
-    
-    // Apply arrival filter
-    if (arrivalFilter) {
-      result = result.filter(offer => 
-        offer.arrival_location.toLowerCase().includes(arrivalFilter.toLowerCase())
-      );
-    }
-    
-    // Apply price filters
-    if (minPriceFilter) {
-      const minPrice = parseFloat(minPriceFilter);
-      if (!isNaN(minPrice)) {
-        result = result.filter(offer => offer.requested_share_amount >= minPrice);
+    // Use a function that doesn't capture closure variables
+    const getFilteredOffers = () => {
+      let result = [...offers];
+      
+      // Apply search term filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        result = result.filter(offer => 
+          offer.departure_location?.toLowerCase().includes(term) ||
+          offer.arrival_location?.toLowerCase().includes(term)
+        );
       }
-    }
-    
-    if (maxPriceFilter) {
-      const maxPrice = parseFloat(maxPriceFilter);
-      if (!isNaN(maxPrice)) {
-        result = result.filter(offer => offer.requested_share_amount <= maxPrice);
+      
+      // Apply departure filter
+      if (departureFilter) {
+        result = result.filter(offer => 
+          offer.departure_location?.toLowerCase().includes(departureFilter.toLowerCase())
+        );
       }
-    }
+      
+      // Apply arrival filter
+      if (arrivalFilter) {
+        result = result.filter(offer => 
+          offer.arrival_location?.toLowerCase().includes(arrivalFilter.toLowerCase())
+        );
+      }
+      
+      // Apply price filters
+      if (minPriceFilter) {
+        const minPrice = parseFloat(minPriceFilter);
+        if (!isNaN(minPrice)) {
+          result = result.filter(offer => offer.requested_share_amount >= minPrice);
+        }
+      }
+      
+      if (maxPriceFilter) {
+        const maxPrice = parseFloat(maxPriceFilter);
+        if (!isNaN(maxPrice)) {
+          result = result.filter(offer => offer.requested_share_amount <= maxPrice);
+        }
+      }
+      
+      // Apply sorting
+      switch (sortOption) {
+        case 'date-asc':
+          result.sort((a, b) => new Date(a.flight_date).getTime() - new Date(b.flight_date).getTime());
+          break;
+        case 'date-desc':
+          result.sort((a, b) => new Date(b.flight_date).getTime() - new Date(a.flight_date).getTime());
+          break;
+        case 'price-asc':
+          result.sort((a, b) => a.requested_share_amount - b.requested_share_amount);
+          break;
+        case 'price-desc':
+          result.sort((a, b) => b.requested_share_amount - a.requested_share_amount);
+          break;
+      }
+      
+      return result;
+    };
     
-    // Apply sorting
-    switch (sortOption) {
-      case 'date-asc':
-        result.sort((a, b) => new Date(a.flight_date).getTime() - new Date(b.flight_date).getTime());
-        break;
-      case 'date-desc':
-        result.sort((a, b) => new Date(b.flight_date).getTime() - new Date(a.flight_date).getTime());
-        break;
-      case 'price-asc':
-        result.sort((a, b) => a.requested_share_amount - b.requested_share_amount);
-        break;
-      case 'price-desc':
-        result.sort((a, b) => b.requested_share_amount - a.requested_share_amount);
-        break;
-    }
+    // Run the filtering in a timeout to prevent blocking the main thread
+    const timeoutId = setTimeout(() => {
+      const result = getFilteredOffers();
+      console.log('Setting filtered offers:', result.length);
+      setFilteredOffers(result);
+    }, 0);
     
-    console.log('Setting filtered offers:', result.length);
-    setFilteredOffers(result);
-  }, [offers, searchTerm, sortOption, departureFilter, arrivalFilter, minPriceFilter, maxPriceFilter]);
+    return () => clearTimeout(timeoutId);
+  }, [
+    offers, 
+    searchTerm, 
+    sortOption, 
+    departureFilter, 
+    arrivalFilter, 
+    minPriceFilter, 
+    maxPriceFilter
+  ]);
   
   // Ensure auth session is fresh before making important API calls
-  const ensureAuthSession = async (): Promise<boolean> => {
+  const ensureAuthSession = useCallback(async (): Promise<boolean> => {
     console.log('Ensuring fresh auth session before API call...');
     
     // First try the standard refresh via auth context
@@ -626,6 +696,7 @@ export default function JetShareListingsContent() {
     
     // First try to get token from supabase auth
     try {
+      const supabase = createClient();
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session?.access_token) {
         authToken = sessionData.session.access_token;
@@ -655,6 +726,7 @@ export default function JetShareListingsContent() {
     if (!authToken) {
       try {
         console.log('No auth token found, attempting to refresh session...');
+        const supabase = createClient();
         const { data: refreshData } = await supabase.auth.refreshSession();
         if (refreshData?.session?.access_token) {
           authToken = refreshData.session.access_token;
@@ -665,18 +737,18 @@ export default function JetShareListingsContent() {
       }
     }
     
-    return false;
-  };
+    return !!authToken;
+  }, [refreshSession]);
 
-  const handleOfferAccept = async (offer: EnhancedJetShareOfferWithUser) => {
+  const handleOfferAccept = useCallback(async (offer: EnhancedJetShareOfferWithUser) => {
     setSelectedOffer(offer);
     
     // Instead of showing a confirmation dialog, go straight to details
     setShowDetailDialog(true);
     setShowConfirmDialog(false);
-  };
+  }, [setSelectedOffer, setShowDetailDialog, setShowConfirmDialog]);
   
-  const confirmOfferAccept = async () => {
+  const confirmOfferAccept = useCallback(async () => {
     setIsAccepting(true);
     
     // Ensure we have a selected offer
@@ -687,6 +759,9 @@ export default function JetShareListingsContent() {
     }
     
     try {
+      // Ensure session is fresh before proceeding
+      await ensureAuthSession();
+      
       const apiUrl = `/api/jetshare/acceptOffer`;
       console.log(`Attempting to accept offer ${selectedOffer.id} via ${apiUrl}`);
       
@@ -795,16 +870,16 @@ export default function JetShareListingsContent() {
       setIsAccepting(false);
       setShowConfirmDialog(false);
     }
-  };
+  }, [selectedOffer, ensureAuthSession, router, setIsAccepting, setShowConfirmDialog]);
   
   // Clear all filters
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setDepartureFilter('');
     setArrivalFilter('');
     setMinPriceFilter('');
     setMaxPriceFilter('');
     setSearchTerm('');
-  };
+  }, [setDepartureFilter, setArrivalFilter, setMinPriceFilter, setMaxPriceFilter, setSearchTerm]);
   
   // Function to get a valid jet image URL with fallbacks
   const getJetImageUrl = (offer: EnhancedJetShareOfferWithUser): string => {
@@ -882,7 +957,11 @@ export default function JetShareListingsContent() {
   const renderOfferCard = (offer: EnhancedJetShareOfferWithUser) => (
     <Card 
       key={offer.id} 
-      className="bg-gray-900 border-gray-800 overflow-hidden hover:border-gray-700 transition-all cursor-pointer hover:shadow-md gdyup-form"
+      className={cn(
+        "overflow-hidden transition-all cursor-pointer hover:shadow-md gdyup-form",
+        getThemedBackgroundClasses('card'),
+        "border border-gdyup-border shadow-lg"
+      )}
       onClick={() => {
         setSelectedOffer(offer);
         setShowDetailDialog(true);
@@ -925,13 +1004,18 @@ export default function JetShareListingsContent() {
             }}
           />
           
-          {/* Gradient overlay for better text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-transparent pointer-events-none"></div>
+          {/* Stronger gradient overlay for better text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent pointer-events-none"></div>
           
           {/* Own offer badge */}
           {offer.isOwnOffer && (
             <div className="absolute top-2 right-2 z-20">
-              <Badge className="bg-gdyup-primary text-black border-transparent text-xs">Your Offer</Badge>
+              <Badge className={cn(
+                "text-xs border-transparent font-semibold shadow-md",
+                getThemedBadgeClasses('primary')
+              )}>
+                Your Offer
+              </Badge>
             </div>
           )}
         </div>
@@ -939,10 +1023,13 @@ export default function JetShareListingsContent() {
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-base font-semibold gdyup-text-primary">
+              <CardTitle className={cn(
+                "text-base font-bold",
+                "text-gdyup-primary"
+              )}>
                 {offer.departure_location} to {offer.arrival_location}
               </CardTitle>
-              <CardDescription className="text-gray-400 text-sm">
+              <CardDescription className="font-medium text-white">
                 {new Date(offer.flight_date).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
@@ -951,8 +1038,10 @@ export default function JetShareListingsContent() {
               </CardDescription>
             </div>
             <div className="text-right">
-              <p className="gdyup-primary font-medium">${offer.requested_share_amount.toLocaleString()}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-gdyup-primary font-bold text-lg">
+                ${offer.requested_share_amount.toLocaleString()}
+              </p>
+              <p className="text-xs font-medium text-white">
                 {offer.available_seats && offer.available_seats > 1
                   ? `${offer.available_seats} seats left`
                   : '1 seat left'}
@@ -964,23 +1053,27 @@ export default function JetShareListingsContent() {
         <CardContent className="py-2">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-start space-x-2">
-              <Users className="h-4 w-4 mt-0.5 text-gray-400" />
+              <Users className="h-4 w-4 mt-0.5 opacity-90 text-white" />
               <div>
-                <p className="text-white font-medium">
+                <p className="font-medium text-white">
                   {((offer.requested_share_amount / offer.total_flight_cost) * 100).toFixed(0)}%
                 </p>
-                <p className="text-xs text-gray-400">Share</p>
+                <p className="text-xs opacity-90 text-gray-200">
+                  Share
+                </p>
               </div>
             </div>
             <div className="flex items-start space-x-2">
-              <Plane className="h-4 w-4 mt-0.5 text-gray-400" />
+              <Plane className="h-4 w-4 mt-0.5 opacity-90 text-white" />
               <div>
-                <p className="text-white font-medium">
+                <p className="font-medium text-white">
                   {offer.aircraft_model 
                     ? offer.aircraft_model.split(' ').slice(0, 2).join(' ') 
                     : offer.jet?.model || 'Private Jet'}
                 </p>
-                <p className="text-xs text-gray-400">Aircraft</p>
+                <p className="text-xs opacity-90 text-gray-200">
+                  Aircraft
+                </p>
               </div>
             </div>
           </div>
@@ -993,30 +1086,39 @@ export default function JetShareListingsContent() {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="gdyup-button-secondary"
+                  className={cn(
+                    getThemedButtonClasses('outline'),
+                    "border-opacity-70 hover:border-opacity-100"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent card onClick from firing
                     router.push(`/gdyup/offer/edit/${offer.id}`);
                   }}
                 >
-                  <Pencil className="h-4 w-4 mr-2 gdyup-icon" />
-                  Edit
+                  <Pencil className="h-4 w-4 mr-2 text-white" />
+                  <span className="text-white">Edit</span>
                 </Button>
                 <Button 
-                  className="gdyup-button-primary" 
+                  className={cn(
+                    getThemedButtonClasses(),
+                    "shadow-md font-semibold"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent card onClick from firing
                     setSelectedOffer(offer);
                     setShowDetailDialog(true);
                   }}
                 >
-                  <Info className="h-4 w-4 mr-2 gdyup-icon" />
+                  <Info className="h-4 w-4 mr-2" />
                   Details
                 </Button>
               </div>
             ) : (
               <Button 
-                className="w-full gdyup-button-primary" 
+                className={cn(
+                  "w-full font-semibold shadow-md",
+                  getThemedButtonClasses()
+                )} 
                 onClick={(e) => {
                   e.stopPropagation(); // Prevent card onClick from firing
                   setSelectedOffer(offer);
@@ -1071,16 +1173,62 @@ export default function JetShareListingsContent() {
   
   return (
     <div>
-      {/* Debug state */}
-      {/* {console.log('Rendering JetShareListingsContent, isLoading:', isLoading, 'filteredOffers:', filteredOffers.length)} */}
+      {/* Hero section with themed icons - smaller size */}
+      <div className="mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {[
+            { icon: Plane, label: "Find Flights" },
+            { icon: BadgeCheck, label: "Secure" },
+            { icon: Bitcoin, label: "Instant" }
+          ].map((item, index) => (
+            <div 
+              key={index}
+              className={cn(
+                "flex flex-col items-center justify-center p-3 rounded-xl",
+                getThemedBackgroundClasses('card'),
+                "border border-gdyup-border shadow-md hover:shadow-lg transition-all"
+              )}
+            >
+              <div className={cn(
+                "flex items-center justify-center w-12 h-12 rounded-full mb-2",
+                "border border-gdyup-primary/30",
+                getThemedBackgroundClasses('card')
+              )}>
+                <ThemedIcon 
+                  icon={item.icon}
+                  className="text-gdyup-primary"
+                  size={22}
+                />
+              </div>
+              <span className={cn("text-center text-sm font-medium", getThemedTextClasses())}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      
       {/* Search and filter bar */}
-      <div className="bg-gray-900 rounded-lg shadow-md border border-gray-800 p-3 mb-4 gdyup-form">
-        <div className="flex flex-col gap-2">
+      <div className={cn(
+        "rounded-lg shadow-md p-4 mb-4 gdyup-form",
+        getThemedBackgroundClasses('card'),
+        "border border-gdyup-border shadow-lg"
+      )}>
+        <div className="flex flex-col gap-3">
           <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white" />
+            <Search className={cn(
+              "absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5",
+              getThemedTextClasses(),
+              "opacity-90"
+            )} />
             <Input
               placeholder="Search locations..."
-              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
+              className={cn(
+                "pl-10 h-12 text-base",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "placeholder:text-gray-400 border-gray-600 hover:border-gray-500 focus:border-gdyup-primary shadow-inner"
+              )}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -1088,82 +1236,132 @@ export default function JetShareListingsContent() {
           
           <div className="flex gap-2 justify-between">
             <Select value={sortOption} onValueChange={setSortOption}>
-              <SelectTrigger className="w-[130px] bg-gray-800 border-gray-700 text-white text-sm">
+              <SelectTrigger className={cn(
+                "w-[150px] text-base h-10",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "border-gray-600 shadow-sm"
+              )}>
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                <SelectItem value="date-asc">Date (Earliest)</SelectItem>
-                <SelectItem value="date-desc">Date (Latest)</SelectItem>
-                <SelectItem value="price-asc">Price (Low-High)</SelectItem>
-                <SelectItem value="price-desc">Price (High-Low)</SelectItem>
+              <SelectContent className={cn(
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "border-gray-600"
+              )}>
+                <SelectItem value="date-asc" className="text-base">Date (Earliest)</SelectItem>
+                <SelectItem value="date-desc" className="text-base">Date (Latest)</SelectItem>
+                <SelectItem value="price-asc" className="text-base">Price (Low-High)</SelectItem>
+                <SelectItem value="price-desc" className="text-base">Price (High-Low)</SelectItem>
               </SelectContent>
             </Select>
             
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gdyup-button-primary">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <span className="text-sm font-medium">Filters</span>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className={cn(
+                    getThemedButtonClasses('outline'),
+                    "text-base font-medium border-gray-600 shadow-sm h-10"
+                  )}
+                >
+                  <Filter className={cn("h-5 w-5 mr-2", getThemedTextClasses())} />
+                  <span className="font-medium">Filters</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent className="bg-gray-900 border-gray-800 text-white gdyup-form">
+              <SheetContent className={cn(
+                "gdyup-form",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses()
+              )}>
                 <SheetHeader>
-                  <SheetTitle className="text-white">Filters</SheetTitle>
-                  <SheetDescription className="text-white">
+                  <SheetTitle className={cn(getThemedTextClasses(), "text-xl")}>Filters</SheetTitle>
+                  <SheetDescription className={cn(getThemedTextClasses('muted'), "text-base opacity-90")}>
                     Narrow down flight shares based on your preferences
                   </SheetDescription>
                 </SheetHeader>
                 
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">From</label>
+                    <label className={cn("text-base font-medium", getThemedTextClasses())}>From</label>
                     <Input
                       placeholder="E.g. New York"
                       value={departureFilter}
                       onChange={(e) => setDepartureFilter(e.target.value)}
-                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
+                      className={cn(
+                        getThemedBackgroundClasses('card'),
+                        getThemedTextClasses(),
+                        "placeholder:text-gray-400 border-gray-600 h-12 text-base"
+                      )}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">To</label>
+                    <label className={cn("text-base font-medium", getThemedTextClasses())}>To</label>
                     <Input
                       placeholder="E.g. Miami"
                       value={arrivalFilter}
                       onChange={(e) => setArrivalFilter(e.target.value)}
-                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
+                      className={cn(
+                        getThemedBackgroundClasses('card'),
+                        getThemedTextClasses(),
+                        "placeholder:text-gray-400 border-gray-600 h-12 text-base"
+                      )}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-white">Price Range</label>
+                    <label className={cn("text-base font-medium", getThemedTextClasses())}>Price Range</label>
                     <div className="flex gap-2 items-center">
                       <Input
                         placeholder="Min"
                         type="number"
                         value={minPriceFilter}
                         onChange={(e) => setMinPriceFilter(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
+                        className={cn(
+                          getThemedBackgroundClasses('card'),
+                          getThemedTextClasses(),
+                          "placeholder:text-gray-400 border-gray-600 h-12 text-base"
+                        )}
                       />
-                      <span className="text-white">to</span>
+                      <span className={cn(getThemedTextClasses(), "text-base font-medium")}>to</span>
                       <Input
                         placeholder="Max"
                         type="number"
                         value={maxPriceFilter}
                         onChange={(e) => setMaxPriceFilter(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-300"
+                        className={cn(
+                          getThemedBackgroundClasses('card'),
+                          getThemedTextClasses(),
+                          "placeholder:text-gray-400 border-gray-600 h-12 text-base"
+                        )}
                       />
                     </div>
                   </div>
                 </div>
                 
                 <SheetFooter>
-                  <Button variant="outline" onClick={clearFilters} className="gdyup-button-secondary">
-                    <X className="h-4 w-4 mr-2 gdyup-icon" />
+                  <Button 
+                    variant="outline" 
+                    onClick={clearFilters} 
+                    className={cn(
+                      getThemedButtonClasses('outline'),
+                      "text-base font-medium h-11 border-gray-600"
+                    )}
+                  >
+                    <X className={cn("h-5 w-5 mr-2", getThemedTextClasses())} />
                     <span>Clear</span>
                   </Button>
                   <SheetClose asChild>
-                    <Button className="gdyup-button-primary">Apply</Button>
+                    <Button 
+                      className={cn(
+                        getThemedButtonClasses(),
+                        "text-base font-semibold h-11 shadow-md"
+                      )}
+                    >
+                      Apply
+                    </Button>
                   </SheetClose>
                 </SheetFooter>
               </SheetContent>
@@ -1173,32 +1371,47 @@ export default function JetShareListingsContent() {
         
         {/* Active filters display */}
         {(departureFilter || arrivalFilter || minPriceFilter || maxPriceFilter) && (
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2 mt-3">
             {departureFilter && (
-              <UIBadge variant="secondary" className="flex items-center gap-1 bg-gray-800 text-white">
+              <UIBadge variant="secondary" className={cn(
+                "flex items-center gap-1 px-3 py-1.5 text-sm",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "border border-gray-600"
+              )}>
                 From: {departureFilter}
                 <X
-                  className="h-3 w-3 cursor-pointer text-white hover:text-white"
+                  className={cn("h-4 w-4 ml-1 cursor-pointer hover:text-white", getThemedTextClasses())}
                   onClick={() => setDepartureFilter('')}
                 />
               </UIBadge>
             )}
             
             {arrivalFilter && (
-              <UIBadge variant="secondary" className="flex items-center gap-1 bg-gray-800 text-white">
+              <UIBadge variant="secondary" className={cn(
+                "flex items-center gap-1 px-3 py-1.5 text-sm",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "border border-gray-600"
+              )}>
                 To: {arrivalFilter}
                 <X
-                  className="h-3 w-3 cursor-pointer text-white hover:text-white"
+                  className={cn("h-4 w-4 ml-1 cursor-pointer hover:text-white", getThemedTextClasses())}
                   onClick={() => setArrivalFilter('')}
                 />
               </UIBadge>
             )}
             
             {(minPriceFilter || maxPriceFilter) && (
-              <UIBadge variant="secondary" className="flex items-center gap-1 bg-gray-800 text-white">
+              <UIBadge variant="secondary" className={cn(
+                "flex items-center gap-1 px-3 py-1.5 text-sm",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "border border-gray-600"
+              )}>
                 ${minPriceFilter || '0'} - ${maxPriceFilter || 'Any'}
                 <X
-                  className="h-3 w-3 cursor-pointer text-white hover:text-white"
+                  className={cn("h-4 w-4 ml-1 cursor-pointer hover:text-white", getThemedTextClasses())}
                   onClick={() => {
                     setMinPriceFilter('');
                     setMaxPriceFilter('');
@@ -1210,7 +1423,11 @@ export default function JetShareListingsContent() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 text-xs gdyup-button-secondary"
+              className={cn(
+                "h-8 text-sm font-medium", 
+                getThemedButtonClasses('outline'),
+                "border border-gray-600"
+              )}
               onClick={clearFilters}
             >
               Clear All
@@ -1221,17 +1438,32 @@ export default function JetShareListingsContent() {
       
       {/* Main content */}
       <div className="mb-4">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-lg font-semibold gdyup-text-primary flex items-center">
+        <div className="flex justify-between items-center mb-4 px-1">
+          <h2 className={cn(
+            "text-xl font-bold flex items-center", // Larger, bolder title
+            getThemedTextClasses('primary')
+          )}>
             Available Flights
             {!isLoading && filteredOffers.length > 0 && (
-              <Badge className="ml-2 text-xs bg-gdyup-primary text-black gdyup-badge">
+              <Badge className={cn(
+                "ml-2 text-sm px-2 py-1 font-semibold shadow-sm", // Larger, more visible badge
+                getThemedBadgeClasses('primary')
+              )}>
                 {filteredOffers.length}
               </Badge>
             )}
           </h2>
           <div className="flex gap-2">
-            <Button onClick={() => router.push('/gdyup/offer')} className="gdyup-button-primary">
+            <Button 
+              onClick={() => {
+                router.push('/gdyup/offer');
+              }} 
+              className={cn(
+                getThemedButtonClasses(),
+                "text-base font-semibold px-5 py-6 shadow-md h-11" // Larger, more visible button
+              )}
+            >
+              <PlaneTakeoff className="h-5 w-5 mr-2" />
               Create Offer
             </Button>
           </div>
@@ -1245,7 +1477,6 @@ export default function JetShareListingsContent() {
           </div>
         ) : filteredOffers.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* We have {filteredOffers.length} offers to display */}
             {filteredOffers.map((offer, index) => (
               <Fragment key={offer.id || index}>
                 {renderOfferCard(offer)}
@@ -1256,7 +1487,7 @@ export default function JetShareListingsContent() {
           <div className="mt-6">
             <EmptyState />
             {error && (
-              <p className="text-center text-red-400 mt-2">{error}</p>
+              <p className={cn("text-center mt-2", getThemedTextClasses('destructive'))}>{error}</p>
             )}
           </div>
         )}
@@ -1278,7 +1509,12 @@ export default function JetShareListingsContent() {
         }}
       >
         <DialogContent 
-          className="sm:max-w-md bg-gray-900 border-gray-800 text-white gdyup-dialog gdyup-form" 
+          className={cn(
+            "sm:max-w-md gdyup-dialog gdyup-form",
+            getThemedBackgroundClasses('card'),
+            "border border-gdyup-border",
+            getThemedTextClasses()
+          )}
           onInteractOutside={(e) => {
             // Prevent closing the dialog when accepting an offer
             if (isAccepting) {
@@ -1289,41 +1525,45 @@ export default function JetShareListingsContent() {
           {selectedOffer && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-white">Confirm Flight Share</DialogTitle>
-                <DialogDescription className="text-gray-300">
+                <DialogTitle className={getThemedTextClasses()}>Confirm Flight Share</DialogTitle>
+                <DialogDescription className={getThemedTextClasses('muted')}>
                   You are about to book a shared flight from {selectedOffer.departure_location} to {selectedOffer.arrival_location} for ${selectedOffer.requested_share_amount.toLocaleString()}.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="grid gap-4 py-4">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center border-b border-gray-700 pb-3">
+                  <div className={cn("flex justify-between items-center pb-3", "border-b-2 border-gdyup-border")}>
                     <div>
-                      <span className="text-sm text-gray-400">From</span>
-                      <p className="font-medium text-white">{selectedOffer.departure_location}</p>
+                      <span className={cn("text-sm", getThemedTextClasses('muted'))}>From</span>
+                      <p className={cn("font-medium", getThemedTextClasses())}>{selectedOffer.departure_location}</p>
                     </div>
-                    <Plane className="h-5 w-5 mx-4 transform rotate-90 gdyup-primary" />
+                    <Plane className={cn("h-5 w-5 mx-4 transform rotate-90", getThemedTextClasses('primary'))} />
                     <div className="text-right">
-                      <span className="text-sm text-gray-400">To</span>
-                      <p className="font-medium text-white">{selectedOffer.arrival_location}</p>
+                      <span className={cn("text-sm", getThemedTextClasses('muted'))}>To</span>
+                      <p className={cn("font-medium", getThemedTextClasses())}>{selectedOffer.arrival_location}</p>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 gdyup-primary" />
-                        <span className="text-sm text-gray-400">Flight Date</span>
+                        <Calendar className={cn("h-4 w-4 mr-2", getThemedTextClasses())} />
+                        <span className={cn("text-sm", getThemedTextClasses('muted'))}>Flight Date</span>
                       </div>
-                      <p className="font-medium text-white">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
+                      <p className={cn("font-medium", getThemedTextClasses())}>
+                        {new Date(selectedOffer.flight_date).toLocaleDateString()}
+                      </p>
                     </div>
                     
                     <div>
                       <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-2 gdyup-primary" />
-                        <span className="text-sm text-gray-400">Your Share Cost</span>
+                        <DollarSign className={cn("h-4 w-4 mr-2", getThemedTextClasses())} />
+                        <span className={cn("text-sm", getThemedTextClasses('muted'))}>Your Share Cost</span>
                       </div>
-                      <p className="font-medium gdyup-primary">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                      <p className={cn("font-medium", getThemedTextClasses('primary'))}>
+                        ${selectedOffer.requested_share_amount.toLocaleString()}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1341,7 +1581,7 @@ export default function JetShareListingsContent() {
                     }, 300);
                   }}
                   disabled={isAccepting}
-                  className="gdyup-button-secondary"
+                  className={getThemedButtonClasses('outline')}
                 >
                   Cancel
                 </Button>
@@ -1349,16 +1589,16 @@ export default function JetShareListingsContent() {
                 <Button 
                   onClick={() => confirmOfferAccept()}
                   disabled={isAccepting}
-                  className="gdyup-button-primary"
+                  className={getThemedButtonClasses()}
                 >
                   {isAccepting ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin gdyup-icon" />
+                      <Loader2 className={cn("mr-2 h-4 w-4 animate-spin", getThemedTextClasses())} />
                       <span>Processing...</span>
                     </>
                   ) : (
                     <>
-                      <ArrowRight className="mr-2 h-4 w-4 gdyup-icon" />
+                      <ArrowRight className={cn("mr-2 h-4 w-4", getThemedTextClasses())} />
                       <span>Book This Flight</span>
                     </>
                   )}
@@ -1371,66 +1611,81 @@ export default function JetShareListingsContent() {
       
       {/* Offer details dialog */}
       <Dialog 
-        open={selectedOffer !== null && !showConfirmDialog} 
+        open={showDetailDialog && selectedOffer !== null} 
         onOpenChange={(open) => {
+          setShowDetailDialog(open);
           if (!open) {
             // Allow animation to complete before clearing selection
             setTimeout(() => setSelectedOffer(null), 300);
           }
         }}
       >
-        <DialogContent className="sm:max-w-md bg-gray-900 border-gray-800 text-white gdyup-dialog gdyup-form">
+        <DialogContent className={cn(
+          "sm:max-w-md gdyup-dialog gdyup-form",
+          getThemedBackgroundClasses('card'),
+          "border border-gdyup-border",
+          getThemedTextClasses()
+        )}>
           {selectedOffer && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-white">Flight Share Details</DialogTitle>
-                <DialogDescription className="text-gray-300">
+                <DialogTitle className={getThemedTextClasses()}>Flight Share Details</DialogTitle>
+                <DialogDescription className={getThemedTextClasses('muted')}>
                   Review the details of this flight share offer.
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4 py-3">
-                <div className="flex justify-between items-center border-b border-gray-700 pb-3">
+                <div className={cn("flex justify-between items-center pb-3", "border-b border-gdyup-border")}>
                   <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 gdyup-primary" />
-                    <span className="font-medium text-white">{selectedOffer.departure_location}</span>
+                    <Plane className={cn("h-4 w-4", getThemedTextClasses('primary'))} />
+                    <span className={cn("font-medium", getThemedTextClasses())}>{selectedOffer.departure_location}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 mx-2 text-gray-400" />
+                  <ArrowRight className={cn("h-4 w-4 mx-2", getThemedTextClasses())} />
                   <div className="flex items-center gap-2">
-                    <Plane className="h-4 w-4 gdyup-primary rotate-90" />
-                    <span className="font-medium text-white">{selectedOffer.arrival_location}</span>
+                    <Plane className={cn("h-4 w-4 rotate-90", getThemedTextClasses('primary'))} />
+                    <span className={cn("font-medium", getThemedTextClasses())}>{selectedOffer.arrival_location}</span>
                   </div>
                 </div>
                 
                 <div className="flex justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">Date</p>
-                    <p className="font-medium text-white">{new Date(selectedOffer.flight_date).toLocaleDateString()}</p>
+                    <p className={cn("text-sm", getThemedTextClasses('muted'))}>Date</p>
+                    <p className={cn("font-medium", getThemedTextClasses())}>
+                      {new Date(selectedOffer.flight_date).toLocaleDateString()}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-400">Requested Share</p>
-                    <p className="font-medium gdyup-primary">${selectedOffer.requested_share_amount.toLocaleString()}</p>
+                    <p className={cn("text-sm", getThemedTextClasses('muted'))}>Requested Share</p>
+                    <p className={cn("font-medium", getThemedTextClasses('primary'))}>
+                      ${selectedOffer.requested_share_amount.toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 
                 <div className="flex justify-between">
                   <div>
-                    <p className="text-sm text-gray-400">Total Flight Cost</p>
-                    <p className="font-medium text-white">${selectedOffer.total_flight_cost.toLocaleString()}</p>
+                    <p className={cn("text-sm", getThemedTextClasses('muted'))}>Total Flight Cost</p>
+                    <p className={cn("font-medium", getThemedTextClasses())}>
+                      ${selectedOffer.total_flight_cost.toLocaleString()}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-400">Share Percentage</p>
-                    <p className="font-medium text-white">
+                    <p className={cn("text-sm", getThemedTextClasses('muted'))}>Share Percentage</p>
+                    <p className={cn("font-medium", getThemedTextClasses())}>
                       {((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
                     </p>
                   </div>
                 </div>
                 
-                <div className="pt-3 border-t border-gray-700">
-                  <p className="text-sm text-gray-400">Offered by</p>
+                <div className={cn("pt-3", "border-t border-gdyup-border")}>
+                  <p className={cn("text-sm", getThemedTextClasses('muted'))}>Offered by</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Avatar>
-                      <AvatarFallback className="bg-gray-800 text-gray-100">
+                      <AvatarFallback className={cn(
+                        "text-gray-100",
+                        getThemedBackgroundClasses('card')
+                      )}>
                         {selectedOffer.user?.first_name?.[0] || 'U'}
                         {selectedOffer.user?.last_name?.[0] || 'U'}
                       </AvatarFallback>
@@ -1442,15 +1697,15 @@ export default function JetShareListingsContent() {
                       )}
                     </Avatar>
                     <div>
-                      <p className="font-medium text-white">
+                      <p className={cn("font-medium", getThemedTextClasses())}>
                         {selectedOffer.user?.first_name ? 
                           `${selectedOffer.user.first_name} ${selectedOffer.user.last_name || ''}` : 
                           'Jet Owner'}
                         {(selectedOffer.user as UserWithVerification)?.verification_status === 'verified' && (
-                          <CheckCircle className="h-3.5 w-3.5 gdyup-primary inline ml-1" />
+                          <CheckCircle className={cn("h-3.5 w-3.5 inline ml-1", getThemedTextClasses('primary'))} />
                         )}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className={cn("text-xs", getThemedTextClasses('muted'))}>
                         This flight share is offered by a verified JetShare user. The requested share amount is
                         {' '}{((selectedOffer.requested_share_amount / selectedOffer.total_flight_cost) * 100).toFixed(0)}%
                         {' '}of the total flight cost.
@@ -1464,18 +1719,18 @@ export default function JetShareListingsContent() {
                 <DialogFooter className="sm:justify-start">
                   <div className="w-full space-y-2">
                     <Button 
-                      className="w-full gdyup-button-primary" 
+                      className={cn("w-full", getThemedButtonClasses())} 
                       onClick={() => confirmOfferAccept()}
                       disabled={isAccepting}
                     >
                       {isAccepting ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin gdyup-icon" />
+                          <Loader2 className={cn("mr-2 h-4 w-4 animate-spin", getThemedTextClasses())} />
                           <span>Processing...</span>
                         </>
                       ) : (
                         <>
-                          <ArrowRight className="mr-2 h-4 w-4 gdyup-icon" />
+                          <ArrowRight className={cn("mr-2 h-4 w-4", getThemedTextClasses())} />
                           <span>Book This Flight</span>
                         </>
                       )}
@@ -1487,10 +1742,11 @@ export default function JetShareListingsContent() {
                   <Button 
                     variant="outline" 
                     onClick={() => {
+                      setShowDetailDialog(false);
                       // Allow animation to complete before clearing selection
                       setTimeout(() => setSelectedOffer(null), 300);
                     }}
-                    className="gdyup-button-secondary"
+                    className={getThemedButtonClasses('outline')}
                   >
                     Close
                   </Button>

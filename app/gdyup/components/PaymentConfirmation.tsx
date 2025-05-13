@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 interface PaymentConfirmationProps {
   clientSecret: string;
@@ -20,6 +22,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
 
   useEffect(() => {
     if (!stripe || !clientSecret) {
@@ -45,7 +48,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
           case "succeeded":
             setMessage("Payment succeeded! You'll be redirected to the dashboard shortly.");
             setTimeout(() => {
-              router.push('/jetshare/dashboard');
+              router.push('/gdyup/dashboard');
             }, 2000);
             break;
           case "processing":
@@ -84,7 +87,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/jetshare/dashboard`,
+          return_url: `${window.location.origin}/gdyup/dashboard`,
         },
         redirect: 'if_required',
       });
@@ -101,7 +104,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
             console.log('Attempting test payment completion after Stripe error', { offerId, paymentIntentId });
             
             try {
-              const testResponse = await fetch('/api/jetshare/completeTestPayment', {
+              const testResponse = await fetch('/api/gdyup/completeTestPayment', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -115,7 +118,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
               if (testResponse.ok) {
                 toast.success('Test payment completed successfully!');
                 setTimeout(() => {
-                  router.push('/jetshare/dashboard');
+                  router.push('/gdyup/dashboard');
                 }, 1500);
                 return;
               } else {
@@ -147,7 +150,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
           console.log('Logging successful transaction for offer:', offerId);
           
           if (offerId) {
-            const response = await fetch('/api/jetshare/logTransaction', {
+            const response = await fetch('/api/gdyup/logTransaction', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -173,7 +176,7 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
         }
         
         setTimeout(() => {
-          router.push('/jetshare/dashboard');
+          router.push('/gdyup/dashboard');
         }, 1500);
       } else if (paymentIntent) {
         console.log('Payment intent status:', paymentIntent.status);
@@ -192,8 +195,14 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+      <div className={cn(
+        "flex flex-col items-center justify-center py-8",
+        getThemedTextClasses()
+      )}>
+        <Loader2 className={cn(
+          "h-8 w-8 animate-spin mb-4",
+          getThemedTextClasses('primary')
+        )} />
         <p>Loading payment details...</p>
       </div>
     );
@@ -202,8 +211,13 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
   return (
     <div className="max-w-md mx-auto">
       <div className="mb-6">
-        <div className="bg-amber-50 dark:bg-amber-900/10 rounded-lg p-4 border border-amber-100 dark:border-amber-800 text-sm">
-          <strong>Test Mode:</strong> This is a test payment environment. Use test card numbers listed below.
+        <div className={cn(
+          "rounded-lg p-4 text-sm",
+          getThemedBackgroundClasses('card'),
+          "border border-gdyup-border"
+        )}>
+          <strong className={getThemedTextClasses('primary')}>Test Mode:</strong> 
+          <span className={getThemedTextClasses()}>This is a test payment environment. Use test card numbers listed below.</span>
         </div>
       </div>
       
@@ -215,12 +229,18 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
       )}
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border shadow-sm">
+        <div className={cn(
+          "p-4 rounded-lg border shadow-sm",
+          getThemedBackgroundClasses('card')
+        )}>
           <PaymentElement />
         </div>
         
         {message && (
-          <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <div className={cn(
+            "text-sm mt-2",
+            getThemedTextClasses('muted')
+          )}>
             {message}
           </div>
         )}
@@ -228,7 +248,10 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
         <Button
           type="submit"
           disabled={isProcessing || !stripe || !elements}
-          className="w-full"
+          className={cn(
+            "w-full",
+            getThemedButtonClasses('primary')
+          )}
         >
           {isProcessing ? (
             <>
@@ -240,7 +263,10 @@ export default function PaymentConfirmation({ clientSecret }: PaymentConfirmatio
           )}
         </Button>
         
-        <div className="text-xs text-center text-gray-500 dark:text-gray-400 mt-4">
+        <div className={cn(
+          "text-xs text-center mt-4",
+          getThemedTextClasses('muted')
+        )}>
           <p>
             Use test card number: <span className="font-mono">4242 4242 4242 4242</span>
           </p>

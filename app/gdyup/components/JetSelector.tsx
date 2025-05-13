@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle, useMemo } from 'react';
 import Image from 'next/image';
 import { Check, ChevronsUpDown, Loader2, Search, Plane, ChevronDown, User } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -22,6 +22,7 @@ import { createPortal } from 'react-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from "@/components/auth-provider";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 // Types for jet data
 interface Jet {
@@ -49,6 +50,7 @@ interface Jet {
   galley?: boolean;
   entertainment?: string;
   wifi?: boolean;
+  interior_type?: string;
 }
 
 // Server-friendly props interface
@@ -69,6 +71,9 @@ interface ClientJetSelectorProps extends Omit<JetSelectorProps, 'onChangeValue' 
   onChange: (value: string, seatCapacity?: number, jetId?: string) => void;
   onCustomChange?: (value: string) => void;
 }
+
+// Default image URL if none provided by API
+const defaultImageUrl = '/images/jets/default-jet.png';
 
 // The actual component implementation
 function JetSelectorImpl({
@@ -99,6 +104,9 @@ function JetSelectorImpl({
   // Get user session to determine user's jets
   const { user, session } = useAuth();
   const userId = user ? user.id : null;
+  
+  // Get theme helpers
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
   // Add ref to prevent update loops
   const isUpdatingRef = useRef(false);
@@ -185,241 +193,292 @@ function JetSelectorImpl({
     return "/images/placeholder-jet.jpg";
   };
 
-  // Fetch jets from API
+  // Add fetchJets function to load jets from API
   useEffect(() => {
     const fetchJets = async () => {
+      if (jets.length > 0) return; // Skip if we already have jets loaded
+      
+      setIsLoading(true);
+      
       try {
-        setIsLoading(true);
-        setError(null);
+        // Use the correct API endpoint for GDYUP with correct parameters
+        let apiUrl = '/api/jetshare/getJets';
         
-        // Add timestamp to prevent caching
-        const timestamp = new Date().getTime();
-        const apiUrl = `/api/jetshare/getJets?t=${timestamp}`;
+        // Add timestamp to prevent caching issues
+        const timestamp = Date.now();
+        apiUrl += `?t=${timestamp}`;
         
-        console.log('Fetching jets from API:', apiUrl);
+        console.log(`Fetching jets from: ${apiUrl}`);
+        
         const response = await fetch(apiUrl);
         
         if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
+          throw new Error(`API request failed with status: ${response.status}`);
         }
         
         const data = await response.json();
         
-        if (!data || !data.jets || !Array.isArray(data.jets)) {
+        if (data && data.jets && Array.isArray(data.jets)) {
+          console.log(`Successfully fetched ${data.jets.length} jets from database`);
+          
+          const jetsList = data.jets.map((jet: Jet) => ({
+            ...jet,
+            display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
+            image_url: jet.image_url || getSafeImageUrl(jet)
+          }));
+          
+          setJets(jetsList);
+          
+          // Extract and set unique manufacturers for filtering
+          if (jetsList.length > 0) {
+            const uniqueManufacturers = [...new Set(jetsList.map((jet: Jet) => jet.manufacturer))].sort();
+            setManufacturers(uniqueManufacturers as string[]);
+          }
+          
+          logJetsLoaded(jetsList.length, 'API');
+        } else {
+          console.error('Invalid API response format:', data);
           throw new Error('Invalid API response format');
         }
-        
-        // Process the jets data
-        const jetsList = data.jets.map((jet: any) => ({
-          ...jet,
-          display_name: `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`,
-          capacity: typeof jet.capacity === 'string' ? parseInt(jet.capacity) : jet.capacity,
-          is_popular: ['Gulfstream G650', 'Bombardier Global 7500', 'Embraer Phenom 300E'].includes(`${jet.manufacturer} ${jet.model}`)
-        }));
-        
-        logJetsLoaded(jetsList.length, 'API');
-        setJets(jetsList);
-        
-        // Extract manufacturers as string array and sort alphabetically
-        const uniqueManufacturers = new Set<string>();
-        jetsList.forEach((jet: any) => {
-          if (jet.manufacturer && typeof jet.manufacturer === 'string') {
-            uniqueManufacturers.add(jet.manufacturer);
-          }
-        });
-        const manufacturersArray = Array.from(uniqueManufacturers).sort();
-        setManufacturers(manufacturersArray);
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        logError('Failed to fetch jets data', error);
-        setError(`Failed to fetch jets: ${errorMsg}`);
+        logError('Error fetching jets', error);
+        // Fall back to default jets if API fails
         setJets([]);
-        setManufacturers([]);
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchJets();
-  }, [retryCount]);
-  
-  // Check if current value is "Other" and show custom input
-  useEffect(() => {
-    // Prevent re-entrancy during updates
-    if (isUpdatingRef.current) return;
-    
-    // Need to check against display_name which we create from manufacturer and model
-    const jet = jets.find(j => 
-      `${j.manufacturer} ${j.model}${j.tail_number ? ` (${j.tail_number})` : ''}` === value ||
-      j.display_name === value
-    );
-    
-    // Special case for "Other (Custom Aircraft)" or any custom model not in our list
-    if ((!jet && value) || (jet && jet.model === 'Custom')) {
-      setShowCustomInput(true);
-      setCustomValue(value);
-    } else {
-      setShowCustomInput(false);
-    }
-  }, [value, jets]);
-  
-  // Filter the jets based on search, selected manufacturer, and owner
-  console.log('[JetSelector] Current jets state before filtering:', jets);
-  const filteredJets = jets.filter(jet => {
-    const displayName = jet.display_name || `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`;
-    
-    const matchesSearch = !search || 
-      displayName.toLowerCase().includes(search.toLowerCase()) ||
-      jet.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
-      jet.model.toLowerCase().includes(search.toLowerCase()) ||
-      (jet.tail_number && jet.tail_number.toLowerCase().includes(search.toLowerCase()));
-      
-    const matchesManufacturer = !selectedManufacturer || jet.manufacturer === selectedManufacturer;
-    
-    // Handle capacity comparison safely by ensuring numeric comparison
-    const jetCapacity = typeof jet.capacity === 'string' ? parseInt(jet.capacity) : jet.capacity;
-    const matchesCapacity = filterByCapacity ? jetCapacity >= filterByCapacity : true;
-    
-    // Check if the jet belongs to the current user (only if showOnlyMyJets is true AND we have a userId)
-    const isOwnedByUser = !showOnlyMyJets || !userId || jet.owner_id === userId;
-    
-    return matchesSearch && matchesManufacturer && matchesCapacity && isOwnedByUser;
-  });
-  
-  // Modify the updateSelectedState function to include more detailed jet information
-  const updateSelectedState = (jet: Jet | null) => {
-    console.log('[updateSelectedState] Called with jet:', jet);
-    if (!jet) {
-        console.error('[updateSelectedState] Received null or undefined jet object.');
-        // Ensure flag is reset if it was somehow set before early exit
-        // isUpdatingRef.current = false; 
-        return;
-    }
+  }, [getSafeImageUrl, logJetsLoaded, logError]);
 
-    // Set the lock *here* 
-    if (isUpdatingRef.current) {
-        console.warn('[updateSelectedState] Update already in progress, skipping.');
-        return;
+  // Move the fetchJetDetails function to the beginning
+  const fetchJetDetails = async (jetId: string) => {
+    try {
+      console.log(`Fetching complete details for jet ID: ${jetId}`);
+      
+      // Add timestamp to the URL to prevent caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/jetshare/getJet?jet_id=${jetId}&t=${timestamp}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch jet details: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Retrieved complete jet details:', data);
+      
+      if (data && data.jet) {
+        // Dispatch jet change event with the fetched details
+        console.log(`[JetSelector fetchJetDetails] Preparing to dispatch jetchange for ID: ${jetId}`, data.jet);
+        
+        // Make sure we're using the fetched data, not stale state
+        updateSelectedState(data.jet);
+        
+        return data.jet;
+      } else {
+        throw new Error('Invalid response format: missing jet data');
+      }
+    } catch (error) {
+      console.error('Error fetching jet details:', error);
+      return null;
     }
+  };
+
+  // Add a function to generate optimal layouts based on seat count
+  const generateOptimalLayout = (seatCount: number) => {
+    if (!seatCount || seatCount <= 0) return null;
+    
+    console.log(`[generateOptimalLayout] Generating layout for ${seatCount} seats`);
+    
+    // Generate layout based on seat count
+    let rows, seatsPerRow;
+    let skipPositions: string[] = [];
+    
+    // For jets with different seat counts, determine an optimal layout
+    if (seatCount <= 6) {
+      // Small jets: 2-3 seats per row
+      seatsPerRow = 2;
+      rows = Math.ceil(seatCount / seatsPerRow);
+    } else if (seatCount <= 9) {
+      // Medium jets: 3 seats per row
+      seatsPerRow = 3;
+      rows = Math.ceil(seatCount / seatsPerRow);
+    } else if (seatCount <= 12) {
+      // Standard configuration: 4 seats per row with aisle
+      seatsPerRow = 4;
+      rows = Math.ceil(seatCount / seatsPerRow);
+      
+      // Create an aisle in the middle
+      for (let r = 0; r < rows; r++) {
+        skipPositions.push(`${r},${Math.floor(seatsPerRow / 2)}`);
+      }
+    } else if (seatCount === 14) {
+      // Special case for 14 seats: 5 columns with middle aisle, 4 rows
+      seatsPerRow = 5; 
+      rows = 4;
+      
+      // Skip the middle position in all rows to create an aisle
+      for (let r = 0; r < rows; r++) {
+        skipPositions.push(`${r},2`);
+      }
+      
+      // Create a wider space in back rows
+      skipPositions.push(`3,0`);
+      skipPositions.push(`3,4`);
+    } else {
+      // Larger configurations: 6 seats per row with aisle
+      seatsPerRow = 6;
+      rows = Math.ceil(seatCount / seatsPerRow);
+      
+      // Create an aisle in the middle
+      for (let r = 0; r < rows; r++) {
+        skipPositions.push(`${r},2`);
+        skipPositions.push(`${r},3`);
+      }
+    }
+    
+    // Calculate total grid positions
+    const totalPositions = rows * seatsPerRow - skipPositions.length;
+    
+    // Skip additional positions if needed
+    if (totalPositions > seatCount) {
+      const extraToSkip = totalPositions - seatCount;
+      
+      // Skip from the back rows
+      let skipped = 0;
+      for (let r = rows - 1; r >= 0 && skipped < extraToSkip; r--) {
+        for (let c = seatsPerRow - 1; c >= 0 && skipped < extraToSkip; c--) {
+          const posStr = `${r},${c}`;
+          if (!skipPositions.includes(posStr)) {
+            skipPositions.push(posStr);
+            skipped++;
+          }
+        }
+      }
+    }
+    
+    return {
+      rows,
+      seatsPerRow,
+      layoutType: 'generated' as const,
+      totalSeats: seatCount,
+      skipPositions
+    };
+  };
+
+  // Update the selected state and dispatch events
+  const updateSelectedState = useCallback((jet: any) => {
+    console.log(`[updateSelectedState] Called with jet:`, jet);
+    
+    // Prevent duplicate updates during processing
+    if (isUpdatingRef.current) {
+      console.log('[updateSelectedState] Update already in progress, skipping.');
+      return;
+    }
+    
     isUpdatingRef.current = true;
     console.log('[updateSelectedState] isUpdatingRef set to true.');
 
     try {
-        console.log('[updateSelectedState] Setting selected jet state...');
-        setSelectedJet(jet);
-        console.log('[updateSelectedState] Getting safe image URL...');
-        const imageUrl = getSafeImageUrl(jet);
-
-        console.log('[updateSelectedState] Parsing numeric fields...');
-        const capacity = jet.capacity ? (typeof jet.capacity === 'string' ? parseInt(jet.capacity) : jet.capacity) : 0; // Default to 0 if missing
-        const range = jet.range_nm ? (typeof jet.range_nm === 'string' ? parseInt(jet.range_nm) : jet.range_nm) : null;
-        const cruiseSpeed = jet.cruise_speed_kts ? (typeof jet.cruise_speed_kts === 'string' ? parseInt(jet.cruise_speed_kts) : jet.cruise_speed_kts) : null;
-        const maxAltitude = jet.max_altitude ? (typeof jet.max_altitude === 'string' ? parseInt(jet.max_altitude) : jet.max_altitude) : null;
-        const cabinWidth = jet.cabin_width ? (typeof jet.cabin_width === 'string' ? parseFloat(jet.cabin_width) : jet.cabin_width) : null;
-        const cabinHeight = jet.cabin_height ? (typeof jet.cabin_height === 'string' ? parseFloat(jet.cabin_height) : jet.cabin_height) : null;
-        const cabinLength = jet.cabin_length ? (typeof jet.cabin_length === 'string' ? parseFloat(jet.cabin_length) : jet.cabin_length) : null;
-        const year = jet.year ? (typeof jet.year === 'string' ? parseInt(jet.year) : jet.year) : null;
-        console.log('[updateSelectedState] Numeric fields parsed successfully.');
-
+      console.log('[updateSelectedState] Setting selected jet state...');
+      setSelectedJet(jet);
+      
+      // Get a safe image URL, defaulting to the placeholder if needed
+      console.log('[updateSelectedState] Getting safe image URL...');
+      const imageUrl = jet.image_url || defaultImageUrl;
+      
+      // Parse numeric fields from API response
+      console.log('[updateSelectedState] Parsing numeric fields...');
+      const capacity = parseInt(String(jet.capacity)) || 0;
+      const range = parseInt(String(jet.range_nm)) || 0;
+      const cruiseSpeed = parseInt(String(jet.cruise_speed_kts)) || 0;
+      const maxAltitude = parseInt(String(jet.max_altitude)) || 0;
+      const cabinWidth = parseInt(String(jet.cabin_width)) || 0;
+      const cabinHeight = parseInt(String(jet.cabin_height)) || 0;
+      const cabinLength = parseInt(String(jet.cabin_length)) || 0;
+      const year = parseInt(String(jet.year)) || 0;
+      
+      console.log('[updateSelectedState] Numeric fields parsed successfully.');
+      
+      // Create a custom layout if needed based on capacity
+      let customLayout = null;
+      
+      // Generate an optimal seat layout based on the capacity
+      // CRITICAL: Let the seatCount be directly determined by the jet's capacity from the API
+      if (capacity > 0) {
+        customLayout = generateOptimalLayout(capacity);
+        console.log(`[updateSelectedState] Generated custom layout for capacity: ${capacity}`, customLayout);
+      }
+      
+      // Create a comprehensive payload including ALL fields from the API
+      console.log('[updateSelectedState] Dispatching event via setTimeout...');
+      
+      // Use setTimeout to avoid React state update loops
+      setTimeout(() => {
+        console.log('[updateSelectedState setTimeout] Dispatching jetchange event NOW.');
+        
+        // Create complete event payload with all data from the original jet object
         const eventDetailPayload = {
-            value: `${jet.manufacturer || 'Unknown'} ${jet.model || 'Model'}`,
-            jetId: jet.id,
-            seatCapacity: capacity,
-            range: range,
-            cruise_speed_kts: cruiseSpeed,
-            max_altitude: maxAltitude,
-            cabin_width: cabinWidth,
-            cabin_height: cabinHeight,
-            cabin_length: cabinLength,
-            year: year,
-            manufacturer: jet.manufacturer,
-            model: jet.model,
-            tail_number: jet.tail_number,
-            owner_id: jet.owner_id,
-            image_url: imageUrl,
-            interior_image_url: jet.interior_image_url,
-            // Include missing amenity fields (defaulting to false/null if not present)
-            berths: jet.berths ?? undefined,
-            lavatory: jet.lavatory ?? undefined,
-            galley: jet.galley ?? undefined,
-            entertainment: jet.entertainment ?? undefined,
-            wifi: jet.wifi ?? undefined
+          // Start with ALL properties from the original jet object
+          ...jet,
+          // Then override or add specific fields we've processed
+          value: `${jet.manufacturer || 'Unknown'} ${jet.model || 'Model'}`,
+          jetId: jet.id,
+          id: jet.id, // Ensure id is set for JetDetailsTabs
+          seatCapacity: capacity,
+          range: range,
+          cruise_speed_kts: cruiseSpeed,
+          max_altitude: maxAltitude,
+          cabin_width: cabinWidth,
+          cabin_height: cabinHeight,
+          cabin_length: cabinLength,
+          year: year,
+          manufacturer: jet.manufacturer || 'Unknown',
+          model: jet.model || 'Model',
+          tail_number: jet.tail_number || 'N/A',
+          owner_id: jet.owner_id,
+          image_url: imageUrl,
+          interior_image_url: jet.interior_image_url,
+          // Include missing amenity fields (defaulting to false/null if not present)
+          berths: jet.berths || false,
+          lavatory: jet.lavatory || false,
+          galley: jet.galley || false,
+          wifi: jet.wifi || false,
+          entertainment: jet.entertainment || null,
+          interior_type: jet.interior_type || null,
+          // Include custom layout if generated
+          has_custom_layout: !!customLayout,
+          custom_layout: customLayout
         };
         
-        console.log('[updateSelectedState] Event payload created:', JSON.stringify(eventDetailPayload, null, 2));
-
+        console.log('[updateSelectedState] Event payload created with all jet data fields', eventDetailPayload);
+        
+        // Dispatch the event
         const jetChangeEvent = new CustomEvent('jetchange', {
-          detail: eventDetailPayload
+          detail: eventDetailPayload,
+          bubbles: true
         });
         
-        console.log('[updateSelectedState] Dispatching event via setTimeout...');
-        setTimeout(() => {
-          console.log('[updateSelectedState setTimeout] Dispatching jetchange event NOW.');
-          window.dispatchEvent(jetChangeEvent);
-          console.log('[updateSelectedState setTimeout] Event dispatched. Resetting isUpdatingRef.');
-          isUpdatingRef.current = false; // Reset *after* dispatch
-        }, 0);
-
+        window.dispatchEvent(jetChangeEvent);
+        console.log('[updateSelectedState setTimeout] Event dispatched. Resetting isUpdatingRef.');
+        
+        // Reset the updating ref
+        isUpdatingRef.current = false;
+      }, 0);
     } catch (error) {
-        console.error('[updateSelectedState] CRITICAL ERROR during processing or dispatch:', error);
-        isUpdatingRef.current = false; // Ensure flag is reset on error
+      console.error('[updateSelectedState] Error updating selected state:', error);
+      isUpdatingRef.current = false;
     }
-  };
+  }, [defaultImageUrl, generateOptimalLayout]);
 
   // Modify handleSelect
   const handleSelect = (currentValue: string, jet: Jet) => {
     console.log(`[handleSelect] Jet selected: ${currentValue}, ID: ${jet.id}. Fetching details...`);
-    fetchJetDetails(jet.id, jet);
+    fetchJetDetails(jet.id);
     setOpen(false);
     
     // isUpdatingRef will be reset within updateSelectedState's setTimeout
-  };
-  
-  // Add a new function to fetch complete jet details
-  const fetchJetDetails = async (jetId: string, fallbackJet: Jet) => {
-    console.log(`Fetching complete details for jet ID: ${jetId}`);
-    
-    try {
-      // Add timestamp to prevent caching
-      const timestamp = new Date().getTime();
-      const response = await fetch(`/api/jetshare/getJet?jet_id=${jetId}&t=${timestamp}`, {
-        method: 'GET',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch jet details: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.jet) {
-        console.log('Retrieved complete jet details:', data.jet);
-        
-        // Create a merged jet object that combines the original jet with the detailed data
-        const detailedJet: Jet = {
-          ...fallbackJet,
-          ...data.jet,
-          // Ensure these fields are preserved from the original if they exist
-          display_name: fallbackJet.display_name || `${data.jet.manufacturer} ${data.jet.model}`,
-          image_url: data.jet.image_url || fallbackJet.image_url
-        };
-        
-        // Update the state with the detailed jet information
-        console.log(`[JetSelector fetchJetDetails] Preparing to dispatch jetchange for ID: ${detailedJet.id}`, detailedJet);
-        updateSelectedState(detailedJet);
-      } else {
-        // If we couldn't get detailed data, use what we have
-        console.warn('No jet details returned from API, using existing data');
-        updateSelectedState(fallbackJet);
-      }
-    } catch (error) {
-      console.error('Error fetching jet details:', error);
-      // Fall back to using the existing jet data
-      updateSelectedState(fallbackJet);
-    }
   };
   
   // Handle custom input change
@@ -478,6 +537,41 @@ function JetSelectorImpl({
     return capacityStr;
   };
 
+  // Filter jets based on search, manufacturer, capacity, and user ownership
+  const filteredJets = useMemo(() => {
+    // Log the current jets for debugging
+    console.log('[JetSelector] Current jets state before filtering:', jets);
+    
+    return jets.filter((jet: Jet) => {
+      const displayName = jet.display_name || `${jet.manufacturer} ${jet.model}${jet.tail_number ? ` (${jet.tail_number})` : ''}`;
+      
+      // Check if jet matches search criteria
+      const matchesSearch = !search || 
+        displayName.toLowerCase().includes(search.toLowerCase()) ||
+        jet.manufacturer.toLowerCase().includes(search.toLowerCase()) ||
+        jet.model.toLowerCase().includes(search.toLowerCase()) ||
+        (jet.tail_number && jet.tail_number.toLowerCase().includes(search.toLowerCase()));
+      
+      // Check if jet matches manufacturer filter
+      const matchesManufacturer = !selectedManufacturer || 
+        jet.manufacturer === selectedManufacturer;
+      
+      // Handle capacity comparison safely with numeric conversion
+      const jetCapacity = typeof jet.capacity === 'string' ? 
+        parseInt(jet.capacity) : 
+        jet.capacity;
+      
+      const matchesCapacity = !filterByCapacity || 
+        (typeof jetCapacity === 'number' && jetCapacity >= filterByCapacity);
+      
+      // Check if the jet belongs to the current user 
+      // (only if showOnlyMyJets is true AND we have a userId)
+      const isOwnedByUser = !showOnlyMyJets || !userId || jet.owner_id === userId;
+      
+      return matchesSearch && matchesManufacturer && matchesCapacity && isOwnedByUser;
+    });
+  }, [jets, search, selectedManufacturer, filterByCapacity, showOnlyMyJets, userId]);
+
   return (
     <div className={cn("relative w-full", className)}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -488,10 +582,10 @@ function JetSelectorImpl({
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "w-full justify-between relative border-gray-700 bg-black",
-              "hover:bg-gray-900 transition-colors",
+              "w-full justify-between relative border-gdyup-border bg-gdyup-bg-dark",
+              "hover:bg-gdyup-bg-card transition-colors",
               "text-left font-normal h-14",
-              selectedJet ? "text-white" : "text-gray-500",
+              selectedJet ? "text-gdyup-text" : "text-gdyup-text-subtle",
               className
             )}
             onClick={() => setOpen(!open)}
@@ -502,7 +596,7 @@ function JetSelectorImpl({
               <Skeleton className="h-5 w-full" />
             ) : selectedJet ? (
               <div className="flex items-center space-x-3 overflow-hidden">
-                <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-800 border border-gray-700">
+                <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gdyup-bg-card border border-gdyup-border">
                   {selectedJet.image_url && !failedImageUrls.has(selectedJet.image_url) ? (
                     <img 
                       src={selectedJet.image_url} 
@@ -516,26 +610,30 @@ function JetSelectorImpl({
                       }}
                     />
                   ) : (
-                    <Plane className="h-5 w-5 text-[#DAFF0D] m-auto" />
+                    <Plane className={cn("h-5 w-5 m-auto", getThemedTextClasses('primary'))} />
                   )}
                 </div>
                 <div className="flex flex-col truncate">
-                  <span className="font-medium truncate text-white">
+                  <span className="font-medium truncate text-gdyup-text">
                     {selectedJet.manufacturer} {selectedJet.model}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gdyup-text-subtle">
                     {formatCapacity(selectedJet.capacity)} seats • {selectedJet.range_nm ? formatCapacity(selectedJet.range_nm) : '?'} nm range
                   </span>
                 </div>
               </div>
             ) : (
-              <span className="text-gray-500">{placeholder}</span>
+              <span className="text-gdyup-text-subtle">{placeholder}</span>
             )}
             <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
             
             {selectedJet && (
               <Badge 
-                className="absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/4 bg-[#DAFF0D] text-black"
+                className={cn(
+                  "absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/4", 
+                  getThemedBackgroundClasses('primary'),
+                  "text-gdyup-button-text"
+                )}
                 variant="default"
               >
                 Selected
@@ -543,20 +641,20 @@ function JetSelectorImpl({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0 max-h-[60vh] md:w-[400px] bg-black border-gray-800 text-white">
-          <Command className="w-full bg-black text-white">
-            <div className="flex items-center border-b border-gray-800 px-3">
-              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-400" />
+        <PopoverContent className="w-[300px] p-0 max-h-[60vh] md:w-[400px] bg-gdyup-bg-dark border-gdyup-border text-gdyup-text">
+          <Command className="w-full bg-gdyup-bg-dark text-gdyup-text">
+            <div className="flex items-center border-b border-gdyup-border px-3">
+              <Search className="mr-2 h-4 w-4 shrink-0 opacity-50 text-gdyup-text-subtle" />
               <CommandInput 
                 placeholder="Search jets..." 
-                className="h-9 flex-1 bg-transparent text-white placeholder:text-gray-500 focus:outline-none"
+                className="h-9 flex-1 bg-transparent text-gdyup-text placeholder:text-gdyup-text-subtle focus:outline-none"
                 value={search}
                 onValueChange={setSearch}
               />
             </div>
             
             {/* Filter toolbar */}
-            <div className="flex items-center gap-1 p-2 border-b border-gray-800 overflow-x-auto">
+            <div className="flex items-center gap-1 p-2 border-b border-gdyup-border overflow-x-auto">
               {/* My Jets Filter */}
               <Button
                 size="sm"
@@ -564,8 +662,8 @@ function JetSelectorImpl({
                 className={cn(
                   "text-xs h-7 px-2",
                   showOnlyMyJets 
-                    ? "bg-[#DAFF0D] text-black hover:bg-[#E8FF4D]" 
-                    : "bg-gray-900 text-gray-300 hover:bg-gray-800 border-gray-700"
+                    ? cn(getThemedButtonClasses('primary'), "text-gdyup-button-text")
+                    : "bg-gdyup-bg-card text-gdyup-text-medium hover:bg-gdyup-bg-card/80 border-gdyup-border"
                 )}
                 onClick={toggleMyJetsFilter}
               >
@@ -582,8 +680,8 @@ function JetSelectorImpl({
                   className={cn(
                     "text-xs h-7 px-2",
                     filterByCapacity === filter.value 
-                      ? "bg-[#DAFF0D] text-black hover:bg-[#E8FF4D]" 
-                      : "bg-gray-900 text-gray-300 hover:bg-gray-800 border-gray-700"
+                      ? cn(getThemedButtonClasses('primary'), "text-gdyup-button-text")
+                      : "bg-gdyup-bg-card text-gdyup-text-medium hover:bg-gdyup-bg-card/80 border-gdyup-border"
                   )}
                   onClick={() => setFilterByCapacity(filter.value)}
                 >
@@ -592,15 +690,15 @@ function JetSelectorImpl({
               ))}
             </div>
             
-            <CommandList className="max-h-[300px] overflow-auto bg-black">
-              <CommandEmpty className="py-6 text-center text-sm text-gray-400">
+            <CommandList className="max-h-[300px] overflow-auto bg-gdyup-bg-dark">
+              <CommandEmpty className="py-6 text-center text-sm text-gdyup-text-subtle">
                 No jets found.
               </CommandEmpty>
-              <CommandGroup className="bg-black">
+              <CommandGroup className="bg-gdyup-bg-dark">
                 {isLoading ? (
                   Array(3).fill(0).map((_, index) => (
                     <div key={index} className="px-2 py-1.5">
-                      <Skeleton className="h-14 w-full rounded-md bg-gray-800" />
+                      <Skeleton className="h-14 w-full rounded-md bg-gdyup-bg-card" />
                     </div>
                   ))
                 ) : (
@@ -617,14 +715,14 @@ function JetSelectorImpl({
                         className={cn(
                           "flex justify-between py-3 px-2 cursor-pointer relative overflow-hidden",
                           isSelected 
-                            ? "bg-gray-800 border-2 border-[#DAFF0D] shadow-lg text-white"
+                            ? "bg-gdyup-bg-card border-2 border-gdyup-primary shadow-lg text-gdyup-text"
                             : isOwned 
-                              ? "bg-gray-800/80 border border-[#DAFF0D]/30 rounded-md text-white" 
-                              : "hover:bg-gray-800 hover:text-white",
+                              ? "bg-gdyup-bg-card/80 border border-gdyup-primary/30 rounded-md text-gdyup-text" 
+                              : "hover:bg-gdyup-bg-card hover:text-gdyup-text"
                         )}
                       >
                         <div className="flex items-center gap-2 z-10 relative">
-                          <div className="relative w-12 h-12 rounded overflow-hidden border border-gray-600 flex-shrink-0">
+                          <div className="relative w-12 h-12 rounded overflow-hidden border border-gdyup-border flex-shrink-0">
                             {jet.image_url && !failedImageUrls.has(jet.image_url) ? (
                               <img 
                                 src={jet.image_url}
@@ -638,8 +736,8 @@ function JetSelectorImpl({
                                 }}
                               />
                             ) : (
-                              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                                <Plane className="h-5 w-5 text-[#DAFF0D]" />
+                              <div className="w-full h-full bg-gdyup-bg-dark flex items-center justify-center">
+                                <Plane className={cn("h-5 w-5", getThemedTextClasses('primary'))} />
                               </div>
                             )}
                           </div>
@@ -647,14 +745,14 @@ function JetSelectorImpl({
                           <div>
                             <p className={cn(
                               "font-medium text-sm",
-                              isSelected ? "text-white" : "text-gray-200"
+                              isSelected ? "text-gdyup-text" : "text-gdyup-text-medium"
                             )}>
                               {jetName}
                             </p>
                             {jet.tail_number && (
                               <p className={cn(
                                 "text-xs", 
-                                isSelected ? "text-gray-300" : "text-gray-400"
+                                isSelected ? "text-gdyup-text-medium" : "text-gdyup-text-subtle"
                               )}>
                                 Tail: {jet.tail_number}
                               </p>
@@ -667,8 +765,8 @@ function JetSelectorImpl({
                             <Badge 
                               variant="outline" 
                               className={cn(
-                                "border-[#DAFF0D]/70 text-[#DAFF0D] bg-gray-900/50 text-xs", 
-                                isSelected && "border-[#DAFF0D] bg-black/60 text-[#DAFF0D]"
+                                "border-gdyup-primary/70 text-gdyup-primary bg-gdyup-bg-card/50 text-xs", 
+                                isSelected && "border-gdyup-primary bg-gdyup-bg-dark/60 text-gdyup-primary"
                               )}
                             >
                               My Jet
@@ -676,7 +774,7 @@ function JetSelectorImpl({
                           )}
                           <p className={cn(
                             "text-sm", 
-                            isSelected ? 'text-gray-300' : 'text-gray-400'
+                            isSelected ? 'text-gdyup-text-medium' : 'text-gdyup-text-subtle'
                           )}>
                             {formatCapacity(jet.capacity)} Seats
                           </p>
@@ -697,7 +795,7 @@ function JetSelectorImpl({
           value={customValue}
           onChange={handleCustomInputChange}
           placeholder="Enter custom aircraft model"
-          className="mt-2 bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
+          className="mt-2 bg-gdyup-bg-card border-gdyup-border text-gdyup-text placeholder:text-gdyup-text-subtle"
         />
       )}
     </div>
@@ -708,6 +806,7 @@ function JetSelectorImpl({
 export default function JetSelector(props: JetSelectorProps) {
   // Use a client-side effect to handle the non-serializable callbacks
   const [mounted, setMounted] = useState(false);
+  const { getThemedBackgroundClasses } = useGdyupTheme();
   
   // Ensure component only renders on client side
   useEffect(() => {
@@ -716,7 +815,7 @@ export default function JetSelector(props: JetSelectorProps) {
   
   // Don't render until client-side to avoid hydration issues
   if (!mounted) {
-    return <div className={props.className || "w-full h-10 bg-gray-700/70 rounded-lg animate-pulse"} />;
+    return <div className={cn(props.className || "w-full h-10 rounded-lg animate-pulse", getThemedBackgroundClasses('card'))} />;
   }
   
   // Transform serializable props to actual function handlers
