@@ -26,7 +26,7 @@ export default function BoardingPassButton({
   const [isLoading, setIsLoading] = useState(false);
   const [isAppleWalletLoading, setIsAppleWalletLoading] = useState(false);
   const [isQRLoading, setIsQRLoading] = useState(false);
-  const { getThemeClasses, theme } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
   const downloadBoardingPass = async () => {
     setIsLoading(true);
@@ -143,12 +143,7 @@ export default function BoardingPassButton({
             size="sm"
             disabled={isLoading}
             onClick={downloadBoardingPass}
-            className={getThemeClasses({
-              base: "text-xs font-medium",
-              default: "border-gray-700 hover:bg-gray-800 hover:text-gdyup-primary",
-              blue: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
-              pink: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
-            })}
+            className="text-xs font-medium border-gdyup-border hover:bg-gdyup-bg-dark hover:text-gdyup-primary"
           >
             {isLoading ? (
               <RefreshCw className="h-3 w-3 animate-spin" />
@@ -164,22 +159,16 @@ export default function BoardingPassButton({
   if (variant === 'expanded') {
     return (
       <motion.div 
-        className={getThemeClasses({
-          base: "p-4 rounded-lg border space-y-3",
-          default: "bg-black/20 border-gray-800",
-          blue: "bg-blue-950/20 border-blue-900",
-          pink: "bg-pink-950/20 border-pink-900"
-        })}
+        className={cn(
+          "p-4 rounded-lg border space-y-3",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border"
+        )}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className={getThemeClasses({
-          base: "text-lg font-semibold mb-2",
-          default: "text-white",
-          blue: "text-blue-100",
-          pink: "text-pink-100"
-        })}>
+        <div className={cn("text-lg font-semibold mb-2", getThemedTextClasses())}>
           Boarding Pass Options
         </div>
         
@@ -188,12 +177,10 @@ export default function BoardingPassButton({
             <Button
               disabled={isLoading}
               onClick={downloadBoardingPass}
-              className={getThemeClasses({
-                base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
-                default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-              })}
+              className={cn(
+                "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
+                getThemedButtonClasses('primary')
+              )}
             >
               {isLoading ? (
                 <motion.div 
@@ -221,12 +208,7 @@ export default function BoardingPassButton({
             <Button
               disabled={isAppleWalletLoading}
               onClick={addToAppleWallet}
-              className={getThemeClasses({
-                base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
-                default: "bg-black text-white border border-gray-700 hover:bg-gray-800",
-                blue: "bg-blue-900 text-blue-100 border border-blue-700 hover:bg-blue-800",
-                pink: "bg-pink-900 text-pink-100 border border-pink-700 hover:bg-pink-800"
-              })}
+              className="h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full bg-black text-white border border-gdyup-border hover:bg-gdyup-bg-dark"
             >
               {isAppleWalletLoading ? (
                 <motion.div 
@@ -255,12 +237,10 @@ export default function BoardingPassButton({
               <Button
                 disabled={isQRLoading}
                 onClick={showNostrQR}
-                className={getThemeClasses({
-                  base: "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
-                  default: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
-                  blue: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white",
-                  pink: "bg-gdyup-secondary hover:bg-gdyup-secondary/90 text-white"
-                })}
+                className={cn(
+                  "h-14 rounded-md font-medium flex flex-col items-center justify-center space-y-1 w-full",
+                  getThemedButtonClasses('secondary')
+                )}
                 title="Nostr QR codes allow for decentralized verification of your boarding pass on the Nostr protocol, enhancing privacy and security"
               >
                 {isQRLoading ? (
@@ -298,12 +278,7 @@ export default function BoardingPassButton({
           variant="outline"
           disabled={isLoading}
           onClick={downloadBoardingPass}
-          className={getThemeClasses({
-            base: "text-sm",
-            default: "border-gray-700 hover:bg-gray-800 hover:text-gdyup-primary",
-            blue: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
-            pink: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
-          })}
+          className="text-sm border-gdyup-border hover:bg-gdyup-bg-dark hover:text-gdyup-primary"
         >
           {isLoading ? (
             <>
@@ -323,12 +298,7 @@ export default function BoardingPassButton({
         <Button
           disabled={isAppleWalletLoading}
           onClick={addToAppleWallet}
-          className={getThemeClasses({
-            base: "text-sm",
-            default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-            blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-            pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-          })}
+          className={getThemedButtonClasses('primary')}
         >
           {isAppleWalletLoading ? (
             <>
@@ -350,12 +320,7 @@ export default function BoardingPassButton({
             variant="outline"
             disabled={isQRLoading}
             onClick={showNostrQR}
-            className={getThemeClasses({
-              base: "text-sm",
-              default: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-              blue: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-              pink: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary"
-            })}
+            className="border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary"
           >
             {isQRLoading ? (
               <>

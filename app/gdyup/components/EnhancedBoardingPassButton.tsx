@@ -52,7 +52,7 @@ export default function EnhancedBoardingPassButton({
   className,
   flightData
 }: EnhancedBoardingPassButtonProps) {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const { isConnected } = useNostr();
   const [isLoading, setIsLoading] = useState(false);
   const [isAppleWalletLoading, setIsAppleWalletLoading] = useState(false);
@@ -226,12 +226,8 @@ export default function EnhancedBoardingPassButton({
     return (
       <motion.div 
         className={cn(
-          getThemeClasses({
-            base: "p-4 rounded-lg border space-y-3",
-            default: "bg-black/20 border-gray-800",
-            blue: "bg-blue-950/20 border-blue-900",
-            pink: "bg-pink-950/20 border-pink-900"
-          }),
+          getThemedBackgroundClasses('card'),
+          "p-4 rounded-lg border-gdyup-border space-y-3",
           className
         )}
         initial={{ opacity: 0, y: 20 }}
@@ -239,12 +235,7 @@ export default function EnhancedBoardingPassButton({
         transition={{ duration: 0.4 }}
       >
         <div className="flex justify-between items-center">
-          <div className={getThemeClasses({
-            base: "text-lg font-semibold",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <div className={cn("text-lg font-semibold", getThemedTextClasses())}>
             Boarding Pass Options
           </div>
           {variant !== 'expanded' && (
@@ -252,12 +243,7 @@ export default function EnhancedBoardingPassButton({
               variant="ghost"
               size="sm"
               onClick={toggleCollapse}
-              className={getThemeClasses({
-                base: "p-1 h-8 w-8",
-                default: "text-gray-400 hover:text-white",
-                blue: "text-blue-400 hover:text-blue-100",
-                pink: "text-pink-400 hover:text-pink-100"
-              })}
+              className={cn("p-1 h-8 w-8", getThemedTextClasses('muted'))}
             >
               <PanelLeftOpen className="h-4 w-4" />
             </Button>
@@ -272,12 +258,7 @@ export default function EnhancedBoardingPassButton({
               onClick={downloadBoardingPass}
               className={cn(
                 "w-full justify-start",
-                getThemeClasses({
-                  base: "",
-                  default: "border-gray-700 hover:bg-gray-800 text-white",
-                  blue: "border-blue-700 hover:bg-blue-800 text-blue-100",
-                  pink: "border-pink-700 hover:bg-pink-800 text-pink-100"
-                })
+                getThemedButtonClasses('secondary')
               )}
             >
               {isPdfLoading ? (
@@ -301,12 +282,7 @@ export default function EnhancedBoardingPassButton({
                 onClick={addToAppleWallet}
                 className={cn(
                   "w-full justify-start",
-                  getThemeClasses({
-                    base: "",
-                    default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                    blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-                    pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-                  })
+                  getThemedButtonClasses('primary')
                 )}
               >
                 {isAppleWalletLoading ? (
@@ -332,12 +308,7 @@ export default function EnhancedBoardingPassButton({
                     variant="outline"
                     className={cn(
                       "w-full justify-start",
-                      getThemeClasses({
-                        base: "",
-                        default: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-                        blue: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-                        pink: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary"
-                      })
+                      getThemedButtonClasses('secondary')
                     )}
                   >
                     <QrCode className="h-4 w-4 mr-2" />
@@ -345,12 +316,10 @@ export default function EnhancedBoardingPassButton({
                   </Button>
                 </motion.div>
               </DialogTrigger>
-              <DialogContent className={getThemeClasses({
-                base: "sm:max-w-md",
-                default: "bg-gray-900 border-gray-800",
-                blue: "bg-blue-950 border-blue-900",
-                pink: "bg-pink-950 border-pink-900"
-              })}>
+              <DialogContent className={cn(
+                getThemedBackgroundClasses('card'),
+                "sm:max-w-md border-gdyup-border"
+              )}>
                 <Tabs defaultValue={qrType} onValueChange={(value) => setQrType(value as 'standard' | 'nostr')}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="standard">Standard QR</TabsTrigger>
@@ -396,12 +365,7 @@ export default function EnhancedBoardingPassButton({
               onClick={saveBoardingPassData}
               className={cn(
                 "w-full justify-start",
-                getThemeClasses({
-                  base: "",
-                  default: "border-gray-700 hover:bg-gray-800 text-white",
-                  blue: "border-blue-700 hover:bg-blue-800 text-blue-100",
-                  pink: "border-pink-700 hover:bg-pink-800 text-pink-100"
-                })
+                getThemedButtonClasses('secondary')
               )}
             >
               {isLoading ? (
@@ -424,12 +388,7 @@ export default function EnhancedBoardingPassButton({
               onClick={shareBoardingPass}
               className={cn(
                 "w-full justify-start",
-                getThemeClasses({
-                  base: "",
-                  default: "border-gray-700 hover:bg-gray-800 text-white",
-                  blue: "border-blue-700 hover:bg-blue-800 text-blue-100",
-                  pink: "border-pink-700 hover:bg-pink-800 text-pink-100"
-                })
+                getThemedButtonClasses('secondary')
               )}
             >
               <Share2 className="h-4 w-4 mr-2" />
@@ -448,12 +407,7 @@ export default function EnhancedBoardingPassButton({
         variant="ghost"
         size="sm"
         onClick={toggleCollapse}
-        className={getThemeClasses({
-          base: "p-1 h-8 w-8",
-          default: "text-gray-400 hover:text-white",
-          blue: "text-blue-400 hover:text-blue-100",
-          pink: "text-pink-400 hover:text-pink-100"
-        })}
+        className={cn("p-1 h-8 w-8", getThemedTextClasses('muted'))}
       >
         <PanelLeftClose className="h-4 w-4" />
       </Button>
@@ -463,12 +417,7 @@ export default function EnhancedBoardingPassButton({
           variant="outline"
           disabled={isPdfLoading}
           onClick={downloadBoardingPass}
-          className={getThemeClasses({
-            base: "text-sm",
-            default: "border-gray-700 hover:bg-gray-800 hover:text-gdyup-primary",
-            blue: "border-blue-700 hover:bg-blue-800 hover:text-gdyup-primary",
-            pink: "border-pink-700 hover:bg-pink-800 hover:text-gdyup-primary"
-          })}
+          className={cn("text-sm", getThemedButtonClasses('secondary'))}
         >
           {isPdfLoading ? (
             <>
@@ -489,12 +438,7 @@ export default function EnhancedBoardingPassButton({
           <Button
             disabled={isAppleWalletLoading}
             onClick={addToAppleWallet}
-            className={getThemeClasses({
-              base: "text-sm",
-              default: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              blue: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              pink: "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-            })}
+            className={cn("text-sm", getThemedButtonClasses('primary'))}
           >
             {isAppleWalletLoading ? (
               <>
@@ -517,24 +461,20 @@ export default function EnhancedBoardingPassButton({
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
                 variant="outline"
-                className={getThemeClasses({
-                  base: "text-sm",
-                  default: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-                  blue: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary",
-                  pink: "border-gdyup-secondary hover:bg-gdyup-secondary/20 text-gdyup-secondary"
-                })}
+                className={cn(
+                  "text-sm",
+                  getThemedButtonClasses('secondary')
+                )}
               >
                 <QrCode className="h-4 w-4 mr-2" />
                 QR Code
               </Button>
             </motion.div>
           </DialogTrigger>
-          <DialogContent className={getThemeClasses({
-            base: "sm:max-w-md",
-            default: "bg-gray-900 border-gray-800",
-            blue: "bg-blue-950 border-blue-900",
-            pink: "bg-pink-950 border-pink-900"
-          })}>
+          <DialogContent className={cn(
+            getThemedBackgroundClasses('card'),
+            "sm:max-w-md border-gdyup-border"
+          )}>
             <Tabs defaultValue={qrType} onValueChange={(value) => setQrType(value as 'standard' | 'nostr')}>
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="standard">Standard QR</TabsTrigger>

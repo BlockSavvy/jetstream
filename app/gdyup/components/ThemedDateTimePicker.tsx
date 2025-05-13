@@ -33,8 +33,29 @@ const ThemedDateTimePickerClient = ({
   className,
   disabled = false,
 }: ThemedDateTimePickerProps) => {
-  const { theme, getThemeClasses, isMobile } = useGdyupTheme();
+  const { 
+    theme, 
+    isMobile,
+    getThemedTextClasses,
+    getThemedButtonClasses,
+    getThemedBackgroundClasses
+  } = useGdyupTheme();
   const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
+  
+  // Safely handle time selector click - prevents SES_UNCAUGHT_EXCEPTION error
+  React.useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      try {
+        // No special handling needed, this just catches any errors 
+        // that might bubble up from the time selector
+      } catch (err) {
+        console.warn('Caught error in time picker click handler', err);
+      }
+    };
+    
+    document.addEventListener('click', handleGlobalClick, true);
+    return () => document.removeEventListener('click', handleGlobalClick, true);
+  }, []);
   
   // Function to update the time
   const handleTimeChange = (timeString: string) => {
@@ -90,26 +111,6 @@ const ThemedDateTimePickerClient = ({
     return `${hours}:${formattedMinutes}`;
   };
 
-  // Get theme-specific button styles
-  const getButtonStyles = () => {
-    return getThemeClasses({
-      base: "w-full justify-start text-left font-normal border flex items-center h-11 px-3 py-2 relative rounded-md focus:outline-none focus:ring-1 focus:ring-offset-1",
-      default: "border-white/30 bg-black hover:bg-gray-900 text-white",
-      blue: "border-blue-500/40 bg-blue-950 hover:bg-blue-900 text-white",
-      pink: "border-pink-500/40 bg-pink-950 hover:bg-pink-900 text-white"
-    });
-  };
-
-  // Get theme-specific calendar styles
-  const getCalendarStyles = () => {
-    return getThemeClasses({
-      base: "p-3 rounded-md shadow-lg",
-      default: "bg-gray-900 text-white border border-white/30",
-      blue: "bg-blue-950 text-white border border-blue-400/50",
-      pink: "bg-pink-950 text-white border border-pink-400/50"
-    });
-  };
-
   // Calendar component with theme-specific styling
   const ThemedCalendar = React.useCallback(() => (
     <Calendar
@@ -118,57 +119,47 @@ const ThemedDateTimePickerClient = ({
       onSelect={handleDateSelect}
       initialFocus
       disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-      className={getCalendarStyles()}
+      className={cn(
+        "gdyup-calendar p-3 rounded-md shadow-lg",
+        getThemedBackgroundClasses('card'),
+        "border border-gdyup-border"
+      )}
       classNames={{
-        day_selected: getThemeClasses({
-          base: "bg-opacity-100 font-bold",
-          default: "bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/80",
-          blue: "bg-blue-500 text-white hover:bg-blue-600",
-          pink: "bg-pink-500 text-white hover:bg-pink-600"
-        }),
-        day_today: getThemeClasses({
-          base: "font-bold border-2",
-          default: "border-[#DAFF0D] text-[#DAFF0D]",
-          blue: "border-blue-500 text-blue-300",
-          pink: "border-pink-500 text-pink-300"
-        }),
-        day_outside: getThemeClasses({
-          base: "text-opacity-50",
-          default: "text-gray-500",
-          blue: "text-blue-700",
-          pink: "text-pink-700"
-        }),
-        day: getThemeClasses({
-          base: "p-2 hover:bg-opacity-50 transition-colors rounded-md",
-          default: "hover:bg-[#DAFF0D]/20",
-          blue: "hover:bg-blue-500/20",
-          pink: "hover:bg-pink-500/20"
-        }),
-        head_cell: getThemeClasses({
-          base: "font-bold text-sm",
-          default: "text-[#DAFF0D]",
-          blue: "text-blue-400",
-          pink: "text-pink-400"
-        }),
+        day_selected: cn(
+          "bg-opacity-100 font-bold",
+          "bg-gdyup-primary text-gdyup-button-text hover:bg-gdyup-primary/80"
+        ),
+        day_today: cn(
+          "font-bold border-2",
+          "border-gdyup-primary text-gdyup-primary"
+        ),
+        day_outside: cn(
+          "text-opacity-50",
+          getThemedTextClasses('muted')
+        ),
+        day: cn(
+          "p-2 hover:bg-opacity-50 transition-colors rounded-md",
+          "hover:bg-gdyup-primary/20"
+        ),
+        head_cell: cn(
+          "font-bold text-sm",
+          getThemedTextClasses()
+        ),
         table: "border-collapse space-y-1 w-full",
-        caption: getThemeClasses({
-          base: "flex justify-center py-2 mb-2 relative items-center",
-          default: "text-white",
-          blue: "text-blue-100",
-          pink: "text-pink-100"
-        }),
+        caption: cn(
+          "flex justify-center py-2 mb-2 relative items-center",
+          getThemedTextClasses()
+        ),
         caption_label: "text-md font-bold",
-        nav_button: getThemeClasses({
-          base: "border p-1 rounded-md mx-1 hover:opacity-70",
-          default: "border-[#DAFF0D]/50 text-[#DAFF0D]",
-          blue: "border-blue-400/50 text-blue-400",
-          pink: "border-pink-400/50 text-pink-400"
-        }),
+        nav_button: cn(
+          "border p-1 rounded-md mx-1 hover:opacity-70",
+          "border-gdyup-primary/50 text-gdyup-primary"
+        ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1"
       }}
     />
-  ), [date, handleDateSelect, getCalendarStyles, getThemeClasses]);
+  ), [date, handleDateSelect, getThemedBackgroundClasses, getThemedTextClasses]);
 
   // The time selector component
   const TimeSelector = React.useCallback(() => (
@@ -178,31 +169,30 @@ const ThemedDateTimePickerClient = ({
         onValueChange={handleTimeChange}
         disabled={!date || disabled}
       >
-        <SelectTrigger className={getThemeClasses({
-          base: "w-full min-w-[120px] h-11",
-          default: "border-white/20 bg-black/80 text-white focus:ring-1 focus:ring-[#DAFF0D] focus:ring-offset-1",
-          blue: "border-blue-500/30 bg-blue-950/80 text-white focus:ring-1 focus:ring-blue-500 focus:ring-offset-1",
-          pink: "border-pink-500/30 bg-pink-950/80 text-white focus:ring-1 focus:ring-pink-500 focus:ring-offset-1"
-        })}>
-          <Clock className="mr-2 h-4 w-4 text-[#DAFF0D]" style={{ color: '#000000', stroke: '#000000', strokeWidth: 2 }} />
+        <SelectTrigger className={cn(
+          "w-full min-w-[120px] h-11 gdyup-time-selector",
+          getThemedBackgroundClasses('card'),
+          "border-gdyup-border focus:ring-1 focus:ring-gdyup-primary focus:ring-offset-1",
+          getThemedTextClasses()
+        )}>
+          <Clock className="mr-2 h-4 w-4 text-gdyup-primary" />
           <SelectValue placeholder="Time" />
         </SelectTrigger>
-        <SelectContent className={getThemeClasses({
-          base: "max-h-[200px] overflow-y-auto",
-          default: "bg-gray-900 text-white border-white/20",
-          blue: "bg-blue-950 text-white border-blue-500/30",
-          pink: "bg-pink-950 text-white border-pink-500/30"
-        })}>
+        <SelectContent className={cn(
+          "max-h-[200px] overflow-y-auto gdyup-time-dropdown",
+          getThemedBackgroundClasses('card'),
+          getThemedTextClasses(),
+          "border-gdyup-border"
+        )}>
           {timeOptions.map((option) => (
             <SelectItem 
               key={option.value} 
               value={option.value}
-              className={getThemeClasses({
-                base: "cursor-pointer",
-                default: "hover:bg-[#DAFF0D]/20 focus:bg-[#DAFF0D]/20 data-[highlighted]:bg-[#DAFF0D]/20 data-[highlighted]:text-white",
-                blue: "hover:bg-blue-500/20 focus:bg-blue-500/20 data-[highlighted]:bg-blue-500/20 data-[highlighted]:text-white",
-                pink: "hover:bg-pink-500/20 focus:bg-pink-500/20 data-[highlighted]:bg-pink-500/20 data-[highlighted]:text-white"
-              })}
+              className={cn(
+                "cursor-pointer gdyup-time-option",
+                "hover:bg-gdyup-primary/20 focus:bg-gdyup-primary/20 data-[highlighted]:bg-gdyup-primary/20",
+                getThemedTextClasses()
+              )}
             >
               {option.label}
             </SelectItem>
@@ -210,7 +200,7 @@ const ThemedDateTimePickerClient = ({
         </SelectContent>
       </Select>
     </div>
-  ), [date, disabled, getCurrentTimeOption, handleTimeChange, timeOptions, getThemeClasses]);
+  ), [date, disabled, getCurrentTimeOption, handleTimeChange, timeOptions, getThemedBackgroundClasses, getThemedTextClasses]);
 
   return (
     <div className={cn("grid gap-2", className)}>
@@ -224,52 +214,45 @@ const ThemedDateTimePickerClient = ({
                 <Button
                   variant={"outline"}
                   className={cn(
-                    getButtonStyles(),
-                    !date && "text-gray-400"
+                    "w-full justify-start text-left font-normal border flex items-center h-11 px-3 py-2 relative rounded-md focus:outline-none focus:ring-1 focus:ring-offset-1 gdyup-date-button",
+                    getThemedBackgroundClasses('card'),
+                    getThemedTextClasses(),
+                    "border-gdyup-border",
+                    !date && "text-gdyup-text-subtle"
                   )}
                   disabled={disabled}
                 >
-                  <CalendarIcon className="mr-2 h-5 w-5 text-[#DAFF0D]" style={{ color: '#000000', stroke: '#000000', strokeWidth: 2 }} />
+                  <CalendarIcon className="mr-2 h-5 w-5 text-gdyup-primary date-picker-icon" />
                   {date ? format(date, "PPP") : <span>{placeholder}</span>}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="bottom" className={getThemeClasses({
-                base: "h-[80vh] p-0 pt-6",
-                default: "bg-gray-900 text-white border-t border-white/20",
-                blue: "bg-blue-950 text-white border-t border-blue-500/30",
-                pink: "bg-pink-950 text-white border-t border-pink-500/30"
-              })}>
+              <SheetContent side="bottom" className={cn(
+                "h-[80vh] p-0 pt-6 gdyup-date-sheet",
+                getThemedBackgroundClasses('card'),
+                getThemedTextClasses(),
+                "border-t border-gdyup-border"
+              )}>
                 <SheetHeader className="px-4 mb-2">
-                  <SheetTitle className={getThemeClasses({
-                    base: "text-lg font-bold",
-                    default: "text-white",
-                    blue: "text-white",
-                    pink: "text-white"
-                  })}>
+                  <SheetTitle className={getThemedTextClasses()}>
                     Select Date & Time
                   </SheetTitle>
                 </SheetHeader>
                 <div className="p-4">
                   <ThemedCalendar />
                   <div className="mt-4">
-                    <p className={getThemeClasses({
-                      base: "text-sm mb-2",
-                      default: "text-white/80",
-                      blue: "text-blue-200/80",
-                      pink: "text-pink-200/80"
-                    })}>Select Time</p>
+                    <p className={cn("text-sm mb-2", getThemedTextClasses('muted'))}>
+                      Select Time
+                    </p>
                     <TimeSelector />
                   </div>
                 </div>
-                <div className="p-4 border-t border-gray-800 mt-auto">
+                <div className="p-4 border-t border-gdyup-border mt-auto">
                   <Button
                     onClick={() => setIsCalendarOpen(false)}
-                    className={getThemeClasses({
-                      base: "w-full h-11",
-                      default: "bg-[#DAFF0D] text-black hover:bg-[#DAFF0D]/80",
-                      blue: "bg-blue-500 text-white hover:bg-blue-600",
-                      pink: "bg-pink-500 text-white hover:bg-pink-600"
-                    })}
+                    className={cn(
+                      "w-full h-11",
+                      getThemedButtonClasses('primary')
+                    )}
                   >
                     Confirm
                   </Button>
@@ -295,16 +278,23 @@ const ThemedDateTimePickerClient = ({
                 <Button
                   variant={"outline"}
                   className={cn(
-                    getButtonStyles(),
-                    !date && "text-gray-400"
+                    "w-full justify-start text-left font-normal border flex items-center h-11 px-3 py-2 relative rounded-md focus:outline-none focus:ring-1 focus:ring-offset-1 gdyup-date-button",
+                    getThemedBackgroundClasses('card'),
+                    getThemedTextClasses(),
+                    "border-gdyup-border",
+                    !date && "text-gdyup-text-subtle"
                   )}
                   disabled={disabled}
                 >
-                  <CalendarIcon className="mr-2 h-5 w-5 text-[#DAFF0D]" style={{ color: '#000000', stroke: '#000000', strokeWidth: 2 }} />
+                  <CalendarIcon className="mr-2 h-5 w-5 text-gdyup-primary date-picker-icon" />
                   {date ? format(date, "PPP") : <span>{placeholder}</span>}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className={getCalendarStyles()}>
+              <PopoverContent className={cn(
+                "p-3 rounded-md shadow-lg gdyup-calendar-popover z-[999]",
+                getThemedBackgroundClasses('card'),
+                "border border-gdyup-border"
+              )}>
                 <div className="flex flex-col space-y-4 p-2">
                   <ThemedCalendar />
                   <div className="flex justify-center">

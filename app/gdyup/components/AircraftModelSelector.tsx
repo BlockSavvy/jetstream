@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@headlessui/react';
 import { createPortal } from 'react-dom';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 // Types for aircraft models
 interface AircraftModel {
@@ -61,6 +62,7 @@ function AircraftModelSelectorImpl({
   className,
   id,
 }: ClientAircraftModelSelectorProps) {
+  const { getThemedTextClasses } = useGdyupTheme();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -514,7 +516,7 @@ function AircraftModelSelectorImpl({
         <div ref={inputRef} className="relative w-full cursor-default overflow-hidden rounded-lg border border-gray-600 dark:border-gray-600 text-left focus:outline-none">
           <Combobox.Input
             id={id}
-            className="w-full pl-3 pr-10 py-2 text-white dark:text-white bg-gray-700/70 dark:bg-gray-700/90 border-none focus:ring-0 outline-none font-medium"
+            className={`w-full pl-3 pr-10 py-2 ${getThemedTextClasses()} bg-gray-700/70 dark:bg-gray-700/90 border-none focus:ring-0 outline-none font-medium`}
             placeholder="Select aircraft model"
             displayValue={(selected: string) => selected || ""}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
@@ -527,7 +529,7 @@ function AircraftModelSelectorImpl({
             onClick={() => setOpen(!open)}
           >
             <ChevronsUpDown
-              className="h-4 w-4 text-gray-400 dark:text-gray-400"
+              className={`h-4 w-4 ${getThemedTextClasses('muted')}`}
               aria-hidden="true"
             />
           </Combobox.Button>
@@ -559,20 +561,20 @@ function AircraftModelSelectorImpl({
                 >
                   <div className="bg-gray-800 dark:bg-gray-800">
                     {isLoading && (
-                      <div className="relative cursor-default select-none py-3 px-4 text-gray-300 dark:text-gray-300 flex items-center">
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin text-amber-500" />
+                      <div className={`relative cursor-default select-none py-3 px-4 ${getThemedTextClasses()} flex items-center`}>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin text-gdyup-primary" />
                         <span>Loading aircraft models...</span>
                       </div>
                     )}
                     
                     {error && (
-                      <div className="relative cursor-default select-none py-3 px-4 text-red-400 dark:text-red-400">
+                      <div className="relative cursor-default select-none py-3 px-4 text-red-400">
                         <span>Error: {error}</span>
                       </div>
                     )}
                     
                     {!isLoading && !error && filteredModels.length === 0 && search !== '' && (
-                      <div className="relative cursor-default select-none py-3 px-4 text-gray-300 dark:text-gray-300">
+                      <div className={`relative cursor-default select-none py-3 px-4 ${getThemedTextClasses()}`}>
                         <span>No aircraft models found.</span>
                       </div>
                     )}

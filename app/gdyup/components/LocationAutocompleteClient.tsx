@@ -4,6 +4,7 @@ import { Search, MapPin, X, CheckCircle, Globe, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 // Popular airports to fall back to when API fails
 const POPULAR_AIRPORTS = [
@@ -28,7 +29,7 @@ export interface Airport {
 }
 
 export default function LocationAutocompleteClient({
-  value,
+  value = '',
   name,
   onChange,
   onBlur,
@@ -52,6 +53,7 @@ export default function LocationAutocompleteClient({
   variant?: 'departure' | 'arrival';
   error?: string;
 }) {
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const [results, setResults] = useState<Airport[]>([]);
   const [formattedResults, setFormattedResults] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -62,10 +64,24 @@ export default function LocationAutocompleteClient({
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Color scheme based on variant
+  // Color scheme based on variant - still keeping some variant-specific colors but with theme-aware base
   const colors = variant === 'departure' 
-    ? { primary: 'bg-blue-500', secondary: 'text-blue-300', light: 'bg-blue-500/20', outline: 'border-blue-500/30' }
-    : { primary: 'bg-amber-500', secondary: 'text-amber-300', light: 'bg-amber-500/20', outline: 'border-amber-500/30' };
+    ? { 
+        bgClass: "bg-blue-600/30", 
+        iconClass: "text-blue-100", 
+        ringClass: "ring-blue-500/30",
+        bgActiveClass: "bg-blue-900",
+        textActiveClass: "text-blue-100",
+        borderActiveClass: "border-blue-700"
+      }
+    : { 
+        bgClass: "bg-amber-600/30", 
+        iconClass: "text-amber-100", 
+        ringClass: "ring-amber-500/30",
+        bgActiveClass: "bg-amber-900",
+        textActiveClass: "text-amber-100",
+        borderActiveClass: "border-amber-700"
+      };
 
   // Function to format airport display
   const formatAirportDisplay = useCallback((airport: Airport): string => {
@@ -80,10 +96,11 @@ export default function LocationAutocompleteClient({
       return (
         <div className="flex items-center">
           <span>{match[1]}</span>
-          <span className={cn("ml-1 px-1.5 py-0.5 text-xs font-bold rounded shadow-sm", 
+          <span className={cn(
+            "ml-1 px-1.5 py-0.5 text-xs font-bold rounded shadow-sm border",
             variant === 'departure' 
-              ? "bg-blue-600/60 text-white border border-blue-500/50" 
-              : "bg-amber-600/60 text-white border border-amber-500/50"
+              ? "bg-blue-600/60 text-white border-blue-500/50" 
+              : "bg-amber-600/60 text-white border-amber-500/50"
           )}>
             {match[2]}
           </span>
@@ -332,60 +349,37 @@ export default function LocationAutocompleteClient({
     }
   }, []);
 
-  // Add a more prominent debug component
-  const LocationDebugInfo = ({ airports, search, results }: { 
-    airports: Airport[], 
-    search: string,
-    results: Airport[]
-  }) => {
-    if (process.env.NODE_ENV !== 'development') {
-      return null; // Only show in dev mode
-    }
-    
-    return (
-      <div className="absolute -top-10 left-0 right-0 bg-black/80 text-xs text-gray-400 rounded p-1 border border-gray-700 z-30">
-        <div className="flex flex-wrap gap-1 justify-between">
-          <span>DB: {airports.length > 0 ? 
-            <span className="text-green-400">✓ {airports.length} airports</span> : 
-            <span className="text-amber-500">✗ No database connection</span>}
-          </span>
-          {search && <span>Query: "{search}" → {results.length} results</span>}
-          {results.length > 0 && <span className="text-xs text-gray-500 truncate">{results[0].city} ({results[0].code}), ...</span>}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className={cn("relative w-full", className)}>
       {label && (
-        <label className="block text-sm font-medium text-white mb-1.5 ml-1">{label}</label>
+        <label className={cn("block text-sm font-medium mb-1.5 ml-1", getThemedTextClasses())}>{label}</label>
       )}
-      
-      {/* New enhanced debug information */}
-      <LocationDebugInfo airports={airports} search={value} results={results} />
       
       <div 
         className={cn(
           "relative flex items-center overflow-hidden rounded-lg border",
-          "bg-black text-white transition-all duration-200",
-          error ? "border-red-500" : isFocused ? (variant === 'departure' ? "border-blue-400 ring-2 ring-blue-500/30" : "border-amber-400 ring-2 ring-amber-500/30") : "border-gray-700",
+          getThemedBackgroundClasses('card'),
+          getThemedTextClasses(),
+          "transition-all duration-200",
+          error ? "border-red-500" : 
+            isFocused ? 
+              (variant === 'departure' ? 
+                cn("border-blue-400 ring-2", colors.ringClass) : 
+                cn("border-amber-400 ring-2", colors.ringClass)
+              ) : 
+              "border-gdyup-border",
           recentlySelected && "ring-2 ring-green-500/40"
         )}
       >
         {/* Icon on the left */}
-        <div className={cn("flex items-center justify-center h-12 w-12", variant === 'departure' ? "bg-blue-600/30" : "bg-amber-600/30")}>
-          {variant === 'departure' ? (
-            <MapPin className="h-5 w-5 text-blue-100" />
-          ) : (
-            <MapPin className="h-5 w-5 text-amber-100" />
-          )}
+        <div className={cn("flex items-center justify-center h-12 w-12", colors.bgClass)}>
+          <MapPin className={cn("h-5 w-5", colors.iconClass)} />
         </div>
         
         {/* Conditionally render either the formatted display or regular input */}
         {hasSelectedAirport ? (
           <div 
-            className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base text-white flex items-center flex-1 cursor-text font-medium"
+            className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base flex items-center flex-1 cursor-text font-medium"
             onClick={() => inputRef.current?.focus()}
           >
             {formatDisplayText(value)}
@@ -408,7 +402,7 @@ export default function LocationAutocompleteClient({
             value={value}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder={variant === 'departure' ? 'From city or code' : 'To city or code'}
-            className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base text-white font-medium placeholder:text-gray-500"
+            className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base font-medium placeholder:text-gray-500"
             onFocus={handleFocus}
             onBlur={handleInternalBlur}
             name={name}
@@ -418,7 +412,7 @@ export default function LocationAutocompleteClient({
         {/* Clear button or search/loading icon */}
         <div className="pr-3">
           {isLoading || isPending ? (
-            <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+            <Loader2 className={cn("h-4 w-4 animate-spin", getThemedTextClasses('muted'))} />
           ) : value ? (
             <button 
               type="button"
@@ -429,12 +423,16 @@ export default function LocationAutocompleteClient({
                 setShowResults(false);
                 if (inputRef.current) inputRef.current.focus();
               }}
-              className="h-7 w-7 rounded-full bg-gray-700/80 flex items-center justify-center hover:bg-gray-600/90 transition-colors"
+              className={cn(
+                "h-7 w-7 rounded-full flex items-center justify-center transition-colors",
+                getThemedBackgroundClasses('secondary'),
+                "hover:bg-gray-600/90"
+              )}
             >
-              <X className="h-4 w-4 text-gray-300" />
+              <X className={cn("h-4 w-4", getThemedTextClasses())} />
             </button>
           ) : (
-            <Search className="h-4 w-4 text-gray-400 mr-2" />
+            <Search className={cn("h-4 w-4 mr-2", getThemedTextClasses('muted'))} />
           )}
         </div>
 
@@ -462,7 +460,11 @@ export default function LocationAutocompleteClient({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-[100] mt-1 w-full bg-gray-800 border border-gray-700 rounded-lg shadow-lg overflow-hidden"
+            className={cn(
+              "absolute z-[100] mt-1 w-full border rounded-lg shadow-lg overflow-hidden",
+              getThemedBackgroundClasses('card'),
+              "border-gdyup-border"
+            )}
             style={{ 
               maxHeight: '60vh',
               position: 'absolute',
@@ -475,16 +477,18 @@ export default function LocationAutocompleteClient({
                 results.map((airport, index) => (
                   <div
                     key={`${airport.code}-${index}`}
-                    className="px-3 py-3 hover:bg-gray-700 cursor-pointer flex items-center border-b border-gray-700/70 last:border-b-0 group"
+                    className={cn(
+                      "px-3 py-3 hover:bg-gray-700 cursor-pointer flex items-center group",
+                      "border-b border-gray-700/70 last:border-b-0"
+                    )}
                     onClick={() => handleSelect(airport)}
                   >
                     <div className="flex-grow">
                       <div className="flex items-center flex-wrap">
-                        <span className="text-white font-medium truncate max-w-[150px]">{airport.city}</span>
-                        <span className={cn("ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md shadow-sm", 
-                          variant === 'departure' 
-                            ? "bg-blue-900 text-blue-100 border border-blue-700" 
-                            : "bg-amber-900 text-amber-100 border border-amber-700"
+                        <span className={cn("font-medium truncate max-w-[150px]", getThemedTextClasses())}>{airport.city}</span>
+                        <span className={cn(
+                          "ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md shadow-sm border", 
+                          colors.bgActiveClass, colors.textActiveClass, colors.borderActiveClass
                         )}>
                           {airport.code}
                         </span>
@@ -494,19 +498,21 @@ export default function LocationAutocompleteClient({
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400 mt-0.5 truncate max-w-[250px]">{airport.name}</div>
+                      <div className={cn("text-xs mt-0.5 truncate max-w-[250px]", getThemedTextClasses('muted'))}>{airport.name}</div>
                       {airport.country && (
                         <div className="text-[10px] text-gray-500">{airport.country}</div>
                       )}
                     </div>
-                    <div className={cn("w-8 h-8 ml-2 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity", 
-                      variant === 'departure' ? "bg-blue-900" : "bg-amber-900")}>
+                    <div className={cn(
+                      "w-8 h-8 ml-2 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity", 
+                      colors.bgActiveClass
+                    )}>
                       <CheckCircle className="h-4 w-4 text-white" />
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="px-3 py-6 text-center text-gray-400">
+                <div className={cn("px-3 py-6 text-center", getThemedTextClasses('muted'))}>
                   <p className="text-sm">No locations found</p>
                   <p className="text-xs mt-1 text-gray-500">Try a different search term</p>
                 </div>
@@ -528,11 +534,10 @@ export default function LocationAutocompleteClient({
                       >
                         <div className="flex-grow">
                           <div className="flex items-center flex-wrap">
-                            <span className="text-white">{airport.city}</span>
-                            <span className={cn("ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md", 
-                              variant === 'departure' 
-                                ? "bg-blue-900 text-blue-100" 
-                                : "bg-amber-900 text-amber-100"
+                            <span className={getThemedTextClasses()}>{airport.city}</span>
+                            <span className={cn(
+                              "ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md", 
+                              colors.bgActiveClass, colors.textActiveClass
                             )}>
                               {airport.code}
                             </span>
@@ -546,8 +551,10 @@ export default function LocationAutocompleteClient({
                             <div className="text-[10px] text-gray-500 mt-0.5">{airport.country}</div>
                           )}
                         </div>
-                        <div className={cn("w-7 h-7 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity", 
-                          variant === 'departure' ? "bg-blue-800" : "bg-amber-800")}>
+                        <div className={cn(
+                          "w-7 h-7 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity", 
+                          colors.bgActiveClass
+                        )}>
                           <CheckCircle className="h-3.5 w-3.5 text-white" />
                         </div>
                       </div>

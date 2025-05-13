@@ -32,7 +32,7 @@ export function FormThemedDateTimePicker({
   disabled = false,
 }: FormThemedDateTimePickerProps) {
   const form = useFormContext();
-  const { theme, getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses } = useGdyupTheme();
 
   return (
     <FormField
@@ -41,12 +41,7 @@ export function FormThemedDateTimePicker({
       render={({ field }) => (
         <FormItem className="flex flex-col">
           {label && (
-            <FormLabel className={getThemeClasses({
-              base: "text-white text-sm font-medium",
-              default: "opacity-90",
-              blue: "opacity-90",
-              pink: "opacity-90"
-            })}>
+            <FormLabel className={cn("text-sm font-medium", getThemedTextClasses())}>
               {label}
             </FormLabel>
           )}
@@ -56,15 +51,14 @@ export function FormThemedDateTimePicker({
               setDate={field.onChange}
               placeholder={placeholder}
               disabled={disabled || field.disabled}
-              className={cn(className, getThemeClasses({
-                base: "w-full mt-1",
-                default: "",
-                blue: "",
-                pink: ""
-              }))}
+              className={cn("w-full mt-1", className)}
             />
           </FormControl>
-          {description && <FormDescription>{description}</FormDescription>}
+          {description && (
+            <FormDescription className={getThemedTextClasses('muted')}>
+              {description}
+            </FormDescription>
+          )}
           <FormMessage />
         </FormItem>
       )}

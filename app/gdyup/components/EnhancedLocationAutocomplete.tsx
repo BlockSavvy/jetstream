@@ -83,7 +83,33 @@ function EnhancedLocationAutocomplete({
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Get theme functionality
-  const { theme, getThemeClasses, isMobile } = useGdyupTheme();
+  const { 
+    theme, 
+    isMobile,
+    getThemedTextClasses,
+    getThemedButtonClasses,
+    getThemedBackgroundClasses,
+    getThemedBadgeClasses 
+  } = useGdyupTheme();
+
+  // Color scheme based on variant - still keeping some variant-specific colors but with theme-aware base
+  const colors = variant === 'departure' 
+    ? { 
+        bgClass: "bg-blue-600/30", 
+        iconClass: "text-blue-100", 
+        ringClass: "ring-blue-500/30",
+        bgActiveClass: "bg-blue-900",
+        textActiveClass: "text-blue-100",
+        borderActiveClass: "border-blue-700"
+      }
+    : { 
+        bgClass: "bg-amber-600/30", 
+        iconClass: "text-amber-100", 
+        ringClass: "ring-amber-500/30",
+        bgActiveClass: "bg-amber-900",
+        textActiveClass: "text-amber-100",
+        borderActiveClass: "border-amber-700"
+      };
 
   // Check if an airport is formatted in the "City (CODE)" format
   const hasSelectedAirport = value && value.trim() !== '' && value.match(/^(.*)\s+\(([A-Z]{3,4})\)$/);
@@ -96,14 +122,12 @@ function EnhancedLocationAutocomplete({
       return (
         <div className="flex items-center">
           <span>{match[1]}</span>
-          <span className={getThemeClasses({
-            base: "ml-1 px-1.5 py-0.5 text-xs font-bold rounded shadow-sm",
-            default: variant === 'departure' 
+          <span className={cn(
+            "ml-1 px-1.5 py-0.5 text-xs font-bold rounded shadow-sm",
+            variant === 'departure' 
               ? "bg-blue-600/60 text-white border border-blue-500/50" 
-              : "bg-amber-600/60 text-white border border-amber-500/50",
-            blue: "bg-blue-600/60 text-white border border-blue-500/50",
-            pink: "bg-pink-600/60 text-white border border-pink-500/50"
-          })}>
+              : "bg-amber-600/60 text-white border border-amber-500/50"
+          )}>
             {match[2]}
           </span>
         </div>
@@ -135,49 +159,6 @@ function EnhancedLocationAutocomplete({
     
     // Add to the beginning (most recent)
     setRecentAirports([airport, ...filtered.slice(0, 9)]);
-  };
-
-  // Get theme-specific class names
-  const getThemeVariants = useCallback(() => {
-    // Base styles that work for all themes
-    const baseContainerStyles = "relative flex items-center overflow-hidden rounded-lg border";
-    
-    // Theme-specific variations
-    if (variant === 'departure') {
-      return getThemeClasses({
-        base: baseContainerStyles,
-        default: "bg-black text-white border-gray-700 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/30",
-        blue: "bg-blue-950 text-white border-blue-800 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/30",
-        pink: "bg-pink-950 text-white border-pink-800 focus-within:border-pink-400 focus-within:ring-2 focus-within:ring-pink-400/30"
-      });
-    } else {
-      return getThemeClasses({
-        base: baseContainerStyles,
-        default: "bg-black text-white border-gray-700 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-500/30",
-        blue: "bg-blue-950 text-white border-blue-800 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/30",
-        pink: "bg-pink-950 text-white border-pink-800 focus-within:border-pink-400 focus-within:ring-2 focus-within:ring-pink-400/30"
-      });
-    }
-  }, [variant, getThemeClasses, theme]);
-
-  // Get icon container styles
-  const getIconContainerStyles = () => {
-    return getThemeClasses({
-      base: "flex items-center justify-center h-12 w-12",
-      default: variant === 'departure' ? "bg-blue-600/30" : "bg-amber-600/30",
-      blue: "bg-blue-800/50",
-      pink: "bg-pink-800/50"
-    });
-  };
-
-  // Get icon styles
-  const getIconStyles = () => {
-    return getThemeClasses({
-      base: "h-5 w-5",
-      default: variant === 'departure' ? "text-blue-100" : "text-amber-100",
-      blue: "text-blue-100",
-      pink: "text-pink-100"
-    });
   };
 
   // Handle focus on input
@@ -410,55 +391,39 @@ function EnhancedLocationAutocomplete({
     return (
       <div
         key={`${airport.code}-${index}`}
-        className={getThemeClasses({
-          base: "px-3 py-3 hover:bg-opacity-70 cursor-pointer flex items-center justify-between border-b last:border-b-0 group",
-          default: "hover:bg-gray-700 border-gray-700/70",
-          blue: "hover:bg-blue-800 border-blue-800/70",
-          pink: "hover:bg-pink-800 border-pink-800/70"
-        })}
+        className={cn(
+          "px-3 py-3 cursor-pointer flex items-center justify-between border-b last:border-b-0 group",
+          "hover:bg-gray-700 border-gray-700/70"
+        )}
         onClick={() => handleSelect(airport)}
       >
         <div className="flex-grow">
           <div className="flex items-center flex-wrap">
-            <span className="text-white">{airport.city}</span>
-            <span className={getThemeClasses({
-              base: "ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md", 
-              default: variant === 'departure' 
-                ? "bg-blue-900 text-blue-100" 
-                : "bg-amber-900 text-amber-100",
-              blue: "bg-blue-800 text-blue-100",
-              pink: "bg-pink-800 text-pink-100"
-            })}>
+            <span className={getThemedTextClasses()}>{airport.city}</span>
+            <span className={cn(
+              "ml-2 px-1.5 py-0.5 text-xs font-bold rounded-md", 
+              variant === 'departure' 
+                ? colors.bgActiveClass + ' ' + colors.textActiveClass 
+                : colors.bgActiveClass + ' ' + colors.textActiveClass
+            )}>
               {airport.code}
             </span>
             {airport.icao_code && (
-              <span className={getThemeClasses({
-                base: "ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-sm",
-                default: "bg-gray-800/80 text-gray-300 border-gray-700/70",
-                blue: "bg-blue-900/80 text-blue-300 border-blue-800/70",
-                pink: "bg-pink-900/80 text-pink-300 border-pink-800/70"
-              })}>
+              <span className={cn(
+                "ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-sm",
+                "bg-gray-800/80 text-gray-300 border-gray-700/70"
+              )}>
                 {airport.icao_code}
               </span>
             )}
             {isPrivate && (
-              <span className={getThemeClasses({
-                base: "ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold rounded-md shadow-sm",
-                default: "bg-purple-900/80 text-purple-100 border-purple-800/70",
-                blue: "bg-blue-900/80 text-blue-100 border-blue-800/70", 
-                pink: "bg-pink-900/80 text-pink-100 border-pink-800/70"
-              })}>
+              <span className="ml-2 px-1.5 py-0.5 text-[10px] uppercase font-bold bg-purple-900/80 text-purple-100 border border-purple-800/70 rounded-md shadow-sm">
                 Private
               </span>
             )}
           </div>
           {!onlyIcon && airport.country && (
-            <div className={getThemeClasses({
-              base: "text-[10px] mt-0.5",
-              default: "text-gray-500",
-              blue: "text-blue-400/70",
-              pink: "text-pink-400/70"
-            })}>
+            <div className={cn("text-[10px] mt-0.5", getThemedTextClasses('muted'))}>
               {airport.country}
             </div>
           )}
@@ -469,12 +434,10 @@ function EnhancedLocationAutocomplete({
             e.stopPropagation();
             toggleFavorite(airport);
           }}
-          className={getThemeClasses({
-            base: "h-8 w-8 rounded-full flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity",
-            default: "hover:bg-gray-800",
-            blue: "hover:bg-blue-900",
-            pink: "hover:bg-pink-900" 
-          })}
+          className={cn(
+            "h-8 w-8 rounded-full flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity",
+            "hover:bg-gray-800"
+          )}
         >
           {isFavorited ? (
             <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" style={{ fill: '#DAFF0D', color: '#000000', stroke: '#000000', strokeWidth: 1 }} />
@@ -489,26 +452,33 @@ function EnhancedLocationAutocomplete({
   return (
     <div className={cn("relative w-full", className)}>
       {label && (
-        <label className="block text-sm font-medium text-white mb-1.5 ml-1">{label}</label>
+        <label className={cn("block text-sm font-medium mb-1.5 ml-1", getThemedTextClasses())}>{label}</label>
       )}
       
       {/* Main input container */}
       <div 
         className={cn(
-          getThemeVariants(),
-          error ? "border-red-500" : "",
+          "relative flex items-center overflow-hidden rounded-lg border",
+          getThemedBackgroundClasses('card'),
+          error ? "border-red-500" : 
+            isFocused ? 
+              (variant === 'departure' ? 
+                cn("border-blue-400 ring-2", colors.ringClass) : 
+                cn("border-amber-400 ring-2", colors.ringClass)
+              ) : 
+              "border-gdyup-border",
           recentlySelected && "ring-2 ring-green-500/40"
         )}
       >
         {/* Icon on the left */}
-        <div className={getIconContainerStyles()}>
-          <MapPin className={getIconStyles()} />
+        <div className={cn("flex items-center justify-center h-12 w-12", colors.bgClass)}>
+          <MapPin className={cn("h-5 w-5", colors.iconClass)} />
         </div>
         
         {/* Conditionally render either the formatted display or regular input */}
         {hasSelectedAirport ? (
           <div 
-            className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base text-white flex items-center flex-1 cursor-text font-medium"
+            className={cn("border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base flex items-center flex-1 cursor-text font-medium", getThemedTextClasses())}
             onClick={() => {
               if (isMobile) {
                 setShowFullModal(true);
@@ -533,7 +503,7 @@ function EnhancedLocationAutocomplete({
           <>
             {isMobile ? (
               <div 
-                className="border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base text-white flex items-center flex-1 cursor-text font-medium"
+                className={cn("border-0 bg-transparent h-12 pl-1 focus-visible:ring-0 focus-visible:ring-offset-0 text-base flex items-center flex-1 cursor-text font-medium", getThemedTextClasses())}
                 onClick={() => setShowFullModal(true)}
               >
                 <span className="text-gray-500">
@@ -549,19 +519,15 @@ function EnhancedLocationAutocomplete({
                 />
               </div>
             ) : (
-              <div className="relative">
+              <div className="flex-1">
                 <Input
                   ref={inputRef}
                   type="text"
                   className={cn(
-                    getThemeClasses({
-                      base: "pl-9 pr-9 py-2 h-11 rounded-xl shadow-sm",
-                      default: "bg-transparent border-gray-700 focus:border-[#DAFF0D] text-white placeholder:text-gray-400",
-                      blue: "bg-transparent border-blue-800 focus:border-blue-500 text-white placeholder:text-blue-400/70",
-                      pink: "bg-transparent border-pink-800 focus:border-pink-500 text-white placeholder:text-pink-400/70",
-                    }),
+                    "bg-transparent h-11 border-0 focus-visible:ring-0",
                     error && "border-red-500 focus:border-red-500",
-                    className
+                    getThemedTextClasses(),
+                    "placeholder:text-gray-400"
                   )}
                   placeholder={placeholder}
                   value={value}
@@ -570,41 +536,38 @@ function EnhancedLocationAutocomplete({
                   onBlur={handleInternalBlur}
                   name={name}
                 />
-                
-                <Search className={getThemeClasses({
-                  base: "w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2",
-                  default: "text-gray-400",
-                  blue: "text-blue-400/70",
-                  pink: "text-pink-400/70"
-                })} />
-                
-                {/* Clear button or search/loading icon */}
-                <div className="pr-3">
-                  {isLoading || isPending ? (
-                    <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
-                  ) : value ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onChange('');
-                        setResults([]);
-                        setFormattedResults([]);
-                        setShowResults(false);
-                        if (inputRef.current) inputRef.current.focus();
-                      }}
-                      className="h-7 w-7 rounded-full bg-gray-900/40 flex items-center justify-center hover:bg-gray-800/60 transition-colors border border-gray-700/30"
-                    >
-                      <X className="h-4 w-4 text-gray-400" style={{ color: '#9ca3af', stroke: '#9ca3af', strokeWidth: 2 }} />
-                    </button>
-                  ) : (
-                    <Search className="h-4 w-4 text-gray-400 mr-2" />
-                  )}
-                </div>
               </div>
             )}
           </>
         )}
+        
+        {/* Clear button or search/loading icon */}
+        <div className="pr-3">
+          {isLoading || isPending ? (
+            <Loader2 className={cn("h-4 w-4 animate-spin", getThemedTextClasses('muted'))} />
+          ) : value ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange('');
+                setResults([]);
+                setFormattedResults([]);
+                setShowResults(false);
+                if (inputRef.current) inputRef.current.focus();
+              }}
+              className={cn(
+                "h-7 w-7 rounded-full flex items-center justify-center",
+                getThemedBackgroundClasses('secondary'),
+                "hover:bg-gray-600/90"
+              )}
+            >
+              <X className={cn("h-4 w-4", getThemedTextClasses('muted'))} />
+            </button>
+          ) : (
+            <Search className={cn("h-4 w-4", getThemedTextClasses('muted'))} />
+          )}
+        </div>
       </div>
 
       {/* Results dropdown for desktop */}
@@ -617,12 +580,11 @@ function EnhancedLocationAutocomplete({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.15 }}
-              className={getThemeClasses({
-                base: "absolute z-[100] mt-1 w-full border rounded-lg shadow-lg overflow-hidden",
-                default: "bg-gray-800 border-gray-700",
-                blue: "bg-blue-950 border-blue-800",
-                pink: "bg-pink-950 border-pink-800"
-              })}
+              className={cn(
+                "absolute z-[100] mt-1 w-full rounded-lg shadow-lg overflow-hidden",
+                getThemedBackgroundClasses('card'),
+                "border border-gdyup-border"
+              )}
               style={{ 
                 maxHeight: '60vh',
                 position: 'absolute',
@@ -640,18 +602,13 @@ function EnhancedLocationAutocomplete({
                     )
                   )
                 ) : (
-                  <div className="px-3 py-6 text-center">
-                    <div className="text-gray-400 text-sm">No airports found</div>
+                  <div className={cn("px-3 py-6 text-center", getThemedTextClasses('muted'))}>
+                    <div>No airports found</div>
                   </div>
                 )}
                 
                 {(!value || value.length < 2) && (
-                  <div className={getThemeClasses({
-                    base: "mt-2 border-t pt-2",
-                    default: "border-gray-700/50",
-                    blue: "border-blue-800/50",
-                    pink: "border-pink-800/50" 
-                  })}>
+                  <div className="mt-2 border-t border-gray-700/50 pt-2">
                     <div className="px-3 py-1 text-xs text-gray-500 font-medium flex items-center">
                       <Globe className="h-3 w-3 mr-1 opacity-70" />
                       {favoriteAirports.length > 0 ? "Favorites & Recents" : "Popular destinations"}
@@ -676,37 +633,30 @@ function EnhancedLocationAutocomplete({
       {/* Mobile full-screen sheet */}
       {isMobile && (
         <Sheet open={showFullModal} onOpenChange={setShowFullModal}>
-          <SheetContent side="bottom" className={getThemeClasses({
-            base: "h-[85vh] p-0 pt-6",
-            default: "bg-gray-900 text-white border-t border-gray-700",
-            blue: "bg-blue-950 text-white border-t border-blue-800",
-            pink: "bg-pink-950 text-white border-t border-pink-800" 
-          })}>
+          <SheetContent side="bottom" className={cn(
+            "h-[85vh] p-0 pt-6",
+            getThemedBackgroundClasses('card'),
+            "border-t border-gdyup-border"
+          )}>
             <SheetHeader className="px-4 mb-2">
-              <SheetTitle className={getThemeClasses({
-                base: "text-lg font-bold",
-                default: "text-white",
-                blue: "text-white",
-                pink: "text-white"
-              })}>
+              <SheetTitle className={getThemedTextClasses()}>
                 {variant === 'departure' ? 'Departure Airport' : 'Arrival Airport'}
               </SheetTitle>
             </SheetHeader>
             
             <div className="px-4 pb-2">
-              <div className={getThemeClasses({
-                base: "flex items-center rounded-full overflow-hidden border",
-                default: "bg-black text-white border-gray-700",
-                blue: "bg-blue-950 text-white border-blue-800",
-                pink: "bg-pink-950 text-white border-pink-800"
-              })}>
-                <Search className="h-4 w-4 ml-3 mr-2 text-gray-400" />
+              <div className={cn(
+                "flex items-center rounded-full overflow-hidden border",
+                getThemedBackgroundClasses('card'),
+                "border-gdyup-border"
+              )}>
+                <Search className={cn("h-4 w-4 ml-3 mr-2", getThemedTextClasses('muted'))} />
                 <Input
                   type="text"
                   value={value}
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder={variant === 'departure' ? 'Search departure city or airport code' : 'Search arrival city or airport code'}
-                  className="border-0 bg-transparent h-12 pl-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-white"
+                  className={cn("border-0 bg-transparent h-12 pl-0 focus-visible:ring-0 focus-visible:ring-offset-0", getThemedTextClasses())}
                   autoFocus
                 />
                 {value && (
@@ -717,31 +667,30 @@ function EnhancedLocationAutocomplete({
                       setResults([]);
                       setFormattedResults([]);
                     }}
-                    className="h-7 w-7 mr-3 rounded-full bg-gray-900/40 flex items-center justify-center hover:bg-gray-800/60 transition-colors border border-gray-700/30"
+                    className={cn(
+                      "h-7 w-7 mr-3 rounded-full flex items-center justify-center transition-colors",
+                      getThemedBackgroundClasses('secondary')
+                    )}
                   >
-                    <X className="h-4 w-4 text-gray-400" style={{ color: '#9ca3af', stroke: '#9ca3af', strokeWidth: 2 }} />
+                    <X className={cn("h-4 w-4", getThemedTextClasses('muted'))} />
                   </button>
                 )}
               </div>
             </div>
             
-            <div className={getThemeClasses({
-              base: "flex px-4 border-b py-2 overflow-x-auto space-x-2 scrollbar-thin scrollbar-thumb-gray-600",
-              default: "border-gray-800",
-              blue: "border-blue-900",
-              pink: "border-pink-900"
-            })}>
+            <div className={cn(
+              "flex px-4 border-b py-2 overflow-x-auto space-x-2 scrollbar-thin scrollbar-thumb-gray-600",
+              "border-gdyup-border"
+            )}>
               {favoriteAirports.length > 0 && (
                 <>
                   {favoriteAirports.slice(0, 5).map((airport, idx) => (
                     <Badge 
                       key={`fav-${airport.code}-${idx}`}
-                      className={getThemeClasses({
-                        base: "cursor-pointer py-1 px-2 flex items-center gap-1 whitespace-nowrap",
-                        default: "bg-amber-700/30 hover:bg-amber-700/50 text-white border-amber-700/50",
-                        blue: "bg-blue-700/30 hover:bg-blue-700/50 text-white border-blue-700/50",
-                        pink: "bg-pink-700/30 hover:bg-pink-700/50 text-white border-pink-700/50"
-                      })}
+                      className={cn(
+                        "cursor-pointer py-1 px-2 flex items-center gap-1 whitespace-nowrap",
+                        getThemedBadgeClasses('primary')
+                      )}
                       onClick={() => handleSelect(airport)}
                     >
                       <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" style={{ fill: '#DAFF0D', color: '#000000', stroke: '#000000', strokeWidth: 1 }} />
@@ -756,7 +705,7 @@ function EnhancedLocationAutocomplete({
               {/* Favorites section */}
               {favoriteAirports.length > 0 && (
                 <div className="py-2">
-                  <div className="px-4 py-1 text-sm text-gray-500 font-medium">
+                  <div className={cn("px-4 py-1 text-sm font-medium", getThemedTextClasses('muted'))}>
                     Favorites
                   </div>
                   {favoriteAirports.map((airport, idx) => 
@@ -767,7 +716,7 @@ function EnhancedLocationAutocomplete({
               
               {/* Search results or recent airports */}
               <div className="py-2">
-                <div className="px-4 py-1 text-sm text-gray-500 font-medium">
+                <div className={cn("px-4 py-1 text-sm font-medium", getThemedTextClasses('muted'))}>
                   {results.length > 0 
                     ? `Search Results (${results.length})` 
                     : (recentAirports.length > 0 ? 'Recent Airports' : 'Popular Airports')}
@@ -800,12 +749,7 @@ function EnhancedLocationAutocomplete({
       )}
       
       {error && (
-        <p className={getThemeClasses({
-          base: "mt-1.5 text-sm",
-          default: "text-red-500",
-          blue: "text-red-400",
-          pink: "text-red-400"
-        })}>
+        <p className="mt-1.5 text-sm text-red-500">
           {error}
         </p>
       )}

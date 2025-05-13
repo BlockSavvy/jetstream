@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Map, Plane } from 'lucide-react';
 import { extractAirportCode, getAirportImage, PLACEHOLDER_AIRPORT_MAP } from '@/lib/utils/airport-images';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { cn } from '@/lib/utils';
 
 interface Airport {
   code: string;
@@ -46,6 +48,7 @@ export default function AirportMap({
   const [imageError, setImageError] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(PLACEHOLDER_AIRPORT_MAP);
   const [isShowingRoute, setIsShowingRoute] = useState<boolean>(false);
+  const { getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
 
   // Fetch airport data for both departure and arrival
   useEffect(() => {
@@ -151,11 +154,18 @@ export default function AirportMap({
   };
 
   return (
-    <div className={`relative w-full max-h-[240px] rounded-lg overflow-hidden ${className} ${hideUntilLoaded && !imageLoaded ? 'invisible' : 'visible'}`}>
+    <div className={cn(
+      "relative w-full max-h-[240px] rounded-lg overflow-hidden",
+      className,
+      hideUntilLoaded && !imageLoaded ? 'invisible' : 'visible'
+    )}>
       {/* Placeholder while loading */}
       {!imageLoaded && (
-        <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <Map className="w-12 h-12 text-gray-400" />
+        <div className={cn(
+          "absolute inset-0 flex items-center justify-center",
+          getThemedBackgroundClasses('card')
+        )}>
+          <Map className="w-12 h-12 text-gdyup-text-muted" />
         </div>
       )}
       
@@ -163,7 +173,7 @@ export default function AirportMap({
       <Image
         src={imageUrl}
         alt={departureAirport?.name || arrivalAirport?.name || 'Airport map'}
-        className={`w-full h-full object-cover ${imageClassName}`}
+        className={cn("w-full h-full object-cover", imageClassName)}
         onLoad={() => setImageLoaded(true)}
         onError={handleImageError}
         width={400}
@@ -179,7 +189,7 @@ export default function AirportMap({
             <div className="w-3/4 h-[3px] bg-gradient-to-r from-[#DAFF0D] via-[#DAFF0D] to-[#DAFF0D] relative">
               {/* Animated plane */}
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 z-10 animate-pulse">
-                <Plane className="h-4 w-4 text-[#DAFF0D] transform -rotate-45" />
+                <Plane className={cn("h-4 w-4 transform -rotate-45", getThemedTextClasses('primary'))} />
               </div>
               
               {/* Origin indicator dot */}
@@ -191,10 +201,16 @@ export default function AirportMap({
           </div>
           
           {/* Airport codes with more elegant styling */}
-          <div className="absolute bottom-3 left-3 bg-black/70 text-[#DAFF0D] text-xs font-bold rounded-full px-3 py-1 flex items-center">
+          <div className={cn(
+            "absolute bottom-3 left-3 bg-black/70 text-xs font-bold rounded-full px-3 py-1 flex items-center",
+            getThemedTextClasses('primary')
+          )}>
             {departureAirport.code}
           </div>
-          <div className="absolute bottom-3 right-3 bg-black/70 text-[#DAFF0D] text-xs font-bold rounded-full px-3 py-1 flex items-center">
+          <div className={cn(
+            "absolute bottom-3 right-3 bg-black/70 text-xs font-bold rounded-full px-3 py-1 flex items-center",
+            getThemedTextClasses('primary')
+          )}>
             {arrivalAirport.code}
           </div>
         </div>
@@ -202,7 +218,10 @@ export default function AirportMap({
       
       {/* Just show single airport code if not showing a route */}
       {imageLoaded && !imageError && !isShowingRoute && (
-        <div className="absolute bottom-3 right-3 bg-black/70 text-[#DAFF0D] text-xs font-bold rounded-full px-3 py-1 flex items-center">
+        <div className={cn(
+          "absolute bottom-3 right-3 bg-black/70 text-xs font-bold rounded-full px-3 py-1 flex items-center",
+          getThemedTextClasses('primary')
+        )}>
           <Plane className="w-3 h-3 mr-1" />
           {departureAirport?.code || arrivalAirport?.code || ''}
         </div>

@@ -39,7 +39,12 @@ export default function EnhancedAirportMap({
   showLabels = true,
   showAnimation = true,
 }: EnhancedAirportMapProps) {
-  const { theme, getThemeClasses } = useGdyupTheme();
+  const { 
+    theme, 
+    getThemedTextClasses,
+    getThemedBackgroundClasses,
+  } = useGdyupTheme();
+  
   const [isLoaded, setIsLoaded] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const planeControls = useAnimationControls();
@@ -79,27 +84,36 @@ export default function EnhancedAirportMap({
     md: "h-48",
     lg: "h-64"
   }[size];
+
+  // Theme-specific map backgrounds
+  const mapBackground = {
+    default: "bg-[url('/images/world-map-dark.png')]",
+    luxury: "bg-[url('/images/world-map-blue.png')]",
+    bitcoin: "bg-[url('/images/world-map-pink.png')]"
+  }[theme || 'default'];
+
+  // Theme-specific background colors
+  const bgColor = {
+    default: "bg-gdyup-accent/30 border-gdyup-border/50",
+    luxury: "bg-blue-900/30 border-blue-700/50",
+    bitcoin: "bg-pink-900/30 border-pink-700/50"
+  }[theme || 'default'];
   
   return (
     <div 
       ref={mapContainerRef}
       className={cn(
-        getThemeClasses({
-          base: `relative overflow-hidden rounded-lg border shadow-inner ${sizeClass}`,
-          default: "bg-gdyup-accent/30 border-gdyup-border/50",
-          blue: "bg-blue-900/30 border-blue-700/50",
-          pink: "bg-pink-900/30 border-pink-700/50"
-        }),
+        "relative overflow-hidden rounded-lg border shadow-inner",
+        bgColor,
+        sizeClass,
         className
       )}
     >
       {/* World map backdrop with theme-specific styling */}
-      <div className={getThemeClasses({
-        base: "absolute inset-0 opacity-40 bg-cover bg-center",
-        default: "bg-[url('/images/world-map-dark.png')]",
-        blue: "bg-[url('/images/world-map-blue.png')]",
-        pink: "bg-[url('/images/world-map-pink.png')]"
-      })} />
+      <div className={cn(
+        "absolute inset-0 opacity-40 bg-cover bg-center",
+        mapBackground
+      )} />
       
       {/* Route visualization */}
       <div className="absolute inset-0 flex items-center justify-center p-6">
@@ -107,33 +121,26 @@ export default function EnhancedAirportMap({
           {/* Departure airport */}
           <div className="flex flex-col items-center">
             {showLabels && (
-              <div className={getThemeClasses({
-                base: "text-xs uppercase font-semibold mb-1",
-                default: "text-white/80",
-                blue: "text-blue-200/80",
-                pink: "text-pink-200/80"
-              })}>
+              <div className={cn(
+                "text-xs uppercase font-semibold mb-1",
+                theme === 'default' ? "text-white/80" : 
+                theme === 'luxury' ? "text-blue-200/80" : 
+                "text-pink-200/80"
+              )}>
                 From
               </div>
             )}
-            <div className={getThemeClasses({
-              base: "flex items-center",
-              default: "",
-              blue: "",
-              pink: ""
-            })}>
-              <FaPlaneDeparture className={getThemeClasses({
-                base: "h-4 w-4 mr-1",
-                default: "text-white",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })} />
-              <div className={getThemeClasses({
-                base: "text-lg font-bold",
-                default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
-              })}>
+            <div className="flex items-center">
+              <FaPlaneDeparture className={cn(
+                "h-4 w-4 mr-1", 
+                theme === 'default' ? "text-white" : 
+                theme === 'luxury' ? "text-blue-300" : 
+                "text-pink-300"
+              )} />
+              <div className={cn(
+                "text-lg font-bold", 
+                getThemedTextClasses()
+              )}>
                 {departureCode}
               </div>
             </div>
@@ -142,12 +149,12 @@ export default function EnhancedAirportMap({
           {/* Flight path */}
           <div className="flex-1 mx-4 relative">
             <motion.div 
-              className={getThemeClasses({
-                base: "h-0.5 w-full absolute top-1/2 transform -translate-y-1/2",
-                default: "bg-white",
-                blue: "bg-blue-300",
-                pink: "text-pink-300"
-              })}
+              className={cn(
+                "h-0.5 w-full absolute top-1/2 transform -translate-y-1/2",
+                theme === 'default' ? "bg-white" : 
+                theme === 'luxury' ? "bg-blue-300" : 
+                "bg-pink-300"
+              )}
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: 0.8 }}
@@ -167,12 +174,12 @@ export default function EnhancedAirportMap({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
                 >
-                  <RiFlightTakeoffLine className={getThemeClasses({
-                    base: "h-6 w-6",
-                    default: "text-white",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })} />
+                  <RiFlightTakeoffLine className={cn(
+                    "h-6 w-6",
+                    theme === 'default' ? "text-white" : 
+                    theme === 'luxury' ? "text-blue-300" : 
+                    "text-pink-300"
+                  )} />
                 </motion.div>
               </motion.div>
             )}
@@ -181,35 +188,28 @@ export default function EnhancedAirportMap({
           {/* Arrival airport */}
           <div className="flex flex-col items-center">
             {showLabels && (
-              <div className={getThemeClasses({
-                base: "text-xs uppercase font-semibold mb-1",
-                default: "text-white/80",
-                blue: "text-blue-200/80",
-                pink: "text-pink-200/80"
-              })}>
+              <div className={cn(
+                "text-xs uppercase font-semibold mb-1",
+                theme === 'default' ? "text-white/80" : 
+                theme === 'luxury' ? "text-blue-200/80" : 
+                "text-pink-200/80"
+              )}>
                 To
               </div>
             )}
-            <div className={getThemeClasses({
-              base: "flex items-center",
-              default: "",
-              blue: "",
-              pink: ""
-            })}>
-              <div className={getThemeClasses({
-                base: "text-lg font-bold",
-                default: "text-white",
-                blue: "text-blue-100",
-                pink: "text-pink-100"
-              })}>
+            <div className="flex items-center">
+              <div className={cn(
+                "text-lg font-bold",
+                getThemedTextClasses()
+              )}>
                 {arrivalCode}
               </div>
-              <FaPlaneArrival className={getThemeClasses({
-                base: "h-4 w-4 ml-1",
-                default: "text-white",
-                blue: "text-blue-300",
-                pink: "text-pink-300"
-              })} />
+              <FaPlaneArrival className={cn(
+                "h-4 w-4 ml-1",
+                theme === 'default' ? "text-white" : 
+                theme === 'luxury' ? "text-blue-300" : 
+                "text-pink-300"
+              )} />
             </div>
           </div>
         </div>
@@ -217,12 +217,12 @@ export default function EnhancedAirportMap({
       
       {/* Optional flight details overlay */}
       {size === 'lg' && (
-        <div className={getThemeClasses({
-          base: "absolute bottom-0 left-0 right-0 p-2 text-xs",
-          default: "bg-black/50 text-white/70",
-          blue: "bg-blue-950/50 text-blue-200/70",
-          pink: "bg-pink-950/50 text-pink-200/70"
-        })}>
+        <div className={cn(
+          "absolute bottom-0 left-0 right-0 p-2 text-xs",
+          theme === 'default' ? "bg-black/50 text-white/70" : 
+          theme === 'luxury' ? "bg-blue-950/50 text-blue-200/70" : 
+          "bg-pink-950/50 text-pink-200/70"
+        )}>
           <div className="flex justify-between">
             <span>Distance: ~1,200 miles</span>
             <span>Est. flight time: 2h 45m</span>

@@ -2,9 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 export default function ClientRedirect({ url }: { url: string }) {
   const router = useRouter();
+  
+  // Get theme helpers
+  const { getThemedTextClasses, getThemedButtonClasses } = useGdyupTheme();
   
   // Use multiple redirect strategies for better reliability
   useEffect(() => {
@@ -40,12 +45,12 @@ export default function ClientRedirect({ url }: { url: string }) {
   
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] py-12">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#DAFF0D]"></div>
-      <p className="mt-4 text-gray-500 font-medium">Redirecting...</p>
-      <p className="mt-2 text-sm text-gray-400">If you are not redirected, 
+      <div className={cn("animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gdyup-primary")}></div>
+      <p className={cn("mt-4 font-medium", getThemedTextClasses('muted'))}>Redirecting...</p>
+      <p className={cn("mt-2 text-sm", getThemedTextClasses('muted'))}>If you are not redirected, 
         <button 
           onClick={() => window.location.href = url}
-          className="ml-1 text-[#DAFF0D] hover:underline focus:outline-none"
+          className={cn("ml-1 hover:underline focus:outline-none", getThemedTextClasses('primary'))}
         >
           click here
         </button>

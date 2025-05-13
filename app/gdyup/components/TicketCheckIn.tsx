@@ -27,7 +27,7 @@ export default function TicketCheckIn({
 }: TicketCheckInProps) {
   const [status, setStatus] = useState<'pending' | 'available' | 'completed' | 'expired'>(checkInStatus);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { getThemeClasses } = useGdyupTheme();
+  const { theme, getThemedTextClasses, getThemedButtonClasses } = useGdyupTheme();
   
   const flightDateTime = flightDate instanceof Date ? flightDate : new Date(flightDate);
   const boardingDateTime = boardingTime instanceof Date ? boardingTime : 
@@ -59,16 +59,41 @@ export default function TicketCheckIn({
     const isExpired = status === 'expired';
     return !isCheckInAvailable || isProcessing || isCompleted || isExpired;
   };
+
+  // Theme-specific background colors
+  const cardBg = {
+    default: "bg-black/30 border-gray-800",
+    luxury: "bg-blue-950/30 border-blue-900",
+    bitcoin: "bg-pink-950/30 border-pink-900"
+  }[theme || 'default'];
+
+  // Status badge styles
+  const getStatusBadgeClasses = () => {
+    if (status === 'completed') {
+      return "bg-green-900/30 text-green-400 border border-green-800";
+    } else if (status === 'available') {
+      return "bg-blue-900/30 text-blue-400 border border-blue-800";
+    } else if (status === 'pending') {
+      return "bg-amber-900/30 text-amber-400 border border-amber-800";
+    } else if (status === 'expired') {
+      return "bg-red-900/30 text-red-400 border border-red-800";
+    }
+    return "";
+  };
+
+  // Button styles
+  const getButtonClasses = () => {
+    if (status === 'completed') {
+      return "bg-green-800 hover:bg-green-700 text-white";
+    }
+    return getThemedButtonClasses('primary');
+  };
   
   return (
     <motion.div 
       className={cn(
-        getThemeClasses({
-          base: "rounded-lg border p-4",
-          default: "bg-black/30 border-gray-800",
-          blue: "bg-blue-950/30 border-blue-900",
-          pink: "bg-pink-950/30 border-pink-900"
-        }),
+        "rounded-lg border p-4",
+        cardBg, 
         className
       )}
       initial={{ opacity: 0, y: 20 }}
@@ -76,59 +101,46 @@ export default function TicketCheckIn({
       transition={{ duration: 0.4 }}
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className={getThemeClasses({
-          base: "text-lg font-medium",
-          default: "text-white",
-          blue: "text-blue-100",
-          pink: "text-pink-100"
-        })}>
+        <h3 className={getThemedTextClasses()}>
           Check-in Status
         </h3>
         
         <div>
           {status === 'completed' && (
-            <span className={getThemeClasses({
-              base: "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-              default: "bg-green-900/30 text-green-400 border border-green-800",
-              blue: "bg-green-900/30 text-green-400 border border-green-800",
-              pink: "bg-green-900/30 text-green-400 border border-green-800"
-            })}>
+            <span className={cn(
+              "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+              getStatusBadgeClasses()
+            )}>
               <Check className="mr-1 h-3 w-3" />
               Checked In
             </span>
           )}
           
           {status === 'available' && (
-            <span className={getThemeClasses({
-              base: "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-              default: "bg-blue-900/30 text-blue-400 border border-blue-800",
-              blue: "bg-blue-900/30 text-blue-400 border border-blue-800",
-              pink: "bg-blue-900/30 text-blue-400 border border-blue-800"
-            })}>
+            <span className={cn(
+              "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+              getStatusBadgeClasses()
+            )}>
               <Clock className="mr-1 h-3 w-3" />
               Available
             </span>
           )}
           
           {status === 'pending' && (
-            <span className={getThemeClasses({
-              base: "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-              default: "bg-amber-900/30 text-amber-400 border border-amber-800",
-              blue: "bg-amber-900/30 text-amber-400 border border-amber-800",
-              pink: "bg-amber-900/30 text-amber-400 border border-amber-800"
-            })}>
+            <span className={cn(
+              "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+              getStatusBadgeClasses()
+            )}>
               <Calendar className="mr-1 h-3 w-3" />
               Upcoming
             </span>
           )}
           
           {status === 'expired' && (
-            <span className={getThemeClasses({
-              base: "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
-              default: "bg-red-900/30 text-red-400 border border-red-800",
-              blue: "bg-red-900/30 text-red-400 border border-red-800",
-              pink: "bg-red-900/30 text-red-400 border border-red-800"
-            })}>
+            <span className={cn(
+              "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
+              getStatusBadgeClasses()
+            )}>
               <Clock className="mr-1 h-3 w-3" />
               Expired
             </span>
@@ -138,58 +150,28 @@ export default function TicketCheckIn({
       
       <div className="space-y-2 mb-4">
         <div className="flex justify-between">
-          <span className={getThemeClasses({
-            base: "text-sm",
-            default: "text-gray-400",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
-          })}>
+          <span className={getThemedTextClasses('muted')}>
             Flight Date:
           </span>
-          <span className={getThemeClasses({
-            base: "text-sm font-medium",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <span className={getThemedTextClasses()}>
             {format(flightDateTime, 'MMM d, yyyy')}
           </span>
         </div>
         
         <div className="flex justify-between">
-          <span className={getThemeClasses({
-            base: "text-sm",
-            default: "text-gray-400",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
-          })}>
+          <span className={getThemedTextClasses('muted')}>
             Boarding Time:
           </span>
-          <span className={getThemeClasses({
-            base: "text-sm font-medium",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <span className={getThemedTextClasses()}>
             {format(boardingDateTime, 'h:mm a')}
           </span>
         </div>
         
         <div className="flex justify-between">
-          <span className={getThemeClasses({
-            base: "text-sm",
-            default: "text-gray-400",
-            blue: "text-blue-300",
-            pink: "text-pink-300"
-          })}>
+          <span className={getThemedTextClasses('muted')}>
             Location:
           </span>
-          <span className={getThemeClasses({
-            base: "text-sm font-medium",
-            default: "text-white",
-            blue: "text-blue-100",
-            pink: "text-pink-100"
-          })}>
+          <span className={getThemedTextClasses()}>
             {departureLocation}
           </span>
         </div>
@@ -201,18 +183,7 @@ export default function TicketCheckIn({
           disabled={isButtonDisabled()}
           className={cn(
             "w-full",
-            getThemeClasses({
-              base: "",
-              default: status === 'completed' 
-                ? "bg-green-800 hover:bg-green-700 text-white"
-                : "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              blue: status === 'completed'
-                ? "bg-green-800 hover:bg-green-700 text-white"
-                : "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text",
-              pink: status === 'completed'
-                ? "bg-green-800 hover:bg-green-700 text-white"
-                : "bg-gdyup-primary hover:bg-gdyup-primary/90 text-gdyup-button-text"
-            })
+            getButtonClasses()
           )}
         >
           {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -222,12 +193,7 @@ export default function TicketCheckIn({
           {status === 'expired' && 'Check-in Expired'}
         </Button>
         
-        <p className={getThemeClasses({
-          base: "text-xs mt-2 text-center",
-          default: "text-gray-400",
-          blue: "text-blue-300",
-          pink: "text-pink-300"
-        })}>
+        <p className={getThemedTextClasses('muted')}>
           {status === 'completed' 
             ? 'You have successfully checked in for your flight.'
             : status === 'expired'

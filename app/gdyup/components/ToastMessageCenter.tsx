@@ -9,7 +9,7 @@ export function ToastMessageCenter() {
   // Choose theme-specific colors for the toasts
   const getToastTheme = () => {
     switch (theme) {
-      case 'blue':
+      case 'luxury':
         return {
           background: '#0f172a', // dark blue
           foreground: '#e2e8f0', // light text
@@ -19,7 +19,7 @@ export function ToastMessageCenter() {
           warning: '#f59e0b', // warning amber
           info: '#3b82f6', // info blue
         };
-      case 'pink':
+      case 'bitcoin':
         return {
           background: '#4a1d2e', // dark pink
           foreground: '#fce7f3', // light text
