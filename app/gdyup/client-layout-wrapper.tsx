@@ -1,126 +1,81 @@
 'use client';
 
-import { ReactNode, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { GdyupThemeProvider } from './hooks/useGdyupTheme';
+import ThemeManager from './components/ThemeManager';
+import { NostrProvider } from './contexts/NostrContext';
 import GdyupHeader from './components/GdyupHeader';
-import { useAuth } from '@/lib/auth-provider';
-import { OnboardingMiddleware } from './components/onboarding/onboarding-middleware';
-import CustomHead from './head';
+import { ConciergeProvider } from '@/app/components/concierge-provider';
+import { ConciergeButton } from '@/components/concierge-button';
+
+// Import all CSS files to ensure proper styling is available
+import './gdyup.css';
+import './index.css';
+import './components/gdyup-forms.css';
 import './pwa-fixes.css';
+import './components/themed-icons.css';
 
-export function ClientLayoutWrapper({ children }: { children: ReactNode }) {
-  const { user, loading: authLoading } = useAuth();
-  const [isMobile, setIsMobile] = useState(false);
-  const [theme, setTheme] = useState<string>('default');
-  const initialized = useRef(false);
-  const currentThemeRef = useRef<string>('default');
+/**
+ * Enhanced ClientLayoutWrapper that handles all client-side functionality
+ * This isolates client components from the server component layout
+ * to prevent hydration issues and chunk loading errors
+ */
+export function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   
-  // Console log the auth state for debugging
+  // Initialize theme from localStorage safely after component mounts
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_AUTH_DEV_MODE === 'true') {
-      console.log('DEV MODE: GDY UP Layout Auth State:', { 
-        isAuthenticated: !!user, 
-        authLoading 
-      });
-    }
-  }, [user, authLoading]);
-
-  // Get current theme from localStorage once
-  useEffect(() => {
-    // Only run once on mount
-    if (initialized.current) return;
-    initialized.current = true;
-    
-    // Get the initial theme from class already applied by ThemeManager
-    // or fall back to localStorage
-    const themeClass = Array.from(document.documentElement.classList)
-      .find(cls => cls.startsWith('gdyup-theme-'));
-    
-    let initialTheme = 'default';
-    if (themeClass) {
-      initialTheme = themeClass.replace('gdyup-theme-', '');
-    } else {
+    // Apply theme as early as possible
+    if (typeof window !== 'undefined') {
       try {
-        const storedTheme = localStorage.getItem('gdyup-theme');
-        if (storedTheme) initialTheme = storedTheme;
-      } catch (error) {
-        console.error('Theme state error:', error);
-      }
-    }
-    
-    currentThemeRef.current = initialTheme;
-    setTheme(initialTheme);
-    
-    // Listen for storage events from other tabs
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'gdyup-theme') {
-        const newTheme = e.newValue || 'default';
-        // Only update if the theme is different from our current ref
-        if (newTheme !== currentThemeRef.current) {
-          currentThemeRef.current = newTheme;
-          setTheme(newTheme);
+        // Set default theme via data attribute
+        document.documentElement.setAttribute('data-gdyup-theme', 'default');
+        
+        // Then try to load from localStorage if available
+        const savedTheme = localStorage.getItem('gdyup-theme');
+        if (savedTheme && ['default', 'luxury', 'bitcoin'].includes(savedTheme)) {
+          document.documentElement.setAttribute('data-gdyup-theme', savedTheme);
         }
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []); // Empty dependency array - only run once
-
-  // Add mobile detection - no theme management here
-  useEffect(() => {
-    // Detect if the user is on a mobile device
-    const checkMobile = () => {
-      const isMobileDevice = typeof window !== 'undefined' && 
-        (window.innerWidth <= 768 || 
-         /Android/i.test(navigator.userAgent) ||
-         /iPhone|iPad|iPod/i.test(navigator.userAgent));
-      
-      setIsMobile(!!isMobileDevice);
-      
-      // Store preference
-      try {
-        localStorage.setItem('jetstream_is_mobile', isMobileDevice ? 'true' : 'false');
       } catch (e) {
-        console.warn('Could not store mobile preference:', e);
+        console.error('Theme storage access error:', e);
       }
-    };
+    }
     
-    // Run on mount
-    checkMobile();
-    
-    // Add resize listener
-    window.addEventListener('resize', checkMobile);
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
+    // Mark component as mounted
+    setMounted(true);
+    console.log('[ClientLayoutWrapper] Mounted successfully');
   }, []);
   
-  // Show loading state while auth is initializing
-  if (authLoading) {
+  // During SSR or before mounting, render a minimal placeholder
+  if (!mounted) {
     return (
-      <main className="min-h-screen bg-background dark gdyup-app">
-        <div className="flex items-center justify-center h-screen">
-          <p>Loading GDY UP...</p>
-        </div>
-      </main>
+      <div className="min-h-screen bg-black flex items-center justify-center" suppressHydrationWarning>
+        <div className="w-10 h-10 rounded-full border-2 border-gray-300 border-t-black animate-spin"></div>
+      </div>
     );
   }
   
+  // After mounting, render the full layout with all providers
   return (
-    <>
-      <CustomHead />
-      <main className={`min-h-screen bg-background dark gdyup-app gdyup-theme-${theme}`}>
-        <OnboardingMiddleware>
-          <GdyupHeader />
-          <div className={`gdyup-content-container ${isMobile ? 'px-2 py-2' : 'px-4 py-4'}`}>
-            {children}
+    <GdyupThemeProvider>
+      <NostrProvider>
+        <ConciergeProvider>
+          <div className="min-h-screen flex flex-col bg-gdyup-bg-dark">
+            <GdyupHeader />
+            <ThemeManager>
+              <main className="flex-1 pb-24">
+                {children}
+              </main>
+              <div className="flex justify-center items-center">
+                <ConciergeButton 
+                  position="bottom-nav"
+                  imageUrl="/icons/conciergebutton.png" 
+                />
+              </div>
+            </ThemeManager>
           </div>
-        </OnboardingMiddleware>
-      </main>
-    </>
+        </ConciergeProvider>
+      </NostrProvider>
+    </GdyupThemeProvider>
   );
 } 

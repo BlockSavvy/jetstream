@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase';
+import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 export default function JetShareHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function JetShareHeader() {
   const { user, loading, signOut } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [hasLocalAuth, setHasLocalAuth] = useState(false);
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
 
   useEffect(() => {
     setIsClient(true);
@@ -138,19 +140,15 @@ export default function JetShareHeader() {
     router.push(`/auth/login?returnUrl=${encodeURIComponent(currentPath)}&t=${timestamp}`);
   };
 
-  // GDY UP brand colors
-  const primaryColor = "#DAFF0D"; // Enhanced for better contrast
-
   return (
-    <header className="sticky top-0 z-50 bg-black border-b border-gray-800" style={{ "--brand-color": primaryColor } as React.CSSProperties}>
+    <header className="sticky top-0 z-50 bg-gdyup-bg-dark border-b border-gdyup-border">
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Link 
               href="/gdyup" 
-              className="text-2xl font-bold"
-              style={{ color: primaryColor }}
+              className={cn("text-2xl font-bold", getThemedTextClasses('primary'))}
             >
               GDY UP
             </Link>
@@ -165,10 +163,9 @@ export default function JetShareHeader() {
                 className={cn(
                   "flex items-center space-x-1 text-sm font-medium transition-colors",
                   isActive(item.path)
-                    ? { color: primaryColor }
-                    : "text-gray-100 hover:text-white"
+                    ? getThemedTextClasses('primary')
+                    : "text-gdyup-text hover:text-gdyup-text-medium"
                 )}
-                style={isActive(item.path) ? { color: primaryColor } : {}}
               >
                 {item.icon}
                 <span>{item.name}</span>
@@ -176,7 +173,7 @@ export default function JetShareHeader() {
             ))}
             
             {/* Divider */}
-            <div className="h-5 w-px bg-gray-700 mx-1" />
+            <div className="h-5 w-px bg-gdyup-border mx-1" />
             
             {/* Profile link */}
             <Link 
@@ -184,10 +181,9 @@ export default function JetShareHeader() {
               className={cn(
                 "flex items-center space-x-1 text-sm font-medium transition-colors",
                 isActive('/gdyup/profile')
-                  ? { color: primaryColor }
-                  : "text-gray-100 hover:text-white"
+                  ? getThemedTextClasses('primary')
+                  : "text-gdyup-text hover:text-gdyup-text-medium"
               )}
-              style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
             >
               <User className="h-5 w-5" />
               <span>Profile</span>
@@ -198,16 +194,19 @@ export default function JetShareHeader() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-sm text-gray-100 hover:text-white"
+                className="text-sm text-gdyup-text hover:text-gdyup-text-medium"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 More
               </Button>
-              <div className="absolute right-0 mt-2 w-56 origin-top-right bg-gray-900 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className={cn(
+                getThemedBackgroundClasses('card'),
+                "absolute right-0 mt-2 w-56 origin-top-right rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
+              )}>
                 <div className="py-1">
                   <Link 
                     href="/" 
-                    className="flex px-4 py-2 text-sm text-gray-100 hover:bg-gray-800 hover:text-white"
+                    className="flex px-4 py-2 text-sm text-gdyup-text hover:bg-gdyup-bg-hover hover:text-gdyup-primary"
                   >
                     <ChevronLeft className="h-5 w-5 mr-2" />
                     <span>Back to JetStream</span>
@@ -222,7 +221,7 @@ export default function JetShareHeader() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleSignOut}
-                className="text-red-300 hover:text-red-200 hover:bg-red-900/30"
+                className={cn(getThemedTextClasses('destructive'), "hover:bg-red-900/30 hover:text-red-200")}
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -232,8 +231,7 @@ export default function JetShareHeader() {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleSignIn}
-                style={{ color: primaryColor }}
-                className="hover:bg-gray-800 hover:brightness-110"
+                className={cn(getThemedTextClasses('primary'), "hover:bg-gdyup-bg-hover hover:brightness-110")}
               >
                 <LogIn className="h-4 w-4 mr-2" />
                 Sign In
@@ -244,13 +242,14 @@ export default function JetShareHeader() {
           {/* Mobile Menu Button */}
           <button
             type="button"
-            className="md:hidden rounded-md p-2 text-gray-100 hover:bg-gray-800 hover:text-white"
+            className="md:hidden rounded-md p-2 text-gdyup-text hover:bg-gdyup-bg-hover hover:text-gdyup-primary"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{ color: 'var(--gdyup-text)' }}
           >
             {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className={cn("h-6 w-6", getThemedTextClasses())} style={{ color: 'inherit' }} />
             ) : (
-              <Menu className="h-6 w-6" />
+              <Menu className={cn("h-6 w-6", getThemedTextClasses())} style={{ color: 'inherit' }} />
             )}
           </button>
         </div>
@@ -265,10 +264,9 @@ export default function JetShareHeader() {
                 className={cn(
                   "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                   isActive(item.path)
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-100 hover:bg-gray-800 hover:text-white"
+                    ? "bg-gdyup-bg-card text-gdyup-primary"
+                    : "text-gdyup-text hover:bg-gdyup-bg-hover hover:text-gdyup-primary"
                 )}
-                style={isActive(item.path) ? { color: primaryColor } : {}}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.icon}
@@ -282,23 +280,26 @@ export default function JetShareHeader() {
               className={cn(
                 "flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
                 isActive('/gdyup/profile')
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-100 hover:bg-gray-800 hover:text-white"
+                  ? "bg-gdyup-bg-card text-gdyup-primary"
+                  : "text-gdyup-text hover:bg-gdyup-bg-hover hover:text-gdyup-primary"
               )}
-              style={isActive('/gdyup/profile') ? { color: primaryColor } : {}}
               onClick={() => setMobileMenuOpen(false)}
             >
               <User className="h-5 w-5" />
               <span>Profile</span>
             </Link>
             
-            <div className="h-px bg-gray-700 my-2" />
+            <div className="h-px bg-gdyup-border my-2" />
             
             {/* Conditional auth buttons for mobile */}
             {isAuthenticated ? (
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-red-300 hover:bg-red-900/30"
+                className={cn(
+                  "w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                  getThemedTextClasses('destructive'),
+                  "hover:bg-red-900/30"
+                )}
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sign Out</span>
@@ -306,8 +307,11 @@ export default function JetShareHeader() {
             ) : (
               <button
                 onClick={handleSignIn}
-                className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-800 hover:brightness-110"
-                style={{ color: primaryColor }}
+                className={cn(
+                  "w-full flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium",
+                  getThemedTextClasses('primary'),
+                  "hover:bg-gdyup-bg-hover hover:brightness-110"
+                )}
               >
                 <LogIn className="h-5 w-5" />
                 <span>Sign In</span>
@@ -315,11 +319,11 @@ export default function JetShareHeader() {
             )}
             
             {/* Move back to JetStream link to bottom */}
-            <div className="h-px bg-gray-700 my-2" />
+            <div className="h-px bg-gdyup-border my-2" />
             
             <Link 
               href="/"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gray-100 hover:bg-gray-800 hover:text-white"
+              className="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-gdyup-text hover:bg-gdyup-bg-hover hover:text-gdyup-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               <ChevronLeft className="h-5 w-5" />
