@@ -115,7 +115,10 @@ export async function GET(request: NextRequest) {
     }
     
     // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Check user jet ownership first
     const hasJets = await checkJetOwnership(supabase, userId)
@@ -126,7 +129,7 @@ export async function GET(request: NextRequest) {
       .select(
         includeDetails 
           ? `*, interior_images, exterior_images, layouts, assignments` 
-          : `id, registration, make, model, seat_capacity, created_at, updated_at`
+          : `id, manufacturer, model, tail_number, capacity, created_at, updated_at, status, image_url, home_base_airport, category, owner_id`
       )
       .eq('owner_id', userId)
       
@@ -140,7 +143,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       hasJets,
-      jets: data
+      data: data
     })
   } catch (error) {
     console.error('Error in jets API:', error)

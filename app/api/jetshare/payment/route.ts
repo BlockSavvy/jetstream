@@ -23,8 +23,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
     
-    // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Fix the cookies handling
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Get the offer details
     const { data: offer, error: offerError } = await supabase

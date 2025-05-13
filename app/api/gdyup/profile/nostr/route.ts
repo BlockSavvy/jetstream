@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies })
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Update the profile with Nostr data
     const { data, error } = await supabase
@@ -61,7 +64,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
     
-    const supabase = await createRouteHandlerClient({ cookies })
+    const cookieStore = cookies();
+    const supabase = await createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Fetch the user Nostr data
     const { data, error } = await supabase
@@ -125,7 +131,10 @@ export async function PUT(request: NextRequest) {
       // Check if the pubkey matches
       if (data.names && data.names[name] === pubkey) {
         // Update the user profile with verified NIP-05
-        const supabase = await createRouteHandlerClient({ cookies })
+        const cookieStore = cookies();
+        const supabase = await createRouteHandlerClient({ 
+          cookies: () => cookieStore
+        });
         
         const { data: profileData, error } = await supabase
           .from('profiles')

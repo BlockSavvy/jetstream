@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
   
   try {
     // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Make sure wallet table exists
     await setupWalletTable(supabase);
@@ -70,7 +73,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Make sure wallet table exists
     await setupWalletTable(supabase);

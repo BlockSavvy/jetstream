@@ -107,7 +107,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing jet_id parameter' }, { status: 400 });
   }
   
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ 
+    cookies: () => cookieStore
+  });
   
   try {
     // First try to get from jet_interiors table which has the most accurate seat info

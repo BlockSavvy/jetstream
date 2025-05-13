@@ -13,8 +13,11 @@ export async function GET(
   }
   
   try {
-    // Initialize Supabase client
-    const supabase = createRouteHandlerClient({ cookies });
+    // Correct cookies handling
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ 
+      cookies: () => cookieStore
+    });
     
     // Get the offer details
     const { data: offer, error } = await supabase
