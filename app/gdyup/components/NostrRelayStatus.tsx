@@ -23,19 +23,19 @@ export default function NostrRelayStatus({
   showTooltip = true,
   className
 }: NostrRelayStatusProps) {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedBadgeClasses, getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>(
     isConnected ? 'connected' : 'disconnected'
   );
   
-  // Simulate connection status changes for demo purposes
+  // Updated to use isConnected prop directly instead of simulating
   useEffect(() => {
-    if (isConnected) {
-      setConnectionStatus('connected');
+    if (isConnected !== undefined) {
+      setConnectionStatus(isConnected ? 'connected' : 'disconnected');
       return;
     }
     
-    // Simulate a connection attempt
+    // Fallback to simulated behavior for demo purposes only when isConnected is not provided
     setConnectionStatus('connecting');
     const timer = setTimeout(() => {
       // 70% chance of successful connection for demo
@@ -79,28 +79,22 @@ export default function NostrRelayStatus({
     </motion.div>
   );
   
+  // Enhanced custom styles for better contrast
+  const getCustomStyles = () => {
+    if (connectionStatus === 'connected') {
+      return "bg-green-600/90 text-white border border-green-500 font-medium";
+    }
+    if (connectionStatus === 'disconnected') {
+      return "bg-red-600/90 text-white border border-red-500 font-medium";
+    }
+    return "bg-amber-600/90 text-white border border-amber-500 font-medium"; // 'connecting' state
+  };
+  
   const badge = (
     <Badge
       className={cn(
         sizeClasses[size],
-        getThemeClasses({
-          base: "font-medium",
-          default: connectionStatus === 'connected' 
-            ? "bg-green-700 hover:bg-green-800 text-white" 
-            : connectionStatus === 'disconnected'
-            ? "bg-red-700 hover:bg-red-800 text-white"
-            : "bg-amber-700 hover:bg-amber-800 text-white",
-          blue: connectionStatus === 'connected'
-            ? "bg-green-800 hover:bg-green-900 text-green-100"
-            : connectionStatus === 'disconnected'
-            ? "bg-red-800 hover:bg-red-900 text-red-100"
-            : "bg-amber-800 hover:bg-amber-900 text-amber-100",
-          pink: connectionStatus === 'connected'
-            ? "bg-green-800 hover:bg-green-900 text-green-100"
-            : connectionStatus === 'disconnected'
-            ? "bg-red-800 hover:bg-red-900 text-red-100"
-            : "bg-amber-800 hover:bg-amber-900 text-amber-100",
-        }),
+        getCustomStyles(),
         className
       )}
     >
@@ -118,7 +112,11 @@ export default function NostrRelayStatus({
         <TooltipTrigger asChild>
           {badge}
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
+        <TooltipContent className={cn(
+          "max-w-xs",
+          getThemedBackgroundClasses('card'),
+          getThemedTextClasses()
+        )}>
           {connectionStatus === 'connected' && (
             <p>
               Connected to {relayUrl}

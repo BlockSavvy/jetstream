@@ -53,15 +53,29 @@ export default function WalletIdentityTab() {
   const [lightningAddress, setLightningAddress] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses, getThemedBadgeClasses } = useGdyupTheme();
   const { user } = useAuth();
-  const { pubkey, nip05, isConnected, isEnabled } = useNostr();
+  const { pubkey, nip05, isConnected, isEnabled, hasNip05 } = useNostr();
+
+  // Add state to cache data to prevent excessive API calls
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const [fetchAttempts, setFetchAttempts] = useState(0);
+  const CACHE_TIMEOUT = 30000; // 30 seconds cache
 
   useEffect(() => {
     const fetchWalletData = async () => {
       if (!user?.id) return;
       
+      // Check if we have recent data to avoid excessive API calls
+      const now = Date.now();
+      if (wallet && now - lastFetchTime < CACHE_TIMEOUT && fetchAttempts > 0) {
+        console.log('Using cached wallet data');
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true);
+      setFetchAttempts(prev => prev + 1);
       
       try {
         // First try to get profile data which has the correct wallet info
@@ -88,8 +102,8 @@ export default function WalletIdentityTab() {
             setWallet({
               user_id: user.id,
               bitcoin_address: bitcoinAddress,
-              lightning_address: profileData.profile.lightning_address || null,
-              custodial: false, 
+              lightning_address: profileData.profile.lightning_address || profileData.profile.lnurl || null,
+              custodial: profileData.profile.lightningWalletType === 'custodial',
               nostr_linked: !!profileData.profile.nostr_pubkey,
               nostr_pubkey: profileData.profile.nostr_pubkey || null,
               nip05: profileData.profile.nip05 || null,
@@ -98,8 +112,10 @@ export default function WalletIdentityTab() {
             
             // Set the form values to match
             setBitcoinAddress(bitcoinAddress || '');
-            setLightningAddress(profileData.profile.lightning_address || '');
+            setLightningAddress(profileData.profile.lightning_address || profileData.profile.lnurl || '');
             
+            // Update cache timestamp
+            setLastFetchTime(now);
             setIsLoading(false);
             return;
           }
@@ -116,6 +132,7 @@ export default function WalletIdentityTab() {
             setWallet(data.wallet);
             setBitcoinAddress(data.wallet.bitcoin_address || '');
             setLightningAddress(data.wallet.lightning_address || '');
+            setLastFetchTime(now);
           }
         }
       } catch (error) {
@@ -127,7 +144,7 @@ export default function WalletIdentityTab() {
     };
     
     fetchWalletData();
-  }, [user?.id]);
+  }, [user?.id, wallet, lastFetchTime, fetchAttempts]);
 
   const handleSaveWallet = async () => {
     if (!user) return;
@@ -156,6 +173,10 @@ export default function WalletIdentityTab() {
       const data = await response.json();
       setWallet(data.wallet);
       setEditMode(false);
+      
+      // Clear cache time to force a refresh
+      setLastFetchTime(0);
+      
       toast.success('Wallet information saved successfully');
     } catch (error) {
       console.error('Error saving wallet information:', error);
@@ -178,39 +199,19 @@ export default function WalletIdentityTab() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className={getThemeClasses({
-          base: "border",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}>
+        <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className={getThemeClasses({
-                  base: "",
-                  default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
-                })}>
+                <CardTitle className={getThemedTextClasses()}>
                   Bitcoin Wallet
                 </CardTitle>
-                <CardDescription className={getThemeClasses({
-                  base: "",
-                  default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
-                })}>
+                <CardDescription className={getThemedTextClasses('muted')}>
                   Your BTC and Lightning payment details
                 </CardDescription>
               </div>
               
-              <div className={getThemeClasses({
-                base: "p-2 rounded-full",
-                default: "bg-gray-800 text-amber-500",
-                blue: "bg-blue-900 text-amber-500",
-                pink: "bg-pink-900 text-amber-500"
-              })}>
+              <div className={cn("p-2 rounded-full bg-gdyup-bg-dark text-amber-500")}>
                 <Bitcoin className="h-5 w-5" />
               </div>
             </div>
@@ -219,74 +220,34 @@ export default function WalletIdentityTab() {
           <CardContent>
             {isLoading ? (
               <div className="space-y-4">
-                <Skeleton className={getThemeClasses({
-                  base: "h-5 w-40",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-10 w-full",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-5 w-40",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-10 w-full",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
+                <Skeleton className={cn("h-5 w-40 bg-gdyup-bg-dark")} />
+                <Skeleton className={cn("h-10 w-full bg-gdyup-bg-dark")} />
+                <Skeleton className={cn("h-5 w-40 bg-gdyup-bg-dark")} />
+                <Skeleton className={cn("h-10 w-full bg-gdyup-bg-dark")} />
               </div>
             ) : editMode ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-300",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <Label className={getThemedTextClasses('muted')}>
                     BTC Address
                   </Label>
                   <Input
                     value={bitcoinAddress}
                     onChange={(e) => setBitcoinAddress(e.target.value)}
                     placeholder="bc1q..."
-                    className={getThemeClasses({
-                      base: "",
-                      default: "bg-gray-800 border-gray-700 text-white",
-                      blue: "bg-blue-900 border-blue-800 text-blue-50",
-                      pink: "bg-pink-900 border-pink-800 text-pink-50"
-                    })}
+                    className={cn("bg-gdyup-bg-dark border-gdyup-border", getThemedTextClasses())}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className={getThemeClasses({
-                    base: "",
-                    default: "text-gray-300",
-                    blue: "text-blue-300",
-                    pink: "text-pink-300"
-                  })}>
+                  <Label className={getThemedTextClasses('muted')}>
                     Lightning Address (LNURL / LUD16)
                   </Label>
                   <Input
                     value={lightningAddress}
                     onChange={(e) => setLightningAddress(e.target.value)}
                     placeholder="you@provider.com"
-                    className={getThemeClasses({
-                      base: "",
-                      default: "bg-gray-800 border-gray-700 text-white",
-                      blue: "bg-blue-900 border-blue-800 text-blue-50",
-                      pink: "bg-pink-900 border-pink-800 text-pink-50"
-                    })}
+                    className={cn("bg-gdyup-bg-dark border-gdyup-border", getThemedTextClasses())}
                   />
                 </div>
                 
@@ -294,12 +255,7 @@ export default function WalletIdentityTab() {
                   <Button
                     variant="outline"
                     onClick={() => setEditMode(false)}
-                    className={getThemeClasses({
-                      base: "flex-1",
-                      default: "border-gray-700 hover:bg-gray-800",
-                      blue: "border-blue-700 hover:bg-blue-800",
-                      pink: "border-pink-700 hover:bg-pink-800"
-                    })}
+                    className={cn("flex-1", "border-gdyup-border", getThemedTextClasses())}
                   >
                     Cancel
                   </Button>
@@ -307,7 +263,7 @@ export default function WalletIdentityTab() {
                   <Button
                     onClick={handleSaveWallet}
                     disabled={isSaving}
-                    className="flex-1"
+                    className={cn("flex-1", getThemedButtonClasses('primary'))}
                   >
                     {isSaving ? (
                       <>
@@ -325,34 +281,19 @@ export default function WalletIdentityTab() {
             ) : wallet ? (
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <div className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-sm"}>
                     BTC Address
                   </div>
                   {wallet.bitcoin_address ? (
                     <div className="flex justify-between items-center">
-                      <div className={getThemeClasses({
-                        base: "font-mono text-sm break-all",
-                        default: "text-white",
-                        blue: "text-blue-50",
-                        pink: "text-pink-50"
-                      })}>
+                      <div className={cn("font-mono text-sm break-all", getThemedTextClasses())}>
                         {wallet.bitcoin_address}
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => copyToClipboard(wallet.bitcoin_address!, 'BTC Address')}
-                        className={getThemeClasses({
-                          base: "h-8 w-8",
-                          default: "text-gray-400 hover:text-white",
-                          blue: "text-blue-400 hover:text-blue-50",
-                          pink: "text-pink-400 hover:text-pink-50"
-                        })}
+                        className={cn("h-8 w-8", getThemedTextClasses('muted'))}
                       >
                         {copiedField === 'BTC Address' ? (
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -362,46 +303,26 @@ export default function WalletIdentityTab() {
                       </Button>
                     </div>
                   ) : (
-                    <div className={getThemeClasses({
-                      base: "text-sm italic",
-                      default: "text-gray-500",
-                      blue: "text-blue-500",
-                      pink: "text-pink-500"
-                    })}>
+                    <div className={cn("text-sm italic", getThemedTextClasses('muted'))}>
                       No BTC address set
                     </div>
                   )}
                 </div>
                 
                 <div className="space-y-1">
-                  <div className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-sm"}>
                     Lightning Address
                   </div>
                   {wallet.lightning_address ? (
                     <div className="flex justify-between items-center">
-                      <div className={getThemeClasses({
-                        base: "font-mono text-sm break-all",
-                        default: "text-white",
-                        blue: "text-blue-50",
-                        pink: "text-pink-50"
-                      })}>
+                      <div className={cn("font-mono text-sm break-all", getThemedTextClasses())}>
                         {wallet.lightning_address}
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => copyToClipboard(wallet.lightning_address!, 'Lightning Address')}
-                        className={getThemeClasses({
-                          base: "h-8 w-8",
-                          default: "text-gray-400 hover:text-white",
-                          blue: "text-blue-400 hover:text-blue-50",
-                          pink: "text-pink-400 hover:text-pink-50"
-                        })}
+                        className={cn("h-8 w-8", getThemedTextClasses('muted'))}
                       >
                         {copiedField === 'Lightning Address' ? (
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -411,12 +332,7 @@ export default function WalletIdentityTab() {
                       </Button>
                     </div>
                   ) : (
-                    <div className={getThemeClasses({
-                      base: "text-sm italic",
-                      default: "text-gray-500", 
-                      blue: "text-blue-500",
-                      pink: "text-pink-500"
-                    })}>
+                    <div className={cn("text-sm italic", getThemedTextClasses('muted'))}>
                       No Lightning Address set
                     </div>
                   )}
@@ -425,12 +341,7 @@ export default function WalletIdentityTab() {
                 <div className="pt-3">
                   <Button
                     onClick={() => setEditMode(true)}
-                    className={getThemeClasses({
-                      base: "w-full",
-                      default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                      blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                      pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-                    })}
+                    className={cn("w-full", getThemedButtonClasses('primary'))}
                   >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Wallet Information
@@ -439,22 +350,16 @@ export default function WalletIdentityTab() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className={getThemeClasses({
-                  base: "text-center p-4 rounded-lg border",
-                  default: "bg-gray-800/50 border-gray-700 text-gray-300",
-                  blue: "bg-blue-900/50 border-blue-800 text-blue-300",
-                  pink: "bg-pink-900/50 border-pink-800 text-pink-300"
-                })}>
+                <div className={cn(
+                  "text-center p-4 rounded-lg border",
+                  "bg-gdyup-bg-dark/50 border-gdyup-border",
+                  getThemedTextClasses('muted')
+                )}>
                   <Wallet className="h-8 w-8 mx-auto mb-2 opacity-70" />
                   <p className="mb-4">No wallet information found. Add your Bitcoin and Lightning addresses.</p>
                   <Button
                     onClick={() => setEditMode(true)}
-                    className={getThemeClasses({
-                      base: "",
-                      default: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                      blue: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90",
-                      pink: "bg-gdyup-primary text-black hover:bg-gdyup-primary/90"
-                    })}
+                    className={getThemedButtonClasses('primary')}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Wallet
@@ -464,12 +369,11 @@ export default function WalletIdentityTab() {
             )}
           </CardContent>
           
-          <CardFooter className={getThemeClasses({
-            base: "flex justify-between text-xs border-t",
-            default: "border-gray-800 text-gray-500",
-            blue: "border-blue-900 text-blue-500",
-            pink: "border-pink-900 text-pink-500"
-          })}>
+          <CardFooter className={cn(
+            "flex justify-between text-xs border-t",
+            "border-gdyup-border",
+            getThemedTextClasses('muted')
+          )}>
             <div>Self-custodial wallet</div>
             {wallet?.nostr_linked && isConnected && (
               <div className="flex items-center gap-1">
@@ -480,39 +384,19 @@ export default function WalletIdentityTab() {
           </CardFooter>
         </Card>
 
-        <Card className={getThemeClasses({
-          base: "border",
-          default: "bg-gray-900 border-gray-800",
-          blue: "bg-blue-950 border-blue-900",
-          pink: "bg-pink-950 border-pink-900"
-        })}>
+        <Card className={cn(getThemedBackgroundClasses('card'), "border-gdyup-border")}>
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className={getThemeClasses({
-                  base: "",
-                  default: "text-white",
-                  blue: "text-blue-50",
-                  pink: "text-pink-50"
-                })}>
+                <CardTitle className={getThemedTextClasses()}>
                   Nostr Identity
                 </CardTitle>
-                <CardDescription className={getThemeClasses({
-                  base: "",
-                  default: "text-gray-400",
-                  blue: "text-blue-400",
-                  pink: "text-pink-400"
-                })}>
+                <CardDescription className={getThemedTextClasses('muted')}>
                   Your decentralized web identity
                 </CardDescription>
               </div>
               
-              <div className={getThemeClasses({
-                base: "p-2 rounded-full",
-                default: "bg-gray-800 text-blue-500",
-                blue: "bg-blue-900 text-blue-500",
-                pink: "bg-pink-900 text-blue-500"
-              })}>
+              <div className={cn("p-2 rounded-full bg-gdyup-bg-dark text-blue-500")}>
                 <Radio className="h-5 w-5" />
               </div>
             </div>
@@ -521,89 +405,44 @@ export default function WalletIdentityTab() {
           <CardContent>
             {isLoading ? (
               <div className="space-y-4">
-                <Skeleton className={getThemeClasses({
-                  base: "h-5 w-40",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-10 w-full",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-5 w-40",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
-                <Skeleton className={getThemeClasses({
-                  base: "h-10 w-full",
-                  default: "bg-gray-800",
-                  blue: "bg-blue-900",
-                  pink: "bg-pink-900"
-                })} />
+                <Skeleton className={cn("h-5 w-40 bg-gdyup-bg-dark")} />
+                <Skeleton className={cn("h-10 w-full bg-gdyup-bg-dark")} />
+                <Skeleton className={cn("h-5 w-40 bg-gdyup-bg-dark")} />
+                <Skeleton className={cn("h-10 w-full bg-gdyup-bg-dark")} />
               </div>
             ) : (!wallet?.nip05 && !nip05) ? (
               <NostrIdentityVerifier />
             ) : (
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <div className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-sm"}>
                     NIP-05 Identity
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={getThemeClasses({
-                      base: "font-medium",
-                      default: "text-white",
-                      blue: "text-blue-50",
-                      pink: "text-pink-50"
-                    })}>
+                    <div className={cn("font-medium", getThemedTextClasses())}>
                       {wallet?.nip05 || nip05 || 'Not set'}
                     </div>
                     <NostrVerificationBadge 
                       pubkey={wallet?.nostr_pubkey || pubkey} 
                       nip05={wallet?.nip05 || nip05}
-                      nip05_verified={wallet?.nip05_verified}
+                      nip05_verified={wallet?.nip05_verified || hasNip05}
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className={getThemeClasses({
-                    base: "text-sm",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-sm"}>
                     Nostr Public Key
                   </div>
                   <div className="flex justify-between items-center">
                     {wallet?.nostr_pubkey || pubkey ? (
-                      <div className={getThemeClasses({
-                        base: "font-mono text-sm break-all",
-                        default: "text-white",
-                        blue: "text-blue-50",
-                        pink: "text-pink-50"
-                      })}>
+                      <div className={cn("font-mono text-sm break-all", getThemedTextClasses())}>
                         {(wallet?.nostr_pubkey || pubkey) ? 
                           `${(wallet?.nostr_pubkey || pubkey || '').substring(0, 8)}...${(wallet?.nostr_pubkey || pubkey || '').substring((wallet?.nostr_pubkey || pubkey || '').length - 8)}` 
                           : 'No public key found'}
                       </div>
                     ) : (
-                      <div className={getThemeClasses({
-                        base: "text-sm italic",
-                        default: "text-gray-500", 
-                        blue: "text-blue-500",
-                        pink: "text-pink-500"
-                      })}>
+                      <div className={cn("text-sm italic", getThemedTextClasses('muted'))}>
                         No Nostr public key connected
                       </div>
                     )}
@@ -611,12 +450,7 @@ export default function WalletIdentityTab() {
                       variant="ghost"
                       size="icon"
                       onClick={() => (wallet?.nostr_pubkey || pubkey) && copyToClipboard(wallet?.nostr_pubkey || pubkey || '', 'Nostr Public Key')}
-                      className={getThemeClasses({
-                        base: "h-8 w-8",
-                        default: "text-gray-400 hover:text-white",
-                        blue: "text-blue-400 hover:text-blue-50",
-                        pink: "text-pink-400 hover:text-pink-50"
-                      })}
+                      className={cn("h-8 w-8", getThemedTextClasses('muted'))}
                       disabled={!(wallet?.nostr_pubkey || pubkey)}
                     >
                       {copiedField === 'Nostr Public Key' ? (
@@ -629,27 +463,25 @@ export default function WalletIdentityTab() {
                 </div>
                 
                 <div className="pt-2">
-                  <div className={getThemeClasses({
-                    base: "text-sm mb-2",
-                    default: "text-gray-400",
-                    blue: "text-blue-400",
-                    pink: "text-pink-400"
-                  })}>
+                  <div className={getThemedTextClasses('muted') + " text-sm mb-2"}>
                     Relay Connection Status
                   </div>
-                  <NostrRelayStatus />
+                  <NostrRelayStatus isConnected={isConnected} className={getThemedBadgeClasses('success')} />
                 </div>
 
                 <div className="pt-4">
                   <Button 
                     variant="outline"
-                    onClick={() => setWallet(null)}
-                    className={getThemeClasses({
-                      base: "w-full",
-                      default: "border-gray-700 text-gray-400 hover:bg-gray-800",
-                      blue: "border-blue-800 text-blue-400 hover:bg-blue-900",
-                      pink: "border-pink-800 text-pink-400 hover:bg-pink-900"
-                    })}
+                    onClick={() => {
+                      // Force refresh wallet data
+                      setLastFetchTime(0);
+                      setWallet(null);
+                    }}
+                    className={cn(
+                      "w-full",
+                      "border-gdyup-border",
+                      getThemedTextClasses('muted')
+                    )}
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Update Nostr Identity
@@ -659,12 +491,7 @@ export default function WalletIdentityTab() {
             )}
           </CardContent>
           
-          <CardFooter className={getThemeClasses({
-            base: "border-t",
-            default: "border-gray-800",
-            blue: "border-blue-900",
-            pink: "border-pink-900"
-          })}>
+          <CardFooter className={cn("border-t border-gdyup-border")}>
             <NostrConnectionStatus />
           </CardFooter>
         </Card>

@@ -303,18 +303,6 @@
 }
 
 /* GDY UP Enhanced Contrast Styles */
-.gdyup-app {
-  /* Using the DAFF0D high-contrast color for better visibility */
-  --gdyup-primary: #DAFF0D;
-  --gdyup-secondary: #FF4B47;
-  --gdyup-bg-dark: #000000;
-  --gdyup-text-high-contrast: #FFFFFF;
-  --gdyup-text-medium: #E0E0E0;
-  --gdyup-text-subtle: #A0A0A0;
-  /* Improved interaction colors */
-  --gdyup-hover-bg: rgba(255, 255, 255, 0.1);
-  --gdyup-active-bg: rgba(218, 255, 13, 0.15);
-}
 
 /* Enhanced text visibility for GDY UP dark theme */
 .gdyup-app .text-high-contrast {
@@ -426,49 +414,13 @@
 }
 
 /* Improved loading indicators */
-.gdyup-app .loading-spinner {
-  border-color: rgba(218, 255, 13, 0.2);
-  border-top-color: var(--gdyup-primary);
-}
+/* REMOVED .gdyup-app .loading-spinner (using theme vars) */
 
 /* GDY UP Theme-Specific Styles */
-.gdyup-theme-default {
-  --gdyup-primary: #DAFF0D;
-  --gdyup-primary-hover: #c8eb00;
-  --gdyup-secondary: #FF4B47;
-  --gdyup-bg-dark: #000000;
-  --gdyup-bg-card: #121212;
-  --gdyup-border: #2a2a2a;
-  --gdyup-text: #FFFFFF;
-  --gdyup-text-medium: #E0E0E0;
-  --gdyup-text-subtle: #A0A0A0;
-}
-
-.gdyup-theme-blue {
-  --gdyup-primary: #3B82F6;
-  --gdyup-primary-hover: #2563EB;
-  --gdyup-secondary: #9CA3AF;
-  --gdyup-bg-dark: #0F172A;
-  --gdyup-bg-card: #1E293B;
-  --gdyup-border: #334155;
-  --gdyup-text: #F8FAFC;
-  --gdyup-text-medium: #CBD5E1;
-  --gdyup-text-subtle: #94A3B8;
-}
-
-.gdyup-theme-pink {
-  --gdyup-primary: #EC4899;
-  --gdyup-primary-hover: #DB2777;
-  --gdyup-secondary: #9CA3AF;
-  --gdyup-bg-dark: #1F1123;
-  --gdyup-bg-card: #2D1636;
-  --gdyup-border: #4A2D4F;
-  --gdyup-text: #FBCFE8;
-  --gdyup-text-medium: #F9A8D4;
-  --gdyup-text-subtle: #F472B6;
-}
+/* REMOVED .gdyup-theme-default, .gdyup-theme-blue, .gdyup-theme-pink blocks */
 
 /* Themed Button Styles */
+/* KEEPING THESE FOR NOW - might need refactor later */
 .gdyup-btn-primary {
   background-color: var(--gdyup-primary) !important;
   color: #000000 !important;
@@ -528,6 +480,7 @@
 }
 
 /* Themed Badge Styles */
+/* KEEPING THESE FOR NOW - might need refactor later */
 .gdyup-badge-success {
   background-color: rgba(0, 180, 0, 0.2) !important;
   color: #4eff4e !important;
@@ -544,5 +497,643 @@
   background-color: rgba(255, 0, 0, 0.2) !important;
   color: #ff6b6b !important;
   border: 1px solid #cc3e3e !important;
+}
+
+/* Critical icon fixes that must override everything else */
+.gdyup-app button[aria-label="Open menu"] svg,
+.gdyup-app button[aria-label="Close menu"] svg,
+.gdyup-app .gdyup-header-menu svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+  fill: none !important;
+}
+
+/* Override all lucide icons with gdyup-primary class to ensure they respect their context */
+.gdyup-app svg.gdyup-primary,
+.gdyup-app .lucide.gdyup-primary,
+.gdyup-app button svg.gdyup-primary {
+  color: inherit !important;
+  stroke: inherit !important;
+}
+
+/* Force icons in navigation to respect text color */
+header nav button svg,
+header nav a svg,
+[role="menu"] svg,
+[role="menuitem"] svg {
+  color: inherit !important;
+  stroke: inherit !important;
+}
+
+/* Make icons in buttons match button text color */
+button[class*="bg-gdyup-primary"] svg,
+button[class*="text-gdyup-button-text"] svg,
+.bg-gdyup-primary svg {
+  color: var(--gdyup-button-text) !important;
+  stroke: var(--gdyup-button-text) !important;
+}
+
+/* ThemedIcon component support - essential for proper icon rendering */
+.text-current {
+  color: currentColor !important;
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+/* Critical icon fixes for menu buttons to ensure visibility */
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg,
+[aria-label*="menu"] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+:root {
+  --gdyup-primary: #22c55e;
+  --gdyup-primary-rgb: 34, 197, 94;
+  --gdyup-secondary: #ef4444; 
+  --gdyup-text: #f9fafb;
+  --gdyup-text-medium: #d1d5db;
+  --gdyup-text-subtle: #9ca3af;
+  --gdyup-bg-dark: #0f172a;
+  --gdyup-border: #374151;
+  --gdyup-button-text: #000000;
+}
+
+/* Default theme */
+:root, [data-gdyup-theme="default"] {
+  --gdyup-primary: #22c55e;
+  --gdyup-primary-rgb: 34, 197, 94;
+  --gdyup-secondary: #ef4444;
+  --gdyup-text: #f9fafb;
+  --gdyup-text-medium: #d1d5db;
+  --gdyup-text-subtle: #9ca3af;
+  --gdyup-bg-dark: #0f172a;
+  --gdyup-border: #374151;
+  --gdyup-button-text: #000000;
+}
+
+/* Luxury theme */
+[data-gdyup-theme="luxury"] {
+  --gdyup-primary: #d4af37;
+  --gdyup-primary-rgb: 212, 175, 55;
+  --gdyup-secondary: #9f2026;
+  --gdyup-text: #f5f5f5;
+  --gdyup-text-medium: #d4d4d4;
+  --gdyup-text-subtle: #a3a3a3;
+  --gdyup-bg-dark: #121212;
+  --gdyup-border: #2e2e2e;
+  --gdyup-button-text: #000000;
+}
+
+/* Bitcoin theme */
+[data-gdyup-theme="bitcoin"] {
+  --gdyup-primary: #f7931a;
+  --gdyup-primary-rgb: 247, 147, 26;
+  --gdyup-secondary: #4d4d4d;
+  --gdyup-text: #ffffff;
+  --gdyup-text-medium: #f0f0f0;
+  --gdyup-text-subtle: #c0c0c0;
+  --gdyup-bg-dark: #121212;
+  --gdyup-bg-card: #1a1a1a;
+  --gdyup-border: #2e2e2e;
+  --gdyup-button-text: #000000;
+  --gdyup-text-high-contrast: #ffffff;
+  --gdyup-hover-bg: rgba(247, 147, 26, 0.15);
+  --gdyup-bg-hover: rgba(247, 147, 26, 0.1);
+  --gdyup-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --gdyup-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(247, 147, 26, 0.2);
+}
+
+.gdyup-button {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+.gdyup-button:hover {
+  filter: brightness(1.1);
+}
+
+.gdyup-card {
+  background-color: #0f172a !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+.gdyup-primary {
+  color: var(--gdyup-primary) !important;
+}
+
+.gdyup-bg-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+/* Global styles for the GDY·UP application */
+.gdyup-layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.badge-success {
+  background-color: rgb(22 163 74 / 0.2) !important;
+  color: rgb(134 239 172) !important;
+}
+
+.badge-warning {
+  background-color: rgb(202 138 4 / 0.2) !important;
+  color: rgb(253 224 71) !important;
+}
+
+/* Fix scrolling issues with concierge button */
+body.concierge-open {
+  position: fixed;
+  width: 100%;
+  overflow-y: hidden;
+}
+
+/* Reset all custom positioning for Radix UI components */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Fix theme menu positioning - enhanced approach */
+.gdyup-theme-menu {
+  background-color: var(--gdyup-bg-dark) !important;
+  border: 1px solid var(--gdyup-primary) !important;
+  z-index: 9999 !important;
+  border-radius: 12px !important;
+  color: var(--gdyup-text) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 0 10px rgba(var(--gdyup-primary-rgb), 0.3) !important;
+}
+
+/* Enhanced mobile-specific styles for theme menu */
+@media (max-width: 768px) {
+  /* Theme switcher container */
+  .theme-switcher-container {
+    position: relative;
+    z-index: 500;
+  }
+  
+  /* Theme menu for mobile needs fixed positioning */
+  .gdyup-theme-menu {
+    width: min(280px, 85vw) !important;
+    margin: 0 !important;
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  /* Force menu to stay in viewport on mobile */
+  [data-radix-popper-content-wrapper] {
+    max-width: 90vw !important;
+  }
+}
+
+/* Direct fixed positioning for concierge button */
+body .concierge-button,
+.concierge-button,
+button.concierge-button,
+[class*="concierge-button"],
+div [class*="concierge"] button,
+div button[class*="concierge"],
+button.concierge-button[class*="rounded-full"] {
+  position: fixed !important;
+  bottom: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 60px !important;
+  height: 60px !important;
+  margin: 0 !important;
+  z-index: 99999 !important;
+  border-radius: 50% !important;
+}
+
+/* Fix hover effect */
+body .concierge-button:hover,
+.concierge-button:hover,
+button.concierge-button:hover {
+  transform: translateX(-50%) scale(1.05) !important;
+}
+
+/* Mobile safeguards */
+@media (max-width: 768px) {
+  body .concierge-button,
+  .concierge-button,
+  button.concierge-button {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0)) !important;
+    right: auto !important; /* Explicitly disable right positioning */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+/* Make scrolling smoother on mobile and prevent elastic bounce */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for better tracking on all devices */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--gdyup-primary-rgb), 0.5);
+  border-radius: 4px;
+}
+
+/* Better focus styles for interactive elements */
+:focus-visible {
+  outline: 2px solid var(--gdyup-primary);
+  outline-offset: 2px;
+}
+
+/* Enhanced Bitcoin theme contrast styles */
+[data-gdyup-theme="bitcoin"] .gdyup-card {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(247, 147, 26, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-gdyup-theme="bitcoin"] .gdyup-card:hover {
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 10px rgba(247, 147, 26, 0.2) !important;
+}
+
+[data-gdyup-theme="bitcoin"] .text-high-contrast {
+  color: #ffffff !important;
+  font-weight: 500;
+}
+
+[data-gdyup-theme="bitcoin"] .badge-success {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+  color: #4ade80 !important;
+  border: 1px solid #22c55e !important;
+}
+
+[data-gdyup-theme="bitcoin"] .badge-warning {
+  background-color: rgba(247, 147, 26, 0.2) !important;
+  color: #f7931a !important;
+  border: 1px solid #f7931a !important;
+}
+
+[data-gdyup-theme="bitcoin"] button.gdyup-primary,
+[data-gdyup-theme="bitcoin"] a.gdyup-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  box-shadow: 0 2px 10px rgba(247, 147, 26, 0.4);
+}
+
+[data-gdyup-theme="bitcoin"] button.gdyup-primary:hover,
+[data-gdyup-theme="bitcoin"] a.gdyup-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 15px rgba(247, 147, 26, 0.6);
+}
+
+/* Fix for the concierge button to maintain proper color in Bitcoin theme */
+[data-gdyup-theme="bitcoin"] .concierge-button {
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Bitcoin theme improvements for listings page */
+[data-gdyup-theme="bitcoin"] .listings-container h2,
+[data-gdyup-theme="bitcoin"] .listings-container h3 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+[data-gdyup-theme="bitcoin"] .listings-container p {
+  color: #f0f0f0 !important;
+}
+
+[data-gdyup-theme="bitcoin"] .listings-container .card,
+[data-gdyup-theme="bitcoin"] .listings-container div[class*="bg-card"] {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(247, 147, 26, 0.3) !important;
+}
+
+[data-gdyup-theme="bitcoin"] .listings-container button[class*="primary"] {
+  background-color: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  font-weight: 500;
+}
+
+[data-gdyup-theme="bitcoin"] .listings-container [class*="badge"] {
+  border: 1px solid rgba(247, 147, 26, 0.5);
+  background-color: rgba(247, 147, 26, 0.1);
+  color: var(--gdyup-primary);
+}
+
+/* Improve Bitcoin theme contrast for all pages */
+[data-gdyup-theme="bitcoin"] {
+  --gdyup-bg-hover: rgba(247, 147, 26, 0.1);
+  --gdyup-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --gdyup-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(247, 147, 26, 0.2);
+}
+
+[data-gdyup-theme="bitcoin"] input,
+[data-gdyup-theme="bitcoin"] select,
+[data-gdyup-theme="bitcoin"] textarea {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+}
+
+[data-gdyup-theme="bitcoin"] input:focus,
+[data-gdyup-theme="bitcoin"] select:focus,
+[data-gdyup-theme="bitcoin"] textarea:focus {
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 0 2px rgba(247, 147, 26, 0.2) !important;
+}
+
+/* Additional mobile refinements for concierge button */
+@media (max-width: 767px) {
+  .concierge-container {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0)) !important; /* Better iOS support */
+    z-index: 10000 !important; /* Ensure highest z-index */
+  }
+  
+  /* Ensure the concierge menu is centered and doesn't overflow */
+  .concierge-container [class*="motion"] {
+    max-width: 90vw !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+}
+
+/* GDY·UP Enhanced Dashboard Tab Navigation */
+.tab-nav-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  background-color: #0A0A0A !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.tab-button {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(30, 30, 30, 0.6) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 0.5rem !important;
+  height: auto !important;
+  min-height: 52px !important;
+  padding: 8px 0 !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin: 0.25rem !important;
+}
+
+.tab-button[data-state="active"] {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: 500 !important;
+}
+
+.tab-button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.tab-button span {
+  font-size: 0.75rem !important;
+  margin-top: 4px !important;
+}
+
+.tab-icon {
+  color: inherit !important;
+  opacity: 0.9 !important;
+}
+
+/* Override the tab styling for better visibility */
+[role="tablist"] {
+  background-color: rgba(10, 10, 10, 0.4) !important;
+  padding: 0.5rem !important;
+  border-radius: 0.75rem !important;
+}
+
+[role="tab"] {
+  background-color: rgba(30, 30, 30, 0.6) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  margin: 0.25rem !important;
+}
+
+[role="tab"][data-state="active"] {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: 500 !important;
+}
+
+/* Global styling for GDY·UP primary colors */
+:root [data-gdyup-theme="bitcoin"] {
+  --gdyup-primary: #f7931a;
+}
+
+:root [data-gdyup-theme="luxury"] {
+  --gdyup-primary: #d4af37;
+}
+
+/* Mobile-specific tab improvements */
+
+/* GDY·UP Dashboard Navigation Drawer */
+.dashboard-nav-drawer {
+  background-color: var(--gdyup-bg-dark) !important;
+  border-right: 1px solid var(--gdyup-border) !important;
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.3) !important;
+  padding: 16px !important;
+  width: 280px !important;
+}
+
+/* Style the default SheetTitle to match our themes */
+.dashboard-nav-drawer [role="dialog"] h2 {
+  color: var(--gdyup-text) !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Override the default Sheet close button */
+.dashboard-nav-drawer [data-radix-collection-item] {
+  background-color: transparent !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Ensure the close button uses our themed colors */
+.dashboard-nav-drawer button[aria-label="Close"] {
+  background-color: transparent !important;
+  color: var(--gdyup-text) !important;
+  opacity: 0.7 !important;
+}
+
+.dashboard-nav-drawer button[aria-label="Close"]:hover {
+  opacity: 1 !important;
+  background-color: var(--gdyup-bg-hover) !important;
+}
+
+/* Override Shadcn sheet styles */
+[data-side="left"] {
+  --sheet-border: none !important;
+}
+
+/* Make sure the drawer has the right theme */
+[data-gdyup-theme="bitcoin"] .dashboard-nav-drawer {
+  --gdyup-bg-dark: #121212;
+  --gdyup-bg-hover: rgba(247, 147, 26, 0.1);
+  --gdyup-text: #ffffff;
+  --gdyup-border: rgba(247, 147, 26, 0.2);
+}
+
+/* Support for iPhone notches and safe areas */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .dashboard-nav-drawer {
+    padding-top: calc(16px + env(safe-area-inset-top)) !important;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* GDY·UP Header Container Styling */
+.header-container {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 1rem;
+}
+
+/* Make the menu button more prominent */
+.header-container [aria-label="Open navigation menu"] {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.header-container [aria-label="Open navigation menu"]:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Ensure proper spacing between menu and title */
+.header-container .flex.items-center.gap-3 {
+  gap: 0.75rem !important;
+}
+
+/* Enhancement for badge contrast in Bitcoin theme */
+[data-gdyup-theme="bitcoin"] .badge-success,
+[data-gdyup-theme="luxury"] .badge-success,
+[data-gdyup-theme="default"] .badge-success {
+  background-color: rgb(22 163 74 / 0.9) !important;
+  color: rgb(255 255 255) !important;
+  border: 1px solid rgb(22 163 74) !important;
+  font-weight: 500;
+}
+
+[data-gdyup-theme="bitcoin"] .badge-warning,
+[data-gdyup-theme="luxury"] .badge-warning,
+[data-gdyup-theme="default"] .badge-warning {
+  background-color: rgb(202 138 4 / 0.9) !important;
+  color: rgb(255 255 255) !important;
+  border: 1px solid rgb(202 138 4) !important;
+  font-weight: 500;
+}
+
+/* Fix for NostrVerificationBadge and NostrRelayStatus */
+.nostr-status-badge {
+  background-color: rgba(22, 163, 74, 0.9) !important;
+  color: white !important;
+  border: 1px solid rgb(22 163 74) !important;
+  font-weight: 500;
+}
+
+.nostr-verification-badge {
+  background-color: rgba(22, 163, 74, 0.9) !important;
+  color: white !important;
+  border: 1px solid rgb(22 163 74) !important;
+  font-weight: 500;
+}
+
+.nostr-verification-badge[data-status="unverified"] {
+  background-color: rgba(202, 138, 4, 0.9) !important;
+  color: white !important;
+  border: 1px solid rgb(202 138 4) !important;
+}
+
+/* Fix for tab button visibility */
+.tab-button {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(30, 30, 30, 0.6) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 0.5rem !important;
+  height: auto !important;
+  min-height: 52px !important;
+  padding: 8px 0 !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  margin: 0.25rem !important;
+}
+
+/* Override the tab styling for better visibility */
+[role="tablist"] {
+  background-color: rgba(10, 10, 10, 0.4) !important;
+  padding: 0.5rem !important;
+  border-radius: 0.75rem !important;
+}
+
+[role="tab"] {
+  background-color: rgba(30, 30, 30, 0.6) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  margin: 0.25rem !important;
+}
+
+[role="tab"][data-state="active"] {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+  font-weight: 500 !important;
 }
 

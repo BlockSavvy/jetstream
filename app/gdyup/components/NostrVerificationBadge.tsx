@@ -27,7 +27,7 @@ export default function NostrVerificationBadge({
   showTooltip = true,
   className
 }: NostrVerificationBadgeProps) {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedBadgeClasses, getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const [verificationStatus, setVerificationStatus] = useState<'verified' | 'unverified' | 'unknown'>(
     isVerified ? 'verified' : nip05 ? 'unknown' : 'unverified'
   );
@@ -95,28 +95,29 @@ export default function NostrVerificationBadge({
     </motion.div>
   );
 
+  // Determine badge variant based on verification status
+  const getBadgeVariant = () => {
+    if (verificationStatus === 'verified') return 'success';
+    if (verificationStatus === 'unverified') return 'warning';
+    return 'outline'; // 'unknown' state
+  };
+
+  // Enhanced custom styles for better contrast
+  const getCustomStyles = () => {
+    if (verificationStatus === 'verified') {
+      return "bg-green-600/90 text-white border border-green-500 font-medium";
+    }
+    if (verificationStatus === 'unverified') {
+      return "bg-amber-600/90 text-white border border-amber-500 font-medium";
+    }
+    return "bg-gray-700/90 text-white border border-gray-600 font-medium"; // 'unknown' state
+  };
+
   const badge = (
     <Badge
       className={cn(
         sizeClasses[size],
-        getThemeClasses({
-          base: "font-medium",
-          default: verificationStatus === 'verified' 
-            ? "bg-green-700 hover:bg-green-800 text-white" 
-            : verificationStatus === 'unverified'
-            ? "bg-amber-700 hover:bg-amber-800 text-white"
-            : "bg-gray-700 hover:bg-gray-800 text-white",
-          blue: verificationStatus === 'verified'
-            ? "bg-green-800 hover:bg-green-900 text-green-100"
-            : verificationStatus === 'unverified'
-            ? "bg-amber-800 hover:bg-amber-900 text-amber-100"
-            : "bg-blue-800 hover:bg-blue-900 text-blue-100",
-          pink: verificationStatus === 'verified'
-            ? "bg-green-800 hover:bg-green-900 text-green-100"
-            : verificationStatus === 'unverified'
-            ? "bg-amber-800 hover:bg-amber-900 text-amber-100"
-            : "bg-pink-800 hover:bg-pink-900 text-pink-100",
-        }),
+        getCustomStyles(),
         className
       )}
     >
@@ -134,7 +135,11 @@ export default function NostrVerificationBadge({
         <TooltipTrigger asChild>
           {badge}
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
+        <TooltipContent className={cn(
+          "max-w-xs",
+          getThemedBackgroundClasses('card'),
+          getThemedTextClasses()
+        )}>
           {verificationStatus === 'verified' && (
             <p>
               {nip05 ? `Verified as ${nip05}` : 'Identity verified on Nostr'}
