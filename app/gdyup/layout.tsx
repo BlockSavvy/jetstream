@@ -1,26 +1,10 @@
-// Server Component
+// Split file into client and server parts
+import { Metadata } from 'next';
+// Use the full path to avoid TypeScript module resolution issues
+import GdyupClientLayout from '@/app/gdyup/components/GdyupClientLayout';
 
-import React from 'react';
-import { GdyupThemeProvider } from './hooks/useGdyupTheme';
-import { NostrProvider } from './contexts/NostrContext';
-import { ConciergeProvider } from '@/app/components/concierge-provider';
-import GdyupHeader from './components/GdyupHeader';
-import ThemeManager from './components/ThemeManager';
-import { ConciergeButton } from '@/components/concierge-button';
-
-// Import CSS files that should be applied to the entire layout
-import './gdyup.css';
-import './index.css';
-import './components/gdyup-forms.css';
-import './pwa-fixes.css';
-import './components/themed-icons.css';
-
-/**
- * Ultra-minimal layout to fix hydration errors.
- * Using a div instead of html to avoid nested HTML elements.
- */
-
-export const metadata = {
+// Server Component - this can contain metadata
+export const metadata: Metadata = {
   title: 'GDY UP | Private Jet Sharing Platform',
   description: 'Share private jets and reduce your flying costs',
 };
@@ -34,9 +18,6 @@ export default function GdyupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="gdyup-layout-wrapper">
-      {children}
-    </div>
-  );
+  // Server component wrapper around client component
+  return <GdyupClientLayout>{children}</GdyupClientLayout>;
 } 

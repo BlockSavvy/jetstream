@@ -4,9 +4,9 @@ import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-provider";
 import ConditionalNavbar from "@/components/conditional-navbar";
-import { ConciergeProvider } from "./components/concierge-provider";
 import { AuthPersistenceProvider } from "@/components/auth-persistence-provider";
-import { NostrProvider } from '@/components/nostr-provider'
+import { NostrProvider } from '@/components/nostr-provider';
+import ClientProviders from '@/components/client-providers';
 
 import "./globals.css";
 
@@ -39,7 +39,7 @@ export default function RootLayout({
                 <div className="flex-1">{children}</div>
               </div>
               <Toaster />
-              <ConciergeProvider />
+              <ClientProviders />
             </NostrProvider>
           </AuthPersistenceProvider>
         </AuthProvider>

@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { GdyupThemeProvider } from '../hooks/useGdyupTheme';
-import ThemeManager from './ThemeManager';
 import { NostrProvider } from '../contexts/NostrContext';
-import { ConciergeProvider } from '@/app/components/concierge-provider';
 import GdyupHeader from './GdyupHeader';
-import { ConciergeButton } from '@/components/concierge-button';
+import { ConciergeProvider } from '@/app/components/concierge-provider';
+import ThemeManager from './ThemeManager';
 
 /**
  * Client content wrapper component that provides all necessary providers
@@ -16,11 +15,9 @@ import { ConciergeButton } from '@/components/concierge-button';
 export function ClientContentWrapper({ 
   children,
   showHeader = true,
-  showConcierge = true,
 }: { 
   children: React.ReactNode;
   showHeader?: boolean;
-  showConcierge?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   
@@ -67,14 +64,6 @@ export function ClientContentWrapper({
               <main className="flex-1">
                 {children}
               </main>
-              {showConcierge && (
-                <div className="fixed bottom-4 right-4 z-50">
-                  <ConciergeButton 
-                    position="bottom-right"
-                    imageUrl="/icons/conciergebutton.png" 
-                  />
-                </div>
-              )}
             </ThemeManager>
           </div>
         </ConciergeProvider>
