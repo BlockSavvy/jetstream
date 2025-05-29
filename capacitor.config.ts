@@ -1,36 +1,35 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.gdyup.app',
-  appName: 'App',
-  webDir: 'dist',
+  appId: 'xyz.gdyup.app',
+  appName: 'GDY·UP',
+  webDir: 'out',
   server: {
-    url: 'https://gdyup.xyz',
+    url: 'https://gdyup.xyz/gdyup',
     cleartext: false,
     allowNavigation: [
       'gdyup.xyz',
-      '*.gdyup.xyz',
-      'api.gdyup.xyz',
-      '*.vercel.app'
+      'api.gdyup.xyz', 
+      'btc.gdyup.xyz',
+      '*.gdyup.xyz'
     ]
   },
   ios: {
     contentInset: 'always',
     allowsLinkPreview: false,
     scrollEnabled: true,
-    preferredContentMode: 'mobile',
+    backgroundColor: '#000000',
     handleApplicationNotifications: true,
-    limitsNavigationsToAppBoundDomains: false,
-    backgroundColor: '#000000'
+    limitsNavigationsToAppBoundDomains: false
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: "#000000",
       showSpinner: false,
+      androidSpinnerStyle: 'large',
+      iosSpinnerStyle: 'small',
       spinnerColor: "#DAFF0D",
-      androidSpinnerStyle: "small",
-      iosSpinnerStyle: "small",
       splashFullScreen: true,
       splashImmersive: true
     },
@@ -39,10 +38,12 @@ const config: CapacitorConfig = {
       backgroundColor: "#000000"
     },
     Keyboard: {
-      resize: "body",
+      resize: "ionic",
       style: "dark",
       resizeOnFullScreen: true
-    }
+    },
+    Haptics: {},
+    Share: {}
   }
 };
 

@@ -1,34 +1,33 @@
 {
-	"appId": "io.gdyup.app",
-	"appName": "App",
-	"webDir": "dist",
+	"appId": "xyz.gdyup.app",
+	"appName": "GDY·UP",
+	"webDir": "out",
 	"server": {
-		"url": "https://gdyup.xyz",
+		"url": "https://gdyup.xyz/gdyup",
 		"cleartext": false,
 		"allowNavigation": [
 			"gdyup.xyz",
-			"*.gdyup.xyz",
 			"api.gdyup.xyz",
-			"*.vercel.app"
+			"btc.gdyup.xyz",
+			"*.gdyup.xyz"
 		]
 	},
 	"ios": {
 		"contentInset": "always",
 		"allowsLinkPreview": false,
 		"scrollEnabled": true,
-		"preferredContentMode": "mobile",
+		"backgroundColor": "#000000",
 		"handleApplicationNotifications": true,
-		"limitsNavigationsToAppBoundDomains": false,
-		"backgroundColor": "#000000"
+		"limitsNavigationsToAppBoundDomains": false
 	},
 	"plugins": {
 		"SplashScreen": {
 			"launchShowDuration": 2000,
 			"backgroundColor": "#000000",
 			"showSpinner": false,
-			"spinnerColor": "#DAFF0D",
-			"androidSpinnerStyle": "small",
+			"androidSpinnerStyle": "large",
 			"iosSpinnerStyle": "small",
+			"spinnerColor": "#DAFF0D",
 			"splashFullScreen": true,
 			"splashImmersive": true
 		},
@@ -37,10 +36,12 @@
 			"backgroundColor": "#000000"
 		},
 		"Keyboard": {
-			"resize": "body",
+			"resize": "ionic",
 			"style": "dark",
 			"resizeOnFullScreen": true
-		}
+		},
+		"Haptics": {},
+		"Share": {}
 	},
 	"packageClassList": []
 }
