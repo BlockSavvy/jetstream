@@ -1,115 +1,109 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
+import React, { useState, useEffect } from 'react';
+import { NostrProvider } from '../contexts/NostrContext';
+import { cn } from '@/lib/utils';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import MobileNavBar from './MobileNavBar';
-import ThemeManager from './ThemeManager';
+import { ConciergeProvider } from '@/app/components/concierge-provider';
+
+function isCapacitorApp(): boolean {
+  return typeof window !== 'undefined' && !!(window as any).Capacitor;
+}
 
 interface GdyupClientLayoutProps {
   children: React.ReactNode;
+  showMobileNav?: boolean;
 }
 
-export default function GdyupClientLayout({ children }: GdyupClientLayoutProps) {
-  const [isCapacitor, setIsCapacitor] = useState(false);
+function LayoutContent({ children, showMobileNav = true }: GdyupClientLayoutProps) {
   const [mounted, setMounted] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const { theme } = useGdyupTheme();
+  const { getThemedBackgroundClasses } = useGdyupTheme();
 
   useEffect(() => {
     setMounted(true);
     
-    // Detect Capacitor environment
-    const capacitorDetected = !!(window as any).Capacitor;
-    setIsCapacitor(capacitorDetected);
-    
-    // Apply Capacitor class to HTML element
-    if (capacitorDetected) {
-      document.documentElement.classList.add('capacitor');
-      
-      // Initialize Capacitor plugins
-      initializeCapacitorPlugins();
-    }
-    
-    // Apply theme class to document
-    document.documentElement.setAttribute('data-gdyup-theme', theme);
-    
-  }, [theme]);
+    // Apply mobile app optimizations
+    if (typeof window !== 'undefined') {
+      // Add capacitor class if running in Capacitor
+      if (isCapacitorApp()) {
+        document.documentElement.classList.add('capacitor');
+        
+        // Initialize Capacitor plugins
+        const setupCapacitorPlugins = async () => {
+          try {
+            const { StatusBar } = (window as any).Capacitor?.Plugins || {};
+            if (StatusBar) {
+              await StatusBar.setStyle({ style: 'DARK' });
+              await StatusBar.setBackgroundColor({ color: '#000000' });
+            }
 
-  const initializeCapacitorPlugins = async () => {
-    try {
-      const { Capacitor } = (window as any);
-      
-      if (Capacitor?.isNativePlatform()) {
-        // Initialize Status Bar
-        const { StatusBar } = Capacitor.Plugins;
-        if (StatusBar) {
-          await StatusBar.setStyle({ style: 'DARK' });
-          await StatusBar.setBackgroundColor({ color: '#000000' });
-          await StatusBar.show();
-        }
-        
-        // Initialize Keyboard
-        const { Keyboard } = Capacitor.Plugins;
-        if (Keyboard) {
-          await Keyboard.setResizeMode({ mode: 'ionic' });
-        }
-        
-        // Initialize Haptics
-        const { Haptics } = Capacitor.Plugins;
-        if (Haptics) {
-          // Haptics available for button interactions
-          console.log('Haptics initialized');
-        }
-        
-        console.log('Capacitor plugins initialized');
+            const { Keyboard } = (window as any).Capacitor?.Plugins || {};
+            if (Keyboard) {
+              await Keyboard.setResizeMode({ mode: 'ionic' });
+            }
+
+            const { Haptics } = (window as any).Capacitor?.Plugins || {};
+            if (Haptics) {
+              // Test haptic feedback
+              console.log('Haptics available:', !!Haptics);
+            }
+          } catch (error) {
+            console.warn('Error setting up Capacitor plugins:', error);
+          }
+        };
+
+        setupCapacitorPlugins();
       }
-    } catch (error) {
-      console.error('Error initializing Capacitor plugins:', error);
-    }
-  };
 
-  // Don't render until mounted to prevent hydration mismatch
+      // Apply app-specific body classes
+      document.body.classList.add('gdyup-app');
+      
+      // Prevent iOS bounce scrolling
+      document.body.style.overscrollBehavior = 'none';
+      
+      return () => {
+        document.body.classList.remove('gdyup-app');
+        if (isCapacitorApp()) {
+          document.documentElement.classList.remove('capacitor');
+        }
+      };
+    }
+  }, []);
+
   if (!mounted) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-gdyup-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gdyup-text">Loading GDY·UP...</p>
-        </div>
+        <div className="w-8 h-8 border-2 border-gdyup-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <ThemeManager>
-      <div className="min-h-screen bg-gdyup-bg-dark text-gdyup-text">
-        {/* Status Bar Overlay for iOS */}
-        {isCapacitor && (
-          <div className="status-bar-overlay bg-gdyup-bg-dark" />
-        )}
-        
+    <>
+      <div className="min-h-screen flex flex-col bg-gdyup-bg-dark">
         {/* Main Content */}
-        <main className="relative">
+        <main className="flex-1 pb-20"> {/* Add bottom padding for mobile nav */}
           {children}
         </main>
         
-        {/* Mobile Navigation - Only show on mobile */}
-        {isMobile && (
+        {/* Mobile Navigation - Always show on mobile */}
+        {showMobileNav && (
           <MobileNavBar />
         )}
-        
-        {/* Desktop Navigation Placeholder */}
-        {!isMobile && (
-          <div className="fixed top-4 right-4 z-50">
-            <div className="bg-gdyup-bg-card border border-gdyup-border rounded-lg p-4">
-              <p className="text-gdyup-text-subtle text-sm">
-                Desktop navigation coming soon
-              </p>
-            </div>
-          </div>
-        )}
       </div>
-    </ThemeManager>
+    </>
+  );
+}
+
+export default function GdyupClientLayout({ children, showMobileNav = true }: GdyupClientLayoutProps) {
+  return (
+    <NostrProvider>
+      <ConciergeProvider>
+        <LayoutContent showMobileNav={showMobileNav}>
+          {children}
+        </LayoutContent>
+      </ConciergeProvider>
+    </NostrProvider>
   );
 } 

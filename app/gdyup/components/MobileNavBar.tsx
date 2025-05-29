@@ -3,13 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Plus, Calendar, User, Sparkles, LucideIcon } from 'lucide-react';
+import { Search, Plus, Calendar, User, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 
 interface NavItem {
   href: string;
-  icon: LucideIcon;
+  icon: React.ElementType;
   label: string;
   isActive?: (pathname: string) => boolean;
 }
@@ -50,6 +50,14 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   const pathname = usePathname();
   const { getThemedTextClasses } = useGdyupTheme();
 
+  // Function to open concierge
+  const handleConciergeClick = () => {
+    const event = new CustomEvent('gdyup-open-concierge', {
+      detail: { context: 'general' }
+    });
+    document.dispatchEvent(event);
+  };
+
   return (
     <nav className={cn(
       "mobile-nav-bar",
@@ -69,27 +77,27 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             return (
               <React.Fragment key={`nav-${index}`}>
                 {/* Concierge Button - Elevated Center */}
-                <div className="concierge-button-mobile flex items-center justify-center">
+                <button
+                  onClick={handleConciergeClick}
+                  className="concierge-button-mobile flex items-center justify-center"
+                  aria-label="Open AI Concierge"
+                >
                   <Sparkles size={24} className="text-gdyup-button-text" />
-                </div>
+                </button>
                 
                 {/* Continue with regular nav item */}
                 <Link
                   href={item.href}
                   className={cn(
-                    "nav-item flex flex-col items-center justify-center",
-                    "px-3 py-2 rounded-xl transition-all duration-200",
-                    "min-h-[60px] flex-1",
+                    "nav-item flex flex-col items-center gap-1",
                     isActive && "active"
                   )}
                 >
                   <Icon 
                     size={20} 
                     className={cn(
-                      "nav-icon mb-1 transition-colors",
-                      isActive 
-                        ? "text-gdyup-nav-active-text" 
-                        : getThemedTextClasses('muted')
+                      "nav-icon transition-colors",
+                      isActive ? "text-gdyup-nav-active-text" : "text-gdyup-nav-text"
                     )} 
                   />
                   <span className={cn(
@@ -104,25 +112,21 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               </React.Fragment>
             );
           }
-          
+
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "nav-item flex flex-col items-center justify-center",
-                "px-3 py-2 rounded-xl transition-all duration-200",
-                "min-h-[60px] flex-1",
+                "nav-item flex flex-col items-center gap-1",
                 isActive && "active"
               )}
             >
               <Icon 
                 size={20} 
                 className={cn(
-                  "nav-icon mb-1 transition-colors",
-                  isActive 
-                    ? "text-gdyup-nav-active-text" 
-                    : getThemedTextClasses('muted')
+                  "nav-icon transition-colors",
+                  isActive ? "text-gdyup-nav-active-text" : "text-gdyup-nav-text"
                 )} 
               />
               <span className={cn(
