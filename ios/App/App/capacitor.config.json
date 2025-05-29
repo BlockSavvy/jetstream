@@ -42,10 +42,5 @@
 			"resizeOnFullScreen": true
 		}
 	},
-	"packageClassList": [
-		"HapticsPlugin",
-		"KeyboardPlugin",
-		"SharePlugin",
-		"StatusBarPlugin"
-	]
+	"packageClassList": []
 }

@@ -1776,3 +1776,290 @@ a.bg-primary svg {
   border-left-width: 3px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
+
+/* ============================================================== */
+/* ELITE NATIVE APP THEMES - OPTIMIZED FOR MOBILE               */
+/* ============================================================== */
+
+/* Base theme variables - optimized for native app experience */
+:root, [data-gdyup-theme="default"] {
+  /* Elite Lime Theme - High contrast, native-optimized */
+  --gdyup-primary: #DAFF0D;
+  --gdyup-primary-hover: #c8eb00;
+  --gdyup-primary-active: #b2d400;
+  --gdyup-primary-rgb: 218, 255, 13;
+  
+  --gdyup-secondary: #FF4B47;
+  --gdyup-secondary-hover: #ff3530;
+  --gdyup-secondary-rgb: 255, 75, 71;
+  
+  /* Native app backgrounds - deeper blacks for OLED */
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #0a0a0a;
+  --gdyup-bg-elevated: #141414;
+  --gdyup-bg-overlay: rgba(0, 0, 0, 0.95);
+  
+  /* High contrast text for mobile readability */
+  --gdyup-text: #FFFFFF;
+  --gdyup-text-medium: #E8E8E8;
+  --gdyup-text-subtle: #B8B8B8;
+  --gdyup-text-disabled: #666666;
+  
+  /* Native button styling */
+  --gdyup-button-text: #000000;
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.4);
+  
+  /* Borders and dividers */
+  --gdyup-border: #2a2a2a;
+  --gdyup-border-light: #404040;
+  --gdyup-divider: #1a1a1a;
+  
+  /* Status colors - optimized for dark backgrounds */
+  --gdyup-success: #00FF88;
+  --gdyup-warning: #FFB800;
+  --gdyup-error: #FF4757;
+  --gdyup-info: #3742FA;
+  
+  /* Native app specific */
+  --gdyup-nav-bg: rgba(0, 0, 0, 0.98);
+  --gdyup-nav-border: rgba(218, 255, 13, 0.2);
+  --gdyup-nav-active: var(--gdyup-primary);
+  --gdyup-nav-active-text: var(--gdyup-button-text);
+  
+  /* Shadows and glows for depth */
+  --gdyup-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.6);
+  --gdyup-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.7);
+  --gdyup-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.8);
+  --gdyup-glow-primary: 0 0 20px rgba(var(--gdyup-primary-rgb), 0.5);
+}
+
+/* Luxury Black Theme - Premium native experience */
+[data-gdyup-theme="luxury"] {
+  --gdyup-primary: #00FF88;
+  --gdyup-primary-hover: #00e67a;
+  --gdyup-primary-active: #00cc6c;
+  --gdyup-primary-rgb: 0, 255, 136;
+  
+  --gdyup-secondary: #FF6B6B;
+  --gdyup-secondary-hover: #ff5252;
+  --gdyup-secondary-rgb: 255, 107, 107;
+  
+  /* Premium black backgrounds */
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #0f0f0f;
+  --gdyup-bg-elevated: #1a1a1a;
+  --gdyup-bg-overlay: rgba(0, 0, 0, 0.97);
+  
+  /* Luxury text hierarchy */
+  --gdyup-text: #FFFFFF;
+  --gdyup-text-medium: #E0E0E0;
+  --gdyup-text-subtle: #A0A0A0;
+  --gdyup-text-disabled: #555555;
+  
+  /* Premium button styling */
+  --gdyup-button-text: #000000;
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-shadow: 0 4px 16px rgba(var(--gdyup-primary-rgb), 0.3);
+  
+  /* Luxury borders */
+  --gdyup-border: #333333;
+  --gdyup-border-light: #4a4a4a;
+  --gdyup-divider: #222222;
+  
+  /* Status colors for luxury theme */
+  --gdyup-success: #00FF88;
+  --gdyup-warning: #FFA726;
+  --gdyup-error: #FF5252;
+  --gdyup-info: #42A5F5;
+  
+  /* Luxury navigation */
+  --gdyup-nav-bg: rgba(0, 0, 0, 0.99);
+  --gdyup-nav-border: rgba(0, 255, 136, 0.3);
+  --gdyup-nav-active: var(--gdyup-primary);
+  --gdyup-nav-active-text: var(--gdyup-button-text);
+  
+  /* Premium shadows and effects */
+  --gdyup-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.8);
+  --gdyup-shadow-md: 0 6px 24px rgba(0, 0, 0, 0.9);
+  --gdyup-shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.95);
+  --gdyup-glow-primary: 0 0 24px rgba(var(--gdyup-primary-rgb), 0.6);
+}
+
+/* Bitcoin Theme - Satoshi-inspired native experience */
+[data-gdyup-theme="bitcoin"] {
+  --gdyup-primary: #F7931A;
+  --gdyup-primary-hover: #e8850f;
+  --gdyup-primary-active: #d97706;
+  --gdyup-primary-rgb: 247, 147, 26;
+  
+  --gdyup-secondary: #FF8C00;
+  --gdyup-secondary-hover: #ff7700;
+  --gdyup-secondary-rgb: 255, 140, 0;
+  
+  /* Bitcoin-inspired backgrounds */
+  --gdyup-bg-dark: #0a0a0a;
+  --gdyup-bg-card: #141414;
+  --gdyup-bg-elevated: #1f1f1f;
+  --gdyup-bg-overlay: rgba(10, 10, 10, 0.96);
+  
+  /* Bitcoin text hierarchy */
+  --gdyup-text: #FFFFFF;
+  --gdyup-text-medium: #E5E5E5;
+  --gdyup-text-subtle: #AAAAAA;
+  --gdyup-text-disabled: #606060;
+  
+  /* Bitcoin button styling */
+  --gdyup-button-text: #000000;
+  --gdyup-button-bg: var(--gdyup-primary);
+  --gdyup-button-hover-bg: var(--gdyup-primary-hover);
+  --gdyup-button-shadow: 0 4px 14px rgba(var(--gdyup-primary-rgb), 0.4);
+  
+  /* Bitcoin borders */
+  --gdyup-border: #2d2d2d;
+  --gdyup-border-light: #454545;
+  --gdyup-divider: #1a1a1a;
+  
+  /* Bitcoin status colors */
+  --gdyup-success: #16A085;
+  --gdyup-warning: #F39C12;
+  --gdyup-error: #E74C3C;
+  --gdyup-info: #3498DB;
+  
+  /* Bitcoin navigation */
+  --gdyup-nav-bg: rgba(10, 10, 10, 0.98);
+  --gdyup-nav-border: rgba(247, 147, 26, 0.25);
+  --gdyup-nav-active: var(--gdyup-primary);
+  --gdyup-nav-active-text: var(--gdyup-button-text);
+  
+  /* Bitcoin shadows and effects */
+  --gdyup-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.7);
+  --gdyup-shadow-md: 0 5px 20px rgba(0, 0, 0, 0.8);
+  --gdyup-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.9);
+  --gdyup-glow-primary: 0 0 22px rgba(var(--gdyup-primary-rgb), 0.5);
+}
+
+/* ============================================================== */
+/* ELITE NATIVE COMPONENT STYLES                                 */
+/* ============================================================== */
+
+/* Elite button styling */
+.gdyup-button {
+  background: var(--gdyup-button-bg);
+  color: var(--gdyup-button-text);
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 24px;
+  box-shadow: var(--gdyup-button-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.gdyup-button:hover {
+  background: var(--gdyup-button-hover-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--gdyup-shadow-md);
+}
+
+.gdyup-button:active {
+  transform: translateY(0);
+  background: var(--gdyup-primary-active);
+}
+
+/* Elite card styling */
+.gdyup-card {
+  background: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 16px;
+  box-shadow: var(--gdyup-shadow-sm);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.gdyup-card:hover {
+  border-color: var(--gdyup-border-light);
+  box-shadow: var(--gdyup-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Elite navigation styling */
+.gdyup-nav {
+  background: var(--gdyup-nav-bg);
+  border-top: 1px solid var(--gdyup-nav-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.gdyup-nav-item {
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.gdyup-nav-item.active {
+  background: var(--gdyup-nav-active);
+  color: var(--gdyup-nav-active-text);
+  box-shadow: var(--gdyup-glow-primary);
+}
+
+/* Elite text styling */
+.gdyup-title {
+  color: var(--gdyup-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: var(--gdyup-glow-primary);
+}
+
+.gdyup-text-primary {
+  color: var(--gdyup-text);
+  font-weight: 500;
+}
+
+.gdyup-text-secondary {
+  color: var(--gdyup-text-medium);
+  font-weight: 400;
+}
+
+.gdyup-text-subtle {
+  color: var(--gdyup-text-subtle);
+  font-weight: 400;
+}
+
+/* Elite input styling */
+.gdyup-input {
+  background: var(--gdyup-bg-elevated);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  color: var(--gdyup-text);
+  padding: 14px 16px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.gdyup-input:focus {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.2);
+  outline: none;
+}
+
+/* Elite status indicators */
+.gdyup-status-success {
+  color: var(--gdyup-success);
+}
+
+.gdyup-status-warning {
+  color: var(--gdyup-warning);
+}
+
+.gdyup-status-error {
+  color: var(--gdyup-error);
+}
+
+.gdyup-status-info {
+  color: var(--gdyup-info);
+}
