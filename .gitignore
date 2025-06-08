@@ -57,3 +57,4 @@ logs/
 .env.gdyup
 storybook-static/
 yarn.lock
+ios/App/App.xcworkspace/xcuserdata/
