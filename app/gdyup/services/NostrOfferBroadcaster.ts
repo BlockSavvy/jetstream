@@ -139,14 +139,18 @@ export class NostrOfferBroadcaster {
       minute: '2-digit' 
     });
 
-    const costPerSeat = Math.round(offerData.requested_share_amount / (offerData.available_seats || 1));
+    // Calculate available seats for the message  
+    const availableSeats = offerData.available_seats || 0;
+    const totalSeats = offerData.total_seats || 0;
+    const costPerSeat = Math.round(offerData.requested_share_amount / (availableSeats || 1));
+    const occupancyText = availableSeats > 0 ? `${availableSeats} seats available` : 'Fully booked';
 
     return `✈️ **NEW JET SHARE AVAILABLE** ✈️
 
 🛫 Route: ${offerData.departure_location} → ${offerData.arrival_location}
 📅 Date: ${departureDate} at ${departureTime}
 🛩️ Aircraft: ${offerData.aircraft_model || 'Private Jet'}
-💺 Available Seats: ${offerData.available_seats}/${offerData.total_seats}
+💺 Available Seats: ${occupancyText}
 💰 Cost per Seat: $${costPerSeat.toLocaleString()}
 💳 Your Share: $${offerData.requested_share_amount.toLocaleString()}
 
@@ -182,8 +186,9 @@ export class NostrOfferBroadcaster {
       let message = '';
       switch (updateType) {
         case 'booked':
+          const remainingSeats = (offerData.available_seats || 0) - (bookedSeats || 0);
           message = `🎉 **SEATS BOOKED** - Flight ${offerData.departure_location} → ${offerData.arrival_location}
-${bookedSeats} seat(s) booked! ${offerData.available_seats - (bookedSeats || 0)} seats remaining.
+${bookedSeats} seat(s) booked! ${remainingSeats} seats remaining.
 Offer ID: ${offerData.id}`;
           break;
         case 'cancelled':

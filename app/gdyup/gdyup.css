@@ -2193,3 +2193,113 @@ button.outline-elite:hover {
 .gdyup-status-info {
   color: var(--gdyup-info);
 }
+
+/* ============================================================== */
+/* ELITE THEME SYSTEM - CONTRAST-OPTIMIZED                       */
+/* ============================================================== */
+
+/* DEFAULT LUXURY THEME */
+[data-gdyup-theme="luxury"] {
+  --gdyup-primary: #DC143C !important;
+  --gdyup-primary-hover: #B91C3C !important;
+  --gdyup-primary-rgb: 220, 20, 60;
+  --gdyup-button-text: #FFFFFF !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-secondary: #E5E7EB !important;
+  --gdyup-text-muted: #9CA3AF !important;
+  --gdyup-bg-dark: #000000 !important;
+  --gdyup-bg-card: #111111 !important;
+  --gdyup-bg-elevated: #1a1a1a !important;
+  --gdyup-border: #333333 !important;
+  --gdyup-nav-bg: rgba(0, 0, 0, 0.95) !important;
+  --gdyup-nav-border: #333333 !important;
+  --gdyup-nav-text: #FFFFFF !important;
+  --gdyup-nav-active: var(--gdyup-primary) !important;
+  --gdyup-nav-active-text: #FFFFFF !important;
+}
+
+/* BTC ORANGE THEME */
+[data-gdyup-theme="bitcoin"] {
+  --gdyup-primary: #FF6B00 !important;
+  --gdyup-primary-hover: #E55A00 !important;
+  --gdyup-primary-rgb: 255, 107, 0;
+  --gdyup-button-text: #FFFFFF !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-secondary: #E5E7EB !important;
+  --gdyup-text-muted: #9CA3AF !important;
+  --gdyup-bg-dark: #000000 !important;
+  --gdyup-bg-card: #111111 !important;
+  --gdyup-bg-elevated: #1a1a1a !important;
+  --gdyup-border: #333333 !important;
+  --gdyup-nav-bg: rgba(0, 0, 0, 0.95) !important;
+  --gdyup-nav-border: #333333 !important;
+  --gdyup-nav-text: #FFFFFF !important;
+  --gdyup-nav-active: var(--gdyup-primary) !important;
+  --gdyup-nav-active-text: #FFFFFF !important;
+}
+
+/* CLASSIC LIME THEME */
+[data-gdyup-theme="classic"] {
+  --gdyup-primary: #DAFF0D !important;
+  --gdyup-primary-hover: #C5E60A !important;
+  --gdyup-primary-rgb: 218, 255, 13;
+  --gdyup-button-text: #000000 !important;
+  --gdyup-text: #FFFFFF !important;
+  --gdyup-text-secondary: #E5E7EB !important;
+  --gdyup-text-muted: #9CA3AF !important;
+  --gdyup-bg-dark: #000000 !important;
+  --gdyup-bg-card: #111111 !important;
+  --gdyup-bg-elevated: #1a1a1a !important;
+  --gdyup-border: #333333 !important;
+  --gdyup-nav-bg: rgba(0, 0, 0, 0.95) !important;
+  --gdyup-nav-border: #333333 !important;
+  --gdyup-nav-text: #FFFFFF !important;
+  --gdyup-nav-active: var(--gdyup-primary) !important;
+  --gdyup-nav-active-text: #000000 !important;
+}
+
+/* EMERGENCY CONTRAST OVERRIDES - BULLETPROOF BUTTON TEXT */
+.btn-primary-elite, 
+.gdyup-button-primary, 
+button[class*="btn-primary"],
+button[class*="primary"],
+[data-gdyup-theme="luxury"] button,
+[data-gdyup-theme="bitcoin"] button,
+[data-gdyup-theme="classic"] button {
+  color: var(--gdyup-button-text) !important;
+  background-color: var(--gdyup-primary) !important;
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* FORCE WHITE TEXT ON PRIMARY BUTTONS FOR LUXURY & BITCOIN */
+[data-gdyup-theme="luxury"] button,
+[data-gdyup-theme="luxury"] .btn-primary-elite,
+[data-gdyup-theme="bitcoin"] button,
+[data-gdyup-theme="bitcoin"] .btn-primary-elite {
+  color: #FFFFFF !important;
+}
+
+/* FORCE BLACK TEXT ON PRIMARY BUTTONS FOR CLASSIC */
+[data-gdyup-theme="classic"] button,
+[data-gdyup-theme="classic"] .btn-primary-elite {
+  color: #000000 !important;
+}
+
+/* THEME TITLE STYLING */
+.gdyup-title {
+  background: linear-gradient(135deg, var(--gdyup-primary), var(--gdyup-primary-hover));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+/* EMERGENCY FALLBACK - ENSURE VISIBILITY */
+.text-contrast-light {
+  color: #FFFFFF !important;
+}
+
+.text-contrast-dark {
+  color: #000000 !important;
+}

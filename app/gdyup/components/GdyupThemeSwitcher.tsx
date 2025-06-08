@@ -1,162 +1,168 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PaintBucket, Check } from 'lucide-react';
-import { useGdyupTheme } from '../hooks/useGdyupTheme';
+import { Palette, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ThemedIcon } from './core';
 
-interface GdyupThemeSwitcherProps {
-  showLabels?: boolean;
-  alignDropdown?: 'start' | 'end' | 'center';
-  sideOffset?: number;
+interface ThemeOption {
+  id: string;
+  name: string;
+  description: string;
+  gradient: string;
+  textColor: string;
 }
 
-export default function GdyupThemeSwitcher({ 
-  showLabels = true, 
-  alignDropdown = 'end',
-  sideOffset = 4
-}: GdyupThemeSwitcherProps) {
-  const { theme, changeTheme, isMobile, getThemedTextClasses, getThemedBackgroundClasses } = useGdyupTheme();
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
+const themes: ThemeOption[] = [
+  {
+    id: 'luxury',
+    name: 'Luxury Crimson',
+    description: 'Elite crimson red with white text',
+    gradient: 'linear-gradient(135deg, #DC143C, #B91C3C)',
+    textColor: '#FFFFFF'
+  },
+  {
+    id: 'bitcoin',
+    name: 'Bitcoin Orange',
+    description: 'Satoshi orange with white text',
+    gradient: 'linear-gradient(135deg, #FF6B00, #E55A00)',
+    textColor: '#FFFFFF'
+  },
+  {
+    id: 'classic',
+    name: 'Classic Lime',
+    description: 'Original neon lime with black text',
+    gradient: 'linear-gradient(135deg, #DAFF0D, #C5E60A)',
+    textColor: '#000000'
+  }
+];
+
+export default function GdyupThemeSwitcher() {
+  const [currentTheme, setCurrentTheme] = useState<string>('luxury');
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Load theme from localStorage on mount
   useEffect(() => {
-    setMounted(true);
-    
-    // Listen for theme change events
-    const handleThemeChange = () => {
-      // Force rerender when theme changes
-      setMounted(false);
-      setTimeout(() => setMounted(true), 10);
-    };
-    
-    document.addEventListener('gdyup-theme-changed', handleThemeChange);
-    return () => document.removeEventListener('gdyup-theme-changed', handleThemeChange);
+    const savedTheme = localStorage.getItem('gdyup-theme') || 'luxury';
+    setCurrentTheme(savedTheme);
+    applyTheme(savedTheme);
   }, []);
-  
-  const themes = [
-    { id: 'default', name: 'Default', description: 'The default GDY·UP theme' },
-    { id: 'luxury', name: 'Luxury Black', description: 'Premium dark blue theme' },
-    { id: 'bitcoin', name: 'BTC Orange', description: 'Bitcoin-inspired theme' },
-  ];
-  
-  const getThemeColorClass = (themeId: string) => {
-    switch (themeId) {
-      case 'default':
-        return 'bg-gradient-to-r from-amber-400 to-lime-400';
-      case 'luxury':
-        return 'bg-gradient-to-r from-red-900 to-red-600';
-      case 'bitcoin':
-        return 'bg-gradient-to-r from-[#FF6B00] to-[#E85D00]'; // SATOSHI ORANGE
-      default:
-        return 'bg-gradient-to-r from-gray-200 to-gray-300';
+
+  const applyTheme = (themeId: string) => {
+    console.log(`[Theme] Applying theme: ${themeId}`);
+    
+    // Remove all existing theme classes
+    document.documentElement.removeAttribute('data-gdyup-theme');
+    
+    // Apply new theme
+    document.documentElement.setAttribute('data-gdyup-theme', themeId);
+    
+    // Force CSS recomputation
+    document.documentElement.style.display = 'none';
+    document.documentElement.offsetHeight; // Trigger reflow
+    document.documentElement.style.display = '';
+    
+    console.log(`[Theme] Theme applied: ${themeId}, attribute set: ${document.documentElement.getAttribute('data-gdyup-theme')}`);
+  };
+
+  const handleThemeChange = (themeId: string) => {
+    console.log(`[Theme] Changing theme to: ${themeId}`);
+    setCurrentTheme(themeId);
+    localStorage.setItem('gdyup-theme', themeId);
+    applyTheme(themeId);
+    setIsOpen(false);
+    
+    // Trigger haptic feedback if available
+    if (typeof window !== 'undefined' && (window as any).Capacitor) {
+      const { Haptics } = (window as any).Capacitor?.Plugins || {};
+      if (Haptics) {
+        Haptics.impact({ style: 'MEDIUM' });
+      }
     }
   };
-  
-  const handleThemeChange = (value: string) => {
-    console.log(`Changing theme to: ${value}`);
-    changeTheme(value as 'default' | 'luxury' | 'bitcoin');
-    setOpen(false); // Close menu after selection
-  };
-  
-  if (!mounted) {
-    return (
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="h-7 gap-2 text-gray-400"
-      >
-        <ThemedIcon icon={PaintBucket} size={14} className="theme-switcher-icon" />
-        {showLabels && <span className="text-xs">Theme</span>}
-      </Button>
-    );
-  }
+
+  const currentThemeObj = themes.find(t => t.id === currentTheme) || themes[0];
 
   return (
-    <div className="theme-switcher-container z-[500]" ref={containerRef}>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
+    <div className="fixed top-4 right-4 z-[200]">
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             className={cn(
-              "h-7 gap-2 theme-switcher-button",
-              getThemedTextClasses()
+              "w-10 h-10 p-0 border-2 border-white/20 backdrop-blur-md",
+              "hover:border-white/40 transition-all duration-200",
+              "bg-black/60"
             )}
+            style={{
+              background: `${currentThemeObj.gradient}, rgba(0, 0, 0, 0.6)`,
+              backgroundBlendMode: 'overlay'
+            }}
           >
-            <ThemedIcon icon={PaintBucket} size={14} className="theme-switcher-icon" />
-            {showLabels && <span className="text-xs">Theme</span>}
+            <Palette className="h-4 w-4 text-white" />
+            <span className="sr-only">Toggle theme</span>
           </Button>
         </DropdownMenuTrigger>
         
-        {open && (
-          <div className="fixed inset-0 bg-transparent z-[499]" onClick={() => setOpen(false)}>
-            <div 
-              className="gdyup-theme-menu-container absolute"
-              style={{
-                top: isMobile ? '50%' : '4rem',
-                left: isMobile ? '50%' : 'auto',
-                right: isMobile ? 'auto' : '2rem',
-                transform: isMobile ? 'translate(-50%, -50%)' : 'none',
-                width: '240px',
-                zIndex: 500,
-              }}
-              onClick={(e) => e.stopPropagation()}
+        <DropdownMenuContent 
+          align="end" 
+          className={cn(
+            "gdyup-theme-menu w-64 p-2",
+            "bg-black/95 border-2 border-gray-600 backdrop-blur-xl",
+            "shadow-2xl rounded-xl"
+          )}
+          sideOffset={8}
+        >
+          <DropdownMenuLabel className="text-white font-semibold text-center py-2">
+            Choose Theme
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator className="bg-gray-600" />
+          
+          {themes.map((theme) => (
+            <DropdownMenuItem
+              key={theme.id}
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-lg cursor-pointer",
+                "hover:bg-white/10 transition-colors duration-200",
+                "focus:bg-white/10 focus:outline-none",
+                currentTheme === theme.id && "bg-white/20"
+              )}
+              onClick={() => handleThemeChange(theme.id)}
             >
-              <div 
-                className="gdyup-theme-menu rounded-xl shadow-lg p-3"
+              {/* Theme Color Preview */}
+              <div
+                className="w-8 h-8 rounded-lg border-2 border-white/30 flex-shrink-0"
                 style={{
-                  backgroundColor: '#121212',
-                  border: `1px solid ${theme === 'default' ? '#DAFF0D' : theme === 'luxury' ? '#39FF14' : '#F7931A'}`,
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                  background: theme.gradient,
                 }}
-              >
-                <div className="text-center mb-2">
-                  <h3 className="text-base font-semibold text-white">Select Theme</h3>
+              />
+              
+              {/* Theme Info */}
+              <div className="flex-1 min-w-0">
+                <div className="text-white font-medium text-sm">
+                  {theme.name}
                 </div>
-                
-                <div className="w-full flex flex-col gap-2">
-                  {themes.map((t) => (
-                    <button
-                      key={t.id}
-                      className="flex items-center justify-between p-2 rounded-lg transition-colors"
-                      style={{
-                        backgroundColor: theme === t.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => handleThemeChange(t.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "h-6 w-6 rounded-full border border-white/20 flex-shrink-0",
-                          getThemeColorClass(t.id)
-                        )}></div>
-                        <span className="font-medium text-sm text-white">
-                          {t.name}
-                        </span>
-                      </div>
-                      
-                      {theme === t.id && (
-                        <div className="h-5 w-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--gdyup-primary)' }}>
-                          <Check size={14} className="text-black flex-shrink-0" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                <div className="text-gray-400 text-xs truncate">
+                  {theme.description}
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+              
+              {/* Current Theme Indicator */}
+              {currentTheme === theme.id && (
+                <Check className="h-4 w-4 text-white flex-shrink-0" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );

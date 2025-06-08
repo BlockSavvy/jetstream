@@ -61,7 +61,7 @@ export function FormNavigation({
   
   return (
     <div className={cn(
-      "fixed left-0 right-0 w-full px-4 py-2 bg-black/90 backdrop-blur-md border-t border-gdyup-border z-60",
+      "fixed left-0 right-0 w-full px-4 py-2 bg-black/90 backdrop-blur-md border-t border-gdyup-border z-[100]",
       // Position above mobile nav bar (mobile nav is about 80px high with safe area)
       "bottom-20 md:bottom-4",
       className
@@ -80,7 +80,7 @@ export function FormNavigation({
             }}
             disabled={isFirstStep}
             className={cn(
-              "w-32 md:w-36 h-11 rounded-md font-medium",
+              "w-32 md:w-36 h-11 rounded-md font-medium text-contrast-light",
               isFirstStep ? "opacity-50 cursor-not-allowed" : "",
               getThemedButtonClasses()
             )}
@@ -115,7 +115,7 @@ export function FormNavigation({
               }}
               disabled={isSubmitting}
               className={cn(
-                "w-32 md:w-36 h-11 rounded-md font-medium",
+                "w-32 md:w-36 h-11 rounded-md font-medium text-contrast-light",
                 isSubmitting ? "opacity-70 cursor-not-allowed" : "",
                 getThemedButtonClasses()
               )}
@@ -141,7 +141,7 @@ export function FormNavigation({
                 onNext?.();
               }}
               className={cn(
-                "w-32 md:w-36 h-11 rounded-md font-medium",
+                "w-32 md:w-36 h-11 rounded-md font-medium text-contrast-light",
                 getThemedButtonClasses()
               )}
             >

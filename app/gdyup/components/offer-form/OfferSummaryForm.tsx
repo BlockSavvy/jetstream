@@ -745,19 +745,6 @@ function InternalOfferSummaryForm({
                 Ask Concierge for pricing suggestions
               </button>
             </div>
-            
-            {/* Form navigation buttons */}
-            <div className="pt-2">
-              <FormNavigation
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-                onBack={onBack}
-                onNext={onSubmit}
-                isSubmitting={isSubmitting}
-                isLastStep={currentStep === totalSteps}
-                nextLabel={currentStep === totalSteps ? "Create Offer" : "Next"}
-              />
-            </div>
           </div>
         </Form>
       </div>

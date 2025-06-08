@@ -290,11 +290,49 @@ export function JetSelectorForm(props: JetSelectorFormProps) {
   // This is the public component that clients will use
   // We manually handle callbacks here
   const handleNext = () => {
-    props.form.trigger().then((isValid: boolean) => {
-      if (isValid && document.dispatchEvent(new CustomEvent('jetselector-next'))) {
-        console.log('Jet selector validation passed, proceeding to next step');
-      }
-    });
+    console.log('FlightInfoForm: Next button clicked, directly triggering navigation');
+    
+    // Validate required fields before proceeding
+    const aircraftModel = props.form.getValues('aircraft_model');
+    const totalSeats = props.form.getValues('total_seats');
+    
+    if (!aircraftModel) {
+      console.log('Validation failed: No aircraft selected');
+      return;
+    }
+    
+    if (!totalSeats || totalSeats <= 0) {
+      console.log('Validation failed: Invalid total seats:', totalSeats);
+      return;
+    }
+    
+    console.log('JetSelector validation passed:', { aircraftModel, totalSeats });
+    
+    // Trigger form validation
+    if (props.form) {
+      props.form.trigger(['aircraft_model', 'total_seats']).then(isValid => {
+        console.log('JetSelector form validation result:', isValid);
+        if (isValid) {
+          // Fire the navigation event
+          document.dispatchEvent(new CustomEvent('jetselector-next'));
+          
+          // Try to directly access the parent form if available
+          const jetShareOfferForm = document.querySelector('[data-component="JetShareOfferForm"]');
+          if (jetShareOfferForm) {
+            console.log('JetSelector: Found parent form, dispatching force-navigate event');
+            const event = new CustomEvent('force-navigate', { 
+              detail: { section: 2 } // Move to seat configuration
+            });
+            jetShareOfferForm.dispatchEvent(event);
+          }
+        } else {
+          console.log('JetSelector validation failed, cannot proceed');
+        }
+      });
+    } else {
+      // No form validation available, just proceed
+      document.dispatchEvent(new CustomEvent('jetselector-next'));
+    }
   };
   
   const handleBack = () => {

@@ -153,23 +153,37 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
 
     // Calculate appropriate seat size based on layout
     const seatSize = useMemo(() => {
-      if (!layout || !containerDimensions.width) return DEFAULT_SEAT_SIZE;
+      if (!layout || !containerDimensions.width || !containerDimensions.height) return DEFAULT_SEAT_SIZE;
       
-      // Calculate max size by width
+      // Ensure layout values are valid numbers
+      const validRows = Math.max(1, layout.rows || 1);
+      const validSeatsPerRow = Math.max(1, layout.seatsPerRow || 1);
+      const validWidth = Math.max(100, containerDimensions.width);
+      const validHeight = Math.max(100, containerDimensions.height);
+      
+      // Calculate max size by width with safety checks
       const maxSizeByWidth = Math.floor(
-        (containerDimensions.width - 40) / (layout.seatsPerRow || 4)
+        (validWidth - 40) / validSeatsPerRow
       );
       
-      // Calculate max size by height
+      // Calculate max size by height with safety checks
       const maxSizeByHeight = Math.floor(
-        (containerDimensions.height - 40) / (layout.rows || 3)
+        (validHeight - 40) / validRows
       );
       
-      // Use the smaller constraint
+      // Use the smaller constraint and ensure it's a valid number
       const calculatedSize = Math.min(maxSizeByWidth, maxSizeByHeight, LARGE_SEAT_SIZE);
       
-      // Ensure minimum size
-      return Math.max(calculatedSize, MIN_SEAT_SIZE);
+      // Ensure minimum size and that result is a finite number
+      const finalSize = Math.max(calculatedSize, MIN_SEAT_SIZE);
+      
+      // Validate the final result
+      if (!isFinite(finalSize) || isNaN(finalSize)) {
+        console.warn('[JetSeatVisualizer] Invalid seat size calculated, using default');
+        return DEFAULT_SEAT_SIZE;
+      }
+      
+      return finalSize;
     }, [containerDimensions, layout]);
 
     // Add refs to avoid stale closures
@@ -572,11 +586,11 @@ const JetSeatVisualizer = forwardRef<JetSeatVisualizerRef, JetSeatVisualizerProp
           data-seat-id={seatId}
           data-key={seatId}
           style={{
-            width: `${seatSize}px`,
-            height: `${seatSize}px`,
-            margin: `${seatSize / 10}px`,
-            fontSize: `${seatSize / 2.5}px`,
-            lineHeight: `${seatSize}px`
+            width: `${isFinite(seatSize) && !isNaN(seatSize) ? seatSize : DEFAULT_SEAT_SIZE}px`,
+            height: `${isFinite(seatSize) && !isNaN(seatSize) ? seatSize : DEFAULT_SEAT_SIZE}px`,
+            margin: `${isFinite(seatSize) && !isNaN(seatSize) ? Math.max(2, seatSize / 10) : 4}px`,
+            fontSize: `${isFinite(seatSize) && !isNaN(seatSize) ? Math.max(10, seatSize / 2.5) : 16}px`,
+            lineHeight: `${isFinite(seatSize) && !isNaN(seatSize) ? seatSize : DEFAULT_SEAT_SIZE}px`
           }}
           className={seatClasses}
           onClick={() => {
