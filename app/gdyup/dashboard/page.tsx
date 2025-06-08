@@ -4,7 +4,7 @@ import React from 'react';
 import EnhancedGDYupDashboard from '@/app/gdyup/components/EnhancedGDYupDashboard';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { cn } from '@/lib/utils';
-import { ClientContentWrapper } from '../components/ClientContentWrapper';
+import GdyupClientLayout from '../components/GdyupClientLayout';
 
 export default function Dashboard() {
   const { 
@@ -13,7 +13,7 @@ export default function Dashboard() {
   } = useGdyupTheme();
 
   return (
-    <ClientContentWrapper>
+    <GdyupClientLayout>
       <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
         <div className="flex flex-col gap-6">
           <div className={cn("border-b pb-4", "border-gdyup-border")}>
@@ -25,6 +25,6 @@ export default function Dashboard() {
           <EnhancedGDYupDashboard />
         </div>
       </div>
-    </ClientContentWrapper>
+    </GdyupClientLayout>
   );
 } 
