@@ -20,21 +20,23 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    // Show splash for 3 seconds to let GIF play
+    // Show splash for 4 seconds to let GIF play fully
     const timer = setTimeout(() => {
+      console.log('[Splash] Hiding splash screen after timeout');
       setIsVisible(false);
       
       // Hide Capacitor splash screen if running in native app
       if (typeof window !== 'undefined' && (window as any).Capacitor) {
         const { SplashScreen } = (window as any).Capacitor?.Plugins || {};
         if (SplashScreen) {
+          console.log('[Splash] Hiding Capacitor splash screen');
           SplashScreen.hide();
         }
       }
       
       // Notify parent that splash is complete
       onComplete();
-    }, 3000);
+    }, 4000); // Increased to 4 seconds
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -54,10 +56,16 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
             maxWidth: '100vw',
             maxHeight: '100vh'
           }}
+          onLoad={() => {
+            console.log('[Splash] GIF loaded successfully');
+          }}
           onError={(e) => {
+            console.log('[Splash] GIF failed to load, using fallback');
             // Fallback to a simple logo if GIF fails
             e.currentTarget.src = '/icons/icon-512x512.png';
             e.currentTarget.className = 'w-32 h-32 object-contain';
+            e.currentTarget.style.maxWidth = '128px';
+            e.currentTarget.style.maxHeight = '128px';
           }}
         />
         
@@ -82,15 +90,14 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
 
   // Handle app initialization
   useEffect(() => {
-    // Only show splash screen on initial app load (not on navigation)
-    const hasShownSplash = sessionStorage.getItem('gdyup_splash_shown');
-    
-    if (!hasShownSplash && isCapacitorApp()) {
-      // First time loading the app in native mode
+    if (isCapacitorApp()) {
+      // Always show splash in Capacitor (native app)
+      console.log('[GdyupClientLayout] Native app detected, showing splash screen');
       setShowSplash(true);
-      sessionStorage.setItem('gdyup_splash_shown', 'true');
+      setIsAppReady(false);
     } else {
-      // Skip splash for web or subsequent navigations
+      // Skip splash for web
+      console.log('[GdyupClientLayout] Web detected, skipping splash screen');
       setShowSplash(false);
       setIsAppReady(true);
     }
