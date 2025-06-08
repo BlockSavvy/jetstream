@@ -9,13 +9,9 @@ const config: CapacitorConfig = {
     cleartext: false,
     allowNavigation: [
       'gdyup.xyz',
-      'api.gdyup.xyz', 
-      'btc.gdyup.xyz',
-      '*.gdyup.xyz',
-      'supabase.com',
+      'supabase.co',
       '*.supabase.co',
-      'stripe.com',
-      '*.stripe.com'
+      'vjhrmizwqhmafkxbmfwa.supabase.co'
     ]
   },
   ios: {
@@ -23,14 +19,15 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
     scrollEnabled: true,
     backgroundColor: '#000000',
-    handleApplicationNotifications: true,
-    limitsNavigationsToAppBoundDomains: false
+    overrideUserAgent: 'GDY-UP-iOS',
+    appendUserAgent: 'GDY-UP-Mobile',
+    scheme: 'capacitor'
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: "#000000",
-      showSpinner: true,
+      showSpinner: false,
       androidSpinnerStyle: 'large',
       iosSpinnerStyle: 'small',
       spinnerColor: "#DAFF0D",
@@ -38,16 +35,16 @@ const config: CapacitorConfig = {
       splashImmersive: true
     },
     StatusBar: {
-      style: "dark",
-      backgroundColor: "#000000"
+      style: 'dark',
+      backgroundColor: '#000000',
+      overlaysWebView: false
     },
     Keyboard: {
-      resize: "ionic",
-      style: "dark",
+      resize: 'body',
+      style: 'dark',
       resizeOnFullScreen: true
     },
-    Haptics: {},
-    Share: {}
+    Haptics: {}
   }
 };
 

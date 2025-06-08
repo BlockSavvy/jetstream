@@ -764,7 +764,7 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
       <ThemeSwitcher />
       
       {/* Main form section */}
-      <div className="pb-24">
+      <div className="pb-32">
         {renderCurrentSection()}
       </div>
       

@@ -61,7 +61,9 @@ export function FormNavigation({
   
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 w-full px-4 py-2 bg-black/80 backdrop-blur-sm border-t border-gray-800 z-20",
+      "fixed left-0 right-0 w-full px-4 py-2 bg-black/90 backdrop-blur-md border-t border-gdyup-border z-60",
+      // Position above mobile nav bar (mobile nav is about 80px high with safe area)
+      "bottom-20 md:bottom-4",
       className
     )}>
       <div className="max-w-screen-md mx-auto">
