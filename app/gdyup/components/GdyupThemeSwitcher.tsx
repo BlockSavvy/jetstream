@@ -54,7 +54,7 @@ export default function GdyupThemeSwitcher({
       case 'default':
         return 'bg-gradient-to-r from-amber-400 to-lime-400';
       case 'luxury':
-        return 'bg-gradient-to-r from-blue-900 to-blue-600';
+        return 'bg-gradient-to-r from-red-900 to-red-600';
       case 'bitcoin':
         return 'bg-gradient-to-r from-[#F7931A] to-amber-500';
       default:

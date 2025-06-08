@@ -48,23 +48,23 @@
 
 /* Luxury Black Theme (gdyup-theme-luxury) */
 .gdyup-theme-luxury {
-  /* Primary color is neon green for Luxury Black theme */
-  --gdyup-primary: #39FF14 !important;
-  --gdyup-primary-hover: #50FF32 !important;
-  --gdyup-primary-rgb: 57, 255, 20 !important;
-  --gdyup-secondary: #FF4500; /* Flare Orange */
-  --gdyup-secondary-rgb: 255, 69, 0;
+  /* Primary color is crimson red for Luxury Black theme */
+  --gdyup-primary: #DC143C !important;
+  --gdyup-primary-hover: #B91C3C !important;
+  --gdyup-primary-rgb: 220, 20, 60 !important;
+  --gdyup-secondary: #8B0000; /* Dark Red */
+  --gdyup-secondary-rgb: 139, 0, 0;
   --gdyup-bg-dark: #000000; /* Jet Black */
   --gdyup-bg-card: #1A1A1A; /* Gunmetal Gray */
   --gdyup-border: #333333;
   --gdyup-text: #E0E0E0; /* Jet Silver */
   --gdyup-text-medium: #CCCCCC; /* Ash Gray */
   --gdyup-text-subtle: #999999;
-  --gdyup-button-text: #000000; /* Text on primary button MUST be dark to contrast with light primary */
+  --gdyup-button-text: #FFFFFF; /* Text on primary button MUST be white to contrast with dark crimson */
 
   --gdyup-button-bg: var(--gdyup-primary);
   --gdyup-button-hover-bg: var(--gdyup-primary-hover);
-  --gdyup-button-active-bg: #32CC10 !important;
+  --gdyup-button-active-bg: #A0001C !important;
   
   /* Additional theme-specific variables */
   --gdyup-icon-shadow: rgba(var(--gdyup-primary-rgb), 0.4);
@@ -172,9 +172,9 @@ html.gdyup-theme-luxury body.gdyup-app {
   --gdyup-text-muted: #6d7a8c;
   
   /* Primary theme color */
-  --gdyup-primary: #39FF14;
-  --gdyup-primary-hover: #50FF32;
-  --gdyup-primary-active: #32CC10;
+  --gdyup-primary: #DC143C;
+  --gdyup-primary-hover: #B91C3C;
+  --gdyup-primary-active: #A0001C;
   
   /* Secondary color */
   --gdyup-secondary: #4c5b6e;
@@ -193,8 +193,8 @@ html.gdyup-theme-luxury body.gdyup-app {
   --gdyup-success: #4caf50;
   
   /* Navigation colors */
-  --gdyup-nav-active: #39FF14;
-  --gdyup-nav-active-text: #000000;
+  --gdyup-nav-active: #DC143C;
+  --gdyup-nav-active-text: #FFFFFF;
   
   /* Shadow effects */
   --gdyup-shadow: rgba(0, 0, 0, 0.3);
@@ -1960,6 +1960,64 @@ a.bg-primary svg {
   overflow: hidden;
 }
 
+/* Elite primary button - guaranteed high contrast */
+.btn-primary-elite,
+.button-primary-elite,
+button.primary-elite {
+  background: var(--gdyup-primary) !important;
+  color: #000000 !important; /* Always dark text for lime/bright colors */
+  border: none !important;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 24px;
+  box-shadow: 0 4px 16px rgba(var(--gdyup-primary-rgb), 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Elite secondary button */
+.btn-secondary-elite,
+.button-secondary-elite,
+button.secondary-elite {
+  background: transparent !important;
+  color: var(--gdyup-primary) !important;
+  border: 2px solid var(--gdyup-primary) !important;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 12px 22px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Elite outline button */
+.btn-outline-elite,
+.button-outline-elite,
+button.outline-elite {
+  background: var(--gdyup-bg-card) !important;
+  color: var(--gdyup-text) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 14px 24px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
 .gdyup-button:hover {
   background: var(--gdyup-button-hover-bg);
   transform: translateY(-1px);
@@ -1969,6 +2027,39 @@ a.bg-primary svg {
 .gdyup-button:active {
   transform: translateY(0);
   background: var(--gdyup-primary-active);
+}
+
+/* Elite button hover states */
+.btn-primary-elite:hover,
+.button-primary-elite:hover,
+button.primary-elite:hover {
+  background: var(--gdyup-primary-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--gdyup-primary-rgb), 0.5) !important;
+}
+
+.btn-primary-elite:active,
+.button-primary-elite:active,
+button.primary-elite:active {
+  transform: translateY(0);
+  background: var(--gdyup-primary-active) !important;
+}
+
+.btn-secondary-elite:hover,
+.button-secondary-elite:hover,
+button.secondary-elite:hover {
+  background: var(--gdyup-primary) !important;
+  color: #000000 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+.btn-outline-elite:hover,
+.button-outline-elite:hover,
+button.outline-elite:hover {
+  background: var(--gdyup-bg-elevated) !important;
+  border-color: var(--gdyup-border-light) !important;
+  transform: translateY(-1px);
 }
 
 /* Elite card styling */
@@ -2045,6 +2136,45 @@ a.bg-primary svg {
   border-color: var(--gdyup-primary);
   box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.2);
   outline: none;
+}
+
+/* Elite input class for forms */
+.input-elite {
+  background: var(--gdyup-bg-elevated) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  border-radius: 12px;
+  color: var(--gdyup-text) !important;
+  padding: 14px 16px !important;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.input-elite:focus {
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.2) !important;
+  outline: none;
+  background: var(--gdyup-bg-card) !important;
+}
+
+.input-elite::placeholder {
+  color: var(--gdyup-text-subtle) !important;
+}
+
+/* Elite card class */
+.elite-card {
+  background: var(--gdyup-bg-card) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  border-radius: 16px;
+  box-shadow: var(--gdyup-shadow-sm);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  color: var(--gdyup-text) !important;
+}
+
+.elite-card:hover {
+  border-color: var(--gdyup-border-light) !important;
+  box-shadow: var(--gdyup-shadow-md);
+  transform: translateY(-2px);
 }
 
 /* Elite status indicators */

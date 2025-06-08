@@ -49,6 +49,16 @@ export function FormNavigation({
 }: FormNavigationProps) {
   const { getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
+  // Helper function to trigger haptic feedback
+  const triggerHaptic = (style: 'LIGHT' | 'MEDIUM' | 'HEAVY' = 'LIGHT') => {
+    if (typeof window !== 'undefined' && (window as any).Capacitor) {
+      const { Haptics } = (window as any).Capacitor?.Plugins || {};
+      if (Haptics) {
+        Haptics.impact({ style });
+      }
+    }
+  };
+  
   return (
     <div className={cn(
       "fixed bottom-0 left-0 right-0 w-full px-4 py-2 bg-black/80 backdrop-blur-sm border-t border-gray-800 z-20",
@@ -60,7 +70,12 @@ export function FormNavigation({
           {/* Back button - disabled if it's the first step */}
           <Button
             type="button"
-            onClick={onBack}
+            onClick={() => {
+              if (!isFirstStep) {
+                triggerHaptic('LIGHT');
+                onBack?.();
+              }
+            }}
             disabled={isFirstStep}
             className={cn(
               "w-32 md:w-36 h-11 rounded-md font-medium",
@@ -93,7 +108,8 @@ export function FormNavigation({
               type="button"
               onClick={() => {
                 console.log('Submit button clicked');
-                if (onSubmit) onSubmit();
+                triggerHaptic('MEDIUM'); // Stronger haptic for important action
+                onSubmit?.();
               }}
               disabled={isSubmitting}
               className={cn(
@@ -119,7 +135,8 @@ export function FormNavigation({
               type="button"
               onClick={() => {
                 console.log('Next button clicked');
-                if (onNext) onNext();
+                triggerHaptic('LIGHT');
+                onNext?.();
               }}
               className={cn(
                 "w-32 md:w-36 h-11 rounded-md font-medium",

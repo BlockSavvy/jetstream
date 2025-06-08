@@ -504,7 +504,7 @@ function ThemeSwitcher() {
           className={cn(
             "w-6 h-6 rounded-full relative",
             theme === 'luxury' ? 'ring-2 ring-gdyup-text ring-offset-1 ring-offset-gdyup-bg-dark' : '',
-            "bg-[#39FF14]" // Luxury Black theme - neon green
+            "bg-[#DC143C]" // Luxury Black theme - crimson red
           )}
           aria-label="Switch to Luxury Black theme"
         />

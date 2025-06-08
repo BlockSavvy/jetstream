@@ -12,6 +12,7 @@ import { UserPlus, Loader2 } from 'lucide-react';
 import { ThemedIcon } from '../core/ThemedIcon';
 import { FormNavigation } from './FormNavigation';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/lib/auth-provider';
 
 // Import the subcomponents with updated type interfaces
 import { FlightInfoForm, FlightInfoFormValues } from './FlightInfoForm';
@@ -61,7 +62,7 @@ function ThemeSwitcher() {
           type="button"
           onClick={() => changeTheme('luxury')}
           className={cn(
-            "w-6 h-6 rounded-full bg-[#39FF14] flex items-center justify-center",
+            "w-6 h-6 rounded-full bg-[#DC143C] flex items-center justify-center",
             theme === 'luxury' ? 'ring-2 ring-gdyup-text ring-offset-1 ring-offset-gdyup-bg-dark' : '',
           )}
         />
@@ -167,6 +168,7 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
   const [showInteriorImage, setShowInteriorImage] = useState(false);
   const [selectedTab, setSelectedTab] = useState('specs');
   const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
+  const [loadedAirports, setLoadedAirports] = useState<any[]>(airports);
   
   // Initialize the form
   const form = useForm<JetShareFormValues>({
@@ -425,14 +427,65 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
     onSubmit
   ]);
   
-  // Simulate an auth check
+  // Real authentication check using the auth provider
+  const { user, loading: authLoading } = useAuth();
+  
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setAuthComplete(true);
-    }, 1000);
+    if (!authLoading) {
+      if (user) {
+        console.log('User authenticated:', user.id);
+        setAuthComplete(true);
+      } else {
+        console.log('No user found, authentication required');
+        setAuthComplete(false);
+        // Redirect to login with return URL
+        const returnUrl = encodeURIComponent(window.location.pathname);
+        setTimeout(() => {
+          window.location.href = `/gdyup/auth/login?returnUrl=${returnUrl}`;
+        }, 2000);
+      }
+    }
+  }, [user, authLoading]);
+  
+  // Load airports if not provided
+  useEffect(() => {
+    const loadAirports = async () => {
+      if (loadedAirports.length === 0) {
+        try {
+          console.log('Loading airports from API...');
+          const response = await fetch('/api/airports');
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Loaded ${data.length} airports from API`);
+            setLoadedAirports(data);
+          } else {
+            console.warn('Failed to load airports from API, using fallback data');
+            // Fallback airport data
+            const fallbackAirports = [
+              { code: 'LAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'USA' },
+              { code: 'JFK', name: 'John F. Kennedy International', city: 'New York', country: 'USA' },
+              { code: 'LHR', name: 'London Heathrow', city: 'London', country: 'UK' },
+              { code: 'CDG', name: 'Charles de Gaulle', city: 'Paris', country: 'France' },
+              { code: 'DXB', name: 'Dubai International', city: 'Dubai', country: 'UAE' },
+              { code: 'SFO', name: 'San Francisco International', city: 'San Francisco', country: 'USA' },
+              { code: 'MIA', name: 'Miami International', city: 'Miami', country: 'USA' },
+              { code: 'LAS', name: 'McCarran International', city: 'Las Vegas', country: 'USA' }
+            ];
+            setLoadedAirports(fallbackAirports);
+          }
+        } catch (error) {
+          console.error('Error loading airports:', error);
+          // Use minimal fallback
+          setLoadedAirports([
+            { code: 'LAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'USA' },
+            { code: 'JFK', name: 'John F. Kennedy International', city: 'New York', country: 'USA' }
+          ]);
+        }
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    loadAirports();
+  }, [loadedAirports.length]);
   
   // Load data when editing an existing offer
   useEffect(() => {
@@ -598,7 +651,7 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
         return (
           <FlightInfoForm
             form={form as unknown as UseFormReturn<FlightInfoFormValues>}
-            airports={airports}
+            airports={loadedAirports}
             totalSteps={totalSections}
             currentStep={currentSection}
           />
@@ -646,27 +699,63 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
   
   // If not authenticated, show authentication UI
   if (!authComplete) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <ThemedIcon 
-          icon={Loader2} 
-          size={48} 
-          className="animate-spin mb-4" 
-        />
-        <h2 className={cn(
-          "text-xl font-semibold mb-2 text-center",
-          getThemedTextClasses()
-        )}>
-          Verifying your account...
-        </h2>
-        <p className={cn(
-          "text-center max-w-md mx-auto opacity-70",
-          getThemedTextClasses()
-        )}>
-          Please wait while we check your authentication status
-        </p>
-      </div>
-    );
+    if (authLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+          <ThemedIcon 
+            icon={Loader2} 
+            size={48} 
+            className="animate-spin mb-4" 
+          />
+          <h2 className={cn(
+            "text-xl font-semibold mb-2 text-center",
+            getThemedTextClasses()
+          )}>
+            Verifying your account...
+          </h2>
+          <p className={cn(
+            "text-center max-w-md mx-auto opacity-70",
+            getThemedTextClasses()
+          )}>
+            Please wait while we check your authentication status
+          </p>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+          <ThemedIcon 
+            icon={UserPlus} 
+            size={48} 
+            className="mb-4" 
+          />
+          <h2 className={cn(
+            "text-xl font-semibold mb-2 text-center",
+            getThemedTextClasses()
+          )}>
+            Authentication Required
+          </h2>
+          <p className={cn(
+            "text-center max-w-md mx-auto opacity-70 mb-6",
+            getThemedTextClasses()
+          )}>
+            You need to be logged in to create flight listings. You'll be redirected to login shortly.
+          </p>
+          <button
+            onClick={() => {
+              const returnUrl = encodeURIComponent(window.location.pathname);
+              window.location.href = `/gdyup/auth/login?returnUrl=${returnUrl}`;
+            }}
+            className={cn(
+              "px-6 py-3 rounded-lg font-medium transition-colors",
+              getThemedButtonClasses('primary')
+            )}
+          >
+            Login Now
+          </button>
+        </div>
+      );
+    }
   }
   
   return (

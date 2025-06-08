@@ -300,9 +300,9 @@ export function ThemeDebugger() {
             >
               <div 
                 className="w-8 h-8 rounded-full mb-1"
-                style={{ background: 'linear-gradient(to right, #39FF14, #32CC10)' }}
+                style={{ background: 'linear-gradient(to right, #DC143C, #A0001C)' }}
               ></div>
-              <span>Luxury<br/>(Neon)</span>
+              <span>Luxury<br/>(Crimson)</span>
               {currentTheme === 'luxury' && (
                 <Check className="absolute bottom-1 right-1" size={14} />
               )}
