@@ -1,27 +1,88 @@
 {
-  "name": "GDY UP",
-  "short_name": "GDYUP",
-  "description": "Peer-to-peer flight splitting and luxury air travel experiences.",
+  "name": "GDY·UP - Private Jet Cost Sharing",
+  "short_name": "GDY·UP",
+  "description": "Share private jet costs and recover up to 70% of your flight expenses",
   "start_url": "/gdyup",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
+  "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#CEFF00",
+  "theme_color": "#DAFF0D",
   "orientation": "portrait",
-  "scope": "/",
-  "prefer_related_applications": false,
-  "icons": [
+  "scope": "/gdyup/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["travel", "lifestyle", "business"],
+  "prefer_related_applications": true,
+  "related_applications": [
     {
-      "src": "/icons/gdyup-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
+      "platform": "itunes",
+      "id": "xyz.gdyup.app"
+    }
+  ],
+  "icons": [
     {
       "src": "/icons/gdyup-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/gdyup-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/videos/gdyup-intro.gif",
+      "sizes": "640x360",
+      "type": "image/gif",
+      "label": "GDY·UP app demo showing private jet cost sharing"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Flights",
+      "short_name": "Browse",
+      "description": "Find available private jet seats",
+      "url": "/gdyup/browse",
+      "icons": [
+        {
+          "src": "/icons/gdyup-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "List Flight",
+      "short_name": "List",
+      "description": "Share your private jet seats",
+      "url": "/gdyup/list",
+      "icons": [
+        {
+          "src": "/icons/gdyup-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "My Flights",
+      "short_name": "Flights",
+      "description": "View your bookings and listings",
+      "url": "/gdyup/flights",
+      "icons": [
+        {
+          "src": "/icons/gdyup-icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 } 

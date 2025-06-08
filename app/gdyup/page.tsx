@@ -18,6 +18,39 @@ export default function GdyupPage() {
 function PageContent() {
   const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   
+  // Elite native share function
+  const handleNativeShare = async (type: 'list' | 'browse') => {
+    const shareData = {
+      title: 'GDY·UP - Private Jet Cost Sharing',
+      text: type === 'list' 
+        ? '✈️ I just listed my private jet seats on GDY·UP! Want to split the cost?'
+        : '✈️ Check out GDY·UP - find private jet seats at a fraction of charter cost!',
+      url: window.location.origin + '/gdyup'
+    };
+
+    try {
+      // Try native share first
+      if (typeof window !== 'undefined' && (window as any).Capacitor) {
+        const { Share } = (window as any).Capacitor.Plugins || {};
+        if (Share) {
+          await Share.share(shareData);
+          return;
+        }
+      }
+      
+      // Fallback to Web Share API
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Final fallback - copy to clipboard
+        await navigator.clipboard.writeText(shareData.url);
+        // Could show a toast here
+      }
+    } catch (error) {
+      console.log('Share failed:', error);
+    }
+  };
+  
   return (
     <div className="main-content">
       {/* Intro Video Section */}
@@ -53,7 +86,7 @@ function PageContent() {
               </video>
               
               {/* Interactive overlay - only show on hover for desktop */}
-              <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 hidden md:flex">
+              <div className="absolute inset-0 bg-black/10 items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 hidden md:flex">
                 <div className="bg-gdyup-primary/90 text-gdyup-button-text rounded-full p-3 shadow-xl backdrop-blur-sm">
                   <Play size={20} />
                 </div>
@@ -92,12 +125,21 @@ function PageContent() {
               <p className={cn("text-lg mb-4", getThemedTextClasses('secondary'))}>
                 List your empty seats and recover up to 70% of your expenses
               </p>
-              <Link href="/gdyup/list" className="block">
-                <button className="btn-primary-elite w-full flex items-center justify-center gap-2">
-                  <Share size={20} />
-                  List Your Seats
+              <div className="flex gap-3">
+                <Link href="/gdyup/list" className="flex-1">
+                  <button className="btn-primary-elite w-full flex items-center justify-center gap-2">
+                    <Share size={20} />
+                    List Your Seats
+                  </button>
+                </Link>
+                <button 
+                  onClick={() => handleNativeShare('list')}
+                  className="btn-secondary-elite px-4 flex items-center justify-center"
+                  aria-label="Share listing option"
+                >
+                  <Share size={18} />
                 </button>
-              </Link>
+              </div>
             </div>
             
             <div className="elite-card p-6 border-l-4 border-gdyup-primary">
@@ -107,12 +149,21 @@ function PageContent() {
               <p className={cn("text-lg mb-4", getThemedTextClasses('secondary'))}>
                 Browse available flights at a fraction of the charter cost
               </p>
-              <Link href="/gdyup/browse" className="block">
-                <button className="btn-primary-elite w-full flex items-center justify-center gap-2">
-                  <Search size={20} />
-                  Browse Flights
+              <div className="flex gap-3">
+                <Link href="/gdyup/browse" className="flex-1">
+                  <button className="btn-primary-elite w-full flex items-center justify-center gap-2">
+                    <Search size={20} />
+                    Browse Flights
+                  </button>
+                </Link>
+                <button 
+                  onClick={() => handleNativeShare('browse')}
+                  className="btn-secondary-elite px-4 flex items-center justify-center"
+                  aria-label="Share browse option"
+                >
+                  <Share size={18} />
                 </button>
-              </Link>
+              </div>
             </div>
           </div>
           

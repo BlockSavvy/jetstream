@@ -46,16 +46,42 @@ interface MobileNavBarProps {
   className?: string;
 }
 
+// Elite haptic feedback function
+const triggerHaptic = (type: 'light' | 'medium' | 'heavy' = 'light') => {
+  if (typeof window !== 'undefined' && (window as any).Capacitor) {
+    const { Haptics } = (window as any).Capacitor.Plugins || {};
+    if (Haptics) {
+      switch (type) {
+        case 'light':
+          Haptics.selectionStart?.();
+          break;
+        case 'medium':
+          Haptics.impact?.({ style: 'MEDIUM' });
+          break;
+        case 'heavy':
+          Haptics.impact?.({ style: 'HEAVY' });
+          break;
+      }
+    }
+  }
+};
+
 export default function MobileNavBar({ className }: MobileNavBarProps) {
   const pathname = usePathname();
   const { getThemedTextClasses } = useGdyupTheme();
 
-  // Function to open concierge
+  // Function to open concierge with haptic feedback
   const handleConciergeClick = () => {
+    triggerHaptic('medium'); // Medium impact for concierge button
     const event = new CustomEvent('gdyup-open-concierge', {
       detail: { context: 'general' }
     });
     document.dispatchEvent(event);
+  };
+
+  // Handle nav item clicks with haptic feedback
+  const handleNavClick = () => {
+    triggerHaptic('light'); // Light haptic for nav changes
   };
 
   return (
@@ -88,6 +114,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 {/* Continue with regular nav item */}
                 <Link
                   href={item.href}
+                  onClick={handleNavClick}
                   className={cn(
                     "nav-item flex flex-col items-center gap-1",
                     isActive && "active"
@@ -117,6 +144,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleNavClick}
               className={cn(
                 "nav-item flex flex-col items-center gap-1",
                 isActive && "active"
