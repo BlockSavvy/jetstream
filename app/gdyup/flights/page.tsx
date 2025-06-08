@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import EliteZapSheet from '../components/EliteZapSheet';
 import { useNostr } from '../contexts/NostrContext';
+import GdyupClientLayout from '../components/GdyupClientLayout';
 
 interface JetShareOffer {
   id: string;
@@ -72,6 +73,14 @@ type CombinedFlight = {
 };
 
 export default function FlightsPage() {
+  return (
+    <GdyupClientLayout>
+      <FlightsPageContent />
+    </GdyupClientLayout>
+  );
+}
+
+function FlightsPageContent() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
   const [offers, setOffers] = useState<JetShareOffer[]>([]);
   const [bookings, setBookings] = useState<FlightBooking[]>([]);

@@ -18,6 +18,7 @@ import { Slider } from '@/components/ui/slider';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import JetSeatVisualizer, { JetSeatVisualizerRef, SeatConfiguration } from '../components/JetSeatVisualizer';
 import { format } from 'date-fns';
+import GdyupClientLayout from '../components/GdyupClientLayout';
 
 // Form schema
 const offerFormSchema = z.object({
@@ -53,6 +54,14 @@ const FORM_STEPS = [
 ];
 
 export default function ListPage() {
+  return (
+    <GdyupClientLayout>
+      <ListPageContent />
+    </GdyupClientLayout>
+  );
+}
+
+function ListPageContent() {
   const [currentStep, setCurrentStep] = useState(0);
   const [jets, setJets] = useState<JetOption[]>([]);
   const [loading, setLoading] = useState(false);

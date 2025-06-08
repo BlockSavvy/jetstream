@@ -1,8 +1,7 @@
 'use client';
 
-import { ConciergeButton } from '@/components/concierge-button';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState, useRef, ReactNode } from 'react';
+import { useEffect, useState, ReactNode } from 'react';
 
 // Extract form data from a global event listener
 interface FormData {
@@ -24,7 +23,6 @@ export function ConciergeProvider({ children }: ConciergeProviderProps) {
   const pathname = usePathname();
   const [context, setContext] = useState<'general' | 'offer-creation' | 'flight-search'>('general');
   const [formData, setFormData] = useState<FormData>({});
-  const [position, setPosition] = useState<'bottom-right' | 'bottom-nav' | 'fab'>('bottom-right');
   const [isClientSide, setIsClientSide] = useState(false);
   
   // Set flag to indicate we're on client-side
@@ -62,9 +60,6 @@ export function ConciergeProvider({ children }: ConciergeProviderProps) {
   // Determine context based on pathname
   useEffect(() => {
     if (!isClientSide) return;
-
-    // Ensure the button is always positioned at the bottom center
-    setPosition('bottom-nav');
     
     // Set context based on path
     if (pathname?.includes('/gdyup/offer') || pathname?.includes('/gdyup/create')) {
@@ -129,15 +124,7 @@ export function ConciergeProvider({ children }: ConciergeProviderProps) {
     return <>{children}</>;
   }
 
-  return (
-    <>
-      {children}
-      <ConciergeButton 
-        imageUrl="/icons/conciergebutton.png" 
-        context={context}
-        position="bottom-right" // Keep consistent position for now
-        currentFlightData={getFlightDataForContext()}
-      />
-    </>
-  );
+  // Just provide context and form data handling - no UI rendering
+  // The concierge button is handled by the MobileNavBar component
+  return <>{children}</>;
 } 

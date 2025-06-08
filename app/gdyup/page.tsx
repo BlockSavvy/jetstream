@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Share, Search, Plane, Bitcoin, Sparkles, CreditCard } from 'lucide-react';
+import { Share, Search, Plane, Bitcoin, Sparkles, CreditCard, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGdyupTheme } from './hooks/useGdyupTheme';
 import GdyupClientLayout from './components/GdyupClientLayout';
@@ -20,6 +20,56 @@ function PageContent() {
   
   return (
     <div className="main-content">
+      {/* Intro Video Section */}
+      <section className="px-6 py-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden bg-gdyup-bg-elevated border border-gdyup-border mb-8">
+            {/* GIF/Video Container */}
+            <div className="relative aspect-video">
+              {/* Primary: Use your custom GIF */}
+              <img 
+                src="/videos/gdyup-intro.gif" 
+                alt="GDY·UP Private Jet Sharing Demo"
+                className="w-full h-full object-cover"
+                style={{ imageRendering: 'crisp-edges' }}
+              />
+              
+              {/* Fallback video sources if GIF doesn't load */}
+              <video 
+                className="w-full h-full object-cover absolute inset-0 opacity-0"
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                poster="/videos/gdyup-intro.gif"
+                onError={(e) => {
+                  // If video fails, ensure GIF is visible
+                  const img = e.currentTarget.parentElement?.querySelector('img');
+                  if (img) img.style.display = 'block';
+                }}
+              >
+                <source src="/videos/gdyup-intro.mp4" type="video/mp4" />
+                <source src="/videos/gdyup-intro.webm" type="video/webm" />
+              </video>
+              
+              {/* Interactive overlay - only show on hover for desktop */}
+              <div className="absolute inset-0 bg-black/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 hidden md:flex">
+                <div className="bg-gdyup-primary/90 text-gdyup-button-text rounded-full p-3 shadow-xl backdrop-blur-sm">
+                  <Play size={20} />
+                </div>
+              </div>
+            </div>
+            
+            {/* Enhanced Caption */}
+            <div className="p-4 text-center bg-gradient-to-t from-gdyup-bg-elevated to-transparent">
+              <p className={cn("text-sm font-medium", getThemedTextClasses('secondary'))}>
+                ✈️ <span className="text-gdyup-primary">See GDY·UP in action</span> - Private jet cost sharing made simple
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Hero Section */}
       <section className="px-6 py-12 text-center">
         <div className="max-w-3xl mx-auto">

@@ -33,7 +33,7 @@ import NostrIdentityVerifier from '@/app/gdyup/components/NostrIdentityVerifier'
 import NostrVerificationBadge from '@/app/gdyup/components/NostrVerificationBadge';
 import { cn } from '@/lib/utils';
 import { UserProfile } from '@/hooks/useUserProfile';
-import { ClientContentWrapper } from '../components/ClientContentWrapper';
+import GdyupClientLayout from '../components/GdyupClientLayout';
 
 // Extend the UserProfile type to include wallet properties
 interface ExtendedUserProfile extends UserProfile {
@@ -378,6 +378,14 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
 
 // Main profile component
 export default function ProfilePage() {
+  return (
+    <GdyupClientLayout>
+      <ProfilePageContent />
+    </GdyupClientLayout>
+  );
+}
+
+function ProfilePageContent() {
   const { user, loading: authLoading } = useAuth();
   const { profile: originalProfile, loading: profileLoading, updateProfile, refreshProfile } = useUserProfile();
   const router = useRouter();
@@ -424,21 +432,18 @@ export default function ProfilePage() {
   // Show loading state while checking auth and profile
   if (authLoading || profileLoading || !profile || !isProfileComplete) {
     return (
-      <ClientContentWrapper>
-        <Container className="flex flex-col min-h-screen bg-gray-900">
-          <div className="flex-grow flex flex-col justify-center items-center py-10">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <p className="text-gray-400">Loading your profile...</p>
-          </div>
-        </Container>
-      </ClientContentWrapper>
+      <Container className="flex flex-col min-h-screen bg-gray-900">
+        <div className="flex-grow flex flex-col justify-center items-center py-10">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <p className="text-gray-400">Loading your profile...</p>
+        </div>
+      </Container>
     );
   }
   
   // If profile exists and is complete, show profile page
   return (
-    <ClientContentWrapper>
-      <Container className="flex flex-col min-h-screen">
+    <Container className="flex flex-col min-h-screen">
         <div className="py-6">
           <div className="flex items-center mb-6">
             <Button 
@@ -721,6 +726,5 @@ export default function ProfilePage() {
           </div>
         </div>
       </Container>
-    </ClientContentWrapper>
-  );
-} 
+    );
+  } 

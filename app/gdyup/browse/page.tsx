@@ -7,6 +7,7 @@ import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { useAuth } from '@/lib/auth-provider';
 import { toast } from 'sonner';
 import ElitePaymentSheet from '../components/ElitePaymentSheet';
+import GdyupClientLayout from '../components/GdyupClientLayout';
 
 interface Flight {
   id: string;
@@ -38,6 +39,14 @@ interface Flight {
 }
 
 export default function BrowsePage() {
+  return (
+    <GdyupClientLayout>
+      <BrowsePageContent />
+    </GdyupClientLayout>
+  );
+}
+
+function BrowsePageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [flights, setFlights] = useState<Flight[]>([]);
