@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'io.gdyup.app',
-  appName: 'GDY·UP',
+  appName: 'GDYUP',
   webDir: 'out',
   server: {
     url: 'https://gdyup.xyz/gdyup',
