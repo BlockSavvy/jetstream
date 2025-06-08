@@ -24,6 +24,7 @@ const nextConfig = {
   // Configure allowed image domains
   images: {
     domains: ['images.unsplash.com'],
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   
   // Custom headers for PWA support
@@ -37,6 +38,14 @@ const nextConfig = {
             {
               key: 'X-App-Mode',
               value: 'gdyup',
+            },
+            {
+              key: 'X-Frame-Options',
+              value: 'SAMEORIGIN',
+            },
+            {
+              key: 'Access-Control-Allow-Origin',
+              value: 'capacitor://localhost',
             },
           ],
         },

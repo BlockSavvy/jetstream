@@ -11,7 +11,11 @@ const config: CapacitorConfig = {
       'gdyup.xyz',
       'api.gdyup.xyz', 
       'btc.gdyup.xyz',
-      '*.gdyup.xyz'
+      '*.gdyup.xyz',
+      'supabase.com',
+      '*.supabase.co',
+      'stripe.com',
+      '*.stripe.com'
     ]
   },
   ios: {
@@ -26,7 +30,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: "#000000",
-      showSpinner: false,
+      showSpinner: true,
       androidSpinnerStyle: 'large',
       iosSpinnerStyle: 'small',
       spinnerColor: "#DAFF0D",
