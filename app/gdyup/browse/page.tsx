@@ -61,35 +61,36 @@ function BrowsePageContent() {
   const { getThemedTextClasses } = useGdyupTheme();
   const { user } = useAuth();
 
-  // Fetch flights from API
-  useEffect(() => {
-    fetchFlights();
-  }, []);
-
+  // Fetch flights from API using the new API client
   const fetchFlights = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/flights');
+      console.log('[Browse] Fetching flights with API client...');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch flights');
-      }
-      
-      const data = await response.json();
+      // Use the new API client with automatic fallback
+      const { apiClient } = await import('../utils/api-client');
+      const data = await apiClient.getFlightsWithFallback();
       
       // Filter for available flights only
-      const availableFlights = data.flights?.filter((flight: Flight) => 
+      const availableFlights = Array.isArray(data) ? data.filter((flight: Flight) => 
         flight.status === 'scheduled' && flight.available_seats > 0
-      ) || [];
+      ) : [];
       
+      console.log(`[Browse] Loaded ${availableFlights.length} available flights`);
       setFlights(availableFlights);
     } catch (error) {
-      console.error('Error fetching flights:', error);
+      console.error('[Browse] Error fetching flights:', error);
       toast.error('Failed to load flights');
+      setFlights([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
+
+  // Fetch flights on component mount
+  useEffect(() => {
+    fetchFlights();
+  }, []);
 
   // Filter flights based on search and filters
   const filteredFlights = flights.filter(flight => {

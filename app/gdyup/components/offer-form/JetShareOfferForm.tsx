@@ -447,45 +447,33 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
     }
   }, [user, authLoading]);
   
-  // Load airports if not provided
-  useEffect(() => {
-    const loadAirports = async () => {
-      if (loadedAirports.length === 0) {
-        try {
-          console.log('Loading airports from API...');
-          const response = await fetch('/api/airports');
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`Loaded ${data.length} airports from API`);
-            setLoadedAirports(data);
-          } else {
-            console.warn('Failed to load airports from API, using fallback data');
-            // Fallback airport data
-            const fallbackAirports = [
-              { code: 'LAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'USA' },
-              { code: 'JFK', name: 'John F. Kennedy International', city: 'New York', country: 'USA' },
-              { code: 'LHR', name: 'London Heathrow', city: 'London', country: 'UK' },
-              { code: 'CDG', name: 'Charles de Gaulle', city: 'Paris', country: 'France' },
-              { code: 'DXB', name: 'Dubai International', city: 'Dubai', country: 'UAE' },
-              { code: 'SFO', name: 'San Francisco International', city: 'San Francisco', country: 'USA' },
-              { code: 'MIA', name: 'Miami International', city: 'Miami', country: 'USA' },
-              { code: 'LAS', name: 'McCarran International', city: 'Las Vegas', country: 'USA' }
-            ];
-            setLoadedAirports(fallbackAirports);
-          }
-        } catch (error) {
-          console.error('Error loading airports:', error);
-          // Use minimal fallback
-          setLoadedAirports([
-            { code: 'LAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'USA' },
-            { code: 'JFK', name: 'John F. Kennedy International', city: 'New York', country: 'USA' }
-          ]);
-        }
+  // Function to fetch airports using the new API client
+  const loadAirports = useCallback(async () => {
+    try {
+      if (loadedAirports.length > 0) return; // Don't fetch if we already have airports
+      
+      console.log('[JetShareOfferForm] Loading airports with API client...');
+      
+      // Use the new API client with automatic fallback
+      const { apiClient } = await import('../../utils/api-client');
+      const airportsData = await apiClient.getAirportsWithFallback();
+      
+      console.log(`[JetShareOfferForm] Loaded ${airportsData.length} airports`);
+      setLoadedAirports(airportsData);
+    } catch (error) {
+      console.error('[JetShareOfferForm] Error loading airports:', error);
+      
+      // If we have airports from props, use those as final fallback
+      if (airports && airports.length > 0) {
+        console.log(`[JetShareOfferForm] Using ${airports.length} airports from props`);
+        setLoadedAirports(airports);
       }
-    };
-    
+    }
+  }, [loadedAirports.length, airports]);
+
+  useEffect(() => {
     loadAirports();
-  }, [loadedAirports.length]);
+  }, [loadAirports]);
   
   // Load data when editing an existing offer
   useEffect(() => {

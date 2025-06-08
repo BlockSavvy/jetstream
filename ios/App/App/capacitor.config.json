@@ -1,10 +1,16 @@
 {
-	"appId": "io.gdyup.app",
-	"appName": "GDY·UP",
-	"webDir": "out",
+	"appId": "app.gdyup.xyz",
+	"appName": "GDYUP",
+	"webDir": "dist",
 	"server": {
 		"url": "https://gdyup.xyz/gdyup",
-		"cleartext": false
+		"cleartext": false,
+		"allowNavigation": [
+			"gdyup.xyz",
+			"*.gdyup.xyz",
+			"supabase.co",
+			"*.supabase.co"
+		]
 	},
 	"ios": {
 		"contentInset": "always",

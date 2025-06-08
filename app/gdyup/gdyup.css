@@ -2303,3 +2303,164 @@ button[class*="primary"],
 .text-contrast-dark {
   color: #000000 !important;
 }
+
+/* ============================================================== */
+/* FORM INPUT FIXES - ENSURE TEXT VISIBILITY EVERYWHERE         */
+/* ============================================================== */
+
+/* Base form styling with proper contrast */
+.gdyup-app input,
+.gdyup-app textarea, 
+.gdyup-app select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  background-color: var(--gdyup-bg-card, #1a1a1a) !important;
+  color: var(--gdyup-text, #FFFFFF) !important;
+  border: 1px solid var(--gdyup-border, #333333) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Form input focus states */
+.gdyup-app input:focus,
+.gdyup-app textarea:focus,
+.gdyup-app select:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: var(--gdyup-bg-card, #1a1a1a) !important;
+  color: var(--gdyup-text, #FFFFFF) !important;
+  border-color: var(--gdyup-primary, #DAFF0D) !important;
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb, 218, 255, 13), 0.1) !important;
+  outline: none !important;
+}
+
+/* Placeholder text styling */
+.gdyup-app input::placeholder,
+.gdyup-app textarea::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--gdyup-text-subtle, #9CA3AF) !important;
+  opacity: 0.7 !important;
+}
+
+/* Form labels */
+.gdyup-app label,
+label {
+  color: var(--gdyup-text, #FFFFFF) !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+}
+
+/* Auth form specific fixes */
+.auth-form input,
+.auth-form textarea,
+.auth-form select,
+form[class*="auth"] input,
+form[class*="login"] input,
+form[class*="signup"] input,
+form[class*="register"] input,
+[class*="AuthForm"] input,
+[class*="LoginForm"] input,
+[class*="SignupForm"] input {
+  background-color: rgba(26, 26, 26, 0.95) !important;
+  color: #FFFFFF !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.75rem !important;
+  padding: 1rem !important;
+  font-size: 1rem !important;
+  font-weight: 400 !important;
+  text-shadow: none !important;
+}
+
+/* Auth form focus states */
+.auth-form input:focus,
+.auth-form textarea:focus,
+form[class*="auth"] input:focus,
+form[class*="login"] input:focus,
+form[class*="signup"] input:focus,
+[class*="AuthForm"] input:focus,
+[class*="LoginForm"] input:focus,
+[class*="SignupForm"] input:focus {
+  background-color: rgba(26, 26, 26, 1) !important;
+  color: #FFFFFF !important;
+  border-color: var(--gdyup-primary, #DAFF0D) !important;
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb, 218, 255, 13), 0.2) !important;
+  outline: none !important;
+  text-shadow: none !important;
+}
+
+/* Sign in page specific fixes */
+.gdyup-app .min-h-screen input,
+.gdyup-app .auth-container input,
+.gdyup-app .login-container input,
+.gdyup-app .signup-container input,
+div[class*="min-h-screen"] input,
+div[class*="auth"] input {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: #FFFFFF !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  font-size: 1rem !important;
+  padding: 1rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Ensure input text is always visible */
+input[type="text"],
+input[type="email"], 
+input[type="password"] {
+  -webkit-text-fill-color: var(--gdyup-text, #FFFFFF) !important;
+  -webkit-opacity: 1 !important;
+  opacity: 1 !important;
+}
+
+/* Fix autocomplete styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--gdyup-bg-card, #1a1a1a) inset !important;
+  -webkit-text-fill-color: var(--gdyup-text, #FFFFFF) !important;
+  color: var(--gdyup-text, #FFFFFF) !important;
+  background-color: var(--gdyup-bg-card, #1a1a1a) !important;
+}
+
+/* Fix for dark theme autocomplete */
+.gdyup-theme-luxury input:-webkit-autofill,
+.gdyup-theme-bitcoin input:-webkit-autofill,
+.gdyup-theme-default input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--gdyup-bg-card) inset !important;
+  -webkit-text-fill-color: var(--gdyup-text) !important;
+}
+
+/* Form validation error text */
+.gdyup-app .error,
+.gdyup-app .error-message,
+.error,
+.error-message,
+[class*="error"] {
+  color: #ff6b6b !important;
+  font-size: 0.875rem !important;
+  margin-top: 0.25rem !important;
+}
+
+/* Form success text */
+.gdyup-app .success,
+.gdyup-app .success-message,
+.success,
+.success-message {
+  color: #51cf66 !important;
+  font-size: 0.875rem !important;
+  margin-top: 0.25rem !important;
+}

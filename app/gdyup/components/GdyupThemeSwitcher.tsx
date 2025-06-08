@@ -21,6 +21,13 @@ interface ThemeOption {
   textColor: string;
 }
 
+interface GdyupThemeSwitcherProps {
+  showLabels?: boolean;
+  alignDropdown?: 'start' | 'end';
+  sideOffset?: number;
+  className?: string;
+}
+
 const themes: ThemeOption[] = [
   {
     id: 'luxury',
@@ -45,13 +52,19 @@ const themes: ThemeOption[] = [
   }
 ];
 
-export default function GdyupThemeSwitcher() {
+export default function GdyupThemeSwitcher({ 
+  showLabels = true, 
+  alignDropdown = 'end', 
+  sideOffset = 8,
+  className
+}: GdyupThemeSwitcherProps) {
   const [currentTheme, setCurrentTheme] = useState<string>('luxury');
   const [isOpen, setIsOpen] = useState(false);
 
   // Load theme from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem('gdyup-theme') || 'luxury';
+    console.log('[Theme] Loading saved theme:', savedTheme);
     setCurrentTheme(savedTheme);
     applyTheme(savedTheme);
   }, []);
@@ -59,10 +72,17 @@ export default function GdyupThemeSwitcher() {
   const applyTheme = (themeId: string) => {
     console.log(`[Theme] Applying theme: ${themeId}`);
     
-    // Remove all existing theme classes
+    // Remove all existing theme classes from body and html
+    document.body.classList.remove('gdyup-theme-luxury', 'gdyup-theme-bitcoin', 'gdyup-theme-classic');
+    document.documentElement.classList.remove('gdyup-theme-luxury', 'gdyup-theme-bitcoin', 'gdyup-theme-classic');
+    
+    // Remove old data attribute
     document.documentElement.removeAttribute('data-gdyup-theme');
     
-    // Apply new theme
+    // Apply new theme class and data attribute
+    const themeClass = `gdyup-theme-${themeId}`;
+    document.body.classList.add(themeClass);
+    document.documentElement.classList.add(themeClass);
     document.documentElement.setAttribute('data-gdyup-theme', themeId);
     
     // Force CSS recomputation
@@ -70,7 +90,7 @@ export default function GdyupThemeSwitcher() {
     document.documentElement.offsetHeight; // Trigger reflow
     document.documentElement.style.display = '';
     
-    console.log(`[Theme] Theme applied: ${themeId}, attribute set: ${document.documentElement.getAttribute('data-gdyup-theme')}`);
+    console.log(`[Theme] Theme applied: ${themeId}, class: ${themeClass}`);
   };
 
   const handleThemeChange = (themeId: string) => {
@@ -92,16 +112,17 @@ export default function GdyupThemeSwitcher() {
   const currentThemeObj = themes.find(t => t.id === currentTheme) || themes[0];
 
   return (
-    <div className="fixed top-4 right-4 z-[200]">
+    <div className={cn("theme-switcher-container", className)}>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             size="sm"
             className={cn(
-              "w-10 h-10 p-0 border-2 border-white/20 backdrop-blur-md",
+              "flex items-center gap-2 border-2 border-white/20 backdrop-blur-md",
               "hover:border-white/40 transition-all duration-200",
-              "bg-black/60"
+              "bg-black/60 text-white hover:text-white",
+              !showLabels && "w-10 h-10 p-0"
             )}
             style={{
               background: `${currentThemeObj.gradient}, rgba(0, 0, 0, 0.6)`,
@@ -109,18 +130,19 @@ export default function GdyupThemeSwitcher() {
             }}
           >
             <Palette className="h-4 w-4 text-white" />
+            {showLabels && <span className="text-white">Theme</span>}
             <span className="sr-only">Toggle theme</span>
           </Button>
         </DropdownMenuTrigger>
         
         <DropdownMenuContent 
-          align="end" 
+          align={alignDropdown}
           className={cn(
             "gdyup-theme-menu w-64 p-2",
             "bg-black/95 border-2 border-gray-600 backdrop-blur-xl",
             "shadow-2xl rounded-xl"
           )}
-          sideOffset={8}
+          sideOffset={sideOffset}
         >
           <DropdownMenuLabel className="text-white font-semibold text-center py-2">
             Choose Theme

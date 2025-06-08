@@ -1,12 +1,18 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.gdyup.app',
+  appId: 'app.gdyup.xyz',
   appName: 'GDYUP',
-  webDir: 'out',
+  webDir: 'dist',
   server: {
     url: 'https://gdyup.xyz/gdyup',
-    cleartext: false
+    cleartext: false,
+    allowNavigation: [
+      'gdyup.xyz',
+      '*.gdyup.xyz',
+      'supabase.co',
+      '*.supabase.co'
+    ]
   },
   ios: {
     contentInset: 'always',

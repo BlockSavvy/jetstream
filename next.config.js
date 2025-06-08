@@ -1,16 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Disable static export - use remote server for live database connectivity
+  // output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true, // Required for Capacitor
+    domains: ['images.unsplash.com'],
+  },
+  
   // Exclude problematic pages from static generation
   experimental: {
     // Option to disable automatic static optimization for specific routes
     optimizePackageImports: ['recharts'],
   },
+  
   // Set proper page options for simulation page
   modularizeImports: {
     'lucide-react': {
       transform: 'lucide-react/dist/esm/icons/{{member}}',
     },
   },
+  
   // Mark problematic pages as dynamically rendered
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   
@@ -21,10 +31,11 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // Configure allowed image domains
-  images: {
-    domains: ['images.unsplash.com'],
-    unoptimized: process.env.NODE_ENV === 'development',
+  // Environment variables for production API endpoints
+  env: {
+    NEXT_PUBLIC_API_BASE_URL: process.env.NODE_ENV === 'production' 
+      ? 'https://gdyup.xyz' 
+      : 'http://localhost:3000',
   },
   
   // Custom headers for PWA support
@@ -56,7 +67,12 @@ const nextConfig = {
 
   // Rewrite rules for GDYUP-specific deployment
   async rewrites() {
-    // Only apply rewrites for GDYUP deployment
+    // Skip rewrites for static export
+    if (process.env.NODE_ENV === 'production') {
+      return [];
+    }
+    
+    // Only apply rewrites for GDYUP deployment in development
     if (process.env.NEXT_PUBLIC_APP_MODE === 'gdyup') {
       return [
         // Redirect root to /gdyup

@@ -83,25 +83,35 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
 }
 
 export default function GdyupClientLayout({ children }: { children: React.ReactNode }) {
+  const [showSplash, setShowSplash] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(true); // Default to ready for web
   const pathname = usePathname();
   const { getThemedBackgroundClasses } = useGdyupTheme();
-  const [showSplash, setShowSplash] = useState(true);
-  const [isAppReady, setIsAppReady] = useState(false);
 
-  // Handle app initialization
+  // Handle app initialization - only show splash on very first app launch
   useEffect(() => {
     if (isCapacitorApp()) {
-      // Always show splash in Capacitor (native app)
-      console.log('[GdyupClientLayout] Native app detected, showing splash screen');
-      setShowSplash(true);
-      setIsAppReady(false);
+      // Check if this is the initial app launch (not navigation)
+      const hasShownSplash = sessionStorage.getItem('gdyup_splash_shown');
+      const isInitialLoad = !hasShownSplash && pathname === '/gdyup';
+      
+      if (isInitialLoad) {
+        console.log('[GdyupClientLayout] Initial app launch detected, showing splash screen');
+        setShowSplash(true);
+        setIsAppReady(false);
+        sessionStorage.setItem('gdyup_splash_shown', 'true');
+      } else {
+        console.log('[GdyupClientLayout] Navigation or subsequent load, skipping splash');
+        setShowSplash(false);
+        setIsAppReady(true);
+      }
     } else {
       // Skip splash for web
       console.log('[GdyupClientLayout] Web detected, skipping splash screen');
       setShowSplash(false);
       setIsAppReady(true);
     }
-  }, []);
+  }, []); // Only run once on mount, not on pathname changes
 
   const handleSplashComplete = () => {
     setShowSplash(false);
