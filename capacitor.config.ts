@@ -1,31 +1,22 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'xyz.gdyup.app',
+  appId: 'io.gdyup.app',
   appName: 'GDY·UP',
   webDir: 'out',
   server: {
     url: 'https://gdyup.xyz/gdyup',
-    cleartext: false,
-    allowNavigation: [
-      'gdyup.xyz',
-      'supabase.co',
-      '*.supabase.co',
-      'vjhrmizwqhmafkxbmfwa.supabase.co'
-    ]
+    cleartext: false
   },
   ios: {
     contentInset: 'always',
     allowsLinkPreview: false,
     scrollEnabled: true,
-    backgroundColor: '#000000',
-    overrideUserAgent: 'GDY-UP-iOS',
-    appendUserAgent: 'GDY-UP-Mobile',
-    scheme: 'capacitor'
+    backgroundColor: '#000000'
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 3000,
+      launchShowDuration: 4000,
       backgroundColor: "#000000",
       showSpinner: false,
       androidSpinnerStyle: 'large',
@@ -36,16 +27,14 @@ const config: CapacitorConfig = {
       launchAutoHide: false
     },
     StatusBar: {
-      style: 'dark',
-      backgroundColor: '#000000',
-      overlaysWebView: false
+      style: "dark",
+      backgroundColor: "#000000"
     },
     Keyboard: {
-      resize: 'body',
-      style: 'dark',
+      resize: "body",
+      style: "dark",
       resizeOnFullScreen: true
-    },
-    Haptics: {}
+    }
   }
 };
 
