@@ -60,7 +60,7 @@
   --gdyup-text: #E0E0E0; /* Jet Silver */
   --gdyup-text-medium: #CCCCCC; /* Ash Gray */
   --gdyup-text-subtle: #999999;
-  --gdyup-button-text: #FFFFFF; /* Text on primary button MUST be white to contrast with dark crimson */
+  --gdyup-button-text: #FFFFFF !important; /* Text on primary button MUST be white to contrast with dark crimson */
 
   --gdyup-button-bg: var(--gdyup-primary);
   --gdyup-button-hover-bg: var(--gdyup-primary-hover);
@@ -76,21 +76,21 @@
   --gdyup-carbon-texture: url('/carbonfibertexture.png');
 }
 
-/* Bitcoin Orange Theme (gdyup-theme-bitcoin) */
+/* Bitcoin Theme - SATOSHI ORANGE (gdyup-theme-bitcoin) */
 .gdyup-theme-bitcoin {
-  /* Primary color is gold for Bitcoin theme */
-  --gdyup-primary: #F7931A; /* Bitcoin Orange */
-  --gdyup-primary-hover: #FFAA33;
-  --gdyup-primary-rgb: 247, 147, 26;
-  --gdyup-secondary: #FF6B00; /* Burnt Orange */
-  --gdyup-secondary-rgb: 255, 107, 0;
+  /* Primary color is SATOSHI ORANGE for Bitcoin theme */
+  --gdyup-primary: #FF6B00 !important; /* SATOSHI ORANGE */
+  --gdyup-primary-hover: #E85D00 !important;
+  --gdyup-primary-rgb: 255, 107, 0 !important;
+  --gdyup-secondary: #F7931A; /* Classic Bitcoin Gold */
+  --gdyup-secondary-rgb: 247, 147, 26;
   --gdyup-bg-dark: #121212; /* Midnight Charcoal */
   --gdyup-bg-card: #2D2D2D; /* Block Gray */
   --gdyup-border: #3A3A3A;
   --gdyup-text: #FDFDFD; /* Lightning White */
   --gdyup-text-medium: #E5E5E5;
   --gdyup-text-subtle: #B8B8B8;
-  --gdyup-button-text: #000000; /* Text on primary button MUST be dark to contrast with gold */
+  --gdyup-button-text: #000000 !important; /* Text on primary button MUST be dark to contrast with satoshi orange */
 
   --gdyup-button-bg: var(--gdyup-primary);
   --gdyup-button-hover-bg: var(--gdyup-primary-hover);
@@ -216,10 +216,10 @@ html.gdyup-theme-bitcoin body.gdyup-app {
   --gdyup-text-subtle: #bd9fb3;
   --gdyup-text-muted: #8a6f84;
   
-  /* Primary theme color */
-  --gdyup-primary: #F7931A;
-  --gdyup-primary-hover: #FFAA33;
-  --gdyup-primary-active: #D68000;
+  /* Primary theme color - UPDATED TO SATOSHI ORANGE */
+  --gdyup-primary: #FF6B00 !important;
+  --gdyup-primary-hover: #E85D00 !important;
+  --gdyup-primary-active: #D65000 !important;
   
   /* Secondary color */
   --gdyup-secondary: #6e4c66;
@@ -237,8 +237,8 @@ html.gdyup-theme-bitcoin body.gdyup-app {
   --gdyup-error: #f44336;
   --gdyup-success: #4caf50;
   
-  /* Navigation colors */
-  --gdyup-nav-active: #F7931A;
+  /* Navigation colors - UPDATED TO SATOSHI ORANGE */
+  --gdyup-nav-active: #FF6B00 !important;
   --gdyup-nav-active-text: #000000;
   
   /* Shadow effects */
@@ -273,8 +273,8 @@ html.gdyup-theme-bitcoin body.gdyup-app {
   --gdyup-border: #223319;
   --gdyup-border-light: #304326;
   
-  /* Button text colors */
-  --gdyup-button-text: #000000;
+  /* Button text colors - BLACK for perfect contrast with bright lime */
+  --gdyup-button-text: #000000 !important;
   
   /* Special colors */
   --gdyup-warning: #ff9800;

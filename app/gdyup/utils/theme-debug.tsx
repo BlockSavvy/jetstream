@@ -323,9 +323,9 @@ export function ThemeDebugger() {
             >
               <div 
                 className="w-8 h-8 rounded-full mb-1"
-                style={{ background: 'linear-gradient(to right, #F7931A, #FFAA33)' }}
+                style={{ background: 'linear-gradient(to right, #FF6B00, #E85D00)' }}
               ></div>
-              <span>Bitcoin<br/>(Orange)</span>
+              <span>Bitcoin<br/>(Satoshi)</span>
               {currentTheme === 'bitcoin' && (
                 <Check className="absolute bottom-1 right-1" size={14} />
               )}

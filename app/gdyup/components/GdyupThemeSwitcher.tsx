@@ -56,7 +56,7 @@ export default function GdyupThemeSwitcher({
       case 'luxury':
         return 'bg-gradient-to-r from-red-900 to-red-600';
       case 'bitcoin':
-        return 'bg-gradient-to-r from-[#F7931A] to-amber-500';
+        return 'bg-gradient-to-r from-[#FF6B00] to-[#E85D00]'; // SATOSHI ORANGE
       default:
         return 'bg-gradient-to-r from-gray-200 to-gray-300';
     }

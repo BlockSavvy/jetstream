@@ -287,6 +287,57 @@ export async function POST(request: Request) {
       // This failure is non-critical for the offer creation, so we just log it
     }
 
+    // 🚀 BROADCAST TO NOSTR GROUPS (non-blocking)
+    try {
+      console.log('🔗 Starting Nostr broadcast for offer:', offer.id);
+      
+      // Fire and forget - broadcast to Nostr without blocking main flow
+      void (async () => {
+        try {
+          // Get user's Nostr profile for broadcasting
+          const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('nostr_pubkey, nostr_settings')
+            .eq('id', user.id)
+            .single();
+          
+          // Only broadcast if user has Nostr enabled and pubkey
+          if (userProfile?.nostr_pubkey && userProfile?.nostr_settings?.broadcast_offers) {
+            const { NostrOfferBroadcaster } = await import('@/app/gdyup/services/NostrOfferBroadcaster');
+            const broadcaster = new NostrOfferBroadcaster();
+            
+            const result = await broadcaster.broadcastOffer(
+              {
+                id: offer.id,
+                departure_location: offer.departure_location,
+                arrival_location: offer.arrival_location,
+                departure_time: offer.departure_time,
+                aircraft_model: offer.aircraft_model,
+                total_seats: offer.total_seats,
+                available_seats: offer.available_seats,
+                total_flight_cost: offer.total_flight_cost,
+                requested_share_amount: offer.requested_share_amount,
+                status: offer.status,
+                user_id: offer.user_id
+              },
+              userProfile.nostr_pubkey
+            );
+            
+            console.log(`✈️ [Nostr] Broadcast result for offer ${offer.id}:`, result);
+            
+            // Clean up broadcaster
+            await broadcaster.disconnect();
+          } else {
+            console.log(`ℹ️ [Nostr] Skipping broadcast - user ${user.id} has no pubkey or broadcasting disabled`);
+          }
+        } catch (nostrError) {
+          console.error('❌ [Nostr] Error during broadcast operation (non-critical):', nostrError);
+        }
+      })();
+    } catch (nostrInitError) {
+      console.error('❌ [Nostr] Error initializing broadcast (non-critical):', nostrInitError);
+    }
+
     return NextResponse.json(offer, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in createOffer route:', error);
