@@ -2483,15 +2483,16 @@ html.capacitor body {
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* Fix for iOS viewport scaling issues */
+/* Fix for iOS viewport scaling issues - REMOVED PROBLEMATIC FIXED POSITIONING */
 html.capacitor {
-  position: fixed !important;
-  overflow: hidden !important;
+  /* DO NOT USE position: fixed - it breaks mobile navigation */
+  overflow-x: hidden !important;
 }
 
 html.capacitor body {
   position: relative !important;
-  overflow: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
@@ -2506,10 +2507,28 @@ html.capacitor body {
 /* Safe area insets for iOS */
 .capacitor .main-content {
   padding-top: env(safe-area-inset-top) !important;
-  padding-bottom: env(safe-area-inset-bottom) !important;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important; /* Space for mobile nav */
   padding-left: env(safe-area-inset-left) !important;
   padding-right: env(safe-area-inset-right) !important;
   min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+}
+
+/* CRITICAL: Ensure mobile navigation is always visible in Capacitor */
+.capacitor .mobile-nav-bar {
+  display: flex !important;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1000 !important;
+  background: var(--gdyup-nav-bg) !important;
+  border-top: 1px solid var(--gdyup-nav-border) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  padding-left: env(safe-area-inset-left) !important;
+  padding-right: env(safe-area-inset-right) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Fix for mobile navigation in Capacitor */
@@ -2535,8 +2554,8 @@ html.capacitor body {
   }
 }
 
-/* Force proper scaling on all containers */
-.capacitor * {
+/* Force proper scaling on all containers EXCEPT navigation */
+.capacitor *:not(.mobile-nav-bar):not(.mobile-nav-bar *) {
   -webkit-transform: translateZ(0) !important;
   transform: translateZ(0) !important;
 }
@@ -2549,6 +2568,113 @@ html.capacitor body {
   width: 100vw !important;
   height: 100vh !important;
   z-index: 99999 !important;
+}
+
+/* ELITE MOBILE NAVIGATION STYLES FOR CAPACITOR */
+.capacitor .mobile-nav-bar .nav-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+  border-radius: 12px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  min-height: 60px !important;
+  color: var(--gdyup-nav-text) !important;
+}
+
+.capacitor .mobile-nav-bar .nav-item:active {
+  transform: scale(0.95) !important;
+}
+
+.capacitor .mobile-nav-bar .nav-item.active {
+  background: var(--gdyup-nav-active) !important;
+  color: var(--gdyup-nav-active-text) !important;
+  box-shadow: var(--gdyup-glow-primary) !important;
+}
+
+.capacitor .mobile-nav-bar .nav-item.active .nav-icon {
+  color: var(--gdyup-nav-active-text) !important;
+  filter: drop-shadow(0 0 8px rgba(var(--gdyup-primary-rgb), 0.6)) !important;
+}
+
+/* Concierge Button - Elevated Center for Capacitor */
+.capacitor .concierge-button-mobile {
+  position: absolute !important;
+  top: -25px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1001 !important;
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 50% !important;
+  background: var(--gdyup-primary) !important;
+  color: var(--gdyup-button-text) !important;
+  border: 3px solid var(--gdyup-bg-dark) !important;
+  box-shadow: var(--gdyup-glow-primary), var(--gdyup-shadow-lg) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.capacitor .concierge-button-mobile:active {
+  transform: translateX(-50%) scale(0.9) !important;
+}
+
+.capacitor .concierge-button-mobile:hover {
+  background: var(--gdyup-primary-hover) !important;
+  box-shadow: var(--gdyup-glow-primary), var(--gdyup-shadow-lg), 0 0 30px rgba(var(--gdyup-primary-rgb), 0.8) !important;
+}
+
+/* EMERGENCY DEBUGGING: Force visible mobile nav with bright background */
+.mobile-nav-bar {
+  display: flex !important;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 99999 !important;
+  min-height: 80px !important;
+  /* Temporary bright background for debugging */
+  background: linear-gradient(135deg, var(--gdyup-primary), rgba(255, 255, 0, 0.8)) !important;
+  border-top: 3px solid #FF0000 !important; /* Red border for visibility */
+  /* Fallback if CSS vars don't work */
+  background-color: #DAFF0D !important;
+}
+
+/* Force navigation items to be visible */
+.mobile-nav-bar .nav-item {
+  color: #000000 !important; /* Black text for visibility */
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 8px !important;
+  margin: 4px !important;
+  min-height: 50px !important;
+  min-width: 50px !important;
+}
+
+.mobile-nav-bar .nav-item svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: none !important;
+}
+
+.mobile-nav-bar .nav-item span {
+  color: #000000 !important;
+  font-weight: bold !important;
+}
+
+/* Force concierge button to be visible */
+.mobile-nav-bar .concierge-button-mobile {
+  background: #FF0000 !important; /* Bright red for visibility */
+  border: 3px solid #FFFFFF !important;
+  color: #FFFFFF !important;
+}
+
+.mobile-nav-bar .concierge-button-mobile svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
 }
 
 /* ============================================================== */
