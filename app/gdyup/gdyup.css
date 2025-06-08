@@ -2464,3 +2464,91 @@ input:-webkit-autofill:active {
   font-size: 0.875rem !important;
   margin-top: 0.25rem !important;
 }
+
+/* ============================================================== */
+/* CAPACITOR iOS VIEWPORT & SCALING FIXES                        */
+/* ============================================================== */
+
+/* Ensure proper viewport handling in Capacitor iOS apps */
+html.capacitor,
+html.capacitor body {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  -webkit-text-size-adjust: 100% !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Fix for iOS viewport scaling issues */
+html.capacitor {
+  position: fixed !important;
+  overflow: hidden !important;
+}
+
+html.capacitor body {
+  position: relative !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Prevent zoom on input focus in iOS */
+.capacitor input,
+.capacitor textarea,
+.capacitor select {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+  transform: translateZ(0) !important; /* Hardware acceleration */
+}
+
+/* Safe area insets for iOS */
+.capacitor .main-content {
+  padding-top: env(safe-area-inset-top) !important;
+  padding-bottom: env(safe-area-inset-bottom) !important;
+  padding-left: env(safe-area-inset-left) !important;
+  padding-right: env(safe-area-inset-right) !important;
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+}
+
+/* Fix for mobile navigation in Capacitor */
+.capacitor .mobile-nav {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+}
+
+/* Emergency viewport reset for zoom issues */
+@media screen and (max-width: 768px) {
+  html {
+    -webkit-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+  }
+  
+  body {
+    -webkit-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+    text-size-adjust: 100% !important;
+    zoom: 1 !important;
+    -webkit-transform: scale(1) !important;
+    transform: scale(1) !important;
+  }
+}
+
+/* Force proper scaling on all containers */
+.capacitor * {
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+}
+
+/* Fix splash screen sizing in Capacitor */
+.capacitor .splash-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+}
+
+/* ============================================================== */

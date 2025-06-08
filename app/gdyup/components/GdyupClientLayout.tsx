@@ -90,10 +90,23 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
 
   // Handle app initialization - only show splash on very first app launch
   useEffect(() => {
+    console.log('[GdyupClientLayout] Initializing app, checking environment...');
+    console.log('[GdyupClientLayout] isCapacitorApp:', isCapacitorApp());
+    console.log('[GdyupClientLayout] pathname:', pathname);
+    
+    // Add capacitor class for CSS targeting
+    if (isCapacitorApp()) {
+      document.documentElement.classList.add('capacitor');
+      console.log('[GdyupClientLayout] Added capacitor class to HTML element');
+    }
+    
     if (isCapacitorApp()) {
       // Check if this is the initial app launch (not navigation)
       const hasShownSplash = sessionStorage.getItem('gdyup_splash_shown');
       const isInitialLoad = !hasShownSplash && pathname === '/gdyup';
+      
+      console.log('[GdyupClientLayout] hasShownSplash:', hasShownSplash);
+      console.log('[GdyupClientLayout] isInitialLoad:', isInitialLoad);
       
       if (isInitialLoad) {
         console.log('[GdyupClientLayout] Initial app launch detected, showing splash screen');
@@ -106,7 +119,7 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
         setIsAppReady(true);
       }
     } else {
-      // Skip splash for web
+      // For web, always skip splash and show app immediately
       console.log('[GdyupClientLayout] Web detected, skipping splash screen');
       setShowSplash(false);
       setIsAppReady(true);
@@ -114,9 +127,32 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
   }, []); // Only run once on mount, not on pathname changes
 
   const handleSplashComplete = () => {
+    console.log('[GdyupClientLayout] Splash complete, showing main app');
     setShowSplash(false);
     setIsAppReady(true);
+    
+    // Hide native Capacitor splash screen if still showing
+    if (isCapacitorApp()) {
+      const { SplashScreen } = (window as any).Capacitor?.Plugins || {};
+      if (SplashScreen) {
+        console.log('[GdyupClientLayout] Hiding native Capacitor splash screen');
+        SplashScreen.hide();
+      }
+    }
   };
+
+  // Force show app content if stuck loading for too long
+  useEffect(() => {
+    const emergencyTimeout = setTimeout(() => {
+      if (!isAppReady) {
+        console.log('[GdyupClientLayout] Emergency timeout - forcing app to show');
+        setShowSplash(false);
+        setIsAppReady(true);
+      }
+    }, 10000); // 10 second emergency timeout
+
+    return () => clearTimeout(emergencyTimeout);
+  }, [isAppReady]);
 
   // Show splash screen during app initialization
   if (showSplash && !isAppReady) {

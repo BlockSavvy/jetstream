@@ -16,11 +16,16 @@
 		"contentInset": "always",
 		"allowsLinkPreview": false,
 		"scrollEnabled": true,
-		"backgroundColor": "#000000"
+		"backgroundColor": "#000000",
+		"preferredContentMode": "mobile",
+		"limitsNavigationsToAppBoundDomains": false,
+		"webContentsDebuggingEnabled": true,
+		"overrideUserAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 GDYUP/1.0",
+		"appendUserAgent": "GDYUP-iOS"
 	},
 	"plugins": {
 		"SplashScreen": {
-			"launchShowDuration": 4000,
+			"launchShowDuration": 1000,
 			"backgroundColor": "#000000",
 			"showSpinner": false,
 			"androidSpinnerStyle": "large",
@@ -28,14 +33,14 @@
 			"spinnerColor": "#DAFF0D",
 			"splashFullScreen": true,
 			"splashImmersive": true,
-			"launchAutoHide": false
+			"launchAutoHide": true
 		},
 		"StatusBar": {
 			"style": "dark",
 			"backgroundColor": "#000000"
 		},
 		"Keyboard": {
-			"resize": "body",
+			"resize": "ionic",
 			"style": "dark",
 			"resizeOnFullScreen": true
 		}

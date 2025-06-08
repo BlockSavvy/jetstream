@@ -1,1 +1,123 @@
-<!DOCTYPE html><html><head><title>GDYUP</title></head><body><script>window.location.href="https://gdyup.xyz/gdyup";</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GDYUP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .splash-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .splash-gif {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            object-position: center;
+        }
+        
+        .loading-text {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFFFFF;
+            font-size: 18px;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .fallback-logo {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="splash-container" id="splash">
+        <img 
+            src="https://gdyup.xyz/videos/gdyup-intro.gif" 
+            alt="GDY·UP Loading..."
+            class="splash-gif"
+            id="splashGif"
+            onerror="handleGifError()"
+        >
+        <div class="loading-text">Loading GDY·UP...</div>
+    </div>
+
+    <script>
+        let splashShown = false;
+        
+        function handleGifError() {
+            console.log('GIF failed to load, using fallback');
+            const gif = document.getElementById('splashGif');
+            gif.src = 'https://gdyup.xyz/icons/gdyup-icon-512.png';
+            gif.className = 'fallback-logo';
+        }
+        
+        function hideSplash() {
+            const splash = document.getElementById('splash');
+            if (splash) {
+                splash.style.opacity = '0';
+                splash.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    // Navigate to the actual app
+                    window.location.href = 'https://gdyup.xyz/gdyup';
+                }, 500);
+            }
+        }
+        
+        // Show splash for 4 seconds
+        setTimeout(() => {
+            if (!splashShown) {
+                splashShown = true;
+                hideSplash();
+            }
+        }, 4000);
+        
+        // Also hide splash when GIF loads (in case it's cached)
+        document.getElementById('splashGif').onload = function() {
+            console.log('GIF loaded successfully');
+            setTimeout(() => {
+                if (!splashShown) {
+                    splashShown = true;
+                    hideSplash();
+                }
+            }, 3000); // Let GIF play for at least 3 seconds
+        };
+        
+        // Detect Capacitor environment
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.Capacitor) {
+                console.log('Running in Capacitor app');
+                document.documentElement.classList.add('capacitor');
+            }
+        });
+    </script>
+</body>
+</html>
