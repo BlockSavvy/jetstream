@@ -144,8 +144,11 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
     console.log('[GdyupClientLayout] isCapacitorApp:', isCapacitorApp());
     console.log('[GdyupClientLayout] pathname:', pathname);
     
+    let isMounted = true;
+    
     // Detect mobile device
     const checkMobile = () => {
+      if (!isMounted) return;
       const mobile = isMobileDevice();
       setIsMobile(mobile);
       console.log('[GdyupClientLayout] Mobile detected:', mobile);
@@ -167,7 +170,7 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
       console.log('[GdyupClientLayout] hasShownSplash:', hasShownSplash);
       console.log('[GdyupClientLayout] isAppLaunch:', isAppLaunch);
       
-      if (isAppLaunch) {
+      if (isAppLaunch && isMounted) {
         console.log('[GdyupClientLayout] FIRST APP LAUNCH - showing splash GIF');
         setShowSplash(true);
         setIsAppReady(false);
@@ -185,6 +188,7 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
     }
     
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', checkMobile);
     };
   }, []); // Only run once on mount, ignore pathname changes

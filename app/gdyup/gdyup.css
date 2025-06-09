@@ -1795,13 +1795,13 @@ a.bg-primary svg {
   
   /* Native app backgrounds - deeper blacks for OLED */
   --gdyup-bg-dark: #000000;
-  --gdyup-bg-card: #0a0a0a;
+  --gdyup-bg-card: #121212;
   --gdyup-bg-elevated: #141414;
   --gdyup-bg-overlay: rgba(0, 0, 0, 0.95);
   
   /* High contrast text for mobile readability */
   --gdyup-text: #FFFFFF;
-  --gdyup-text-medium: #E8E8E8;
+  --gdyup-text-medium: #E0E0E0;
   --gdyup-text-subtle: #B8B8B8;
   --gdyup-text-disabled: #666666;
   
@@ -1848,8 +1848,8 @@ a.bg-primary svg {
   
   /* Premium black backgrounds */
   --gdyup-bg-dark: #000000;
-  --gdyup-bg-card: #0f0f0f;
-  --gdyup-bg-elevated: #1a1a1a;
+  --gdyup-bg-card: #121212;
+  --gdyup-bg-elevated: #141414;
   --gdyup-bg-overlay: rgba(0, 0, 0, 0.97);
   
   /* Luxury text hierarchy */
@@ -1900,9 +1900,9 @@ a.bg-primary svg {
   --gdyup-secondary-rgb: 255, 140, 0;
   
   /* Bitcoin-inspired backgrounds */
-  --gdyup-bg-dark: #0a0a0a;
-  --gdyup-bg-card: #141414;
-  --gdyup-bg-elevated: #1f1f1f;
+  --gdyup-bg-dark: #121212;
+  --gdyup-bg-card: #2D2D2D;
+  --gdyup-bg-elevated: #2D2D2D;
   --gdyup-bg-overlay: rgba(10, 10, 10, 0.96);
   
   /* Bitcoin text hierarchy */
@@ -1918,9 +1918,9 @@ a.bg-primary svg {
   --gdyup-button-shadow: 0 4px 14px rgba(var(--gdyup-primary-rgb), 0.4);
   
   /* Bitcoin borders */
-  --gdyup-border: #2d2d2d;
-  --gdyup-border-light: #454545;
-  --gdyup-divider: #1a1a1a;
+  --gdyup-border: #3A3A3A;
+  --gdyup-border-light: #4a4a4a;
+  --gdyup-divider: #222222;
   
   /* Bitcoin status colors */
   --gdyup-success: #16A085;
@@ -2749,7 +2749,10 @@ html .mobile-nav-bar,
 nav.mobile-nav-bar,
 .gdyup-app .mobile-nav-bar,
 [class*="mobile-nav-bar"],
-div[class*="mobile-nav-bar"] {
+div[class*="mobile-nav-bar"],
+.capacitor .mobile-nav-bar,
+.capacitor body .mobile-nav-bar,
+.capacitor html .mobile-nav-bar {
   position: fixed !important;
   bottom: 0 !important;
   left: 0 !important;
@@ -2772,6 +2775,22 @@ div[class*="mobile-nav-bar"] {
   transform: none !important;
 }
 
+/* NUCLEAR Z-INDEX ENFORCEMENT */
+.mobile-nav-bar,
+nav.mobile-nav-bar,
+.capacitor .mobile-nav-bar {
+  z-index: 999999 !important;
+}
+
+/* Additional z-index enforcement for all child elements */
+.mobile-nav-bar *,
+.mobile-nav-bar > *,
+.mobile-nav-bar div,
+.mobile-nav-bar button,
+.mobile-nav-bar a {
+  z-index: inherit !important;
+}
+
 /* Force nav items container */
 .mobile-nav-bar > div,
 .mobile-nav-bar .flex {
@@ -2782,6 +2801,7 @@ div[class*="mobile-nav-bar"] {
   width: 100% !important;
   padding: 0.5rem 1rem !important;
   margin: 0 !important;
+  z-index: inherit !important;
 }
 
 /* Force nav items styling */
