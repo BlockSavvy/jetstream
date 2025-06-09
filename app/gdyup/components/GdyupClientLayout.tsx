@@ -23,8 +23,32 @@ function isMobileDevice(): boolean {
 // Custom App Initialization Splash Screen Component
 function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
+  const [gifLoaded, setGifLoaded] = useState(false);
+  const [showGif, setShowGif] = useState(false);
 
   useEffect(() => {
+    // Preload the GIF aggressively to avoid static frame
+    const preloadGif = () => {
+      const img = new Image();
+      img.onload = () => {
+        console.log('[Splash] GIF preloaded successfully');
+        setGifLoaded(true);
+        // Small delay to ensure animation starts
+        setTimeout(() => {
+          setShowGif(true);
+        }, 100);
+      };
+      img.onerror = () => {
+        console.log('[Splash] GIF preload failed');
+        setGifLoaded(true);
+        setShowGif(true);
+      };
+      // Force cache busting to ensure fresh GIF load
+      img.src = `/videos/gdyup-intro.gif?v=${Date.now()}`;
+    };
+
+    preloadGif();
+
     // Show splash for 4 seconds to let GIF play fully
     const timer = setTimeout(() => {
       console.log('[Splash] Hiding splash screen after timeout');
@@ -41,7 +65,7 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
       
       // Notify parent that splash is complete
       onComplete();
-    }, 4000); // Increased to 4 seconds
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
@@ -50,39 +74,51 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
-      {/* GDY·UP Splash GIF */}
-      <div className="relative w-full h-full flex items-center justify-center">
-        <img 
-          src="/videos/gdyup-intro.gif" 
-          alt="GDY·UP Loading..."
-          className="w-full h-full object-cover"
-          style={{ 
-            imageRendering: 'crisp-edges',
-            maxWidth: '100vw',
-            maxHeight: '100vh'
-          }}
-          onLoad={() => {
-            console.log('[Splash] GIF loaded successfully');
-          }}
-          onError={(e) => {
-            console.log('[Splash] GIF failed to load, using fallback');
-            // Fallback to a simple logo if GIF fails
-            e.currentTarget.src = '/icons/icon-512x512.png';
-            e.currentTarget.className = 'w-32 h-32 object-contain';
-            e.currentTarget.style.maxWidth = '128px';
-            e.currentTarget.style.maxHeight = '128px';
-          }}
-        />
-        
-        {/* Optional loading indicator overlay */}
-        <div className="absolute bottom-20 left-0 right-0 flex justify-center">
+      {/* Pure black background while GIF loads */}
+      {!showGif && (
+        <div className="absolute inset-0 bg-black flex items-center justify-center">
           <div className="flex space-x-1">
             <div className="w-2 h-2 bg-gdyup-primary rounded-full animate-pulse"></div>
             <div className="w-2 h-2 bg-gdyup-primary rounded-full animate-pulse delay-75"></div>
             <div className="w-2 h-2 bg-gdyup-primary rounded-full animate-pulse delay-150"></div>
           </div>
         </div>
-      </div>
+      )}
+      
+      {/* GDY·UP Splash GIF - Only show when fully loaded and ready */}
+      {showGif && (
+        <div className="relative w-full h-full flex items-center justify-center">
+          <img 
+            src={`/videos/gdyup-intro.gif?v=${Date.now()}`}
+            alt="GDY·UP Loading..."
+            className="w-full h-full object-cover"
+            style={{ 
+              imageRendering: 'crisp-edges',
+              maxWidth: '100vw',
+              maxHeight: '100vh',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0
+            }}
+            onLoad={() => {
+              console.log('[Splash] GIF rendered successfully');
+            }}
+            onError={(e) => {
+              console.log('[Splash] GIF render failed, using fallback');
+              // Fallback to a simple logo if GIF fails
+              e.currentTarget.src = '/icons/gdyup-icon-512.png';
+              e.currentTarget.className = 'w-32 h-32 object-contain';
+              e.currentTarget.style.maxWidth = '128px';
+              e.currentTarget.style.maxHeight = '128px';
+              e.currentTarget.style.position = 'relative';
+            }}
+            // Force animation restart
+            key={`gif-${Date.now()}`}
+          />
+        </div>
+      )}
     </div>
   );
 }

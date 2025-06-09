@@ -225,7 +225,10 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 <Link
                   href={item.href}
                   onClick={handleNavClick}
-                  className="nav-item"
+                  className={cn(
+                    "nav-item",
+                    isActive ? "active" : ""
+                  )}
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
@@ -260,7 +263,10 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               key={item.href}
               href={item.href}
               onClick={handleNavClick}
-              className="nav-item"
+              className={cn(
+                "nav-item",
+                isActive ? "active" : ""
+              )}
               style={{
                 display: 'flex',
                 flexDirection: 'column',

@@ -2737,3 +2737,168 @@ html.capacitor body {
 }
 
 /* ============================================================== */
+
+/* ============================================================== */
+/* ELITE MOBILE NAVIGATION - MAXIMUM SPECIFICITY FORCING */
+/* ============================================================== */
+
+/* FORCE mobile nav to bottom of SCREEN (not page) with nuclear CSS */
+body .mobile-nav-bar,
+html .mobile-nav-bar,
+.mobile-nav-bar,
+nav.mobile-nav-bar,
+.gdyup-app .mobile-nav-bar,
+[class*="mobile-nav-bar"],
+div[class*="mobile-nav-bar"] {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  height: auto !important;
+  min-height: 80px !important;
+  z-index: 999999 !important;
+  background: #000000 !important;
+  border-top: 1px solid #333333 !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+  padding-left: env(safe-area-inset-left, 0px) !important;
+  padding-right: env(safe-area-inset-right, 0px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+/* Force nav items container */
+.mobile-nav-bar > div,
+.mobile-nav-bar .flex {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  width: 100% !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0 !important;
+}
+
+/* Force nav items styling */
+.mobile-nav-bar .nav-item,
+.mobile-nav-bar a {
+  color: #FFFFFF !important;
+  background: transparent !important;
+  border-radius: 12px !important;
+  margin: 4px !important;
+  min-height: 60px !important;
+  min-width: 50px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 8px 12px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  text-decoration: none !important;
+}
+
+/* Force active nav item styling */
+.mobile-nav-bar .nav-item.active,
+.mobile-nav-bar a.active {
+  background: #DAFF0D !important;
+  color: #000000 !important;
+  box-shadow: 0 0 15px rgba(218, 255, 13, 0.6) !important;
+}
+
+/* Force concierge button positioning */
+.mobile-nav-bar .concierge-button-mobile {
+  position: absolute !important;
+  top: -32px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 1000001 !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: #DAFF0D !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(218, 255, 13, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+/* Force concierge button image */
+.mobile-nav-bar .concierge-button-mobile img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+}
+
+/* Force nav icons and text */
+.mobile-nav-bar .nav-item svg,
+.mobile-nav-bar a svg {
+  color: inherit !important;
+  stroke: inherit !important;
+  fill: none !important;
+}
+
+.mobile-nav-bar .nav-item span,
+.mobile-nav-bar a span {
+  color: inherit !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+}
+
+/* CAPACITOR SPECIFIC OVERRIDES */
+.capacitor .mobile-nav-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 999999 !important;
+}
+
+/* UNIVERSAL MOBILE OVERRIDE */
+@media (max-width: 768px) {
+  .mobile-nav-bar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    z-index: 999999 !important;
+  }
+  
+  /* FORCE page content padding to not be hidden behind fixed nav */
+  body,
+  html,
+  #__next,
+  .gdyup-app,
+  main,
+  .main-content {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Ensure last elements in pages have extra margin */
+  .main-content > *:last-child,
+  main > *:last-child,
+  .gdyup-app > *:last-child {
+    margin-bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Fix for iOS viewport issues */
+  html.capacitor,
+  html.capacitor body {
+    height: 100vh !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
