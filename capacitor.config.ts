@@ -16,38 +16,14 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'always',
-    allowsLinkPreview: false,
     scrollEnabled: true,
-    backgroundColor: '#000000',
-    preferredContentMode: 'mobile',
-    limitsNavigationsToAppBoundDomains: false,
-    webContentsDebuggingEnabled: true,
-    overrideUserAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 GDYUP/1.0',
-    appendUserAgent: 'GDYUP-iOS'
+    backgroundColor: '#000000'
   },
   plugins: {
-    SplashScreen: {
-      launchShowDuration: 0,
-      backgroundColor: "#000000",
-      showSpinner: false,
-      androidSpinnerStyle: 'large',
-      iosSpinnerStyle: 'small',
-      spinnerColor: "#DAFF0D",
-      splashFullScreen: true,
-      splashImmersive: true,
-      launchAutoHide: true,
-      useDialog: false,
-      androidSplashResourceName: "splash",
-      iosSplashResourceName: "Default"
-    },
+    // Minimal plugin configuration to avoid build issues
     StatusBar: {
       style: "dark",
       backgroundColor: "#000000"
-    },
-    Keyboard: {
-      resize: "ionic",
-      style: "dark",
-      resizeOnFullScreen: true
     }
   }
 };
