@@ -100,16 +100,20 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   };
 
   return (
-    <nav className={cn(
-      "mobile-nav-bar",
-      "fixed bottom-0 left-0 right-0",
-      "bg-gdyup-nav-bg border-t border-gdyup-nav-border",
-      "backdrop-blur-xl",
-      "z-[9999]",
-      className
-    )}>
+    <nav 
+      className="mobile-nav-bar fixed bottom-0 left-0 right-0 z-[9999] bg-black border-t border-gray-700"
+      style={{
+        minHeight: '80px',
+        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+    >
       {/* Navigation Items Container */}
-      <div className="flex items-center justify-around px-4 py-2 relative">
+      <div className="flex items-center justify-around px-4 py-2 relative w-full">
         {navItems.map((item, index) => {
           const isActive = item.isActive ? item.isActive(pathname || '') : pathname === item.href;
           const Icon = item.icon;
@@ -121,49 +125,58 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 {/* Concierge Button - Elevated Center */}
                 <button
                   onClick={handleConciergeClick}
-                  className="concierge-button-mobile flex items-center justify-center"
+                  className="concierge-button-mobile"
                   aria-label="Open AI Concierge"
                   style={{
                     position: 'absolute',
-                    top: '-25px',
+                    top: '-32px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    zIndex: 10000,
-                    width: '60px',
-                    height: '60px',
+                    zIndex: 10001,
+                    width: '64px',
+                    height: '64px',
                     borderRadius: '50%',
-                    background: 'var(--gdyup-primary)',
-                    color: 'var(--gdyup-button-text)',
-                    border: '3px solid var(--gdyup-bg-dark)',
-                    boxShadow: 'var(--gdyup-glow-primary), var(--gdyup-shadow-lg)',
-                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                    background: '#DAFF0D',
+                    color: '#000000',
+                    border: '3px solid #000000',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(218, 255, 13, 0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
                   }}
                 >
-                  <Sparkles size={24} className="text-gdyup-button-text" />
+                  <Sparkles size={28} />
                 </button>
                 
-                {/* Continue with regular nav item */}
+                {/* Regular nav item */}
                 <Link
                   href={item.href}
                   onClick={handleNavClick}
-                  className={cn(
-                    "nav-item flex flex-col items-center gap-1",
-                    isActive && "active"
-                  )}
+                  className="nav-item"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    backgroundColor: isActive ? '#DAFF0D' : 'transparent',
+                    color: isActive ? '#000000' : '#FFFFFF',
+                    textDecoration: 'none',
+                    minHeight: '60px',
+                    minWidth: '50px',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease'
+                  }}
                 >
-                  <Icon 
-                    size={20} 
-                    className={cn(
-                      "nav-icon transition-colors",
-                      isActive ? "text-gdyup-nav-active-text" : "text-gdyup-nav-text"
-                    )} 
-                  />
-                  <span className={cn(
-                    "text-xs font-medium transition-colors",
-                    isActive 
-                      ? "text-gdyup-nav-active-text" 
-                      : getThemedTextClasses('muted')
-                  )}>
+                  <Icon size={20} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: '500',
+                    color: isActive ? '#000000' : '#FFFFFF'
+                  }}>
                     {item.label}
                   </span>
                 </Link>
@@ -176,33 +189,35 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               key={item.href}
               href={item.href}
               onClick={handleNavClick}
-              className={cn(
-                "nav-item flex flex-col items-center gap-1",
-                isActive && "active"
-              )}
+              className="nav-item"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '8px 12px',
+                borderRadius: '12px',
+                backgroundColor: isActive ? '#DAFF0D' : 'transparent',
+                color: isActive ? '#000000' : '#FFFFFF',
+                textDecoration: 'none',
+                minHeight: '60px',
+                minWidth: '50px',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
             >
-              <Icon 
-                size={20} 
-                className={cn(
-                  "nav-icon transition-colors",
-                  isActive ? "text-gdyup-nav-active-text" : "text-gdyup-nav-text"
-                )} 
-              />
-              <span className={cn(
-                "text-xs font-medium transition-colors",
-                isActive 
-                  ? "text-gdyup-nav-active-text" 
-                  : getThemedTextClasses('muted')
-              )}>
+              <Icon size={20} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: '500',
+                color: isActive ? '#000000' : '#FFFFFF'
+              }}>
                 {item.label}
               </span>
             </Link>
           );
         })}
       </div>
-      
-      {/* Safe Area Bottom Padding */}
-      <div className="h-[env(safe-area-inset-bottom)]" />
     </nav>
   );
 } 
