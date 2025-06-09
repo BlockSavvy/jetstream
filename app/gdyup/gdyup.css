@@ -2710,3 +2710,30 @@ html.capacitor body {
 }
 
 /* ============================================================== */
+
+/* Hide duplicate concierge buttons on mobile when mobile nav is active */
+@media (max-width: 768px) {
+  /* Hide the default ConciergeButton component on mobile devices */
+  .concierge-button:not(.concierge-button-mobile),
+  [data-testid="ai-concierge-button"]:not(.concierge-button-mobile),
+  .ai-concierge-button:not(.concierge-button-mobile) {
+    display: none !important;
+  }
+  
+  /* Ensure mobile nav bar is always visible and properly positioned */
+  .mobile-nav-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 99999 !important;
+  }
+  
+  /* Show only the mobile concierge button */
+  .mobile-nav-bar .concierge-button-mobile {
+    display: flex !important;
+  }
+}
+
+/* ============================================================== */

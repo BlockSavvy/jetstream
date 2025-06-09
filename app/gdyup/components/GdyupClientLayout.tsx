@@ -15,6 +15,11 @@ function isCapacitorApp(): boolean {
   return typeof window !== 'undefined' && !!(window as any).Capacitor;
 }
 
+// Mobile detection utility  
+function isMobileDevice(): boolean {
+  return typeof window !== 'undefined' && window.innerWidth <= 768;
+}
+
 // Custom App Initialization Splash Screen Component
 function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
   const [isVisible, setIsVisible] = useState(true);
@@ -82,10 +87,19 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-export default function GdyupClientLayout({ children }: { children: React.ReactNode }) {
-  const [showSplash, setShowSplash] = useState(false);
-  const [isAppReady, setIsAppReady] = useState(true); // Default to ready for web
+interface GdyupClientLayoutProps {
+  children: React.ReactNode;
+  showNavigation?: boolean;
+}
+
+const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({ 
+  children, 
+  showNavigation = true 
+}) => {
   const pathname = usePathname();
+  const [showSplash, setShowSplash] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { getThemedBackgroundClasses } = useGdyupTheme();
 
   // Handle app initialization - only show splash on very first app launch
@@ -94,22 +108,31 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
     console.log('[GdyupClientLayout] isCapacitorApp:', isCapacitorApp());
     console.log('[GdyupClientLayout] pathname:', pathname);
     
+    // Detect mobile device
+    const checkMobile = () => {
+      const mobile = isMobileDevice();
+      setIsMobile(mobile);
+      console.log('[GdyupClientLayout] Mobile detected:', mobile);
+    };
+    
+    // Check mobile on mount and on resize
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
     // Add capacitor class for CSS targeting
     if (isCapacitorApp()) {
       document.documentElement.classList.add('capacitor');
       console.log('[GdyupClientLayout] Added capacitor class to HTML element');
-    }
-    
-    if (isCapacitorApp()) {
-      // Check if this is the initial app launch (not navigation)
+      
+      // Only show splash on the very first app launch, not on navigation
       const hasShownSplash = sessionStorage.getItem('gdyup_splash_shown');
-      const isInitialLoad = !hasShownSplash && pathname === '/gdyup';
+      const isAppLaunch = !hasShownSplash;
       
       console.log('[GdyupClientLayout] hasShownSplash:', hasShownSplash);
-      console.log('[GdyupClientLayout] isInitialLoad:', isInitialLoad);
+      console.log('[GdyupClientLayout] isAppLaunch:', isAppLaunch);
       
-      if (isInitialLoad) {
-        console.log('[GdyupClientLayout] Initial app launch detected, showing splash screen');
+      if (isAppLaunch) {
+        console.log('[GdyupClientLayout] FIRST APP LAUNCH - showing splash GIF');
         setShowSplash(true);
         setIsAppReady(false);
         sessionStorage.setItem('gdyup_splash_shown', 'true');
@@ -124,7 +147,11 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
       setShowSplash(false);
       setIsAppReady(true);
     }
-  }, []); // Only run once on mount, not on pathname changes
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []); // Only run once on mount, ignore pathname changes
 
   const handleSplashComplete = () => {
     console.log('[GdyupClientLayout] Splash complete, showing main app');
@@ -172,10 +199,12 @@ export default function GdyupClientLayout({ children }: { children: React.ReactN
             </main>
             
             {/* Mobile Navigation */}
-            <MobileNavBar />
+            {isMobile && <MobileNavBar />}
           </div>
         </ConciergeProvider>
       </NostrProvider>
     </AuthProvider>
   );
-} 
+}
+
+export default GdyupClientLayout; 
