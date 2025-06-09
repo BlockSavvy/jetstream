@@ -6,6 +6,27 @@
 		"url": "https://gdyup.xyz/gdyup",
 		"cleartext": false
 	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 0,
+			"launchAutoHide": true,
+			"showSpinner": false,
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP",
+			"splashFullScreen": true,
+			"splashImmersive": true,
+			"backgroundColor": "#000000"
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#000000"
+		},
+		"Keyboard": {
+			"resize": "native",
+			"style": "DARK",
+			"resizeOnFullScreen": true
+		}
+	},
 	"packageClassList": [
 		"HapticsPlugin",
 		"KeyboardPlugin",
