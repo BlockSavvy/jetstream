@@ -143,23 +143,23 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     <nav 
       className="mobile-nav-bar"
       style={{
-        position: 'fixed',
-        bottom: '0',
-        left: '0',
-        right: '0',
-        width: '100%',
-        minHeight: '80px',
-        zIndex: 99999,
-        backgroundColor: '#000000',
-        borderTop: '1px solid #333333',
-        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        paddingRight: 'env(safe-area-inset-right, 0px)',
-        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        display: 'flex',
-        flexDirection: 'column'
+        position: 'fixed !important' as any,
+        bottom: '0 !important' as any,
+        left: '0 !important' as any,
+        right: '0 !important' as any,
+        width: '100% !important' as any,
+        minHeight: '80px !important' as any,
+        zIndex: '999999 !important' as any,
+        backgroundColor: '#000000 !important' as any,
+        borderTop: '1px solid #333333 !important' as any,
+        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px)) !important' as any,
+        paddingLeft: 'env(safe-area-inset-left, 0px) !important' as any,
+        paddingRight: 'env(safe-area-inset-right, 0px) !important' as any,
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5) !important' as any,
+        backdropFilter: 'blur(20px) !important' as any,
+        WebkitBackdropFilter: 'blur(20px) !important' as any,
+        display: 'flex !important' as any,
+        flexDirection: 'column !important' as any
       }}
     >
       {/* Navigation Items Container */}

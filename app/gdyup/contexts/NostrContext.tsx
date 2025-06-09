@@ -502,6 +502,29 @@ export function NostrProvider({ children }: NostrProviderProps) {
   
   // Initialize Nostr state when user is available
   useEffect(() => {
+    // NUCLEAR CIRCUIT BREAKER FOR CAPACITOR ENVIRONMENT
+    // Skip ALL Nostr initialization in Capacitor to prevent network crashes
+    if (typeof window !== 'undefined' && (window as any).Capacitor) {
+      console.log('[Nostr] Capacitor environment detected - using safe offline mode');
+      
+      // Set safe defaults without any network calls
+      setIsInitialized(true);
+      setIsEnabled(true);
+      setRelays(DEFAULT_FALLBACK_RELAYS);
+      setIsConnected(false); // Stay disconnected to avoid WebSocket issues
+      
+      // Set basic user data if available
+      if ((user as any)?.nostr_pubkey) {
+        setPubkey((user as any).nostr_pubkey);
+      }
+      if ((user as any)?.nip05 && (user as any).nip05 !== 'dev@gdyup.xyz') {
+        setNip05((user as any).nip05);
+        setHasNip05(true);
+      }
+      
+      return; // Exit early - no network operations in Capacitor
+    }
+    
     // Skip if already initializing
     if (isInitializing) return;
     
