@@ -2922,3 +2922,168 @@ nav.mobile-nav-bar,
     -webkit-overflow-scrolling: touch !important;
   }
 }
+
+/* ============================================================== */
+/* NUCLEAR MOBILE NAVIGATION FIXES FOR CAPACITOR */
+/* ============================================================== */
+
+/* FORCE mobile nav to bottom of SCREEN (not page) with maximum specificity */
+body .mobile-nav-bar,
+html .mobile-nav-bar,
+.mobile-nav-bar,
+nav.mobile-nav-bar,
+.gdyup-app .mobile-nav-bar,
+[class*="mobile-nav-bar"],
+div[class*="mobile-nav-bar"],
+.capacitor .mobile-nav-bar,
+.capacitor body .mobile-nav-bar,
+.capacitor html .mobile-nav-bar,
+#__next .mobile-nav-bar,
+main .mobile-nav-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  height: auto !important;
+  min-height: 80px !important;
+  z-index: 2147483647 !important;
+  background: #000000 !important;
+  border-top: 1px solid #333333 !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+  padding-left: env(safe-area-inset-left, 0px) !important;
+  padding-right: env(safe-area-inset-right, 0px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: 0 !important;
+  transform: none !important;
+  contain: layout style paint !important;
+  will-change: auto !important;
+}
+
+/* NUCLEAR MAIN CONTENT PADDING TO PREVENT OVERLAP */
+.capacitor .main-content,
+.capacitor main,
+.capacitor #__next,
+.main-content {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+  margin-bottom: 0 !important;
+}
+
+/* FORCE page sections to not interfere with nav */
+.capacitor section:last-child,
+.capacitor div:last-child,
+.main-content > section:last-child,
+.main-content > div:last-child {
+  margin-bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* NUCLEAR Z-INDEX ENFORCEMENT FOR MOBILE NAV */
+.mobile-nav-bar,
+nav.mobile-nav-bar,
+.capacitor .mobile-nav-bar {
+  z-index: 2147483647 !important;
+}
+
+/* FORCE concierge button positioning */
+.mobile-nav-bar .concierge-button-mobile {
+  position: absolute !important;
+  top: -32px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483648 !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: #DAFF0D !important;
+  color: #000000 !important;
+  border: 3px solid #000000 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(218, 255, 13, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+/* FORCE concierge radial menu positioning */
+.concierge-radial-menu {
+  position: fixed !important;
+  bottom: 100px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483649 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 16px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 12px 20px !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-radius: 16px !important;
+  border: 1px solid #DAFF0D !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* UNIVERSAL MOBILE OVERRIDE */
+@media (max-width: 768px) {
+  .mobile-nav-bar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    z-index: 2147483647 !important;
+  }
+  
+  /* FORCE page content padding to not be hidden behind fixed nav */
+  body,
+  html,
+  #__next,
+  .gdyup-app,
+  main,
+  .main-content {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Ensure last elements in pages have extra margin */
+  .main-content > *:last-child,
+  main > *:last-child,
+  .gdyup-app > *:last-child {
+    margin-bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  
+  /* Fix for iOS viewport issues */
+  html.capacitor,
+  html.capacitor body {
+    height: 100vh !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* CAPACITOR SPECIFIC OVERRIDES WITH MAXIMUM SPECIFICITY */
+.capacitor .mobile-nav-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 2147483647 !important;
+}
+
+/* Prevent any container from affecting mobile nav positioning */
+.capacitor .mobile-nav-bar {
+  contain: layout style paint !important;
+  isolation: isolate !important;
+}
+
+/* ============================================================== */
