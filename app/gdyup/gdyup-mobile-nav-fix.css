@@ -139,4 +139,14 @@
   .main-content {
     padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
   }
+}
+
+/* Pulse animation for splash screen loading dots */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 } 
