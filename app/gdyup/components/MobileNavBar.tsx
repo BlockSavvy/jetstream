@@ -283,49 +283,48 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         <div 
           style={{
             position: 'relative' as const,
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', // 5 columns: nav nav CONCIERGE nav nav
             alignItems: 'center',
-            justifyContent: 'space-between', // Perfect spacing
+            justifyItems: 'center',
             width: '100%',
-            padding: '12px 20px 8px 20px', // Increased side padding for better balance
+            padding: '12px 16px 8px 16px',
             height: '100%',
-            maxWidth: '400px', // Constrain max width for better proportions
-            margin: '0 auto' // Center the entire nav container
+            maxWidth: '400px',
+            margin: '0 auto'
           }}
         >
-          {/* Concierge Button - Mathematically Centered */}
+          {/* Concierge Button - Grid Position 3 (Center) */}
           <button
             onClick={handleConciergeClick}
             aria-label="Open AI Concierge"
             style={{
               position: 'absolute' as const,
-              top: '-30px', // Slightly higher for better visual balance
+              top: '-30px',
               left: '50%',
-              transform: 'translateX(-50%)', // Perfect mathematical centering
+              transform: 'translateX(-50%)', // NOW this will be truly centered
               zIndex: 999999,
-              width: '60px', // Slightly larger for premium feel
+              width: '60px',
               height: '60px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)', // Premium gradient
+              background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
               color: '#000000',
               border: '3px solid #000000',
               boxShadow: `
                 0 8px 25px rgba(0, 0, 0, 0.3),
                 0 0 20px rgba(218, 255, 13, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.3)
-              `, // Multi-layer shadow for depth
+              `,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Premium easing
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               padding: '0',
               overflow: 'hidden' as const,
-              // Premium hover state preparation
               filter: 'brightness(1)',
             }}
             onMouseDown={() => {
-              // Add press effect
               const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
               if (button) {
                 button.style.transform = 'translateX(-50%) scale(0.95)';
@@ -333,7 +332,6 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               }
             }}
             onMouseUp={() => {
-              // Release press effect
               const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
               if (button) {
                 button.style.transform = 'translateX(-50%) scale(1)';
@@ -349,7 +347,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 height: '85%',
                 objectFit: 'cover' as const,
                 borderRadius: '50%',
-                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' // Subtle image shadow
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
               }}
             />
             {/* Elite pulse animation ring */}
@@ -369,10 +367,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             />
           </button>
 
-          {/* Navigation Items - Perfectly Distributed */}
+          {/* Navigation Items - Grid Positioned */}
           {navItems.map((item, index) => {
             const isActive = item.isActive ? item.isActive(pathname || '') : pathname === item.href;
             const Icon = item.icon;
+            
+            // Grid column positions: 1, 2, skip 3 (concierge), 4, 5
+            const gridColumn = index < 2 ? index + 1 : index + 2;
             
             return (
               <Link
@@ -380,25 +381,25 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 href={item.href}
                 onClick={handleNavClick}
                 style={{
+                  gridColumn: `${gridColumn}`, // Explicit grid positioning
                   display: 'flex',
                   flexDirection: 'column' as const,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px', // Optimal icon-text spacing
-                  padding: '8px 12px',
-                  borderRadius: '12px', // More rounded for 2025 standards
+                  gap: '4px',
+                  padding: '8px 6px', // Tighter padding since we have proper grid
+                  borderRadius: '12px',
                   backgroundColor: isActive ? 'rgba(218, 255, 13, 0.95)' : 'transparent',
                   color: isActive ? '#000000' : '#FFFFFF',
                   textDecoration: 'none',
                   minHeight: '56px',
-                  minWidth: '60px', // Wider for better touch targets
+                  minWidth: '55px', // Optimized for grid layout
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   // Premium active state
                   ...(isActive && {
                     boxShadow: '0 4px 12px rgba(218, 255, 13, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                    transform: 'translateY(-1px)' // Subtle lift effect
+                    transform: 'translateY(-1px)'
                   }),
-                  // Hover preparation
                   position: 'relative' as const
                 }}
                 onMouseEnter={(e) => {
@@ -415,17 +416,18 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 }}
               >
                 <Icon 
-                  size={20} // Slightly larger icons
+                  size={19}
                   color={isActive ? '#000000' : '#FFFFFF'} 
-                  strokeWidth={2.5} // Bolder strokes for clarity
+                  strokeWidth={2.5}
                 />
                 <span style={{
-                  fontSize: '0.75rem', // Slightly larger text
-                  fontWeight: '600', // Bolder weight
+                  fontSize: '0.7rem',
+                  fontWeight: '600',
                   color: isActive ? '#000000' : '#FFFFFF',
                   textAlign: 'center' as const,
-                  lineHeight: '1',
-                  letterSpacing: '0.2px' // Better letter spacing
+                  lineHeight: '1.1',
+                  letterSpacing: '0.1px',
+                  whiteSpace: 'nowrap' as const
                 }}>
                   {item.label}
                 </span>
