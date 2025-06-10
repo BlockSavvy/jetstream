@@ -129,7 +129,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     // Set initial height immediately
     updateViewportHeight();
     
-    // Debug: Check if nav element exists after mounting
+    // DEBUG: Check if nav element exists after mounting AND check parent containers
     setTimeout(() => {
       const navElement = document.querySelector('.mobile-nav-bar') as HTMLElement;
       console.log('[MobileNavBar] Nav element found:', !!navElement);
@@ -138,8 +138,37 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         console.log('[MobileNavBar] Nav position:', navElement.style.position);
         console.log('[MobileNavBar] Nav top:', navElement.style.top);
         console.log('[MobileNavBar] Nav z-index:', navElement.style.zIndex);
+        
+        // Check parent containers for clipping issues
+        let parent = navElement.parentElement;
+        let level = 0;
+        while (parent && level < 5) {
+          const computedStyle = window.getComputedStyle(parent);
+          console.log(`[MobileNavBar] Parent ${level} (${parent.tagName}):`, {
+            overflow: computedStyle.overflow,
+            height: computedStyle.height,
+            position: computedStyle.position,
+            zIndex: computedStyle.zIndex,
+            transform: computedStyle.transform
+          });
+          parent = parent.parentElement;
+          level++;
+        }
       }
     }, 1000);
+    
+    // Add critical CSS override to force visibility
+    const style = document.createElement('style');
+    style.id = 'mobile-nav-force-visible';
+    style.textContent = `
+      .mobile-nav-bar {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+    `;
+    document.head.appendChild(style);
     
     // Update on resize and orientation change (universal)
     window.addEventListener('resize', updateViewportHeight);
@@ -160,12 +189,18 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         window.removeEventListener('resize', updateViewportHeight);
         window.removeEventListener('orientationchange', updateViewportHeight);
         window.removeEventListener('scroll', handleViewportChange);
+        // Clean up style
+        const styleEl = document.getElementById('mobile-nav-force-visible');
+        if (styleEl) styleEl.remove();
       };
     }
     
     return () => {
       window.removeEventListener('resize', updateViewportHeight);
       window.removeEventListener('orientationchange', updateViewportHeight);
+      // Clean up style
+      const styleEl = document.getElementById('mobile-nav-force-visible');
+      if (styleEl) styleEl.remove();
     };
   }, [pathname]);
 
@@ -211,7 +246,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
           boxShadow: '0 -4px 20px rgba(218, 255, 13, 0.8)', // BRIGHT SHADOW FOR DEBUGGING
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          display: 'flex',
+          display: 'flex', // FORCE DISPLAY (now via CSS injection)
           flexDirection: 'column',
           margin: '0',
           // CRITICAL: Transform to force hardware acceleration
@@ -223,7 +258,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
           backfaceVisibility: 'hidden',
           // DEBUG: Make sure it's not being clipped
           overflow: 'visible',
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          // FORCE VISIBILITY (now via CSS injection)
+          visibility: 'visible',
+          opacity: '1',
+          // Ensure it's not being transformed away
+          WebkitTransformStyle: 'preserve-3d',
+          transformStyle: 'preserve-3d'
         }}
       >
         {/* Navigation Items Container */}

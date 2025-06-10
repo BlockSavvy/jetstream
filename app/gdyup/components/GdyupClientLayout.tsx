@@ -166,11 +166,21 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
     setIsMobile(mobile);
     console.log('[GdyupClientLayout] Mobile detected:', mobile);
     
-    // Setup Capacitor
+    // Setup Capacitor - ONLY SHOW SPLASH ONCE PER SESSION
     if (isCapacitorApp()) {
       document.documentElement.classList.add('capacitor');
-      console.log('[GdyupClientLayout] 🎬 CAPACITOR - will show splash');
-      setAppState('splash');
+      
+      // Check if we've already shown splash this session
+      const hasShownSplash = sessionStorage.getItem('gdyup-splash-shown');
+      
+      if (!hasShownSplash) {
+        console.log('[GdyupClientLayout] 🎬 CAPACITOR - showing splash (first time this session)');
+        sessionStorage.setItem('gdyup-splash-shown', 'true');
+        setAppState('splash');
+      } else {
+        console.log('[GdyupClientLayout] 🎬 CAPACITOR - skipping splash (already shown this session)');
+        setAppState('ready');
+      }
     } else {
       console.log('[GdyupClientLayout] 🌐 WEB - ready immediately');
       setAppState('ready');
