@@ -4,6 +4,7 @@ const config: CapacitorConfig = {
   appId: 'app.gdyup.xyz',
   appName: 'GDY·UP',
   webDir: 'out',
+  // Use remote server with our mobile nav fixes
   server: {
     url: 'https://gdyup.xyz/gdyup',
     cleartext: true
