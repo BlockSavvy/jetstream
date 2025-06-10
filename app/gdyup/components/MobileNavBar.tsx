@@ -117,6 +117,29 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     setIsCapacitor(capacitorDetected);
     console.log('[MobileNavBar] Capacitor detected:', capacitorDetected);
     
+    // Add premium CSS animations
+    const style = document.createElement('style');
+    style.id = 'elite-nav-animations';
+    style.textContent = `
+      @keyframes concierge-pulse {
+        0% { opacity: 0; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+        100% { opacity: 0; transform: scale(1.2); }
+      }
+      
+      @keyframes subtle-glow {
+        0%, 100% { box-shadow: 0 0 5px rgba(218, 255, 13, 0.3); }
+        50% { box-shadow: 0 0 15px rgba(218, 255, 13, 0.6); }
+      }
+      
+      /* Premium nav bar backdrop */
+      #gdyup-mobile-nav-portal {
+        backdrop-filter: blur(20px) saturate(1.5) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(1.5) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
     // iOS WebView BULLETPROOF setup
     const updateViewport = () => {
       const vh = window.innerHeight;
@@ -176,6 +199,10 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', updateViewport);
+      
+      // Cleanup animations
+      const styleEl = document.getElementById('elite-nav-animations');
+      if (styleEl) styleEl.remove();
       
       // Cleanup on unmount
       if (capacitorDetected) {
@@ -256,53 +283,93 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         <div 
           style={{
             position: 'relative' as const,
-            display: 'grid', // Use grid for perfect centering
-            gridTemplateColumns: '1fr 1fr 1fr 1fr', // Equal columns
+            display: 'flex',
             alignItems: 'center',
-            justifyItems: 'center',
+            justifyContent: 'space-between', // Perfect spacing
             width: '100%',
-            padding: '12px 1rem 8px 1rem', // Better vertical centering
-            height: '100%'
+            padding: '12px 20px 8px 20px', // Increased side padding for better balance
+            height: '100%',
+            maxWidth: '400px', // Constrain max width for better proportions
+            margin: '0 auto' // Center the entire nav container
           }}
         >
-          {/* Concierge Button - Perfectly Centered */}
+          {/* Concierge Button - Mathematically Centered */}
           <button
             onClick={handleConciergeClick}
             aria-label="Open AI Concierge"
             style={{
               position: 'absolute' as const,
-              top: '-28px',
+              top: '-30px', // Slightly higher for better visual balance
               left: '50%',
-              transform: 'translateX(-50%)',
+              transform: 'translateX(-50%)', // Perfect mathematical centering
               zIndex: 999999,
-              width: '56px',
-              height: '56px',
+              width: '60px', // Slightly larger for premium feel
+              height: '60px',
               borderRadius: '50%',
-              background: '#DAFF0D',
+              background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)', // Premium gradient
               color: '#000000',
-              border: '2px solid #000000',
-              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(218, 255, 13, 0.5)',
+              border: '3px solid #000000',
+              boxShadow: `
+                0 8px 25px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(218, 255, 13, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3)
+              `, // Multi-layer shadow for depth
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // Premium easing
               padding: '0',
-              overflow: 'hidden' as const
+              overflow: 'hidden' as const,
+              // Premium hover state preparation
+              filter: 'brightness(1)',
+            }}
+            onMouseDown={() => {
+              // Add press effect
+              const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
+              if (button) {
+                button.style.transform = 'translateX(-50%) scale(0.95)';
+                button.style.filter = 'brightness(1.1)';
+              }
+            }}
+            onMouseUp={() => {
+              // Release press effect
+              const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
+              if (button) {
+                button.style.transform = 'translateX(-50%) scale(1)';
+                button.style.filter = 'brightness(1)';
+              }
             }}
           >
             <img 
               src="/icons/conciergebutton.png" 
               alt="AI Concierge" 
               style={{
-                width: '90%',
-                height: '90%',
+                width: '85%',
+                height: '85%',
                 objectFit: 'cover' as const,
-                borderRadius: '50%'
+                borderRadius: '50%',
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' // Subtle image shadow
+              }}
+            />
+            {/* Elite pulse animation ring */}
+            <div
+              style={{
+                position: 'absolute' as const,
+                top: '-3px',
+                left: '-3px',
+                right: '-3px',
+                bottom: '-3px',
+                borderRadius: '50%',
+                border: '2px solid #DAFF0D',
+                opacity: '0',
+                animation: 'concierge-pulse 3s infinite',
+                pointerEvents: 'none' as const
               }}
             />
           </button>
 
+          {/* Navigation Items - Perfectly Distributed */}
           {navItems.map((item, index) => {
             const isActive = item.isActive ? item.isActive(pathname || '') : pathname === item.href;
             const Icon = item.icon;
@@ -316,28 +383,69 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   display: 'flex',
                   flexDirection: 'column' as const,
                   alignItems: 'center',
-                  justifyContent: 'center', // Perfect vertical centering
-                  gap: '3px', // Optimal spacing
-                  padding: '6px 8px',
-                  borderRadius: '8px',
-                  backgroundColor: isActive ? '#DAFF0D' : 'transparent',
+                  justifyContent: 'center',
+                  gap: '4px', // Optimal icon-text spacing
+                  padding: '8px 12px',
+                  borderRadius: '12px', // More rounded for 2025 standards
+                  backgroundColor: isActive ? 'rgba(218, 255, 13, 0.95)' : 'transparent',
                   color: isActive ? '#000000' : '#FFFFFF',
                   textDecoration: 'none',
-                  minHeight: '52px', // Better proportions
-                  minWidth: '48px',
-                  transition: 'all 0.2s ease'
+                  minHeight: '56px',
+                  minWidth: '60px', // Wider for better touch targets
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  // Premium active state
+                  ...(isActive && {
+                    boxShadow: '0 4px 12px rgba(218, 255, 13, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                    transform: 'translateY(-1px)' // Subtle lift effect
+                  }),
+                  // Hover preparation
+                  position: 'relative' as const
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                    e.currentTarget.style.transform = 'translateY(-0.5px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }
                 }}
               >
-                <Icon size={18} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
+                <Icon 
+                  size={20} // Slightly larger icons
+                  color={isActive ? '#000000' : '#FFFFFF'} 
+                  strokeWidth={2.5} // Bolder strokes for clarity
+                />
                 <span style={{
-                  fontSize: '0.7rem',
-                  fontWeight: '500',
+                  fontSize: '0.75rem', // Slightly larger text
+                  fontWeight: '600', // Bolder weight
                   color: isActive ? '#000000' : '#FFFFFF',
                   textAlign: 'center' as const,
-                  lineHeight: '1'
+                  lineHeight: '1',
+                  letterSpacing: '0.2px' // Better letter spacing
                 }}>
                   {item.label}
                 </span>
+                
+                {/* Active indicator dot */}
+                {isActive && (
+                  <div
+                    style={{
+                      position: 'absolute' as const,
+                      bottom: '2px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '4px',
+                      height: '4px',
+                      borderRadius: '50%',
+                      backgroundColor: '#000000',
+                      opacity: '0.6'
+                    }}
+                  />
+                )}
               </Link>
             );
           })}
@@ -347,152 +455,218 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       {/* Elite Concierge Panel */}
       <AnimatePresence>
         {conciergeExpanded && (
-          <motion.div
-            style={{
-              position: 'absolute' as const,
-              bottom: '96px', // Perfect positioning above nav
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 999999,
-              display: 'flex',
-              flexDirection: 'column' as const, // Vertical panel layout
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px',
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: '20px',
-              border: '2px solid #DAFF0D',
-              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(218, 255, 13, 0.3)',
-              minWidth: '200px'
-            }}
-            initial={{ opacity: 0, y: 30, scale: 0.8 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 15, scale: 0.8 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            {/* Panel Header */}
+          <>
+            {/* Premium backdrop overlay */}
             <motion.div
+              style={{
+                position: 'absolute' as const,
+                top: '0',
+                left: '0',
+                right: '0',
+                bottom: '0',
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+                zIndex: 999998
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setConciergeExpanded(false)} // Click outside to close
+            />
+            
+            <motion.div
               style={{
-                marginBottom: '12px',
-                textAlign: 'center' as const
+                position: 'absolute' as const,
+                bottom: '100px', // Perfect positioning above nav
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 999999,
+                display: 'flex',
+                flexDirection: 'column' as const,
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '20px',
+                backgroundColor: 'rgba(0, 0, 0, 0.85)', // Slightly more transparent
+                backdropFilter: 'blur(30px) saturate(1.8)', // Enhanced glassmorphism
+                WebkitBackdropFilter: 'blur(30px) saturate(1.8)',
+                borderRadius: '24px', // More rounded for 2025
+                border: '1px solid rgba(218, 255, 13, 0.4)',
+                boxShadow: `
+                  0 20px 60px rgba(0, 0, 0, 0.4),
+                  0 0 30px rgba(218, 255, 13, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1)
+                `, // Multi-layer premium shadows
+                minWidth: '240px',
+                // Premium glassmorphism effect
+                background: `
+                  linear-gradient(145deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%),
+                  linear-gradient(145deg, rgba(218, 255, 13, 0.05) 0%, rgba(218, 255, 13, 0.02) 100%)
+                `
+              }}
+              initial={{ opacity: 0, y: 40, scale: 0.7 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.8 }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.25, 0.46, 0.45, 0.94] // Premium cubic bezier
               }}
             >
-              <span style={{
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                color: '#DAFF0D',
-                letterSpacing: '0.5px',
-                textShadow: '0 2px 4px rgba(0,0,0,0.8)'
-              }}>
-                AI CONCIERGE
-              </span>
-            </motion.div>
+              {/* Premium Panel Header */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                style={{
+                  marginBottom: '16px',
+                  textAlign: 'center' as const
+                }}
+              >
+                <span style={{
+                  fontSize: '1rem',
+                  fontWeight: '700',
+                  color: '#DAFF0D',
+                  letterSpacing: '1px',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.8)',
+                  textTransform: 'uppercase' as const,
+                  background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  AI Concierge
+                </span>
+                <div style={{
+                  width: '40px',
+                  height: '2px',
+                  background: 'linear-gradient(90deg, transparent 0%, #DAFF0D 50%, transparent 100%)',
+                  margin: '8px auto 0',
+                  borderRadius: '1px'
+                }} />
+              </motion.div>
 
-            {/* Elite Button Grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
-              gap: '12px',
-              alignItems: 'center',
-              justifyItems: 'center'
-            }}>
-              {conciergeOptions.map((option, index) => (
-                <motion.div
-                  key={option.id}
-                  initial={{ opacity: 0, scale: 0.6, y: 20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.6, y: 10 }}
-                  transition={{ duration: 0.3, delay: index * 0.1, ease: "easeOut" }}
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column' as const, 
-                    alignItems: 'center',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    console.log('[MobileNavBar] Concierge option clicked:', option.id);
-                    option.action();
-                    setConciergeExpanded(false);
-                    triggerHaptic('light');
-                  }}
-                >
+              {/* Elite Button Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '16px', // More generous spacing
+                alignItems: 'center',
+                justifyItems: 'center',
+                marginBottom: '16px'
+              }}>
+                {conciergeOptions.map((option, index) => (
                   <motion.div
-                    style={{
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '16px', // Rounded square for modern look
-                      backgroundColor: '#DAFF0D',
-                      color: '#000000',
-                      border: '2px solid #000000',
-                      boxShadow: '0 6px 20px rgba(218, 255, 13, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                      display: 'flex',
+                    key={option.id}
+                    initial={{ opacity: 0, scale: 0.4, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.4, y: 15 }}
+                    transition={{ 
+                      duration: 0.4, 
+                      delay: index * 0.1 + 0.2, 
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
+                    style={{ 
+                      display: 'flex', 
+                      flexDirection: 'column' as const, 
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      marginBottom: '8px'
+                      cursor: 'pointer'
                     }}
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 8px 25px rgba(218, 255, 13, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                    onClick={() => {
+                      console.log('[MobileNavBar] Concierge option clicked:', option.id);
+                      option.action();
+                      setConciergeExpanded(false);
+                      triggerHaptic('medium');
                     }}
-                    whileTap={{ scale: 0.95 }}
                   >
-                    {React.createElement(option.icon, { 
-                      size: 20,
-                      strokeWidth: 2.5,
-                      color: '#000000'
-                    })}
+                    <motion.div
+                      style={{
+                        width: '56px',
+                        height: '56px',
+                        borderRadius: '18px', // Perfect rounded square
+                        background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
+                        color: '#000000',
+                        border: '2px solid rgba(0, 0, 0, 0.8)',
+                        boxShadow: `
+                          0 8px 24px rgba(218, 255, 13, 0.3),
+                          0 4px 12px rgba(0, 0, 0, 0.3),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.3)
+                        `,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        marginBottom: '10px',
+                        position: 'relative' as const
+                      }}
+                      whileHover={{ 
+                        scale: 1.05,
+                        boxShadow: `
+                          0 12px 30px rgba(218, 255, 13, 0.4),
+                          0 6px 16px rgba(0, 0, 0, 0.3),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.4)
+                        `,
+                        y: -2
+                      }}
+                      whileTap={{ 
+                        scale: 0.95,
+                        y: 0
+                      }}
+                    >
+                      {React.createElement(option.icon, { 
+                        size: 22,
+                        strokeWidth: 2.5,
+                        color: '#000000'
+                      })}
+                    </motion.div>
+                    
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ delay: index * 0.1 + 0.4 }}
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: '600',
+                        textAlign: 'center' as const,
+                        color: '#FFFFFF',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                        maxWidth: '60px',
+                        lineHeight: '1.2',
+                        letterSpacing: '0.3px'
+                      }}
+                    >
+                      {option.label}
+                    </motion.span>
                   </motion.div>
-                  
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ delay: index * 0.1 + 0.2 }}
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: '600',
-                      textAlign: 'center' as const,
-                      color: '#FFFFFF',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.9)',
-                      maxWidth: '55px',
-                      lineHeight: '1.1',
-                      letterSpacing: '0.2px'
-                    }}
-                  >
-                    {option.label}
-                  </motion.span>
-                </motion.div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Panel Footer */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 0.4 }}
-              style={{
-                marginTop: '12px',
-                textAlign: 'center' as const
-              }}
-            >
-              <span style={{
-                fontSize: '0.6rem',
-                color: '#888888',
-                fontStyle: 'italic'
-              }}>
-                Tap outside to close
-              </span>
+              {/* Premium Panel Footer */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 0.6 }}
+                style={{
+                  textAlign: 'center' as const,
+                  paddingTop: '8px',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                <span style={{
+                  fontSize: '0.65rem',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontStyle: 'italic',
+                  letterSpacing: '0.2px'
+                }}>
+                  Tap outside to close
+                </span>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
