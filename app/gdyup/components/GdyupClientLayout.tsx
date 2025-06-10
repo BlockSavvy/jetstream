@@ -226,6 +226,50 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
     return <AppSplashScreen onComplete={handleSplashComplete} />;
   }
 
+  useEffect(() => {
+    console.log('[GdyupClientLayout] Setting up mobile navigation and iOS optimizations');
+    
+    // Add mobile navigation body class
+    document.body.classList.add('mobile-nav-active');
+    
+    // iOS Capacitor detection and optimization
+    if (typeof window !== 'undefined') {
+      const isCapacitor = !!(window as any).Capacitor;
+      console.log('[GdyupClientLayout] Capacitor detected:', isCapacitor);
+      
+      if (isCapacitor) {
+        // Add Capacitor class for iOS-specific styles
+        document.documentElement.classList.add('capacitor');
+        
+        // Set up viewport height variables for iOS
+        const updateViewportHeight = () => {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+          document.documentElement.style.setProperty('--mobile-nav-top', `${window.innerHeight - 80}px`);
+          console.log('[GdyupClientLayout] Viewport height updated for iOS:', window.innerHeight);
+        };
+        
+        updateViewportHeight();
+        window.addEventListener('resize', updateViewportHeight);
+        window.addEventListener('orientationchange', updateViewportHeight);
+        
+        // iOS WebView optimizations
+        document.body.style.overscrollBehavior = 'none';
+        (document.body.style as any).webkitOverflowScrolling = 'touch';
+        
+        return () => {
+          window.removeEventListener('resize', updateViewportHeight);
+          window.removeEventListener('orientationchange', updateViewportHeight);
+        };
+      }
+    }
+    
+    return () => {
+      document.body.classList.remove('mobile-nav-active');
+      document.documentElement.classList.remove('capacitor');
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <NostrProvider>

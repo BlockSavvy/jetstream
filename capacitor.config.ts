@@ -6,27 +6,47 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     url: 'https://gdyup.xyz/gdyup',
-    cleartext: false
+    cleartext: true
+  },
+  ios: {
+    contentInset: 'always',
+    allowsLinkPreview: false,
+    scrollEnabled: true,
+    preferredContentMode: 'mobile',
+    handleApplicationNotifications: false,
+    limitsNavigationsToAppBoundDomains: false,
+    backgroundColor: '#000000',
+    overrideUserAgent: 'GDY-UP iOS App',
+    appendUserAgent: 'GDY-UP iOS',
+    scheme: 'https'
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 0,
-      launchAutoHide: true,
+      launchShowDuration: 3000,
+      backgroundColor: "#000000",
       showSpinner: false,
-      androidSplashResourceName: 'splash',
-      androidScaleType: 'CENTER_CROP',
+      androidSplashResourceName: "splash",
+      androidScaleType: "CENTER_CROP",
+      iosSpinnerStyle: "small",
       splashFullScreen: true,
       splashImmersive: true,
-      backgroundColor: '#000000'
+      launchAutoHide: false
     },
     StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#000000'
+      style: "dark",
+      backgroundColor: "#000000",
+      overlaysWebView: false
     },
     Keyboard: {
-      resize: 'native',
-      style: 'DARK',
+      resize: "native",
+      style: "dark",
       resizeOnFullScreen: true
+    },
+    Haptics: {
+      // Enable haptic feedback
+    },
+    Share: {
+      // Enable native sharing
     }
   }
 };

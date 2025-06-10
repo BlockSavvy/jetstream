@@ -102,117 +102,96 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   const pathname = usePathname();
   const { getThemedTextClasses } = useGdyupTheme();
   const [conciergeExpanded, setConciergeExpanded] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(0);
 
-  // Debug logging
+  // iOS Native positioning solution
   useEffect(() => {
-    console.log('[MobileNavBar] Component mounted');
+    console.log('[MobileNavBar] Component mounted - USING IOS NATIVE SOLUTION');
     console.log('[MobileNavBar] Current pathname:', pathname);
     console.log('[MobileNavBar] Capacitor detected:', !!(window as any).Capacitor);
     
-    // Add visibility debugging
-    const navElement = document.querySelector('.mobile-nav-bar');
-    if (navElement) {
-      console.log('[MobileNavBar] Element found, checking styles...');
-      const styles = window.getComputedStyle(navElement);
-      console.log('[MobileNavBar] Display:', styles.display);
-      console.log('[MobileNavBar] Position:', styles.position);
-      console.log('[MobileNavBar] Z-index:', styles.zIndex);
-      console.log('[MobileNavBar] Bottom:', styles.bottom);
-      console.log('[MobileNavBar] Visibility:', styles.visibility);
-      console.log('[MobileNavBar] Opacity:', styles.opacity);
-    } else {
-      console.log('[MobileNavBar] Element NOT found in DOM');
-    }
-
-    // NUCLEAR CAPACITOR POSITIONING FIX
     if ((window as any).Capacitor) {
-      console.log('[MobileNavBar] Applying nuclear Capacitor positioning fix...');
+      console.log('[MobileNavBar] Applying iOS Native viewport solution...');
       
-      // Create a style element with maximum specificity
-      const styleEl = document.createElement('style');
-      styleEl.innerHTML = `
-        /* NUCLEAR MOBILE NAV POSITIONING FOR CAPACITOR */
-        .capacitor .mobile-nav-bar,
-        body.capacitor .mobile-nav-bar,
-        html.capacitor .mobile-nav-bar,
-        .mobile-nav-bar {
-          position: fixed !important;
-          bottom: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          width: 100vw !important;
-          min-height: 80px !important;
-          z-index: 2147483647 !important;
-          background: #000000 !important;
-          border-top: 1px solid #333333 !important;
-          padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
-          padding-left: env(safe-area-inset-left, 0px) !important;
-          padding-right: env(safe-area-inset-right, 0px) !important;
-          box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
-          backdrop-filter: blur(20px) !important;
-          -webkit-backdrop-filter: blur(20px) !important;
-          display: flex !important;
-          flex-direction: column !important;
-          margin: 0 !important;
-          transform: none !important;
-        }
+      // Get real viewport height (iOS safe)
+      const updateViewportHeight = () => {
+        const vh = window.innerHeight;
+        setViewportHeight(vh);
+        console.log('[MobileNavBar] Viewport height updated:', vh);
         
-        /* Force concierge radial menu positioning */
-        .mobile-nav-bar .concierge-radial-menu {
-          position: fixed !important;
-          bottom: 100px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          z-index: 2147483648 !important;
-          display: flex !important;
-          flex-direction: row !important;
-          gap: 16px !important;
-          align-items: center !important;
-          justify-content: center !important;
-        }
-      `;
-      document.head.appendChild(styleEl);
+        // Force CSS custom property for viewport height
+        document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
+        document.documentElement.style.setProperty('--mobile-nav-top', `${vh - 80}px`);
+      };
+
+      // Set initial height
+      updateViewportHeight();
+      
+      // Update on resize and orientation change
+      window.addEventListener('resize', updateViewportHeight);
+      window.addEventListener('orientationchange', updateViewportHeight);
+      
+      // iOS specific viewport fix
+      const handleViewportChange = () => {
+        setTimeout(updateViewportHeight, 100);
+      };
+      
+      // Listen for iOS-specific events
+      window.addEventListener('scroll', handleViewportChange, { passive: true });
+      
+      return () => {
+        window.removeEventListener('resize', updateViewportHeight);
+        window.removeEventListener('orientationchange', updateViewportHeight);
+        window.removeEventListener('scroll', handleViewportChange);
+      };
     }
   }, [pathname]);
 
   // Function to open concierge with haptic feedback
   const handleConciergeClick = () => {
     console.log('[MobileNavBar] Concierge button clicked - toggling radial menu');
-    triggerHaptic('medium'); // Medium impact for concierge button
+    triggerHaptic('medium');
     setConciergeExpanded(!conciergeExpanded);
   };
 
   // Handle nav item clicks with haptic feedback
   const handleNavClick = () => {
     console.log('[MobileNavBar] Nav item clicked');
-    triggerHaptic('light'); // Light haptic for nav changes
-    setConciergeExpanded(false); // Close concierge menu on navigation
+    triggerHaptic('light');
+    setConciergeExpanded(false);
   };
 
   return (
     <>
       <nav 
-        className="mobile-nav-bar"
+        className="mobile-nav-bar ios-native-nav"
         style={{
-          position: 'fixed !important' as any,
-          bottom: '0 !important' as any,
-          left: '0 !important' as any,
-          right: '0 !important' as any,
-          width: '100vw !important' as any,
-          minHeight: '80px !important' as any,
-          zIndex: '2147483647 !important' as any,
-          backgroundColor: '#000000 !important' as any,
-          borderTop: '1px solid #333333 !important' as any,
-          paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px)) !important' as any,
-          paddingLeft: 'env(safe-area-inset-left, 0px) !important' as any,
-          paddingRight: 'env(safe-area-inset-right, 0px) !important' as any,
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5) !important' as any,
-          backdropFilter: 'blur(20px) !important' as any,
-          WebkitBackdropFilter: 'blur(20px) !important' as any,
-          display: 'flex !important' as any,
-          flexDirection: 'column !important' as any,
-          margin: '0 !important' as any,
-          transform: 'none !important' as any
+          // iOS NATIVE POSITIONING - NO POSITION FIXED!
+          position: 'absolute',
+          top: viewportHeight > 0 ? `${viewportHeight - 80}px` : 'calc(100vh - 80px)',
+          left: '0',
+          right: '0',
+          width: '100vw',
+          height: '80px',
+          zIndex: 2147483647,
+          backgroundColor: '#000000',
+          borderTop: '1px solid #333333',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          display: 'flex',
+          flexDirection: 'column',
+          margin: '0',
+          // CRITICAL: Transform to force hardware acceleration
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)',
+          willChange: 'transform',
+          // Force iOS to respect positioning
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
         }}
       >
         {/* Navigation Items Container */}
@@ -224,7 +203,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             alignItems: 'center',
             justifyContent: 'space-around',
             width: '100%',
-            padding: '0.5rem 1rem'
+            padding: '0.5rem 1rem',
+            height: '100%'
           }}
         >
           {navItems.map((item, index) => {
@@ -350,14 +330,14 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         </div>
       </nav>
       
-      {/* Concierge Radial Menu - Fixed positioning outside nav */}
+      {/* Concierge Radial Menu - iOS Native positioning */}
       <AnimatePresence>
         {conciergeExpanded && (
           <motion.div
             className="concierge-radial-menu"
             style={{
-              position: 'fixed',
-              bottom: '100px',
+              position: 'absolute',
+              top: viewportHeight > 0 ? `${viewportHeight - 180}px` : 'calc(100vh - 180px)',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 2147483649,
