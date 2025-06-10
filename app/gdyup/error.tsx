@@ -11,8 +11,19 @@ export default function GdyupError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to console to help with debugging
-    console.error('GdyupError:', error);
+    // Detailed error logging for debugging
+    console.error('🚨 GdyupError caught:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      digest: error.digest,
+      cause: error.cause,
+      errorString: error.toString(),
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+    });
+    
+    // Also log the raw error object
+    console.error('Raw error object:', error);
   }, [error]);
 
   return (
@@ -24,10 +35,25 @@ export default function GdyupError({
             {error.message || "Unknown error occurred"}
           </p>
           
+          {error.name && (
+            <p className="text-xs text-gray-400 mt-2">
+              Error Type: {error.name}
+            </p>
+          )}
+          
           {error.digest && (
             <p className="text-xs text-gray-400 mt-2">
               Error Digest: {error.digest}
             </p>
+          )}
+          
+          {error.stack && (
+            <details className="mt-2">
+              <summary className="text-xs text-gray-400 cursor-pointer">Stack Trace</summary>
+              <pre className="text-xs text-gray-500 mt-1 whitespace-pre-wrap">
+                {error.stack}
+              </pre>
+            </details>
           )}
         </div>
         <div className="flex justify-between">
