@@ -104,11 +104,40 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   const { getThemedTextClasses } = useGdyupTheme();
   const [conciergeExpanded, setConciergeExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(0);
+  const [isCapacitor, setIsCapacitor] = useState(false);
 
-  // Only mount on client side
+  // Only mount on client side and setup iOS-specific positioning
   useEffect(() => {
     setMounted(true);
     console.log('[MobileNavBar] 🚀 BULLETPROOF NAV - Component mounted, will render to body portal');
+    
+    // Detect Capacitor
+    const capacitorDetected = !!(window as any).Capacitor;
+    setIsCapacitor(capacitorDetected);
+    console.log('[MobileNavBar] Capacitor detected:', capacitorDetected);
+    
+    // iOS WebView positioning setup - SIMPLE approach
+    const updateViewport = () => {
+      const vh = window.innerHeight;
+      setViewportHeight(vh);
+      console.log('[MobileNavBar] iOS viewport height:', vh);
+    };
+    
+    updateViewport();
+    
+    // Update on orientation change
+    const handleOrientationChange = () => {
+      setTimeout(updateViewport, 100);
+    };
+    
+    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('resize', updateViewport);
+    
+    return () => {
+      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', updateViewport);
+    };
   }, []);
 
   // Function to open concierge with haptic feedback
@@ -136,20 +165,20 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       <div 
         id="gdyup-mobile-nav-portal"
         style={{
-          // BULLETPROOF POSITIONING - ALWAYS VISIBLE
-          position: 'fixed',
+          // iOS WebView BULLETPROOF positioning
+          position: 'sticky',
           bottom: '0',
           left: '0',
           right: '0',
           width: '100vw',
           height: '80px',
           zIndex: 999999,
-          backgroundColor: '#FF0000', // BRIGHT RED FOR DEBUGGING
-          borderTop: '3px solid #DAFF0D',
+          backgroundColor: '#000000', // BACK TO BLACK - debug complete!
+          borderTop: '1px solid #333333',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))',
           paddingLeft: 'env(safe-area-inset-left, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
-          boxShadow: '0 -4px 20px rgba(218, 255, 13, 0.8)',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           display: 'flex',
@@ -163,7 +192,16 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
           overflow: 'visible' as const,
           pointerEvents: 'auto' as const,
           visibility: 'visible' as const,
-          opacity: '1'
+          opacity: '1',
+          // iOS WebView specific positioning that ACTUALLY works
+          ...(isCapacitor && {
+            position: 'fixed' as const,
+            top: `${viewportHeight - 80}px`,
+            bottom: 'auto',
+            WebkitTransform: 'translate3d(0, 0, 1000px)',
+            transform: 'translate3d(0, 0, 1000px)',
+            isolation: 'isolate'
+          })
         }}
       >
         {/* Navigation Items Container */}
