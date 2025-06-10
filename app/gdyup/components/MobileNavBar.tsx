@@ -117,11 +117,50 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     setIsCapacitor(capacitorDetected);
     console.log('[MobileNavBar] Capacitor detected:', capacitorDetected);
     
-    // iOS WebView positioning setup - SIMPLE approach
+    // iOS WebView BULLETPROOF setup
     const updateViewport = () => {
       const vh = window.innerHeight;
       setViewportHeight(vh);
       console.log('[MobileNavBar] iOS viewport height:', vh);
+      
+      if (capacitorDetected) {
+        // Force document height and prevent zoom/bounce
+        document.documentElement.style.height = '100%';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.height = '100%';
+        document.body.style.overflow = 'hidden';
+        document.body.style.position = 'relative';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        
+        // Create or update the scroll container
+        let scrollContainer = document.getElementById('gdyup-scroll-container');
+        if (!scrollContainer) {
+          scrollContainer = document.createElement('div');
+          scrollContainer.id = 'gdyup-scroll-container';
+          scrollContainer.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 80px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            z-index: 1;
+          `;
+          
+          // Move all body children into scroll container except the nav
+          const children = Array.from(document.body.children);
+          children.forEach(child => {
+            if (child.id !== 'gdyup-mobile-nav-portal' && child.id !== 'gdyup-scroll-container') {
+              scrollContainer!.appendChild(child);
+            }
+          });
+          
+          document.body.appendChild(scrollContainer);
+        }
+      }
     };
     
     updateViewport();
@@ -137,6 +176,24 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     return () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', updateViewport);
+      
+      // Cleanup on unmount
+      if (capacitorDetected) {
+        const scrollContainer = document.getElementById('gdyup-scroll-container');
+        if (scrollContainer) {
+          // Move children back to body
+          const children = Array.from(scrollContainer.children);
+          children.forEach(child => {
+            document.body.appendChild(child);
+          });
+          scrollContainer.remove();
+        }
+        
+        // Reset body styles
+        document.body.style.height = '';
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+      }
     };
   }, []);
 
@@ -165,8 +222,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       <div 
         id="gdyup-mobile-nav-portal"
         style={{
-          // iOS WebView BULLETPROOF positioning
-          position: 'sticky',
+          // BULLETPROOF iOS WebView positioning with scroll container
+          position: 'absolute',
           bottom: '0',
           left: '0',
           right: '0',
@@ -192,16 +249,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
           overflow: 'visible' as const,
           pointerEvents: 'auto' as const,
           visibility: 'visible' as const,
-          opacity: '1',
-          // iOS WebView specific positioning that ACTUALLY works
-          ...(isCapacitor && {
-            position: 'fixed' as const,
-            top: `${viewportHeight - 80}px`,
-            bottom: 'auto',
-            WebkitTransform: 'translate3d(0, 0, 1000px)',
-            transform: 'translate3d(0, 0, 1000px)',
-            isolation: 'isolate'
-          })
+          opacity: '1'
         }}
       >
         {/* Navigation Items Container */}
@@ -335,7 +383,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         {conciergeExpanded && (
           <motion.div
             style={{
-              position: 'fixed' as const,
+              position: 'absolute' as const,
               bottom: '100px',
               left: '50%',
               transform: 'translateX(-50%)',
