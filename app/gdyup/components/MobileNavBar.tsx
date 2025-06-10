@@ -294,78 +294,86 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             margin: '0 auto'
           }}
         >
-          {/* Concierge Button - Grid Position 3 (Center) */}
-          <button
-            onClick={handleConciergeClick}
-            aria-label="Open AI Concierge"
+          {/* Concierge Button - Grid Column 3 (Perfect Center) */}
+          <div
             style={{
-              position: 'absolute' as const,
-              top: '-30px',
-              left: '50%',
-              transform: 'translateX(-50%)', // NOW this will be truly centered
-              zIndex: 999999,
-              width: '60px',
-              height: '60px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
-              color: '#000000',
-              border: '3px solid #000000',
-              boxShadow: `
-                0 8px 25px rgba(0, 0, 0, 0.3),
-                0 0 20px rgba(218, 255, 13, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3)
-              `,
+              gridColumn: '3', // Explicitly place in center column
+              position: 'relative' as const,
               display: 'flex',
-              alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              padding: '0',
-              overflow: 'hidden' as const,
-              filter: 'brightness(1)',
-            }}
-            onMouseDown={() => {
-              const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
-              if (button) {
-                button.style.transform = 'translateX(-50%) scale(0.95)';
-                button.style.filter = 'brightness(1.1)';
-              }
-            }}
-            onMouseUp={() => {
-              const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
-              if (button) {
-                button.style.transform = 'translateX(-50%) scale(1)';
-                button.style.filter = 'brightness(1)';
-              }
+              alignItems: 'center'
             }}
           >
-            <img 
-              src="/icons/conciergebutton.png" 
-              alt="AI Concierge" 
-              style={{
-                width: '85%',
-                height: '85%',
-                objectFit: 'cover' as const,
-                borderRadius: '50%',
-                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
-              }}
-            />
-            {/* Elite pulse animation ring */}
-            <div
+            <button
+              onClick={handleConciergeClick}
+              aria-label="Open AI Concierge"
               style={{
                 position: 'absolute' as const,
-                top: '-3px',
-                left: '-3px',
-                right: '-3px',
-                bottom: '-3px',
+                top: '-42px', // Raised above the grid
+                width: '60px',
+                height: '60px',
                 borderRadius: '50%',
-                border: '2px solid #DAFF0D',
-                opacity: '0',
-                animation: 'concierge-pulse 3s infinite',
-                pointerEvents: 'none' as const
+                background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
+                color: '#000000',
+                border: '3px solid #000000',
+                boxShadow: `
+                  0 8px 25px rgba(0, 0, 0, 0.3),
+                  0 0 20px rgba(218, 255, 13, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3)
+                `,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                padding: '0',
+                overflow: 'hidden' as const,
+                filter: 'brightness(1)',
+                zIndex: 999999
               }}
-            />
-          </button>
+              onMouseDown={() => {
+                const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
+                if (button) {
+                  button.style.transform = 'scale(0.95)';
+                  button.style.filter = 'brightness(1.1)';
+                }
+              }}
+              onMouseUp={() => {
+                const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
+                if (button) {
+                  button.style.transform = 'scale(1)';
+                  button.style.filter = 'brightness(1)';
+                }
+              }}
+            >
+              <img 
+                src="/icons/conciergebutton.png" 
+                alt="AI Concierge" 
+                style={{
+                  width: '85%',
+                  height: '85%',
+                  objectFit: 'cover' as const,
+                  borderRadius: '50%',
+                  filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
+                }}
+              />
+              {/* Elite pulse animation ring */}
+              <div
+                style={{
+                  position: 'absolute' as const,
+                  top: '-3px',
+                  left: '-3px',
+                  right: '-3px',
+                  bottom: '-3px',
+                  borderRadius: '50%',
+                  border: '2px solid #DAFF0D',
+                  opacity: '0',
+                  animation: 'concierge-pulse 3s infinite',
+                  pointerEvents: 'none' as const
+                }}
+              />
+            </button>
+          </div>
 
           {/* Navigation Items - Grid Positioned */}
           {navItems.map((item, index) => {
