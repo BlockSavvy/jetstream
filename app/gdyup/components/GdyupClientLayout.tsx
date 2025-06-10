@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-provider';
 import { AuthProvider } from '@/lib/auth-provider';
@@ -145,148 +145,128 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
   showNavigation = true 
 }) => {
   const pathname = usePathname();
-  const [showSplash, setShowSplash] = useState(false);
-  const [isAppReady, setIsAppReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [appState, setAppState] = useState<'loading' | 'splash' | 'ready'>('loading');
   const [isMobile, setIsMobile] = useState(false);
-  const [isClient, setIsClient] = useState(false);
   const { getThemedBackgroundClasses } = useGdyupTheme();
 
-  // Client-side hydration fix
+  // Prevent hydration mismatch by only rendering after client mount
   useEffect(() => {
-    setIsClient(true);
+    setMounted(true);
   }, []);
 
-  // Handle app initialization - only show splash on very first app launch
+  // Initialize app state only after mount
   useEffect(() => {
-    if (!isClient) return; // Wait for client-side hydration
+    if (!mounted) return;
     
-    console.log('[GdyupClientLayout] 🚀 Initializing app, checking environment...');
-    console.log('[GdyupClientLayout] isCapacitorApp:', isCapacitorApp());
-    console.log('[GdyupClientLayout] pathname:', pathname);
+    console.log('[GdyupClientLayout] 🚀 Client mounted, initializing...');
     
-    let isMounted = true;
+    // Detect mobile
+    const mobile = isMobileDevice();
+    setIsMobile(mobile);
+    console.log('[GdyupClientLayout] Mobile detected:', mobile);
     
-    // Detect mobile device
-    const checkMobile = () => {
-      if (!isMounted) return;
-      const mobile = isMobileDevice();
-      setIsMobile(mobile);
-      console.log('[GdyupClientLayout] Mobile detected:', mobile);
-    };
-    
-    // Check mobile on mount and on resize
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    // Add capacitor class for CSS targeting
+    // Setup Capacitor
     if (isCapacitorApp()) {
       document.documentElement.classList.add('capacitor');
-      console.log('[GdyupClientLayout] Added capacitor class to HTML element');
-      
-      // ALWAYS show splash on first load in Capacitor (not just first app launch)
-      console.log('[GdyupClientLayout] 🎬 CAPACITOR - showing splash screen');
-      setShowSplash(true);
-      setIsAppReady(false);
+      console.log('[GdyupClientLayout] 🎬 CAPACITOR - will show splash');
+      setAppState('splash');
     } else {
-      // For web, always skip splash and show app immediately
-      console.log('[GdyupClientLayout] 🌐 WEB - skipping splash screen');
-      setShowSplash(false);
-      setIsAppReady(true);
+      console.log('[GdyupClientLayout] 🌐 WEB - ready immediately');
+      setAppState('ready');
     }
-    
-    return () => {
-      isMounted = false;
-      window.removeEventListener('resize', checkMobile);
-    };
-  }, [isClient]); // Depend on isClient to prevent hydration issues
+  }, [mounted]);
 
-  // Force show app content if stuck loading for too long
+  // Handle splash completion
+  const handleSplashComplete = useCallback(() => {
+    console.log('[GdyupClientLayout] 🎉 Splash complete');
+    setAppState('ready');
+  }, []);
+
+  // Setup mobile optimizations only after ready
   useEffect(() => {
-    const emergencyTimeout = setTimeout(() => {
-      if (!isAppReady) {
-        console.log('[GdyupClientLayout] 🚨 EMERGENCY TIMEOUT - forcing app to show');
-        console.log('[GdyupClientLayout] Current state - showSplash:', showSplash, 'isAppReady:', isAppReady);
-        setShowSplash(false);
-        setIsAppReady(true);
-      }
-    }, 5000); // 5 second emergency timeout
-
-    return () => clearTimeout(emergencyTimeout);
-  }, [isAppReady, showSplash]);
-
-  const handleSplashComplete = () => {
-    console.log('[GdyupClientLayout] 🎉 Splash complete, showing main app');
-    console.log('[GdyupClientLayout] Previous state - showSplash:', showSplash, 'isAppReady:', isAppReady);
-    setShowSplash(false);
-    setIsAppReady(true);
-    console.log('[GdyupClientLayout] New state - showSplash: false, isAppReady: true');
-  };
-
-  // Don't render anything until client-side hydration is complete
-  if (!isClient) {
-    return (
-      <div className="min-h-screen w-full bg-black flex items-center justify-center">
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse"></div>
-          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-75"></div>
-          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-150"></div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show splash screen during app initialization in Capacitor
-  if (showSplash && !isAppReady && isCapacitorApp()) {
-    console.log('[GdyupClientLayout] Rendering splash screen');
-    return <AppSplashScreen onComplete={handleSplashComplete} />;
-  }
-
-  console.log('[GdyupClientLayout] Rendering main app content');
-
-  useEffect(() => {
-    console.log('[GdyupClientLayout] Setting up mobile navigation and iOS optimizations');
+    if (appState !== 'ready' || !mounted) return;
     
-    // Add mobile navigation body class
+    console.log('[GdyupClientLayout] ⚙️ Setting up mobile optimizations');
+    
     document.body.classList.add('mobile-nav-active');
     
-    // iOS Capacitor detection and optimization
-    if (typeof window !== 'undefined') {
-      const isCapacitor = !!(window as any).Capacitor;
-      console.log('[GdyupClientLayout] Capacitor detected:', isCapacitor);
+    if (isCapacitorApp()) {
+      const updateViewportHeight = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        document.documentElement.style.setProperty('--mobile-nav-top', `${window.innerHeight - 80}px`);
+      };
       
-      if (isCapacitor) {
-        // Add Capacitor class for iOS-specific styles
-        document.documentElement.classList.add('capacitor');
-        
-        // Set up viewport height variables for iOS
-        const updateViewportHeight = () => {
-          const vh = window.innerHeight * 0.01;
-          document.documentElement.style.setProperty('--vh', `${vh}px`);
-          document.documentElement.style.setProperty('--mobile-nav-top', `${window.innerHeight - 80}px`);
-          console.log('[GdyupClientLayout] Viewport height updated for iOS:', window.innerHeight);
-        };
-        
-        updateViewportHeight();
-        window.addEventListener('resize', updateViewportHeight);
-        window.addEventListener('orientationchange', updateViewportHeight);
-        
-        // iOS WebView optimizations
-        document.body.style.overscrollBehavior = 'none';
-        (document.body.style as any).webkitOverflowScrolling = 'touch';
-        
-        return () => {
-          window.removeEventListener('resize', updateViewportHeight);
-          window.removeEventListener('orientationchange', updateViewportHeight);
-        };
-      }
+      updateViewportHeight();
+      window.addEventListener('resize', updateViewportHeight);
+      window.addEventListener('orientationchange', updateViewportHeight);
+      
+      document.body.style.overscrollBehavior = 'none';
+      (document.body.style as any).webkitOverflowScrolling = 'touch';
+      
+      return () => {
+        window.removeEventListener('resize', updateViewportHeight);
+        window.removeEventListener('orientationchange', updateViewportHeight);
+      };
     }
     
     return () => {
       document.body.classList.remove('mobile-nav-active');
       document.documentElement.classList.remove('capacitor');
     };
-  }, []);
+  }, [appState, mounted]);
 
+  // Show loading until mounted (prevents hydration mismatch)
+  if (!mounted) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#000000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            backgroundColor: '#DAFF0D',
+            borderRadius: '50%',
+            animation: 'pulse 1.5s ease-in-out infinite'
+          }} />
+          <div style={{
+            width: '8px',
+            height: '8px',
+            backgroundColor: '#DAFF0D',
+            borderRadius: '50%',
+            animation: 'pulse 1.5s ease-in-out 0.1s infinite'
+          }} />
+          <div style={{
+            width: '8px',
+            height: '8px',
+            backgroundColor: '#DAFF0D',
+            borderRadius: '50%',
+            animation: 'pulse 1.5s ease-in-out 0.2s infinite'
+          }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Show splash screen in Capacitor
+  if (appState === 'splash') {
+    console.log('[GdyupClientLayout] 📱 Rendering splash screen');
+    return <AppSplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  // Show main app
+  console.log('[GdyupClientLayout] 🚀 Rendering main app');
+  
   return (
     <AuthProvider>
       <ConciergeProvider>
