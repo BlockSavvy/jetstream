@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-provider';
 import { AuthProvider } from '@/lib/auth-provider';
-import { NostrProvider } from '../contexts/NostrContext';
 import { ConciergeProvider } from '@/app/components/concierge-provider';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { cn } from '@/lib/utils';
@@ -272,21 +271,19 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
 
   return (
     <AuthProvider>
-      <NostrProvider>
-        <ConciergeProvider>
-          <div className={cn(
-            "min-h-screen w-full transition-colors duration-300",
-            getThemedBackgroundClasses()
-          )}>
-            <main className="pb-20 min-h-screen">
-              {children}
-            </main>
-            
-            {/* Mobile Navigation */}
-            {isMobile && <MobileNavBar />}
-          </div>
-        </ConciergeProvider>
-      </NostrProvider>
+      <ConciergeProvider>
+        <div className={cn(
+          "min-h-screen w-full transition-colors duration-300",
+          getThemedBackgroundClasses()
+        )}>
+          <main className="pb-20 min-h-screen">
+            {children}
+          </main>
+          
+          {/* Mobile Navigation */}
+          {isMobile && <MobileNavBar />}
+        </div>
+      </ConciergeProvider>
     </AuthProvider>
   );
 }
