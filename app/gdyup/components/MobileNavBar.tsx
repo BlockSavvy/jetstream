@@ -256,96 +256,57 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         <div 
           style={{
             position: 'relative' as const,
-            display: 'flex',
+            display: 'grid', // Use grid for perfect centering
+            gridTemplateColumns: '1fr 1fr 1fr 1fr', // Equal columns
             alignItems: 'center',
-            justifyContent: 'space-around',
+            justifyItems: 'center',
             width: '100%',
-            padding: '8px 1rem 4px 1rem', // Better padding for text positioning
+            padding: '12px 1rem 8px 1rem', // Better vertical centering
             height: '100%'
           }}
         >
+          {/* Concierge Button - Perfectly Centered */}
+          <button
+            onClick={handleConciergeClick}
+            aria-label="Open AI Concierge"
+            style={{
+              position: 'absolute' as const,
+              top: '-28px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 999999,
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#DAFF0D',
+              color: '#000000',
+              border: '2px solid #000000',
+              boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(218, 255, 13, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              padding: '0',
+              overflow: 'hidden' as const
+            }}
+          >
+            <img 
+              src="/icons/conciergebutton.png" 
+              alt="AI Concierge" 
+              style={{
+                width: '90%',
+                height: '90%',
+                objectFit: 'cover' as const,
+                borderRadius: '50%'
+              }}
+            />
+          </button>
+
           {navItems.map((item, index) => {
             const isActive = item.isActive ? item.isActive(pathname || '') : pathname === item.href;
             const Icon = item.icon;
             
-            // Insert concierge button in the middle
-            if (index === 2) {
-              return (
-                <React.Fragment key={`nav-${index}`}>
-                  {/* Concierge Button - Elevated Center */}
-                  <button
-                    onClick={handleConciergeClick}
-                    aria-label="Open AI Concierge"
-                    style={{
-                      position: 'absolute' as const,
-                      top: '-28px', // Raised higher for better visual balance
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      zIndex: 999999,
-                      width: '56px', // Slightly smaller for better proportion
-                      height: '56px',
-                      borderRadius: '50%',
-                      background: '#DAFF0D',
-                      color: '#000000',
-                      border: '2px solid #000000', // Thinner border
-                      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(218, 255, 13, 0.5)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      padding: '0',
-                      overflow: 'hidden' as const
-                    }}
-                  >
-                    <img 
-                      src="/icons/conciergebutton.png" 
-                      alt="AI Concierge" 
-                      style={{
-                        width: '90%', // Slightly smaller image for better fit
-                        height: '90%',
-                        objectFit: 'cover' as const,
-                        borderRadius: '50%'
-                      }}
-                    />
-                  </button>
-                  
-                  {/* Regular nav item */}
-                  <Link
-                    href={item.href}
-                    onClick={handleNavClick}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column' as const,
-                      alignItems: 'center',
-                      justifyContent: 'flex-start', // Align content to top
-                      gap: '2px', // Smaller gap between icon and text
-                      padding: '4px 8px 8px 8px', // More space at bottom
-                      borderRadius: '8px',
-                      backgroundColor: isActive ? '#DAFF0D' : 'transparent',
-                      color: isActive ? '#000000' : '#FFFFFF',
-                      textDecoration: 'none',
-                      minHeight: '56px', // Shorter to match new layout
-                      minWidth: '45px',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <Icon size={18} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
-                    <span style={{
-                      fontSize: '0.7rem', // Slightly smaller text
-                      fontWeight: '500',
-                      color: isActive ? '#000000' : '#FFFFFF',
-                      textAlign: 'center' as const,
-                      lineHeight: '1',
-                      marginTop: '1px' // Fine-tune text position
-                    }}>
-                      {item.label}
-                    </span>
-                  </Link>
-                </React.Fragment>
-              );
-            }
-
             return (
               <Link
                 key={item.href}
@@ -355,26 +316,25 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   display: 'flex',
                   flexDirection: 'column' as const,
                   alignItems: 'center',
-                  justifyContent: 'flex-start', // Align content to top
-                  gap: '2px', // Smaller gap between icon and text
-                  padding: '4px 8px 8px 8px', // More space at bottom
+                  justifyContent: 'center', // Perfect vertical centering
+                  gap: '3px', // Optimal spacing
+                  padding: '6px 8px',
                   borderRadius: '8px',
                   backgroundColor: isActive ? '#DAFF0D' : 'transparent',
                   color: isActive ? '#000000' : '#FFFFFF',
                   textDecoration: 'none',
-                  minHeight: '56px', // Shorter to match new layout
-                  minWidth: '45px',
+                  minHeight: '52px', // Better proportions
+                  minWidth: '48px',
                   transition: 'all 0.2s ease'
                 }}
               >
                 <Icon size={18} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
                 <span style={{
-                  fontSize: '0.7rem', // Slightly smaller text
+                  fontSize: '0.7rem',
                   fontWeight: '500',
                   color: isActive ? '#000000' : '#FFFFFF',
                   textAlign: 'center' as const,
-                  lineHeight: '1',
-                  marginTop: '1px' // Fine-tune text position
+                  lineHeight: '1'
                 }}>
                   {item.label}
                 </span>
@@ -384,92 +344,154 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         </div>
       </div>
       
-      {/* Concierge Radial Menu */}
+      {/* Elite Concierge Panel */}
       <AnimatePresence>
         {conciergeExpanded && (
           <motion.div
             style={{
               position: 'absolute' as const,
-              bottom: '88px', // Positioned just above the nav bar
+              bottom: '96px', // Perfect positioning above nav
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 999999,
               display: 'flex',
-              flexDirection: 'row' as const,
-              gap: '12px', // Tighter spacing
+              flexDirection: 'column' as const, // Vertical panel layout
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '8px 16px', // Smaller padding
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              borderRadius: '12px', // Smaller radius
-              border: '1px solid #DAFF0D',
-              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6)'
+              padding: '16px',
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              border: '2px solid #DAFF0D',
+              boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(218, 255, 13, 0.3)',
+              minWidth: '200px'
             }}
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            initial={{ opacity: 0, y: 30, scale: 0.8 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, y: 15, scale: 0.8 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            {conciergeOptions.map((option, index) => (
-              <motion.div
-                key={option.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2, delay: index * 0.05 }}
-                style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }}
-              >
-                <motion.button
+            {/* Panel Header */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.1 }}
+              style={{
+                marginBottom: '12px',
+                textAlign: 'center' as const
+              }}
+            >
+              <span style={{
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: '#DAFF0D',
+                letterSpacing: '0.5px',
+                textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+              }}>
+                AI CONCIERGE
+              </span>
+            </motion.div>
+
+            {/* Elite Button Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              gap: '12px',
+              alignItems: 'center',
+              justifyItems: 'center'
+            }}>
+              {conciergeOptions.map((option, index) => (
+                <motion.div
+                  key={option.id}
+                  initial={{ opacity: 0, scale: 0.6, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.6, y: 10 }}
+                  transition={{ duration: 0.3, delay: index * 0.1, ease: "easeOut" }}
+                  style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column' as const, 
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}
                   onClick={() => {
                     console.log('[MobileNavBar] Concierge option clicked:', option.id);
                     option.action();
                     setConciergeExpanded(false);
                     triggerHaptic('light');
                   }}
-                  style={{
-                    width: '40px', // Smaller buttons
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: '#DAFF0D',
-                    color: '#000000',
-                    border: '1.5px solid #000000',
-                    boxShadow: '0 3px 12px rgba(218, 255, 13, 0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    marginBottom: '4px' // Smaller margin
-                  }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                 >
-                  {React.createElement(option.icon, { 
-                    size: 16, // Smaller icons
-                    strokeWidth: 2,
-                    color: '#000000'
-                  })}
-                </motion.button>
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    fontSize: '0.6rem', // Smaller text
-                    fontWeight: '500',
-                    textAlign: 'center' as const,
-                    color: '#FFFFFF',
-                    textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                    maxWidth: '50px', // Narrower text
-                    lineHeight: '1.1'
-                  }}
-                >
-                  {option.label}
-                </motion.span>
-              </motion.div>
-            ))}
+                  <motion.div
+                    style={{
+                      width: '50px',
+                      height: '50px',
+                      borderRadius: '16px', // Rounded square for modern look
+                      backgroundColor: '#DAFF0D',
+                      color: '#000000',
+                      border: '2px solid #000000',
+                      boxShadow: '0 6px 20px rgba(218, 255, 13, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '8px'
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      boxShadow: '0 8px 25px rgba(218, 255, 13, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {React.createElement(option.icon, { 
+                      size: 20,
+                      strokeWidth: 2.5,
+                      color: '#000000'
+                    })}
+                  </motion.div>
+                  
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: index * 0.1 + 0.2 }}
+                    style={{
+                      fontSize: '0.65rem',
+                      fontWeight: '600',
+                      textAlign: 'center' as const,
+                      color: '#FFFFFF',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                      maxWidth: '55px',
+                      lineHeight: '1.1',
+                      letterSpacing: '0.2px'
+                    }}
+                  >
+                    {option.label}
+                  </motion.span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Panel Footer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.4 }}
+              style={{
+                marginTop: '12px',
+                textAlign: 'center' as const
+              }}
+            >
+              <span style={{
+                fontSize: '0.6rem',
+                color: '#888888',
+                fontStyle: 'italic'
+              }}>
+                Tap outside to close
+              </span>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
