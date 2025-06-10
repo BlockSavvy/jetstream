@@ -21,34 +21,40 @@ function isMobileDevice(): boolean {
 
 // Custom App Initialization Splash Screen Component
 function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
-  const [isVisible, setIsVisible] = useState(true);
-  const [splashStep, setSplashStep] = useState<'loading' | 'gif' | 'complete'>('loading');
+  const [splashStep, setSplashStep] = useState<'initializing' | 'gif' | 'complete'>('initializing');
 
   useEffect(() => {
-    console.log('[Splash] AppSplashScreen mounted');
+    console.log('[Splash] 🎬 AppSplashScreen mounted');
     
-    // Immediately hide native Capacitor splash screen
-    if (typeof window !== 'undefined' && (window as any).Capacitor) {
-      const { SplashScreen } = (window as any).Capacitor?.Plugins || {};
-      if (SplashScreen) {
-        console.log('[Splash] Hiding native Capacitor splash screen immediately');
-        SplashScreen.hide();
+    // Immediately hide any remaining native splash
+    const hideNativeSplash = async () => {
+      if (typeof window !== 'undefined' && (window as any).Capacitor) {
+        const { SplashScreen } = (window as any).Capacitor?.Plugins || {};
+        if (SplashScreen) {
+          try {
+            await SplashScreen.hide();
+            console.log('[Splash] ✅ Native splash hidden');
+          } catch (e) {
+            console.log('[Splash] ⚠️ Native splash already hidden or error:', e);
+          }
+        }
       }
-    }
+    };
 
-    // Show GIF immediately after a short delay
+    hideNativeSplash();
+
+    // Show GIF immediately
     const showGifTimer = setTimeout(() => {
-      console.log('[Splash] Showing GIF');
+      console.log('[Splash] 🎥 Showing GIF animation');
       setSplashStep('gif');
-    }, 300);
+    }, 100);
 
-    // Complete splash after 3 seconds total
+    // Complete splash after GIF has time to play
     const completeTimer = setTimeout(() => {
-      console.log('[Splash] Completing splash screen');
+      console.log('[Splash] ✨ Completing splash sequence');
       setSplashStep('complete');
-      setIsVisible(false);
       onComplete();
-    }, 3000);
+    }, 3500); // 3.5 seconds total
 
     return () => {
       clearTimeout(showGifTimer);
@@ -56,48 +62,74 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
     };
   }, [onComplete]);
 
-  if (!isVisible) {
-    console.log('[Splash] Splash screen hidden, returning null');
+  // Don't render anything if complete
+  if (splashStep === 'complete') {
+    console.log('[Splash] 🚀 Splash complete, removing component');
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black flex items-center justify-center">
-      {splashStep === 'loading' && (
-        <div className="absolute inset-0 bg-black flex items-center justify-center">
-          <div className="flex space-x-1">
-            <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse"></div>
-            <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-75"></div>
-            <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-150"></div>
-          </div>
+    <div 
+      className="fixed inset-0 z-[999999] bg-black flex items-center justify-center"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999999,
+        backgroundColor: '#000000',
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      {/* Initial loading state */}
+      {splashStep === 'initializing' && (
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse"></div>
+          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-75"></div>
+          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-150"></div>
         </div>
       )}
       
+      {/* GIF animation */}
       {splashStep === 'gif' && (
-        <div className="relative w-full h-full flex items-center justify-center bg-black">
+        <div 
+          className="relative w-full h-full bg-black flex items-center justify-center"
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#000000',
+            position: 'relative'
+          }}
+        >
           <img 
             src="/videos/gdyup-intro.gif"
-            alt="GDY·UP Loading..."
-            className="w-full h-full object-cover"
-            style={{ 
-              maxWidth: '100vw',
-              maxHeight: '100vh',
+            alt="GDY·UP Loading Animation"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
               position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
               bottom: 0,
-              imageRendering: 'auto'
+              backgroundColor: '#000000'
             }}
-            onLoad={() => console.log('[Splash] GIF loaded successfully')}
+            onLoad={() => console.log('[Splash] 🎯 GIF loaded and displaying')}
             onError={(e) => {
-              console.log('[Splash] GIF failed to load, showing fallback');
-              // Fallback to simple logo if GIF fails
-              e.currentTarget.src = '/icons/gdyup-icon-512.png';
-              e.currentTarget.style.width = '128px';
-              e.currentTarget.style.height = '128px';
-              e.currentTarget.style.position = 'relative';
-              e.currentTarget.style.objectFit = 'contain';
+              console.log('[Splash] ❌ GIF failed, showing logo fallback');
+              // Replace with logo if GIF fails
+              const img = e.currentTarget;
+              img.src = '/icons/gdyup-icon-512.png';
+              img.style.width = '200px';
+              img.style.height = '200px';
+              img.style.objectFit = 'contain';
+              img.style.position = 'relative';
             }}
           />
         </div>
@@ -123,7 +155,7 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
 
   // Handle app initialization - only show splash on very first app launch
   useEffect(() => {
-    console.log('[GdyupClientLayout] Initializing app, checking environment...');
+    console.log('[GdyupClientLayout] 🚀 Initializing app, checking environment...');
     console.log('[GdyupClientLayout] isCapacitorApp:', isCapacitorApp());
     console.log('[GdyupClientLayout] pathname:', pathname);
     
@@ -146,26 +178,13 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
       document.documentElement.classList.add('capacitor');
       console.log('[GdyupClientLayout] Added capacitor class to HTML element');
       
-      // Only show splash on the very first app launch, not on navigation
-      const hasShownSplash = sessionStorage.getItem('gdyup_splash_shown');
-      const isAppLaunch = !hasShownSplash;
-      
-      console.log('[GdyupClientLayout] hasShownSplash:', hasShownSplash);
-      console.log('[GdyupClientLayout] isAppLaunch:', isAppLaunch);
-      
-      if (isAppLaunch && isMounted) {
-        console.log('[GdyupClientLayout] FIRST APP LAUNCH - showing splash GIF');
-        setShowSplash(true);
-        setIsAppReady(false);
-        sessionStorage.setItem('gdyup_splash_shown', 'true');
-      } else {
-        console.log('[GdyupClientLayout] Navigation or subsequent load, skipping splash');
-        setShowSplash(false);
-        setIsAppReady(true);
-      }
+      // ALWAYS show splash on first load in Capacitor (not just first app launch)
+      console.log('[GdyupClientLayout] 🎬 CAPACITOR - showing splash screen');
+      setShowSplash(true);
+      setIsAppReady(false);
     } else {
       // For web, always skip splash and show app immediately
-      console.log('[GdyupClientLayout] Web detected, skipping splash screen');
+      console.log('[GdyupClientLayout] 🌐 WEB - skipping splash screen');
       setShowSplash(false);
       setIsAppReady(true);
     }
