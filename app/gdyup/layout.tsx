@@ -9,7 +9,7 @@ import ThemeManager from './components/ThemeManager';
 import { ConciergeButton } from '@/components/concierge-button';
 
 // Import CSS files that should be applied to the entire layout
-import './gdyup.css';
+import './gdyup-mobile-nav-fix.css';
 import './index.css';
 import './components/gdyup-forms.css';
 import './pwa-fixes.css';

@@ -103,35 +103,39 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   const { getThemedTextClasses } = useGdyupTheme();
   const [conciergeExpanded, setConciergeExpanded] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
+  const [isCapacitor, setIsCapacitor] = useState(false);
 
-  // iOS Native positioning solution
+  // Universal positioning solution for both web and Capacitor
   useEffect(() => {
-    console.log('[MobileNavBar] Component mounted - USING IOS NATIVE SOLUTION');
+    console.log('[MobileNavBar] Component mounted - USING UNIVERSAL SOLUTION');
     console.log('[MobileNavBar] Current pathname:', pathname);
-    console.log('[MobileNavBar] Capacitor detected:', !!(window as any).Capacitor);
     
-    if ((window as any).Capacitor) {
-      console.log('[MobileNavBar] Applying iOS Native viewport solution...');
+    const capacitorDetected = !!(window as any).Capacitor;
+    setIsCapacitor(capacitorDetected);
+    console.log('[MobileNavBar] Capacitor detected:', capacitorDetected);
+    
+    // Universal viewport height calculation (works in both web and Capacitor)
+    const updateViewportHeight = () => {
+      const vh = window.innerHeight;
+      setViewportHeight(vh);
+      console.log('[MobileNavBar] Viewport height updated:', vh);
       
-      // Get real viewport height (iOS safe)
-      const updateViewportHeight = () => {
-        const vh = window.innerHeight;
-        setViewportHeight(vh);
-        console.log('[MobileNavBar] Viewport height updated:', vh);
-        
-        // Force CSS custom property for viewport height
-        document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
-        document.documentElement.style.setProperty('--mobile-nav-top', `${vh - 80}px`);
-      };
+      // Force CSS custom properties for universal use
+      document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
+      document.documentElement.style.setProperty('--mobile-nav-top', `${vh - 80}px`);
+    };
 
-      // Set initial height
-      updateViewportHeight();
+    // Set initial height immediately
+    updateViewportHeight();
+    
+    // Update on resize and orientation change (universal)
+    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('orientationchange', updateViewportHeight);
+    
+    // Additional iOS specific optimizations when in Capacitor
+    if (capacitorDetected) {
+      console.log('[MobileNavBar] Applying additional iOS optimizations...');
       
-      // Update on resize and orientation change
-      window.addEventListener('resize', updateViewportHeight);
-      window.addEventListener('orientationchange', updateViewportHeight);
-      
-      // iOS specific viewport fix
       const handleViewportChange = () => {
         setTimeout(updateViewportHeight, 100);
       };
@@ -145,6 +149,11 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         window.removeEventListener('scroll', handleViewportChange);
       };
     }
+    
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight);
+      window.removeEventListener('orientationchange', updateViewportHeight);
+    };
   }, [pathname]);
 
   // Function to open concierge with haptic feedback
@@ -166,9 +175,10 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       <nav 
         className="mobile-nav-bar ios-native-nav"
         style={{
-          // iOS NATIVE POSITIONING - NO POSITION FIXED!
-          position: 'absolute',
+          // Universal positioning - fixed for web, absolute for Capacitor
+          position: isCapacitor ? 'absolute' : 'fixed',
           top: viewportHeight > 0 ? `${viewportHeight - 80}px` : 'calc(100vh - 80px)',
+          bottom: isCapacitor ? 'auto' : '0',
           left: '0',
           right: '0',
           width: '100vw',
@@ -330,14 +340,15 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         </div>
       </nav>
       
-      {/* Concierge Radial Menu - iOS Native positioning */}
+      {/* Concierge Radial Menu - Universal positioning */}
       <AnimatePresence>
         {conciergeExpanded && (
           <motion.div
             className="concierge-radial-menu"
             style={{
-              position: 'absolute',
+              position: isCapacitor ? 'absolute' : 'fixed',
               top: viewportHeight > 0 ? `${viewportHeight - 180}px` : 'calc(100vh - 180px)',
+              bottom: isCapacitor ? 'auto' : '100px',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 2147483649,
