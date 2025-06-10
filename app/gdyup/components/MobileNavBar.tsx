@@ -119,6 +119,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       const vh = window.innerHeight;
       setViewportHeight(vh);
       console.log('[MobileNavBar] Viewport height updated:', vh);
+      console.log('[MobileNavBar] Calculated top position:', vh - 80);
       
       // Force CSS custom properties for universal use
       document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
@@ -127,6 +128,18 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
 
     // Set initial height immediately
     updateViewportHeight();
+    
+    // Debug: Check if nav element exists after mounting
+    setTimeout(() => {
+      const navElement = document.querySelector('.mobile-nav-bar') as HTMLElement;
+      console.log('[MobileNavBar] Nav element found:', !!navElement);
+      console.log('[MobileNavBar] Nav element styles:', navElement ? window.getComputedStyle(navElement) : 'not found');
+      if (navElement) {
+        console.log('[MobileNavBar] Nav position:', navElement.style.position);
+        console.log('[MobileNavBar] Nav top:', navElement.style.top);
+        console.log('[MobileNavBar] Nav z-index:', navElement.style.zIndex);
+      }
+    }, 1000);
     
     // Update on resize and orientation change (universal)
     window.addEventListener('resize', updateViewportHeight);
@@ -177,19 +190,25 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
         style={{
           // Universal positioning - fixed for web, absolute for Capacitor
           position: isCapacitor ? 'absolute' : 'fixed',
-          top: viewportHeight > 0 ? `${viewportHeight - 80}px` : 'calc(100vh - 80px)',
-          bottom: isCapacitor ? 'auto' : '0',
+          // FALLBACK: If viewport calculation fails, use bottom positioning
+          ...(viewportHeight > 0 ? {
+            top: `${viewportHeight - 80}px`,
+            bottom: 'auto'
+          } : {
+            bottom: '0',
+            top: 'auto'
+          }),
           left: '0',
           right: '0',
           width: '100vw',
           height: '80px',
           zIndex: 2147483647,
-          backgroundColor: '#000000',
-          borderTop: '1px solid #333333',
+          backgroundColor: '#FF0000', // BRIGHT RED FOR DEBUGGING
+          borderTop: '3px solid #DAFF0D', // BRIGHT BORDER FOR DEBUGGING
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))',
           paddingLeft: 'env(safe-area-inset-left, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.5)',
+          boxShadow: '0 -4px 20px rgba(218, 255, 13, 0.8)', // BRIGHT SHADOW FOR DEBUGGING
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           display: 'flex',
@@ -201,7 +220,10 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
           willChange: 'transform',
           // Force iOS to respect positioning
           WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
+          // DEBUG: Make sure it's not being clipped
+          overflow: 'visible',
+          pointerEvents: 'auto'
         }}
       >
         {/* Navigation Items Container */}
