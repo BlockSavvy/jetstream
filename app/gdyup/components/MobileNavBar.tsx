@@ -260,7 +260,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             alignItems: 'center',
             justifyContent: 'space-around',
             width: '100%',
-            padding: '0.5rem 1rem',
+            padding: '8px 1rem 4px 1rem', // Better padding for text positioning
             height: '100%'
           }}
         >
@@ -278,17 +278,17 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                     aria-label="Open AI Concierge"
                     style={{
                       position: 'absolute' as const,
-                      top: '-32px',
+                      top: '-28px', // Raised higher for better visual balance
                       left: '50%',
                       transform: 'translateX(-50%)',
                       zIndex: 999999,
-                      width: '64px',
-                      height: '64px',
+                      width: '56px', // Slightly smaller for better proportion
+                      height: '56px',
                       borderRadius: '50%',
                       background: '#DAFF0D',
                       color: '#000000',
-                      border: '3px solid #000000',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(218, 255, 13, 0.6)',
+                      border: '2px solid #000000', // Thinner border
+                      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(218, 255, 13, 0.5)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -302,8 +302,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       src="/icons/conciergebutton.png" 
                       alt="AI Concierge" 
                       style={{
-                        width: '100%',
-                        height: '100%',
+                        width: '90%', // Slightly smaller image for better fit
+                        height: '90%',
                         objectFit: 'cover' as const,
                         borderRadius: '50%'
                       }}
@@ -318,23 +318,26 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       display: 'flex',
                       flexDirection: 'column' as const,
                       alignItems: 'center',
-                      gap: '4px',
-                      padding: '8px 12px',
-                      borderRadius: '12px',
+                      justifyContent: 'flex-start', // Align content to top
+                      gap: '2px', // Smaller gap between icon and text
+                      padding: '4px 8px 8px 8px', // More space at bottom
+                      borderRadius: '8px',
                       backgroundColor: isActive ? '#DAFF0D' : 'transparent',
                       color: isActive ? '#000000' : '#FFFFFF',
                       textDecoration: 'none',
-                      minHeight: '60px',
-                      minWidth: '50px',
-                      justifyContent: 'center',
+                      minHeight: '56px', // Shorter to match new layout
+                      minWidth: '45px',
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <Icon size={20} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
+                    <Icon size={18} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
                     <span style={{
-                      fontSize: '0.75rem',
+                      fontSize: '0.7rem', // Slightly smaller text
                       fontWeight: '500',
-                      color: isActive ? '#000000' : '#FFFFFF'
+                      color: isActive ? '#000000' : '#FFFFFF',
+                      textAlign: 'center' as const,
+                      lineHeight: '1',
+                      marginTop: '1px' // Fine-tune text position
                     }}>
                       {item.label}
                     </span>
@@ -352,23 +355,26 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   display: 'flex',
                   flexDirection: 'column' as const,
                   alignItems: 'center',
-                  gap: '4px',
-                  padding: '8px 12px',
-                  borderRadius: '12px',
+                  justifyContent: 'flex-start', // Align content to top
+                  gap: '2px', // Smaller gap between icon and text
+                  padding: '4px 8px 8px 8px', // More space at bottom
+                  borderRadius: '8px',
                   backgroundColor: isActive ? '#DAFF0D' : 'transparent',
                   color: isActive ? '#000000' : '#FFFFFF',
                   textDecoration: 'none',
-                  minHeight: '60px',
-                  minWidth: '50px',
-                  justifyContent: 'center',
+                  minHeight: '56px', // Shorter to match new layout
+                  minWidth: '45px',
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Icon size={20} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
+                <Icon size={18} color={isActive ? '#000000' : '#FFFFFF'} strokeWidth={2} />
                 <span style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.7rem', // Slightly smaller text
                   fontWeight: '500',
-                  color: isActive ? '#000000' : '#FFFFFF'
+                  color: isActive ? '#000000' : '#FFFFFF',
+                  textAlign: 'center' as const,
+                  lineHeight: '1',
+                  marginTop: '1px' // Fine-tune text position
                 }}>
                   {item.label}
                 </span>
@@ -384,22 +390,22 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
           <motion.div
             style={{
               position: 'absolute' as const,
-              bottom: '100px',
+              bottom: '88px', // Positioned just above the nav bar
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 999999,
               display: 'flex',
               flexDirection: 'row' as const,
-              gap: '16px',
+              gap: '12px', // Tighter spacing
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '12px 20px',
+              padding: '8px 16px', // Smaller padding
               backgroundColor: 'rgba(0, 0, 0, 0.9)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              borderRadius: '16px',
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              borderRadius: '12px', // Smaller radius
               border: '1px solid #DAFF0D',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)'
+              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.6)'
             }}
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -423,25 +429,25 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                     triggerHaptic('light');
                   }}
                   style={{
-                    width: '48px',
-                    height: '48px',
+                    width: '40px', // Smaller buttons
+                    height: '40px',
                     borderRadius: '50%',
                     backgroundColor: '#DAFF0D',
                     color: '#000000',
-                    border: '2px solid #000000',
-                    boxShadow: '0 4px 15px rgba(218, 255, 13, 0.6)',
+                    border: '1.5px solid #000000',
+                    boxShadow: '0 3px 12px rgba(218, 255, 13, 0.5)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    marginBottom: '8px'
+                    marginBottom: '4px' // Smaller margin
                   }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   {React.createElement(option.icon, { 
-                    size: 20, 
+                    size: 16, // Smaller icons
                     strokeWidth: 2,
                     color: '#000000'
                   })}
@@ -451,13 +457,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.6rem', // Smaller text
                     fontWeight: '500',
                     textAlign: 'center' as const,
                     color: '#FFFFFF',
                     textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                    maxWidth: '60px',
-                    lineHeight: '1.2'
+                    maxWidth: '50px', // Narrower text
+                    lineHeight: '1.1'
                   }}
                 >
                   {option.label}
