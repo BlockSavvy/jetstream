@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, Plus, Calendar, User, Sparkles, MessageSquareText, Mic, InfoIcon } from 'lucide-react';
@@ -102,107 +103,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   const pathname = usePathname();
   const { getThemedTextClasses } = useGdyupTheme();
   const [conciergeExpanded, setConciergeExpanded] = useState(false);
-  const [viewportHeight, setViewportHeight] = useState(0);
-  const [isCapacitor, setIsCapacitor] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Universal positioning solution for both web and Capacitor
+  // Only mount on client side
   useEffect(() => {
-    console.log('[MobileNavBar] Component mounted - USING UNIVERSAL SOLUTION');
-    console.log('[MobileNavBar] Current pathname:', pathname);
-    
-    const capacitorDetected = !!(window as any).Capacitor;
-    setIsCapacitor(capacitorDetected);
-    console.log('[MobileNavBar] Capacitor detected:', capacitorDetected);
-    
-    // Universal viewport height calculation (works in both web and Capacitor)
-    const updateViewportHeight = () => {
-      const vh = window.innerHeight;
-      setViewportHeight(vh);
-      console.log('[MobileNavBar] Viewport height updated:', vh);
-      console.log('[MobileNavBar] Calculated top position:', vh - 80);
-      
-      // Force CSS custom properties for universal use
-      document.documentElement.style.setProperty('--vh', `${vh * 0.01}px`);
-      document.documentElement.style.setProperty('--mobile-nav-top', `${vh - 80}px`);
-    };
-
-    // Set initial height immediately
-    updateViewportHeight();
-    
-    // DEBUG: Check if nav element exists after mounting AND check parent containers
-    setTimeout(() => {
-      const navElement = document.querySelector('.mobile-nav-bar') as HTMLElement;
-      console.log('[MobileNavBar] Nav element found:', !!navElement);
-      console.log('[MobileNavBar] Nav element styles:', navElement ? window.getComputedStyle(navElement) : 'not found');
-      if (navElement) {
-        console.log('[MobileNavBar] Nav position:', navElement.style.position);
-        console.log('[MobileNavBar] Nav top:', navElement.style.top);
-        console.log('[MobileNavBar] Nav z-index:', navElement.style.zIndex);
-        
-        // Check parent containers for clipping issues
-        let parent = navElement.parentElement;
-        let level = 0;
-        while (parent && level < 5) {
-          const computedStyle = window.getComputedStyle(parent);
-          console.log(`[MobileNavBar] Parent ${level} (${parent.tagName}):`, {
-            overflow: computedStyle.overflow,
-            height: computedStyle.height,
-            position: computedStyle.position,
-            zIndex: computedStyle.zIndex,
-            transform: computedStyle.transform
-          });
-          parent = parent.parentElement;
-          level++;
-        }
-      }
-    }, 1000);
-    
-    // Add critical CSS override to force visibility
-    const style = document.createElement('style');
-    style.id = 'mobile-nav-force-visible';
-    style.textContent = `
-      .mobile-nav-bar {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    // Update on resize and orientation change (universal)
-    window.addEventListener('resize', updateViewportHeight);
-    window.addEventListener('orientationchange', updateViewportHeight);
-    
-    // Additional iOS specific optimizations when in Capacitor
-    if (capacitorDetected) {
-      console.log('[MobileNavBar] Applying additional iOS optimizations...');
-      
-      const handleViewportChange = () => {
-        setTimeout(updateViewportHeight, 100);
-      };
-      
-      // Listen for iOS-specific events
-      window.addEventListener('scroll', handleViewportChange, { passive: true });
-      
-      return () => {
-        window.removeEventListener('resize', updateViewportHeight);
-        window.removeEventListener('orientationchange', updateViewportHeight);
-        window.removeEventListener('scroll', handleViewportChange);
-        // Clean up style
-        const styleEl = document.getElementById('mobile-nav-force-visible');
-        if (styleEl) styleEl.remove();
-      };
-    }
-    
-    return () => {
-      window.removeEventListener('resize', updateViewportHeight);
-      window.removeEventListener('orientationchange', updateViewportHeight);
-      // Clean up style
-      const styleEl = document.getElementById('mobile-nav-force-visible');
-      if (styleEl) styleEl.remove();
-    };
-  }, [pathname]);
+    setMounted(true);
+    console.log('[MobileNavBar] 🚀 BULLETPROOF NAV - Component mounted, will render to body portal');
+  }, []);
 
   // Function to open concierge with haptic feedback
   const handleConciergeClick = () => {
@@ -218,60 +125,51 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     setConciergeExpanded(false);
   };
 
-  return (
+  // Don't render anything until mounted on client
+  if (!mounted) {
+    return null;
+  }
+
+  // BULLETPROOF MOBILE NAV COMPONENT
+  const MobileNavContent = (
     <>
-      <nav 
-        className="mobile-nav-bar ios-native-nav"
+      <div 
+        id="gdyup-mobile-nav-portal"
         style={{
-          // Universal positioning - fixed for web, absolute for Capacitor
-          position: isCapacitor ? 'absolute' : 'fixed',
-          // FALLBACK: If viewport calculation fails, use bottom positioning
-          ...(viewportHeight > 0 ? {
-            top: `${viewportHeight - 80}px`,
-            bottom: 'auto'
-          } : {
-            bottom: '0',
-            top: 'auto'
-          }),
+          // BULLETPROOF POSITIONING - ALWAYS VISIBLE
+          position: 'fixed',
+          bottom: '0',
           left: '0',
           right: '0',
           width: '100vw',
           height: '80px',
-          zIndex: 2147483647,
+          zIndex: 999999,
           backgroundColor: '#FF0000', // BRIGHT RED FOR DEBUGGING
-          borderTop: '3px solid #DAFF0D', // BRIGHT BORDER FOR DEBUGGING
+          borderTop: '3px solid #DAFF0D',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px))',
           paddingLeft: 'env(safe-area-inset-left, 0px)',
           paddingRight: 'env(safe-area-inset-right, 0px)',
-          boxShadow: '0 -4px 20px rgba(218, 255, 13, 0.8)', // BRIGHT SHADOW FOR DEBUGGING
+          boxShadow: '0 -4px 20px rgba(218, 255, 13, 0.8)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          display: 'flex', // FORCE DISPLAY (now via CSS injection)
-          flexDirection: 'column',
+          display: 'flex',
+          flexDirection: 'column' as const,
           margin: '0',
-          // CRITICAL: Transform to force hardware acceleration
           transform: 'translateZ(0)',
           WebkitTransform: 'translateZ(0)',
           willChange: 'transform',
-          // Force iOS to respect positioning
-          WebkitBackfaceVisibility: 'hidden',
-          backfaceVisibility: 'hidden',
-          // DEBUG: Make sure it's not being clipped
-          overflow: 'visible',
-          pointerEvents: 'auto',
-          // FORCE VISIBILITY (now via CSS injection)
-          visibility: 'visible',
-          opacity: '1',
-          // Ensure it's not being transformed away
-          WebkitTransformStyle: 'preserve-3d',
-          transformStyle: 'preserve-3d'
+          WebkitBackfaceVisibility: 'hidden' as const,
+          backfaceVisibility: 'hidden' as const,
+          overflow: 'visible' as const,
+          pointerEvents: 'auto' as const,
+          visibility: 'visible' as const,
+          opacity: '1'
         }}
       >
         {/* Navigation Items Container */}
         <div 
-          className="flex items-center justify-around px-4 py-2 relative w-full"
           style={{
-            position: 'relative',
+            position: 'relative' as const,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-around',
@@ -291,14 +189,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   {/* Concierge Button - Elevated Center */}
                   <button
                     onClick={handleConciergeClick}
-                    className="concierge-button-mobile"
                     aria-label="Open AI Concierge"
                     style={{
-                      position: 'absolute',
+                      position: 'absolute' as const,
                       top: '-32px',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      zIndex: 2147483648,
+                      zIndex: 999999,
                       width: '64px',
                       height: '64px',
                       borderRadius: '50%',
@@ -312,7 +209,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       padding: '0',
-                      overflow: 'hidden'
+                      overflow: 'hidden' as const
                     }}
                   >
                     <img 
@@ -321,7 +218,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover',
+                        objectFit: 'cover' as const,
                         borderRadius: '50%'
                       }}
                     />
@@ -331,13 +228,9 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   <Link
                     href={item.href}
                     onClick={handleNavClick}
-                    className={cn(
-                      "nav-item",
-                      isActive ? "active" : ""
-                    )}
                     style={{
                       display: 'flex',
-                      flexDirection: 'column',
+                      flexDirection: 'column' as const,
                       alignItems: 'center',
                       gap: '4px',
                       padding: '8px 12px',
@@ -369,13 +262,9 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 key={item.href}
                 href={item.href}
                 onClick={handleNavClick}
-                className={cn(
-                  "nav-item",
-                  isActive ? "active" : ""
-                )}
                 style={{
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'column' as const,
                   alignItems: 'center',
                   gap: '4px',
                   padding: '8px 12px',
@@ -401,22 +290,20 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             );
           })}
         </div>
-      </nav>
+      </div>
       
-      {/* Concierge Radial Menu - Universal positioning */}
+      {/* Concierge Radial Menu */}
       <AnimatePresence>
         {conciergeExpanded && (
           <motion.div
-            className="concierge-radial-menu"
             style={{
-              position: isCapacitor ? 'absolute' : 'fixed',
-              top: viewportHeight > 0 ? `${viewportHeight - 180}px` : 'calc(100vh - 180px)',
-              bottom: isCapacitor ? 'auto' : '100px',
+              position: 'fixed' as const,
+              bottom: '100px',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 2147483649,
+              zIndex: 999999,
               display: 'flex',
-              flexDirection: 'row',
+              flexDirection: 'row' as const,
               gap: '16px',
               alignItems: 'center',
               justifyContent: 'center',
@@ -440,7 +327,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.2, delay: index * 0.05 }}
-                className="flex flex-col items-center"
+                style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }}
               >
                 <motion.button
                   onClick={() => {
@@ -480,7 +367,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   style={{
                     fontSize: '0.7rem',
                     fontWeight: '500',
-                    textAlign: 'center',
+                    textAlign: 'center' as const,
                     color: '#FFFFFF',
                     textShadow: '0 1px 3px rgba(0,0,0,0.8)',
                     maxWidth: '60px',
@@ -496,4 +383,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       </AnimatePresence>
     </>
   );
+
+  // Render to body using portal - BYPASSES ALL PARENT CONTAINERS
+  return createPortal(MobileNavContent, document.body);
 } 
