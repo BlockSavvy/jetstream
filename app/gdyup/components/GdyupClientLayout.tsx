@@ -21,40 +21,37 @@ function isMobileDevice(): boolean {
 
 // Custom App Initialization Splash Screen Component
 function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
-  const [splashStep, setSplashStep] = useState<'initializing' | 'gif' | 'complete'>('initializing');
+  const [splashStep, setSplashStep] = useState<'loading' | 'gif' | 'complete'>('loading');
 
   useEffect(() => {
     console.log('[Splash] 🎬 AppSplashScreen mounted');
     
-    // Immediately hide any remaining native splash
-    const hideNativeSplash = async () => {
+    // Hide native splash immediately
+    const hideNativeSplash = () => {
       if (typeof window !== 'undefined' && (window as any).Capacitor) {
         const { SplashScreen } = (window as any).Capacitor?.Plugins || {};
         if (SplashScreen) {
-          try {
-            await SplashScreen.hide();
-            console.log('[Splash] ✅ Native splash hidden');
-          } catch (e) {
-            console.log('[Splash] ⚠️ Native splash already hidden or error:', e);
-          }
+          SplashScreen.hide().catch(() => {
+            console.log('[Splash] Native splash already hidden');
+          });
         }
       }
     };
 
     hideNativeSplash();
 
-    // Show GIF immediately
+    // Show GIF after brief delay
     const showGifTimer = setTimeout(() => {
-      console.log('[Splash] 🎥 Showing GIF animation');
+      console.log('[Splash] 🎥 Showing GIF');
       setSplashStep('gif');
-    }, 100);
+    }, 500);
 
-    // Complete splash after GIF has time to play
+    // Complete splash
     const completeTimer = setTimeout(() => {
-      console.log('[Splash] ✨ Completing splash sequence');
+      console.log('[Splash] ✨ Completing splash');
       setSplashStep('complete');
       onComplete();
-    }, 3500); // 3.5 seconds total
+    }, 3500);
 
     return () => {
       clearTimeout(showGifTimer);
@@ -62,15 +59,12 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
     };
   }, [onComplete]);
 
-  // Don't render anything if complete
   if (splashStep === 'complete') {
-    console.log('[Splash] 🚀 Splash complete, removing component');
     return null;
   }
 
   return (
     <div 
-      className="fixed inset-0 z-[999999] bg-black flex items-center justify-center"
       style={{
         position: 'fixed',
         top: 0,
@@ -79,60 +73,63 @@ function AppSplashScreen({ onComplete }: { onComplete: () => void }) {
         bottom: 0,
         zIndex: 999999,
         backgroundColor: '#000000',
-        width: '100vw',
-        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
       }}
     >
-      {/* Initial loading state */}
-      {splashStep === 'initializing' && (
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse"></div>
-          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-75"></div>
-          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-150"></div>
-        </div>
-      )}
-      
-      {/* GIF animation */}
-      {splashStep === 'gif' && (
-        <div 
-          className="relative w-full h-full bg-black flex items-center justify-center"
-          style={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: '#000000',
-            position: 'relative'
-          }}
-        >
-          <img 
-            src="/videos/gdyup-intro.gif"
-            alt="GDY·UP Loading Animation"
+      {splashStep === 'loading' && (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div 
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: '#000000'
+              width: '12px',
+              height: '12px',
+              backgroundColor: '#DAFF0D',
+              borderRadius: '50%',
+              animation: 'pulse 1.5s ease-in-out infinite'
             }}
-            onLoad={() => console.log('[Splash] 🎯 GIF loaded and displaying')}
-            onError={(e) => {
-              console.log('[Splash] ❌ GIF failed, showing logo fallback');
-              // Replace with logo if GIF fails
-              const img = e.currentTarget;
-              img.src = '/icons/gdyup-icon-512.png';
-              img.style.width = '200px';
-              img.style.height = '200px';
-              img.style.objectFit = 'contain';
-              img.style.position = 'relative';
+          />
+          <div 
+            style={{
+              width: '12px',
+              height: '12px',
+              backgroundColor: '#DAFF0D',
+              borderRadius: '50%',
+              animation: 'pulse 1.5s ease-in-out 0.1s infinite'
+            }}
+          />
+          <div 
+            style={{
+              width: '12px',
+              height: '12px',
+              backgroundColor: '#DAFF0D',
+              borderRadius: '50%',
+              animation: 'pulse 1.5s ease-in-out 0.2s infinite'
             }}
           />
         </div>
+      )}
+      
+      {splashStep === 'gif' && (
+        <img 
+          src="/videos/gdyup-intro.gif"
+          alt="GDY·UP Loading"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            backgroundColor: '#000000'
+          }}
+          onLoad={() => console.log('[Splash] 🎯 GIF loaded')}
+          onError={(e) => {
+            console.log('[Splash] ❌ GIF failed, showing logo');
+            const img = e.currentTarget;
+            img.src = '/icons/gdyup-icon-512.png';
+            img.style.width = '200px';
+            img.style.height = '200px';
+            img.style.objectFit = 'contain';
+          }}
+        />
       )}
     </div>
   );
@@ -151,10 +148,18 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
   const [showSplash, setShowSplash] = useState(false);
   const [isAppReady, setIsAppReady] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { getThemedBackgroundClasses } = useGdyupTheme();
+
+  // Client-side hydration fix
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Handle app initialization - only show splash on very first app launch
   useEffect(() => {
+    if (!isClient) return; // Wait for client-side hydration
+    
     console.log('[GdyupClientLayout] 🚀 Initializing app, checking environment...');
     console.log('[GdyupClientLayout] isCapacitorApp:', isCapacitorApp());
     console.log('[GdyupClientLayout] pathname:', pathname);
@@ -193,7 +198,7 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
       isMounted = false;
       window.removeEventListener('resize', checkMobile);
     };
-  }, []); // Only run once on mount, ignore pathname changes
+  }, [isClient]); // Depend on isClient to prevent hydration issues
 
   // Force show app content if stuck loading for too long
   useEffect(() => {
@@ -215,19 +220,23 @@ const GdyupClientLayout: React.FC<GdyupClientLayoutProps> = ({
     setShowSplash(false);
     setIsAppReady(true);
     console.log('[GdyupClientLayout] New state - showSplash: false, isAppReady: true');
-    
-    // Hide native Capacitor splash screen if still showing
-    if (isCapacitorApp()) {
-      const { SplashScreen } = (window as any).Capacitor?.Plugins || {};
-      if (SplashScreen) {
-        console.log('[GdyupClientLayout] Hiding native Capacitor splash screen');
-        SplashScreen.hide();
-      }
-    }
   };
 
-  // Show splash screen during app initialization
-  if (showSplash && !isAppReady) {
+  // Don't render anything until client-side hydration is complete
+  if (!isClient) {
+    return (
+      <div className="min-h-screen w-full bg-black flex items-center justify-center">
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse"></div>
+          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-75"></div>
+          <div className="w-3 h-3 bg-gdyup-primary rounded-full animate-pulse delay-150"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show splash screen during app initialization in Capacitor
+  if (showSplash && !isAppReady && isCapacitorApp()) {
     console.log('[GdyupClientLayout] Rendering splash screen');
     return <AppSplashScreen onComplete={handleSplashComplete} />;
   }
