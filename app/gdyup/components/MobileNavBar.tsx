@@ -106,6 +106,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
   const [mounted, setMounted] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(0);
   const [isCapacitor, setIsCapacitor] = useState(false);
+  const [conciergeButtonPosition, setConciergeButtonPosition] = useState({ x: 0, y: 0 });
 
   // Only mount on client side and setup iOS-specific positioning
   useEffect(() => {
@@ -224,10 +225,25 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     };
   }, []);
 
+  // Function to get the actual position of the concierge button
+  const updateConciergeButtonPosition = () => {
+    const button = document.querySelector('[aria-label="Open AI Concierge"]') as HTMLElement;
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      setConciergeButtonPosition({ x: centerX, y: centerY });
+      console.log('[MobileNavBar] Concierge button position:', { x: centerX, y: centerY });
+    }
+  };
+
   // Function to open concierge with haptic feedback
   const handleConciergeClick = () => {
     console.log('[MobileNavBar] Concierge button clicked - toggling radial menu');
     triggerHaptic('medium');
+    
+    // Update button position before showing menu
+    updateConciergeButtonPosition();
     setConciergeExpanded(!conciergeExpanded);
   };
 
@@ -486,18 +502,18 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               onClick={() => setConciergeExpanded(false)} // Click outside to close
             />
             
-            {/* CIRCULAR RADIAL MENU - ABSOLUTE MASTERPIECE */}
+            {/* CIRCULAR RADIAL MENU - POSITIONED RELATIVE TO ACTUAL BUTTON */}
             <motion.div
               style={{
                 position: 'absolute' as const,
-                bottom: '140px', // Position directly above the concierge button
-                left: '50%',
-                transform: 'translateX(-50%)',
+                left: `${conciergeButtonPosition.x}px`, // Use actual button X position
+                top: `${conciergeButtonPosition.y - 140}px`, // Position above button
+                transform: 'translateX(-50%)', // Center on the button
                 zIndex: 999999,
-                width: '240px', // Wider container for proper arc
-                height: '140px', // Taller for semicircle
+                width: '240px',
+                height: '140px',
                 display: 'flex',
-                alignItems: 'flex-end', // Align to bottom of container
+                alignItems: 'flex-end',
                 justifyContent: 'center',
                 pointerEvents: 'none' as const,
               }}
