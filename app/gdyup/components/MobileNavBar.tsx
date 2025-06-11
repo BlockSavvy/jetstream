@@ -533,15 +533,15 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             >
               {/* 🎯 PERFECTLY POSITIONED RADIAL BUTTONS */}
               {conciergeOptions.map((option, index) => {
-                // 🎯 FINAL PERFECT POSITIONING
-                const RADIUS = 95; // Slightly tighter for better visual balance
-                const angles = [145, 90, 35]; // Tweaked for perfect visual centering
+                // 🎯 ABSOLUTELY PERFECT CENTERING
+                const RADIUS = 100; // Perfect distance for integrated buttons
+                const angles = [150, 90, 30]; // Symmetric 60° spacing from center
                 const angle = angles[index];
                 const radian = (angle * Math.PI) / 180;
                 
                 // Calculate exact position relative to button center
                 const x = Math.cos(radian) * RADIUS;
-                const y = -Math.sin(radian) * RADIUS - 5; // Slight upward adjustment
+                const y = -Math.sin(radian) * RADIUS - 10; // More upward clearance
                 
 
                 
@@ -584,11 +584,11 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       triggerHaptic('medium');
                     }}
                   >
-                    {/* 💎 PERFECT RADIAL BUTTON */}
+                    {/* 💎 INTEGRATED BUTTON WITH TEXT & ICON */}
                     <motion.div
                       style={{
-                        width: '56px', // Slightly smaller for better proportion
-                        height: '56px',
+                        width: '74px', // Wider to accommodate text
+                        height: '74px', // Taller for better text layout
                         borderRadius: '50%',
                         background: `
                           linear-gradient(135deg, 
@@ -596,20 +596,22 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                             #B8E600 100%
                           )
                         `,
-                        border: '2.5px solid rgba(0, 0, 0, 0.9)',
+                        border: '3px solid rgba(0, 0, 0, 0.9)',
                         boxShadow: `
                           0 6px 20px rgba(218, 255, 13, 0.5),
                           0 3px 10px rgba(0, 0, 0, 0.4),
                           inset 0 1px 0 rgba(255, 255, 255, 0.5)
                         `,
                         display: 'flex',
+                        flexDirection: 'column' as const,
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
                         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         position: 'relative' as const,
                         overflow: 'hidden' as const,
-                        filter: 'brightness(1.05)'
+                        filter: 'brightness(1.05)',
+                        gap: '2px'
                       }}
                       whileHover={{ 
                         scale: 1.15,
@@ -654,14 +656,33 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       
                       {/* Icon */}
                       {React.createElement(option.icon, { 
-                        size: 22,
+                        size: 20,
                         strokeWidth: 2.5,
                         color: '#000000',
                         style: { 
                           filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
-                          zIndex: 2
+                          zIndex: 2,
+                          marginBottom: '1px'
                         }
                       })}
+                      
+                      {/* Integrated Text Label */}
+                      <span style={{
+                        fontSize: '0.5rem',
+                        fontWeight: '600',
+                        color: '#000000',
+                        letterSpacing: '0.2px',
+                        textAlign: 'center' as const,
+                        lineHeight: '1',
+                        textShadow: '0 1px 1px rgba(255,255,255,0.3)',
+                        zIndex: 2,
+                        maxWidth: '60px',
+                        overflow: 'hidden' as const,
+                        textOverflow: 'ellipsis' as const,
+                        whiteSpace: 'nowrap' as const
+                      }}>
+                        {option.label.toUpperCase()}
+                      </span>
                       
                       {/* Subtle pulse ring */}
                       <motion.div
@@ -687,47 +708,6 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                           repeatDelay: 4
                         }}
                       />
-                    </motion.div>
-                    
-                    {/* ✨ ELITE FLOATING LABEL */}
-                    <motion.div
-                      style={{
-                        position: 'absolute' as const,
-                        top: '-42px', // Closer to button
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        padding: '3px 8px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(218, 255, 13, 0.6)',
-                        whiteSpace: 'nowrap' as const,
-                        pointerEvents: 'none' as const,
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)'
-                      }}
-                      initial={{ opacity: 0, y: 8, scale: 0.7 }}
-                      animate={{ 
-                        opacity: 0.95, 
-                        y: 0, 
-                        scale: 1 
-                      }}
-                      exit={{ opacity: 0, y: 3, scale: 0.7 }}
-                      transition={{ 
-                        duration: 0.4,
-                        delay: index * 0.08 + 0.4,
-                        ease: [0.25, 0.46, 0.45, 0.94]
-                      }}
-                    >
-                      <span style={{
-                        fontSize: '0.6rem',
-                        fontWeight: '500',
-                        color: '#DAFF0D',
-                        letterSpacing: '0.3px',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-                      }}>
-                        {option.label.toUpperCase()}
-                      </span>
                     </motion.div>
                   </motion.div>
                 );
