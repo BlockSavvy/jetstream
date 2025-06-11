@@ -100,8 +100,8 @@ export const apiClient = {
       console.log('[API Client] 🚀 LOADING REAL AIRPORTS FROM DATABASE');
       
       const url = query 
-        ? `${BASE_URL}/api/airports?query=${encodeURIComponent(query)}&limit=100&t=${Date.now()}`
-        : `${BASE_URL}/api/airports?limit=100&t=${Date.now()}`;
+        ? `${BASE_URL}/api/airports/?query=${encodeURIComponent(query)}&limit=100&t=${Date.now()}`
+        : `${BASE_URL}/api/airports/?limit=100&t=${Date.now()}`;
       
       console.log('[API Client] Real database URL:', url);
       
@@ -144,7 +144,7 @@ export const apiClient = {
     try {
       console.log('[API Client] 🚀 LOADING REAL FLIGHTS FROM DATABASE');
       
-      const url = `${BASE_URL}/api/flights?t=${Date.now()}`;
+      const url = `${BASE_URL}/api/flights/?t=${Date.now()}`;
       console.log('[API Client] Real flights URL:', url);
       
       const response = await fetch(url, {
@@ -185,7 +185,7 @@ export const apiClient = {
     try {
       console.log('[API Client] 🚀 LOADING REAL OFFERS FROM DATABASE');
       
-      const url = `${BASE_URL}/api/jetshare/getOffers?t=${Date.now()}`;
+      const url = `${BASE_URL}/api/jetshare/getOffers/?t=${Date.now()}`;
       console.log('[API Client] Real offers URL:', url);
       
       const response = await fetch(url, {
@@ -233,7 +233,7 @@ export const apiClient = {
     try {
       console.log(`[API Client] 🔍 SEARCHING REAL AIRPORTS: "${query}"`);
       
-      const url = `${BASE_URL}/api/airports?query=${encodeURIComponent(query)}&limit=${limit}&t=${Date.now()}`;
+      const url = `${BASE_URL}/api/airports/?query=${encodeURIComponent(query)}&limit=${limit}&t=${Date.now()}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -273,7 +273,7 @@ export const apiClient = {
     try {
       console.log('[API Client] 📊 LOADING REAL DASHBOARD STATS');
       
-      const url = `${BASE_URL}/api/gdyup/dashboard?t=${Date.now()}`;
+      const url = `${BASE_URL}/api/gdyup/dashboard/?t=${Date.now()}`;
       
       const response = await fetch(url, {
         method: 'GET',

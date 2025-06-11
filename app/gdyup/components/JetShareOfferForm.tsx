@@ -60,7 +60,7 @@ import { debounce } from 'lodash';
 import EnhancedLocationAutocomplete from './EnhancedLocationAutocomplete';
 import { FormThemedDateTimePicker } from './FormThemedDateTimePicker';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
-import { EliteDateTimePicker } from './EliteDateTimePicker';
+import { UltraEliteDateTimePicker } from './UltraEliteDateTimePicker';
 import { RiFlightTakeoffLine } from 'react-icons/ri';
 import { formatCurrency } from '@/lib/utils';
 import JetDetailsTabs from './JetDetailsTabs';
@@ -1599,9 +1599,11 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     <FormLabel className={getThemedTextClasses()}>
                       Departure Date & Time
                     </FormLabel>
-                    <EliteDateTimePicker
+                    <UltraEliteDateTimePicker
                       date={field.value}
                       setDate={field.onChange}
+                      label="Departure Date & Time"
+                      placeholder="Select when you want to depart"
                     />
                     <FormMessage />
                   </FormItem>
