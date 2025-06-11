@@ -6,26 +6,30 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capacitor;
 
-// ELITE DATABASE CLIENT - REAL DATA ONLY, NO FALLBACKS!
-const BASE_URL = 'https://gdyup.xyz'; // ALWAYS use production server
+// SMART BASE URL - Use local dev server in development, remote in production
+const getBaseUrl = (): string => {
+  // In Capacitor app, always use remote server
+  if (isCapacitorApp) {
+    return 'https://gdyup.xyz';
+  }
+  
+  // In web development, use local server
+  if (isDevelopment && typeof window !== 'undefined') {
+    return window.location.origin; // This will be http://localhost:3000
+  }
+  
+  // In production, use remote server
+  return 'https://gdyup.xyz';
+};
+
+const BASE_URL = getBaseUrl();
 const FORCE_REAL_DATA = true; // Never use fallbacks
+
+console.log('[API Client] 🚀 BASE_URL configured as:', BASE_URL);
 
 // API base URL configuration
 const getApiBaseUrl = (): string => {
-  // Always use the remote server for real data
-  // This ensures we never use fallback data and always get live database data
-  if (isCapacitorApp) {
-    // In Capacitor app, always use remote server
-    return 'https://gdyup.xyz';
-  }
-  
-  if (isDevelopment) {
-    // In web development, still use remote server to get real data
-    return 'https://gdyup.xyz';
-  }
-  
-  // In production web, use remote server
-  return 'https://gdyup.xyz';
+  return BASE_URL;
 };
 
 // Enhanced fetch with proper error handling and headers

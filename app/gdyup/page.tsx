@@ -53,79 +53,79 @@ function PageContent() {
   
   return (
     <div className="main-content">
-      {/* Hero Section */}
-      <section className="px-6 py-12 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-4">
-            <div className="gdyup-title mb-2">
+      {/* Optimized Hero Section - Reduced spacing */}
+      <section className="px-4 py-8 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-3">
+            <div className="gdyup-title mb-1">
               GDY UP & SPLIT
             </div>
             <div className={getThemedTextClasses()}>Private Jet Costs</div>
           </h1>
-          <p className={cn("text-xl sm:text-2xl mb-8 max-w-2xl mx-auto", getThemedTextClasses('secondary'))}>
+          <p className={cn("text-lg sm:text-xl mb-6 max-w-2xl mx-auto", getThemedTextClasses('secondary'))}>
             List empty seats, connect with verified travelers, and recover up to 70% of your flight expenses.
           </p>
           
-          {/* Two-sided marketplace CTAs */}
-          <div className="flex flex-col gap-6 mb-8">
-            <div className="elite-card p-6 border-l-4 border-gdyup-primary">
-              <h2 className={cn("text-2xl font-bold mb-3", getThemedTextClasses())}>
+          {/* Optimized Two-sided marketplace CTAs - Reduced gaps */}
+          <div className="flex flex-col gap-4 mb-6">
+            <div className="elite-card p-4 border-l-4 border-gdyup-primary">
+              <h2 className={cn("text-xl font-bold mb-2", getThemedTextClasses())}>
                 Have a booked private flight?
               </h2>
-              <p className={cn("text-lg mb-4", getThemedTextClasses('secondary'))}>
+              <p className={cn("text-base mb-3", getThemedTextClasses('secondary'))}>
                 List your empty seats and recover up to 70% of your expenses
               </p>
               <div className="flex gap-3">
                 <Link href="/gdyup/list" className="flex-1">
-                  <button className="btn-primary-elite w-full flex items-center justify-center gap-2">
-                    <Share size={20} />
-                    List Your Seats
+                  <button className="btn-primary-elite w-full flex items-center justify-center gap-2 h-12">
+                    <Share size={18} className="flex-shrink-0" />
+                    <span>List Your Seats</span>
                   </button>
                 </Link>
                 <button 
                   onClick={() => handleNativeShare('list')}
-                  className="btn-secondary-elite px-4 flex items-center justify-center"
+                  className="btn-secondary-elite px-4 flex items-center justify-center h-12 w-12 flex-shrink-0"
                   aria-label="Share listing option"
                 >
-                  <Share size={18} />
+                  <Share size={16} />
                 </button>
               </div>
             </div>
             
-            <div className="elite-card p-6 border-l-4 border-gdyup-primary">
-              <h2 className={cn("text-2xl font-bold mb-3", getThemedTextClasses())}>
+            <div className="elite-card p-4 border-l-4 border-gdyup-primary">
+              <h2 className={cn("text-xl font-bold mb-2", getThemedTextClasses())}>
                 Looking for private jet seats?
               </h2>
-              <p className={cn("text-lg mb-4", getThemedTextClasses('secondary'))}>
+              <p className={cn("text-base mb-3", getThemedTextClasses('secondary'))}>
                 Browse available flights at a fraction of the charter cost
               </p>
               <div className="flex gap-3">
                 <Link href="/gdyup/browse" className="flex-1">
-                  <button className="btn-primary-elite w-full flex items-center justify-center gap-2">
-                    <Search size={20} />
-                    Browse Flights
+                  <button className="btn-primary-elite w-full flex items-center justify-center gap-2 h-12">
+                    <Search size={18} className="flex-shrink-0" />
+                    <span>Browse Flights</span>
                   </button>
                 </Link>
                 <button 
                   onClick={() => handleNativeShare('browse')}
-                  className="btn-secondary-elite px-4 flex items-center justify-center"
+                  className="btn-secondary-elite px-4 flex items-center justify-center h-12 w-12 flex-shrink-0"
                   aria-label="Share browse option"
                 >
-                  <Share size={18} />
+                  <Share size={16} />
                 </button>
               </div>
             </div>
           </div>
           
-          {/* Payment options badge */}
-          <div className="flex items-center justify-center gap-4 text-base">
-            <span className={getThemedTextClasses()}>Accepts:</span>
-            <div className="flex items-center gap-2">
-              <CreditCard size={20} className="text-gdyup-text-subtle" />
+          {/* Enhanced Payment options - Better icon visibility */}
+          <div className="flex items-center justify-center gap-3 text-sm flex-wrap">
+            <span className={cn("font-medium", getThemedTextClasses())}>Accepts:</span>
+            <div className="flex items-center gap-1.5">
+              <CreditCard size={18} className={cn("flex-shrink-0", getThemedTextClasses())} />
               <span className="font-medium">Cards</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Bitcoin size={20} className="text-gdyup-primary" />
+            <div className="flex items-center gap-1.5">
+              <Bitcoin size={18} className="text-gdyup-primary flex-shrink-0" />
               <span className="font-medium">Bitcoin</span>
             </div>
             <span>&</span>
@@ -134,51 +134,65 @@ function PageContent() {
         </div>
       </section>
       
-      {/* How It Works Section */}
-      <section className="px-6 py-16">
-        <div className="text-center mb-12">
-          <h2 className="gdyup-title text-3xl md:text-4xl font-bold mb-4">
+      {/* Optimized How It Works Section - Better spacing and icon visibility */}
+      <section className="px-4 py-10">
+        <div className="text-center mb-8">
+          <h2 className="gdyup-title text-2xl md:text-3xl font-bold mb-3">
             Ultra-Simple P2P Jet Sharing
           </h2>
-          <p className={cn("text-xl max-w-2xl mx-auto", getThemedTextClasses('secondary'))}>
+          <p className={cn("text-lg max-w-2xl mx-auto", getThemedTextClasses('secondary'))}>
             Already booked a private jet? Share empty seats and recoup your costs instantly.
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-          {/* Steps */}
-          <div className="elite-card p-6 text-center">
-            <div className="w-16 h-16 bg-gdyup-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Plane size={28} className="text-gdyup-button-text" />
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {/* Step 1 - Enhanced icon visibility */}
+          <div className="elite-card p-5 text-center">
+            <div className="w-14 h-14 bg-gdyup-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Plane 
+                size={24} 
+                className="text-gdyup-button-text flex-shrink-0" 
+                strokeWidth={2.5}
+              />
             </div>
-            <h3 className={cn("text-xl font-bold mb-3", getThemedTextClasses())}>
+            <h3 className={cn("text-lg font-bold mb-2", getThemedTextClasses())}>
               List Your Flight
             </h3>
-            <p className={cn("text-base", getThemedTextClasses('secondary'))}>
+            <p className={cn("text-sm leading-relaxed", getThemedTextClasses('secondary'))}>
               Select available seats in 30 seconds. Set your price and watch your flight expenses drop.
             </p>
           </div>
           
-          <div className="elite-card p-6 text-center">
-            <div className="w-16 h-16 bg-gdyup-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Sparkles size={28} className="text-gdyup-button-text" />
+          {/* Step 2 - Enhanced icon visibility */}
+          <div className="elite-card p-5 text-center">
+            <div className="w-14 h-14 bg-gdyup-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Sparkles 
+                size={24} 
+                className="text-gdyup-button-text flex-shrink-0" 
+                strokeWidth={2.5}
+              />
             </div>
-            <h3 className={cn("text-xl font-bold mb-3", getThemedTextClasses())}>
+            <h3 className={cn("text-lg font-bold mb-2", getThemedTextClasses())}>
               AI Concierge
             </h3>
-            <p className={cn("text-base", getThemedTextClasses('secondary'))}>
+            <p className={cn("text-sm leading-relaxed", getThemedTextClasses('secondary'))}>
               Our AI concierge finds perfect matches for your flight and handles all arrangements seamlessly.
             </p>
           </div>
           
-          <div className="elite-card p-6 text-center">
-            <div className="w-16 h-16 bg-gdyup-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Bitcoin size={28} className="text-gdyup-button-text" />
+          {/* Step 3 - Enhanced icon visibility */}
+          <div className="elite-card p-5 text-center">
+            <div className="w-14 h-14 bg-gdyup-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Bitcoin 
+                size={24} 
+                className="text-gdyup-button-text flex-shrink-0" 
+                strokeWidth={2.5}
+              />
             </div>
-            <h3 className={cn("text-xl font-bold mb-3", getThemedTextClasses())}>
+            <h3 className={cn("text-lg font-bold mb-2", getThemedTextClasses())}>
               Get Paid Directly
             </h3>
-            <p className={cn("text-base", getThemedTextClasses('secondary'))}>
+            <p className={cn("text-sm leading-relaxed", getThemedTextClasses('secondary'))}>
               Receive payments directly via credit card, Bitcoin or other crypto. We only take a 7.5% fee.
             </p>
           </div>
