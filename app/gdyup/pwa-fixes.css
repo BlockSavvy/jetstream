@@ -1,0 +1,404 @@
+/* ============================================================== */
+/* ELITE NATIVE APP OPTIMIZATIONS - CAPACITOR & iOS             */
+/* ============================================================== */
+
+/* iOS Safe Area Variables */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Native App Base Styles */
+html.capacitor {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html.capacitor body {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  position: fixed;
+  background: var(--gdyup-bg-dark);
+  
+  /* Prevent iOS bounce/overscroll */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Disable iOS text selection and callouts */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* Disable iOS tap highlights */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection for inputs and content areas */
+html.capacitor input,
+html.capacitor textarea,
+html.capacitor [contenteditable],
+html.capacitor .selectable-text {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ============================================================== */
+/* ELITE NATIVE NAVIGATION                                       */
+/* ============================================================== */
+
+/* Bottom Navigation with Safe Area */
+.mobile-nav-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  
+  /* Native app styling */
+  background: var(--gdyup-nav-bg);
+  border-top: 1px solid var(--gdyup-nav-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  
+  /* Safe area padding */
+  padding-bottom: calc(1rem + var(--safe-area-bottom));
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+  
+  /* Elite shadow */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Navigation Items */
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  min-height: 60px;
+}
+
+.nav-item:active {
+  transform: scale(0.95);
+}
+
+.nav-item.active {
+  background: var(--gdyup-nav-active);
+  color: var(--gdyup-nav-active-text);
+  box-shadow: var(--gdyup-glow-primary);
+}
+
+.nav-item.active .nav-icon {
+  color: var(--gdyup-nav-active-text);
+  filter: drop-shadow(0 0 8px rgba(var(--gdyup-primary-rgb), 0.6));
+}
+
+/* Concierge Button - Elevated Center */
+.concierge-button-mobile {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  
+  /* Elite styling */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  border: 3px solid var(--gdyup-bg-dark);
+  box-shadow: var(--gdyup-glow-primary), var(--gdyup-shadow-lg);
+  
+  /* Native interactions */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.concierge-button-mobile:active {
+  transform: translateX(-50%) scale(0.9);
+}
+
+.concierge-button-mobile:hover {
+  background: var(--gdyup-primary-hover);
+  box-shadow: var(--gdyup-glow-primary), var(--gdyup-shadow-lg), 0 0 30px rgba(var(--gdyup-primary-rgb), 0.8);
+}
+
+/* ============================================================== */
+/* ELITE CONTENT AREAS                                           */
+/* ============================================================== */
+
+/* Main Content with Safe Areas */
+.main-content {
+  padding-top: var(--safe-area-top);
+  padding-bottom: calc(80px + var(--safe-area-bottom)); /* Account for nav bar */
+  padding-left: calc(1rem + var(--safe-area-left));
+  padding-right: calc(1rem + var(--safe-area-right));
+  min-height: 100vh;
+  background: var(--gdyup-bg-dark);
+}
+
+/* Elite Cards */
+.elite-card {
+  background: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--gdyup-shadow-sm);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.elite-card:active {
+  transform: scale(0.98);
+}
+
+.elite-card:hover {
+  border-color: var(--gdyup-border-light);
+  box-shadow: var(--gdyup-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ============================================================== */
+/* ELITE BUTTONS & INTERACTIONS                                  */
+/* ============================================================== */
+
+/* Primary Button */
+.btn-primary-elite {
+  background: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 16px 24px;
+  min-height: 52px;
+  box-shadow: var(--gdyup-button-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.btn-primary-elite:active {
+  transform: scale(0.96);
+  background: var(--gdyup-primary-active);
+}
+
+.btn-primary-elite:hover {
+  background: var(--gdyup-primary-hover);
+  box-shadow: var(--gdyup-shadow-md);
+}
+
+/* Secondary Button */
+.btn-secondary-elite {
+  background: transparent;
+  color: var(--gdyup-primary);
+  border: 2px solid var(--gdyup-primary);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 14px 24px;
+  min-height: 52px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-secondary-elite:active {
+  transform: scale(0.96);
+  background: rgba(var(--gdyup-primary-rgb), 0.1);
+}
+
+.btn-secondary-elite:hover {
+  background: rgba(var(--gdyup-primary-rgb), 0.05);
+}
+
+/* ============================================================== */
+/* ELITE FORMS & INPUTS                                          */
+/* ============================================================== */
+
+/* Elite Input Fields */
+.input-elite {
+  background: var(--gdyup-bg-elevated);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  color: var(--gdyup-text);
+  padding: 16px;
+  font-size: 16px;
+  min-height: 52px;
+  width: 100%;
+  transition: all 0.2s ease;
+  
+  /* iOS specific */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.input-elite:focus {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.2);
+  outline: none;
+  background: var(--gdyup-bg-card);
+}
+
+.input-elite::placeholder {
+  color: var(--gdyup-text-subtle);
+}
+
+/* Elite Select Dropdown */
+.select-elite {
+  background: var(--gdyup-bg-elevated);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  color: var(--gdyup-text);
+  padding: 16px;
+  font-size: 16px;
+  min-height: 52px;
+  width: 100%;
+  cursor: pointer;
+  
+  /* iOS specific */
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+/* ============================================================== */
+/* ELITE ANIMATIONS & MICRO-INTERACTIONS                         */
+/* ============================================================== */
+
+/* Haptic Feedback Simulation */
+@keyframes haptic-light {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+@keyframes haptic-medium {
+  0% { transform: scale(1); }
+  25% { transform: scale(0.96); }
+  75% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.haptic-light {
+  animation: haptic-light 0.1s ease-out;
+}
+
+.haptic-medium {
+  animation: haptic-medium 0.15s ease-out;
+}
+
+/* Elite Loading States */
+@keyframes elite-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.loading-elite {
+  animation: elite-pulse 1.5s ease-in-out infinite;
+}
+
+/* Elite Slide Transitions */
+.slide-enter {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.slide-exit-active {
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================== */
+/* ELITE STATUS BAR & SYSTEM UI                                  */
+/* ============================================================== */
+
+/* Status Bar Styling */
+.status-bar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-area-top);
+  background: var(--gdyup-bg-dark);
+  z-index: 9999;
+}
+
+/* System UI Adjustments */
+.system-ui-safe {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* ============================================================== */
+/* ELITE ACCESSIBILITY & PERFORMANCE                             */
+/* ============================================================== */
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  :root {
+    --gdyup-border: #666666;
+    --gdyup-border-light: #888888;
+    --gdyup-text-subtle: #CCCCCC;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark Mode Optimization */
+@media (prefers-color-scheme: dark) {
+  html.capacitor {
+    color-scheme: dark;
+  }
+}
+
+/* Performance Optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.smooth-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+} 

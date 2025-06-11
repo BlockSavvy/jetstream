@@ -1,0 +1,479 @@
+/* Main GDYUP Stylesheet Index */
+
+/* Import GDYUP core branding styles */
+@import './gdyup.css';
+
+/* Root styling - ensure dark mode always */
+:root {
+  --gdyup-header-height: 60px;
+}
+
+/* Ensure dark mode for the entire GDYUP app */
+.gdyup-app {
+  color-scheme: dark;
+  background-color: var(--gdyup-background);
+  color: var(--gdyup-text);
+  min-height: 100vh;
+}
+
+/* Main container - apply consistent styling from CSS variables */
+main {
+  background-color: var(--gdyup-background);
+  color: var(--gdyup-text);
+  min-height: calc(100vh - var(--gdyup-header-height));
+  padding-bottom: 5rem;
+}
+
+/* Button consistent styling for the entire GDYUP app */
+.gdyup-app button, 
+.gdyup-app .button,
+.gdyup-app a.button {
+  background-color: var(--gdyup-primary);
+  color: black;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Form styling */
+.gdyup-app form {
+  background-color: var(--gdyup-card-bg);
+  border-radius: 0.5rem;
+  border: 1px solid var(--gdyup-card-border);
+  color: var(--gdyup-text);
+  padding: 1rem;
+}
+
+/* Form inputs and controls */
+.gdyup-app input,
+.gdyup-app select,
+.gdyup-app textarea {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--gdyup-card-border) !important;
+  color: var(--gdyup-text) !important;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+}
+
+.gdyup-app input:focus,
+.gdyup-app select:focus,
+.gdyup-app textarea:focus {
+  border-color: var(--gdyup-primary) !important;
+  box-shadow: 0 0 0 2px rgba(218, 255, 13, 0.25) !important;
+  outline: none;
+}
+
+/* Ensure dropdown menu styling is consistent */
+.gdyup-app [role="menu"],
+.gdyup-app .dropdown-menu,
+.gdyup-app .menu {
+  background-color: var(--gdyup-card-bg);
+  border: 1px solid var(--gdyup-card-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  padding: 0.5rem;
+  z-index: 50;
+}
+
+.gdyup-app [role="menuitem"],
+.gdyup-app .dropdown-item,
+.gdyup-app .menu-item {
+  color: var(--gdyup-text);
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.gdyup-app [role="menuitem"]:hover,
+.gdyup-app .dropdown-item:hover,
+.gdyup-app .menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--gdyup-primary);
+}
+
+/* Ensure consistent card styling */
+.gdyup-app .card,
+.gdyup-app [class*="Card"] {
+  background-color: var(--gdyup-card-bg);
+  border: 1px solid var(--gdyup-card-border);
+  border-radius: 0.5rem;
+  color: var(--gdyup-text);
+  overflow: hidden;
+}
+
+/* Ensure headings have proper contrast */
+.gdyup-app h1, 
+.gdyup-app h2, 
+.gdyup-app h3, 
+.gdyup-app h4, 
+.gdyup-app h5, 
+.gdyup-app h6 {
+  color: var(--gdyup-text);
+  font-weight: 600;
+}
+
+/* Override heading styles when they have the GDYUP primary class */
+.gdyup-app h1.gdyup-primary,
+.gdyup-app h2.gdyup-primary,
+.gdyup-app h3.gdyup-primary,
+.gdyup-app h4.gdyup-primary,
+.gdyup-app h5.gdyup-primary,
+.gdyup-app h6.gdyup-primary {
+  color: var(--gdyup-primary) !important;
+  text-shadow: 0 0 10px rgba(218, 255, 13, 0.2);
+}
+
+/* Ensure icons have proper contrast and styling */
+.gdyup-app svg,
+.gdyup-app .lucide-icon {
+  color: inherit;
+}
+
+/* Apply consistent styling to primary-colored icons */
+.gdyup-app svg.gdyup-primary,
+.gdyup-app .lucide-icon.gdyup-primary {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.4));
+}
+
+/* Add consistent shadowing to important components */
+.gdyup-app .shadow-brand {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* Ensure proper styling for badges */
+.gdyup-app .badge,
+.gdyup-app [class*="Badge"] {
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Override specific UI component styles to match GDYUP branding */
+.gdyup-app [role="dialog"] {
+  background-color: var(--gdyup-card-bg);
+  border: 1px solid var(--gdyup-card-border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 0.75rem;
+}
+
+/* Fix mobile menu dropdown styling */
+.gdyup-app header nav button,
+.gdyup-app header nav a {
+  background: transparent;
+  box-shadow: none;
+  font-weight: 500;
+  padding: 0;
+}
+
+.gdyup-app header nav button:hover,
+.gdyup-app header nav a:hover {
+  background: transparent;
+}
+
+/* Component-specific styles */
+@import './components/gdyup-forms.css';
+
+/* Apply GDYUP branding globally */
+body {
+  background-color: var(--gdyup-background);
+  color: var(--gdyup-text);
+}
+
+/* Ensure consistent button styling across the app */
+button:not([class*="gdyup-"]):not([class*="btn-"]):not([data-state]) {
+  background-color: var(--gdyup-primary);
+  color: black !important;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Button hover state */
+button:not([class*="gdyup-"]):not([class*="btn-"]):not([data-state]):hover {
+  background-color: #E8FF4D;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Fix outline button text contrast */
+button[variant="outline"] {
+  background-color: transparent !important;
+  color: white !important;
+  border: 1px solid #444 !important;
+}
+
+/* Improve outline button hover state */
+button[variant="outline"]:hover {
+  border-color: var(--gdyup-primary) !important;
+  color: var(--gdyup-primary) !important;
+}
+
+/* Override shadcn UI components with GDYUP branding */
+.bg-primary {
+  background-color: var(--gdyup-primary) !important;
+  color: black !important;
+}
+
+.text-primary {
+  color: var(--gdyup-primary) !important;
+}
+
+.border-primary {
+  border-color: var(--gdyup-primary) !important;
+}
+
+/* Apply GDYUP branding to all forms */
+form {
+  background-color: var(--gdyup-card-bg);
+  border-radius: 0.5rem;
+  border: 1px solid var(--gdyup-card-border);
+  color: var(--gdyup-text);
+  padding: 1rem;
+}
+
+/* Add these rules to ensure proper styling for maps and jet selections */
+
+/* Enhanced Airport Map styling */
+.gdyup-app .route-map {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.gdyup-app .route-map .plane-icon {
+  filter: drop-shadow(0 0 3px rgba(218, 255, 13, 0.6));
+}
+
+.gdyup-app .route-map .route-line {
+  height: 2px;
+  background: linear-gradient(to right, #3b82f6, #DAFF0D, #f59e0b);
+  box-shadow: 0 0 8px rgba(218, 255, 13, 0.4);
+}
+
+/* Jet Selector styling */
+.gdyup-app .jet-item {
+  background-color: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.gdyup-app .jet-item:hover {
+  background-color: rgba(31, 41, 55, 0.8);
+  border-color: rgba(107, 114, 128, 0.7);
+}
+
+/* Normal jet item text styling */
+.gdyup-app .jet-item .jet-name,
+.jet-item .jet-name {
+  font-weight: 600;
+  color: white;
+}
+
+/* Updated selected jet styling with stronger rules */
+.gdyup-app .jet-item.selected,
+div[class*="jet-item"][class*="selected"],
+.jet-item.selected {
+  background-color: rgba(17, 24, 39, 0.95) !important;
+  border: 2px solid #DAFF0D !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
+}
+
+/* Force white text on all elements inside selected items */
+.gdyup-app .jet-item.selected *,
+div[class*="jet-item"][class*="selected"] *,
+.jet-item.selected * {
+  color: white !important;
+}
+
+/* Special handling for the "My Jet" badge */
+.gdyup-app .jet-item.selected [class*="badge"],
+div[class*="jet-item"][class*="selected"] [class*="badge"],
+.jet-item.selected [class*="badge"] {
+  background-color: #DAFF0D !important;
+  color: black !important;
+  font-weight: bold !important;
+}
+
+/* Add a subtle highlight to make text more readable */
+.gdyup-app .jet-item.selected .jet-name,
+div[class*="jet-item"][class*="selected"] .jet-name,
+.jet-item.selected .jet-name {
+  color: white !important;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.gdyup-app .jet-item.selected svg,
+div[class*="jet-item"][class*="selected"] svg,
+.jet-item.selected svg {
+  color: #DAFF0D !important;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5)) !important;
+}
+
+/* Add these more specific rules at the bottom of the file to ensure they take precedence */
+
+/* Fix for Radix UI CommandItem in JetSelector dropdown */
+/* Target the exact component structure we're seeing in the HTML */
+[cmdk-item][role="option"],
+[id^="radix-"][cmdk-item][role="option"] {
+  background-color: #1f2937 !important; /* dark gray */
+  color: white !important;
+  border: 1px solid rgba(75, 85, 99, 0.4) !important;
+}
+
+/* Target hover state */
+[cmdk-item][role="option"]:hover,
+[id^="radix-"][cmdk-item][role="option"]:hover {
+  background-color: #111827 !important; /* darker gray */
+  border-color: rgba(107, 114, 128, 0.5) !important;
+  color: white !important;
+}
+
+/* Target selected state with highest specificity */
+[cmdk-item][role="option"][data-selected="true"],
+[id^="radix-"][cmdk-item][role="option"][data-selected="true"],
+[cmdk-item][role="option"][aria-selected="true"],
+[id^="radix-"][cmdk-item][role="option"][aria-selected="true"] {
+  background-color: rgba(17, 24, 39, 0.95) !important; /* Very dark gray */
+  border: 2px solid #DAFF0D !important;
+  box-shadow: 0 0 10px rgba(218, 255, 13, 0.3) !important;
+  color: white !important;
+}
+
+/* Fix text color within selected items */
+[cmdk-item][role="option"][data-selected="true"] *,
+[id^="radix-"][cmdk-item][role="option"][data-selected="true"] *,
+[cmdk-item][role="option"][aria-selected="true"] *,
+[id^="radix-"][cmdk-item][role="option"][aria-selected="true"] * {
+  color: white !important;
+}
+
+/* Special handling for badge in selected items */
+[cmdk-item][role="option"][data-selected="true"] [class*="badge"],
+[id^="radix-"][cmdk-item][role="option"][data-selected="true"] [class*="badge"],
+[cmdk-item][role="option"][data-selected="true"] div[class*="inline-flex"][class*="rounded-full"],
+[id^="radix-"][cmdk-item][role="option"][data-selected="true"] div[class*="inline-flex"][class*="rounded-full"] {
+  background-color: #DAFF0D !important;
+  color: black !important;
+  border-color: #DAFF0D !important;
+  font-weight: bold !important;
+}
+
+/* Make sure the text color persists in the badge */
+[cmdk-item][role="option"][data-selected="true"] [class*="badge"] *,
+[id^="radix-"][cmdk-item][role="option"][data-selected="true"] [class*="badge"] *,
+[cmdk-item][role="option"][data-selected="true"] div[class*="inline-flex"][class*="rounded-full"] *,
+[id^="radix-"][cmdk-item][role="option"][data-selected="true"] div[class*="inline-flex"][class*="rounded-full"] * {
+  color: black !important;
+} 
+
+/* Mobile menu icon fixes - ensure proper contrast */
+.mobile-menu button svg,
+.mobile-menu a svg,
+nav[class*="mobile"] svg,
+div[class*="mobile"] svg {
+  color: var(--gdyup-text) !important;
+  stroke: var(--gdyup-text) !important;
+}
+
+/* Special case for menu buttons to ensure they're always visible */
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg,
+[aria-label*="menu"] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Support for ThemedIcon component */
+button .text-current,
+a .text-current,
+.mobile-menu .text-current {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Critical icon visibility fix - DEPRECATED: Use ThemedIcon component instead */
+/* These rules are kept temporarily for backward compatibility */
+
+/* Ensure all icons in buttons/menus use their parent's text color */
+button svg,
+a svg,
+.lucide,
+.lucide-icon,
+[data-lucide] {
+  color: currentColor;
+  stroke: currentColor;
+  fill: none;
+}
+
+/* Legacy code - will be removed in the future */
+.gdyup-header-menu svg,
+button[aria-label="Open menu"] svg,
+button[aria-label="Close menu"] svg,
+.mobile-menu button svg,
+.mobile-menu a svg {
+  color: var(--gdyup-text);
+  stroke: var(--gdyup-text);
+}
+
+/* Fix primary buttons to use button text color for icons */
+.gdyup-button svg,
+button.bg-primary svg,
+.bg-gdyup-primary svg,
+.gdyup-bg-primary svg {
+  color: var(--gdyup-button-text);
+  stroke: var(--gdyup-button-text);
+}
+
+/* Legacy code - will be removed in the future */
+.gdyup-primary svg,
+.text-gdyup-primary svg {
+  color: var(--gdyup-primary);
+  stroke: var(--gdyup-primary);
+}
+
+/* Dashboard visibility fixes - overrides any conflicting styles */
+.gdyup-app .dashboard-content,
+.gdyup-app .dashboard-content h1, 
+.gdyup-app .dashboard-content h2, 
+.gdyup-app .dashboard-content h3, 
+.gdyup-app .dashboard-content h4, 
+.gdyup-app .dashboard-content p, 
+.gdyup-app .dashboard-content span, 
+.gdyup-app .dashboard-content div {
+  color: var(--gdyup-text) !important;
+}
+
+.gdyup-app .dashboard-content .card {
+  background-color: var(--gdyup-bg-card) !important;
+  border-color: var(--gdyup-border) !important;
+}
+
+.gdyup-app .dashboard-content svg {
+  color: currentColor !important;
+  stroke: currentColor !important;
+} 

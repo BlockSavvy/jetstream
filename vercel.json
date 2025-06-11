@@ -8,5 +8,15 @@
   "cleanUrls": true,
   "github": {
     "silent": true
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/update-embeddings",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/jetshare/cleanup-expired-offers?key=gdyup-internal-api",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 } 

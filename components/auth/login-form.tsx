@@ -26,15 +26,16 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
-export function LoginForm() {
+// Extract the core login form functionality to a separate component
+function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [pendingPaymentOfferId, setPendingPaymentOfferId] = useState<string | null>(null)
   const { signIn } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const returnUrl = searchParams.get('returnUrl')
-  const errorParam = searchParams.get('error')
+  const returnUrl = searchParams?.get('returnUrl')
+  const errorParam = searchParams?.get('error')
 
   // Check for error parameter in URL and display it
   useEffect(() => {
@@ -138,10 +139,54 @@ export function LoginForm() {
           finalRedirectUrl = paymentUrl;
         }
         
+        // Store auth info in localStorage for redundancy
+        try {
+          if (session.user) {
+            localStorage.setItem('jetstream_user_id', session.user.id);
+            if (session.user.email) {
+              localStorage.setItem('jetstream_user_email', session.user.email);
+            }
+            localStorage.setItem('auth_last_authenticated', 'true');
+            localStorage.setItem('jetstream_session_time', Date.now().toString());
+            
+            // Store tokens if available
+            if (session.access_token && session.refresh_token) {
+              const tokenData = {
+                access_token: session.access_token,
+                refresh_token: session.refresh_token,
+                expires_at: Math.floor(Date.now() / 1000) + 3600
+              };
+              localStorage.setItem('sb-vjhrmizwqhmafkxbmfwa-auth-token', JSON.stringify(tokenData));
+            }
+            
+            // Log what we're storing for debugging
+            console.log('Stored auth info in localStorage for redundancy');
+          }
+        } catch (e) {
+          console.warn('Error storing auth info in localStorage:', e);
+        }
+        
+        console.log('Will redirect to:', finalRedirectUrl);
+        
         // Give the session a moment to fully establish
         setTimeout(() => {
           if (finalRedirectUrl) {
+            // Append timestamp to prevent caching issues
+            if (finalRedirectUrl.includes('?')) {
+              finalRedirectUrl = `${finalRedirectUrl}&t=${Date.now()}`;
+            } else {
+              finalRedirectUrl = `${finalRedirectUrl}?t=${Date.now()}`;
+            }
+            
             console.log('Redirecting to:', finalRedirectUrl)
+            
+            // For GDY UP and Jets pages, use direct navigation to ensure cookies are sent
+            if (finalRedirectUrl.includes('/gdyup/') || finalRedirectUrl.includes('/jets')) {
+              console.log('Using direct navigation for GDY UP/Jets page');
+              window.location.href = finalRedirectUrl;
+              return;
+            }
+            
             // Use the router for same-origin URLs, window.location for cross-origin
             if (finalRedirectUrl.startsWith('/')) {
               router.push(finalRedirectUrl)
@@ -185,16 +230,16 @@ export function LoginForm() {
   return (
     <div className="mx-auto w-full max-w-md space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold dark:text-white">Welcome back</h1>
-        <p className="text-muted-foreground dark:text-gray-300">Enter your credentials to sign in</p>
+        <h1 className="text-2xl font-bold text-white">Sign in to GDYUP</h1>
+        <p className="text-gray-300 text-sm">Access your jet sharing platform</p>
         
         {pendingPaymentOfferId && (
-          <Alert className="mt-4 bg-blue-50 border-blue-200 dark:bg-blue-900/40 dark:border-blue-700">
+          <Alert className="mt-4 bg-gray-800 border-[#DAFF0D]/40">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-blue-500 dark:text-blue-400 mr-2" />
-              <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <AlertCircle className="h-5 w-5 text-[#DAFF0D] mr-2" />
+              <AlertDescription className="text-white">
                 <div className="font-medium">Complete Your Booking</div>
-                <p className="text-sm mt-1 dark:text-blue-300">Please sign in to continue with your flight booking. Your selection is being held for you.</p>
+                <p className="text-sm mt-1 text-gray-300">Please sign in to continue with your flight booking. Your selection is being held for you.</p>
               </AlertDescription>
             </div>
           </Alert>
@@ -202,25 +247,29 @@ export function LoginForm() {
       </div>
       
       {errorMessage && (
-        <Alert variant="destructive" className="mt-4 dark:bg-red-900/40 dark:border-red-700">
+        <Alert variant="destructive" className="mt-4 bg-red-900/40 border-red-700">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="dark:text-red-200">{errorMessage}</AlertDescription>
+          <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
-      
+
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="dark:text-gray-200">Email</FormLabel>
+                <FormLabel className="text-gray-200">Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="youremail@example.com" type="email" autoComplete="email" {...field} 
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400" />
+                  <Input
+                    placeholder="you@example.com"
+                    {...field}
+                    autoComplete="email"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
                 </FormControl>
-                <FormMessage className="dark:text-red-300" />
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -230,40 +279,69 @@ export function LoginForm() {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-center justify-between">
-                  <FormLabel className="dark:text-gray-200">Password</FormLabel>
+                  <FormLabel className="text-gray-200">Password</FormLabel>
                   <Link
-                    href="/auth/forgot-password"
-                    className="text-sm font-medium text-primary hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                    href="/auth/reset-password"
+                    className="text-xs text-[#DAFF0D] hover:underline"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <FormControl>
-                  <Input placeholder="••••••••" type="password" autoComplete="current-password" {...field} 
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                  <Input
+                    type="password"
+                    {...field}
+                    autoComplete="current-password"
+                    className="bg-gray-800 border-gray-700 text-white"
+                  />
                 </FormControl>
-                <FormMessage className="dark:text-red-300" />
+                <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-[#DAFF0D] text-black hover:bg-[#C8EF00] font-medium"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Signing in...
               </>
             ) : (
-              'Sign in'
+              'Sign In'
             )}
           </Button>
         </form>
       </Form>
-      <div className="text-center text-sm">
-        <span className="text-muted-foreground dark:text-gray-400">Don't have an account?</span>{' '}
-        <Link href="/auth/register" className="font-medium text-primary hover:underline dark:text-blue-400 dark:hover:text-blue-300">
-          Sign up
-        </Link>
+
+      <div className="text-center">
+        <p className="text-gray-400 text-sm">
+          Don&apos;t have an account?{' '}
+          <Link
+            href="/auth/register"
+            className="text-[#DAFF0D] hover:underline font-medium"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
-  )
+  );
+}
+
+// Main export with Suspense boundary
+import { Suspense } from 'react'
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto w-full max-w-md flex justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-[#DAFF0D]" />
+      </div>
+    }>
+      <LoginFormContent />
+    </Suspense>
+  );
 } 

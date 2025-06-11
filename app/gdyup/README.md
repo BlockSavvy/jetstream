@@ -1,0 +1,345 @@
+# GDYUP Mobile App (JetStream Platform)
+
+GDYUP is a mobile-first app within the JetStream platform ecosystem that allows users to share private jet flights, reducing costs by finding co-passengers. It is the rebrand of the original JetShare module with enhanced functionality.
+
+## Features
+
+- Mobile-first PWA design optimized for phones and tablets
+- Bitcoin and Lightning Network payment integration via BTCPay Server
+- Decentralized identity with Nostr protocol
+- Modern UI with centralized CSS and theme management
+- Complete flow from offer creation to boarding pass
+
+## Setup Instructions
+
+### 1. Database Setup
+
+GDYUP requires two main tables and utility functions for the flight sharing system:
+
+```sql
+-- Run these in the Supabase SQL Editor
+
+-- Create tables if they don't exist
+CREATE TABLE IF NOT EXISTS jetshare_offers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id),
+  flight_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  departure_location TEXT NOT NULL,
+  arrival_location TEXT NOT NULL,
+  total_flight_cost INTEGER NOT NULL,
+  requested_share_amount INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  matched_user_id UUID REFERENCES profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS jetshare_transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  offer_id UUID NOT NULL REFERENCES jetshare_offers(id),
+  payer_user_id UUID NOT NULL REFERENCES profiles(id),
+  recipient_user_id UUID NOT NULL REFERENCES profiles(id),
+  amount INTEGER NOT NULL,
+  handling_fee INTEGER NOT NULL,
+  payment_method TEXT NOT NULL,
+  payment_status TEXT NOT NULL,
+  transaction_reference TEXT,
+  transaction_date TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for faster queries
+CREATE INDEX IF NOT EXISTS jetshare_offers_user_id_idx ON jetshare_offers(user_id);
+CREATE INDEX IF NOT EXISTS jetshare_offers_status_idx ON jetshare_offers(status);
+CREATE INDEX IF NOT EXISTS jetshare_offers_matched_user_id_idx ON jetshare_offers(matched_user_id);
+
+-- Set up RLS (Row Level Security) for these tables if needed
+ALTER TABLE jetshare_offers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jetshare_transactions ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies
+CREATE POLICY "jetshare_offers_insert_policy" ON jetshare_offers
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "jetshare_offers_select_policy" ON jetshare_offers
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "jetshare_offers_update_policy" ON jetshare_offers
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid() OR matched_user_id = auth.uid());
+
+-- Add diagnostic functions
+-- Copy and paste the contents of app/jetshare/utils/supabase_functions.sql here
+```
+
+### 2. Environment Variables
+
+Ensure these environment variables are set:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# App Configuration
+NEXT_PUBLIC_APP_URL=https://gdyup.xyz
+
+# BTCPay Server Configuration
+BTCPAY_HOST=https://btc.gdyup.xyz
+BTCPAY_API_KEY=your-btcpay-api-key
+BTCPAY_WEBHOOK_SECRET=your-webhook-secret
+
+# Payment Processing
+STRIPE_SECRET_KEY=your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
+```
+
+### 3. Running the Application
+
+```bash
+npm run dev
+```
+
+Access GDYUP at: <https://gdyup.xyz>
+
+## Complete User Flow
+
+1. **Airport Search & Offer Creation**:
+   - Airport search autocompletes after 2 letters
+   - Users create flight share offers with details and pricing
+
+2. **Listing & Acceptance**:
+   - Offers listed in marketplace for others to view
+   - User can accept an offer and proceed to payment
+
+3. **Payment Options**:
+   - Credit Card via Stripe
+   - Bitcoin via BTCPay Server (on-chain and Lightning Network)
+   - "Pay Later" option (1-hour hold)
+
+4. **Post-Payment Process**:
+   - Automated generation of boarding pass
+   - Access to flight details and communications
+
+## Debugging & Troubleshooting
+
+### Common Issues & Solutions
+
+#### 1. Foreign Key Constraint Violations
+
+**Issue**: When creating offers, you might encounter errors related to foreign key constraints.
+
+**Solution**: This usually happens when a user profile doesn't exist. Use the diagnostic endpoint to check and fix:
+
+GET /api/jetshare/debug
+
+Or visit the debug page (development mode only):
+
+/jetshare/debug
+
+#### 2. Offers Not Appearing in the Marketplace
+
+**Issue**: Offers created by a user might not appear in the marketplace listings.
+
+**Solutions**:
+
+- Check that the API endpoint is filtering correctly (viewMode=marketplace)
+- Ensure the user has created an offer
+- Verify that the offer status is "open"
+
+#### 3. Blank Offer Creation Form
+
+**Issue**: The offer creation form might appear blank or not load properly.
+
+**Solutions**:
+
+- Check browser console for JavaScript errors
+- Ensure user is authenticated
+- Verify that the user has a valid profile in the database
+
+#### 4. Database Setup Troubleshooting
+
+If you need to check if the database is set up correctly, run the SQL script in `app/jetshare/utils/supabase_functions.sql` in the Supabase SQL Editor. This will create the necessary diagnostic functions.
+
+### Debugging Tools
+
+We've provided several debugging tools:
+
+1. **Debug API**: `/api/jetshare/debug` - Returns information about the current user, their profile, and offers
+2. **Fix Constraints API**: `/api/jetshare/fixConstraints` - Can fix database constraints and create missing profiles
+3. **Debug Page**: `/jetshare/debug` - UI for debugging database issues (development mode only)
+
+### Manual Database Fixes
+
+If you need to directly fix the database:
+
+1. Ensure user profiles exist:
+
+```sql
+INSERT INTO profiles (id, first_name, last_name, email, created_at, updated_at)
+SELECT 
+  id, 
+  COALESCE(raw_user_meta_data->>'first_name', 'User'),
+  COALESCE(raw_user_meta_data->>'last_name', 'User'),
+  email,
+  created_at,
+  updated_at
+FROM auth.users
+WHERE id NOT IN (SELECT id FROM profiles);
+```
+
+2. Remove orphaned offers:
+
+```sql
+DELETE FROM jetshare_offers
+WHERE user_id NOT IN (SELECT id FROM profiles);
+```
+
+## Development Notes
+
+### File Structure
+
+```
+/app/gdyup
+  /components - UI components for the mobile app
+  /pages - Main application pages
+  /payment - Payment flow components
+  /styles - CSS and theme files
+  /utils - Utility functions
+```
+
+### API Endpoints
+
+The app uses both dedicated GDYUP endpoints and some legacy JetShare endpoints:
+
+- `/api/jetshare/getOffers` - Get flight share offers
+- `/api/jetshare/createOffer` - Create a new offer
+- `/api/jetshare/acceptOffer` - Accept an offer
+- `/api/jetshare/process-payment` - Process payment
+- `/api/gdyup/airports` - Airport search with autocomplete
+- `/api/gdyup/tickets` - Boarding pass generation
+
+### Key Components
+
+- `LocationAutocompleteClient` - Airport search with autocomplete after 2 letters
+- `OfferCreationForm` - Form for creating flight share offers
+- `JetSharePaymentForm` - Payment processing with multiple options
+- `BoardingPassView` - Display digital boarding pass
+
+## GDYUP App Styling Guide
+
+## Overview
+
+The GDYUP app uses a centralized styling system to ensure consistent branding across all components. This document provides guidelines on how to implement and maintain the styling.
+
+## Color System
+
+GDYUP uses the following color palette:
+
+- **Primary**: `#DAFF0D` - Bright lime green used for primary actions, highlights, and brand identity
+- **Secondary**: `#FF4B47` - Used for notifications, alerts, and secondary actions
+- **Background**: `#000000` - Main app background
+- **Text**: `#FFFFFF`, `#E0E0E0`, `#D0D0D0` - Different text emphasis levels
+
+## CSS Architecture
+
+### Core Files
+
+1. **gdyup.css**: Contains core branding styles, colors, and basic component overrides
+2. **index.css**: Central import file that loads all GDYUP styles
+3. **components/gdyup-forms.css**: Form-specific styling
+
+### Class Naming System
+
+- `.gdyup-app`: Main container class that enables all GDYUP styles
+- `.gdyup-form`: For form elements to ensure consistent styling
+- `.gdyup-button`, `.gdyup-button-outline`: For buttons
+- `.gdyup-primary`, `.gdyup-secondary`: For text colors
+- `.gdyup-bg-primary`, `.gdyup-bg-secondary`: For background colors
+
+## How to Use
+
+### Basic Component Styling
+
+To apply GDYUP styling to a component:
+
+```tsx
+<div className="gdyup-app">
+  <h1 className="gdyup-primary">Your Title</h1>
+  <button className="gdyup-button">Action</button>
+</div>
+```
+
+### Form Styling
+
+For forms, add the `gdyup-form` class:
+
+```tsx
+<form className="gdyup-form">
+  <div className="form-section">
+    <div className="form-section-header">
+      <SomeIcon className="w-5 h-5" />
+      <h2 className="form-section-title">Section Title</h2>
+    </div>
+    
+    {/* Form fields here */}
+  </div>
+  
+  <button type="submit" className="button-primary">Submit</button>
+</form>
+```
+
+## Common Components
+
+### Form Sections
+
+```tsx
+<div className="form-section">
+  <div className="form-section-header">
+    <Icon className="w-5 h-5" />
+    <h2 className="form-section-title">Section Title</h2>
+  </div>
+  
+  {/* Content */}
+</div>
+```
+
+### Buttons
+
+```tsx
+<button className="button-primary">Primary Action</button>
+<button className="button-secondary">Secondary Action</button>
+```
+
+### Cards
+
+```tsx
+<div className="card">
+  <div className="card-header">
+    <h3>Card Title</h3>
+  </div>
+  <div className="card-content">
+    {/* Card content */}
+  </div>
+</div>
+```
+
+## Recommendations
+
+1. Always import the central styles in your layout file
+2. Use the predefined classes instead of creating custom styles
+3. When creating new components, add their styles to the appropriate CSS file
+4. For reusable components, create a dedicated CSS section in gdyup.css
+
+## Troubleshooting
+
+If styles aren't applying correctly:
+
+1. Check that the component has the `gdyup-app` class in its parent tree
+2. Make sure the CSS imports are correct in the layout
+3. Use the !important flag sparingly for overrides
+4. Check for conflicting classes or inline styles

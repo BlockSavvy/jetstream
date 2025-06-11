@@ -107,12 +107,14 @@ Each match includes a compatibility score and specific reasons why the match was
 We've added comprehensive scripts to set up and restore the JetStream database, fully integrated with JetShare functionality. To initialize the database:
 
 1. Make sure your `.env.local` file contains the Supabase credentials:
+
    ```
    NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
 
 2. Run the master setup script:
+
    ```bash
    node db/setup-all.js
    ```

@@ -12,9 +12,7 @@ All crew member and captain images should be stored in the `/public/images/crew/
 
 Primary profile images are used for avatars and profile pages. They should follow this format:
 
-```
 /images/crew/[name_with_underscores].jpg
-```
 
 Examples:
 
@@ -26,9 +24,7 @@ Examples:
 
 Secondary images are used for card headers and larger displays. They should follow the same naming convention as the primary image, but with a `_2` suffix:
 
-```
 /images/crew/[name_with_underscores]_2.jpg
-```
 
 Examples:
 
@@ -65,9 +61,7 @@ In the database, only the primary image path should be stored in the `profile_im
 
 Example database entry:
 
-```
 profile_image_url: '/images/crew/captain_reid.jpg'
-```
 
 The application will automatically look for `/images/crew/captain_reid_2.jpg` when needed.
 

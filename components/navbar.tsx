@@ -93,10 +93,16 @@ export default function Navbar() {
               Flights
             </Link>
             <Link 
-              href="/jetshare" 
-              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname.startsWith('/jetshare') ? 'font-semibold' : ''}`}
+              href="/jets" 
+              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname.startsWith('/jets') ? 'font-semibold' : ''}`}
             >
-              JetShare
+              My Jets
+            </Link>
+            <Link 
+              href="/gdyup" 
+              className={`${textColorClass} ${hoverColorClass} transition-colors ${pathname.startsWith('/gdyup') ? 'font-semibold' : ''}`}
+            >
+              GDY UP
             </Link>
             <Link 
               href="/pulse" 
@@ -168,11 +174,18 @@ export default function Navbar() {
               Flights
             </Link>
             <Link
-              href="/jetshare"
-              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname.startsWith('/jetshare') ? 'font-semibold' : ''}`}
+              href="/jets"
+              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname.startsWith('/jets') ? 'font-semibold' : ''}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              JetShare
+              My Jets
+            </Link>
+            <Link
+              href="/gdyup"
+              className={`${textColorClass} ${hoverColorClass} transition-colors py-2 ${pathname.startsWith('/gdyup') ? 'font-semibold' : ''}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              GDY UP
             </Link>
             <Link
               href="/pulse"

@@ -1,45 +1,49 @@
-import type React from "react"
-import "./globals.css"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/components/auth-provider"
-import { Toaster } from "sonner"
-import Navbar from "@/components/navbar"
-import { AuthPersistenceProvider } from "@/components/auth-persistence-provider"
-import { ConciergeProvider } from "@/app/components/concierge-provider"
+import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/sonner";
+import { fontSans } from "@/lib/fonts";
+import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/lib/auth-provider";
+import ConditionalNavbar from "@/components/conditional-navbar";
+import { ConciergeProvider } from "./components/concierge-provider";
+import { AuthPersistenceProvider } from "@/components/auth-persistence-provider";
+import { NostrProvider } from '@/components/nostr-provider'
 
-const inter = Inter({ subsets: ["latin"] })
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "JetStream - Private Jets On-Demand",
-  description:
-    "Redefine luxury travel with JetStream - the Uber of private jets. Seamless fractional jet experiences, personalized flights, effortlessly matched.",
-  generator: 'v0dev'
-}
+  title: "JetStream | GDY UP",
+  description: "Manage your private aviation needs seamlessly with GDY UP.",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            <AuthPersistenceProvider>
-              <Toaster position="top-center" />
-              <Navbar />
-              <main className="min-h-screen">
-                {children}
-              </main>
-              {/* Global AI Concierge */}
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable
+        )}
+      >
+        <AuthProvider>
+          <AuthPersistenceProvider>
+            <NostrProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <ConditionalNavbar />
+                <div className="flex-1">{children}</div>
+              </div>
+              <Toaster />
               <ConciergeProvider />
-            </AuthPersistenceProvider>
-          </AuthProvider>
-        </ThemeProvider>
+            </NostrProvider>
+          </AuthPersistenceProvider>
+        </AuthProvider>
       </body>
     </html>
-  )
+  );
 }

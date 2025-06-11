@@ -1,0 +1,769 @@
+/* GDYUP Forms Specific CSS - Ensuring brand consistency */
+
+/* Form-specific styles that extend the main theme */
+.gdyup-form {
+  /* Use the existing theme variables defined in the main CSS */
+  color-scheme: dark;
+}
+
+/* Theme-responsive logo colors - Keep this as it's form-specific */
+.gdyup-logo {
+  filter: brightness(1.1) contrast(1.1);
+}
+
+.gdyup-theme-blue .gdyup-logo {
+  filter: brightness(1.05) contrast(1.05) saturate(0.85);
+}
+
+.gdyup-theme-pink .gdyup-logo {
+  filter: brightness(1.1) contrast(1.1) saturate(0.9);
+}
+
+/* Form Elements */
+.gdyup-form input[type="text"],
+.gdyup-form input[type="number"],
+.gdyup-form input[type="email"],
+.gdyup-form input[type="password"],
+.gdyup-form input[type="search"],
+.gdyup-form textarea,
+.gdyup-form select {
+  background-color: rgba(26, 26, 26, 0.8);
+  border: 1px solid var(--gdyup-border);
+  color: var(--gdyup-text);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form input:focus,
+.gdyup-form textarea:focus,
+.gdyup-form select:focus {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 0 3px rgba(var(--gdyup-primary-rgb), 0.2);
+  outline: none;
+}
+
+/* Form labels */
+.gdyup-form label {
+  color: var(--gdyup-text-medium);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Form sections */
+.gdyup-form .form-section {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .form-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .form-section-header svg {
+  color: var(--gdyup-primary);
+  filter: drop-shadow(0 0 6px rgba(var(--gdyup-primary-rgb), 0.3));
+}
+
+.gdyup-form .form-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gdyup-primary);
+}
+
+/* Primary buttons */
+.gdyup-form button[type="submit"],
+.gdyup-form .button-primary,
+.gdyup-form .gdyup-button-primary {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.3);
+  transition: all 0.2s ease-in-out;
+  border: none;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.01em;
+}
+
+.gdyup-form button[type="submit"]:hover,
+.gdyup-form .button-primary:hover,
+.gdyup-form .gdyup-button-primary:hover {
+  background-color: var(--gdyup-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.5);
+}
+
+/* Reset buttons */
+.gdyup-form button[class*="reset"],
+.gdyup-form button:has(span:contains("Reset")) {
+  border: 1px solid var(--gdyup-primary);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: var(--gdyup-primary);
+  font-weight: 600;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.2);
+}
+
+.gdyup-form button[class*="reset"]:hover,
+.gdyup-form button:has(span:contains("Reset")):hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  box-shadow: 0 0 12px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Secondary/outline buttons */
+.gdyup-form .button-secondary,
+.gdyup-form .button-outline {
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--gdyup-border);
+  color: var(--gdyup-text);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .button-secondary:hover,
+.gdyup-form .button-outline:hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.1);
+  border-color: rgba(var(--gdyup-primary-rgb), 0.4);
+  color: var(--gdyup-primary);
+}
+
+/* Sliders */
+.gdyup-form [role="slider"] {
+  background-color: var(--gdyup-primary);
+  border: 2px solid var(--gdyup-button-text);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.5);
+}
+
+.gdyup-form [data-orientation="horizontal"] > span {
+  background-color: #333333;
+}
+
+.gdyup-form [data-orientation="horizontal"] > span > span {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.4);
+}
+
+/* Selected items, checkboxes, radio buttons */
+.gdyup-form [data-state="checked"],
+.gdyup-form input[type="checkbox"]:checked,
+.gdyup-form input[type="radio"]:checked {
+  background-color: var(--gdyup-primary);
+  border-color: var(--gdyup-primary);
+}
+
+/* Tabs */
+.gdyup-form [role="tablist"] {
+  background-color: rgba(21, 21, 21, 0.9);
+  border-color: var(--gdyup-border);
+}
+
+.gdyup-form [role="tab"][data-state="active"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+}
+
+/* Multi-step form navigation */
+.gdyup-form .step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.gdyup-form .step-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--gdyup-border);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .step-dot.active {
+  background-color: var(--gdyup-primary);
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.5);
+  transform: scale(1.2);
+}
+
+/* Card styles inside forms */
+.gdyup-form .card {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.gdyup-form .card-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--gdyup-border);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .card-content {
+  padding: 1rem;
+}
+
+/* Dialog styling */
+.gdyup-dialog [role="dialog"],
+.gdyup-dialog [data-state="open"] {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  padding: 0.5rem;
+}
+
+/* Dialog close button styling */
+.gdyup-dialog button[data-dialog-close],
+.gdyup-dialog [data-dialog-close],
+.gdyup-dialog [aria-label="Close"] {
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #333333;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  z-index: 100;
+  top: 8px;
+  right: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-dialog button[data-dialog-close] svg,
+.gdyup-dialog [data-dialog-close] svg,
+.gdyup-dialog [aria-label="Close"] svg {
+  color: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  width: 16px;
+  height: 16px;
+}
+
+/* Make dropdown popover match theme */
+.gdyup-form [cmdk-item][data-selected="true"] {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form [cmdk-item]:hover:not([data-selected="true"]) {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Split configuration visualizations */
+.gdyup-form .split-section {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  border: 1px solid var(--gdyup-border);
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .split-ratio {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.gdyup-form .split-ratio-bar {
+  flex-grow: 1;
+  height: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--gdyup-border);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.gdyup-form .split-ratio-progress {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+.gdyup-form .split-ratio-label {
+  min-width: 60px;
+  font-weight: 600;
+  color: var(--gdyup-text);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+.gdyup-form .split-ratio-label.primary {
+  color: var(--gdyup-primary);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
+}
+
+.gdyup-form .split-ratio-label.secondary {
+  text-align: right;
+  color: var(--gdyup-text);
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+/* JetSelector specific styles */
+.gdyup-form .jet-selector {
+  background-color: var(--gdyup-bg-card);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--gdyup-border);
+  transition: all 0.2s ease-in-out;
+}
+
+.gdyup-form .jet-selector:hover {
+  border-color: rgba(var(--gdyup-primary-rgb), 0.4);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.gdyup-form .jet-selected {
+  border-color: var(--gdyup-primary);
+  box-shadow: 0 0 15px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+.gdyup-form .jet-image-container {
+  position: relative;
+  height: 12rem;
+  overflow: hidden;
+}
+
+.gdyup-form .jet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gdyup-form .jet-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gdyup-text);
+  margin-bottom: 0.5rem;
+}
+
+.gdyup-form .jet-subtitle {
+  font-size: 0.875rem;
+  color: var(--gdyup-text-medium);
+}
+
+.gdyup-form .jet-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+  border: 1px solid rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Calendar/DatePicker styles */
+.gdyup-form .calendar-wrapper {
+  background-color: var(--gdyup-bg-card);
+  border: 1px solid var(--gdyup-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gdyup-form .calendar-header {
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .calendar-day {
+  color: var(--gdyup-text);
+}
+
+.gdyup-form .calendar-day.selected {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+}
+
+.gdyup-form .calendar-day:hover:not(.selected) {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.1);
+}
+
+/* JetSeatVisualizer specific styling */
+.gdyup-form .seat {
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  background-color: #333333;
+  color: var(--gdyup-text-medium);
+}
+
+.gdyup-form .seat.selected {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  box-shadow: 0 0 10px rgba(var(--gdyup-primary-rgb), 0.4);
+  transform: scale(1.05);
+}
+
+.gdyup-form .seat:hover:not(.selected):not(.disabled) {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.15);
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .seat.disabled {
+  background-color: #222222;
+  color: #555555;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* For the progress bar in multi-step forms */
+.gdyup-form .progress-wrapper {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #333333;
+  border-radius: 0.25rem;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.gdyup-form .progress-bar {
+  height: 100%;
+  background-color: var(--gdyup-primary);
+  border-radius: 0.25rem;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Summary section styling */
+.gdyup-form .summary-section {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid var(--gdyup-border);
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.gdyup-form .summary-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gdyup-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gdyup-form .summary-label {
+  color: var(--gdyup-text-medium);
+}
+
+.gdyup-form .summary-value {
+  font-weight: 600;
+  color: var(--gdyup-text);
+}
+
+.gdyup-form .summary-value.highlight {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .enhanced-map-container {
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0.75rem 0;
+}
+
+.gdyup-form .route-map-mini {
+  background-color: rgba(31, 41, 55, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .route-map-mini .route-line {
+  height: 2px;
+  background: linear-gradient(to right, #3b82f6, var(--gdyup-primary), #f59e0b);
+  border-radius: 999px;
+  box-shadow: 0 0 4px rgba(var(--gdyup-primary-rgb), 0.3);
+}
+
+/* Additional component-specific styles */
+.gdyup-form .gdyup-section {
+  padding: 1rem;
+  margin: 0;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+.gdyup-form .gdyup-icon {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .jet-details {
+  background-color: var(--gdyup-bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--gdyup-border);
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.gdyup-form .jet-info-tabs {
+  width: 100%;
+}
+
+.gdyup-form .jet-tabs-list {
+  display: flex;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--gdyup-border);
+}
+
+.gdyup-form .seat-configuration {
+  padding: 0.5rem 0;
+}
+
+.gdyup-form .visualizer-container {
+  background-color: rgba(17, 24, 39, 0.4);
+  border-radius: 8px;
+  border: 1px solid var(--gdyup-border);
+  padding: 1rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .seat-visualizer {
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid var(--gdyup-border);
+  padding: 1rem;
+  margin-top: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.gdyup-form .enhanced-map {
+  height: auto;
+  min-height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--gdyup-border);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Form error styling */
+.gdyup-form .form-error {
+  color: #FF6B6B;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.gdyup-form .form-error svg {
+  color: #FF6B6B;
+  margin-right: 4px;
+}
+
+.gdyup-form .form-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+/* Badge styling */
+.gdyup-badge {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+  font-weight: 600;
+  box-shadow: 0 0 8px rgba(var(--gdyup-primary-rgb), 0.5);
+  border-radius: 9999px;
+  padding: 0.15rem 0.5rem;
+}
+
+.gdyup-badge:hover {
+  background-color: var(--gdyup-primary-hover);
+}
+
+/* Mobile-specific style improvements */
+@media (max-width: 768px) {
+  /* Flatten nested containers on mobile */
+  .gdyup-form .form-section {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  /* Reduce nesting depth by flattening inner containers */
+  .gdyup-form .form-section > div:not(.form-section-header):not(.tabs-list) {
+    border: none;
+    box-shadow: none;
+    padding: 0.5rem 0;
+    background: transparent;
+  }
+  
+  /* Optimize the swiper component on mobile */
+  .gdyup-form .gdyup-swiper {
+    height: calc(100vh - 160px);
+  }
+  
+  /* Make section headings more compact on mobile */
+  .gdyup-form .form-section-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .gdyup-form .form-section-title {
+    font-size: 1.125rem;
+  }
+  
+  /* Make cards less nested */
+  .gdyup-form .card, 
+  .gdyup-form .bg-gray-800\/50,
+  .gdyup-form .bg-gray-900\/60,
+  .gdyup-form .bg-gray-900\/90 {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid var(--gdyup-border);
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Enhanced tab styling */
+  .gdyup-form [role="tablist"] {
+    background-color: rgba(35, 37, 41, 0.5);
+    border-radius: 8px;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .gdyup-form [role="tab"] {
+    flex: 1;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    font-weight: 500;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .gdyup-form [role="tab"][data-state="active"] {
+    background-color: var(--gdyup-primary);
+    color: var(--gdyup-button-text);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Adjust specifics for our component classes */
+  .gdyup-form .jet-details {
+    margin-top: 0.5rem;
+  }
+  
+  .gdyup-form .visualizer-container {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    background-color: rgba(17, 24, 39, 0.6);
+  }
+  
+  .gdyup-form .seat-visualizer {
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .gdyup-form .enhanced-map {
+    min-height: 100px;
+  }
+  
+  /* Make form fields take less vertical space */
+  .gdyup-form label {
+    margin-bottom: 0.25rem;
+  }
+  
+  .gdyup-form input, 
+  .gdyup-form select, 
+  .gdyup-form textarea {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Make route map more pronounced */
+  .gdyup-form .route-map {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    margin: 0.75rem 0;
+  }
+  
+  .gdyup-form .enhanced-map-container {
+    margin: 0.5rem 0;
+  }
+  
+  .gdyup-form .route-map-mini {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+  }
+}
+
+/* Icon Adaptations for Form Context */
+
+/* For clarity, we add a few specific form icon overrides */
+.gdyup-form button svg,
+.gdyup-form a svg {
+  color: var(--gdyup-primary);
+  stroke: var(--gdyup-primary);
+  fill: none;
+  stroke-width: 2px;
+}
+
+/* Icons on primary buttons within forms */
+.gdyup-form .gdyup-button-primary svg,
+.gdyup-form .button-primary svg,
+.gdyup-form button[type="submit"] svg {
+  color: var(--gdyup-button-text);
+  stroke: var(--gdyup-button-text);
+  fill: none;
+  stroke-width: 2px;
+}
+
+/* Tailwind compatibility layer - only absolutely necessary overrides */
+.gdyup-form .bg-\[\#DAFF0D\] {
+  background-color: var(--gdyup-primary);
+  color: var(--gdyup-button-text);
+}
+
+.gdyup-form .text-\[\#DAFF0D\] {
+  color: var(--gdyup-primary);
+}
+
+.gdyup-form .border-\[\#DAFF0D\] {
+  border-color: var(--gdyup-primary);
+}
+
+/* Fix X button in forms to ensure visibility */
+.gdyup-form button:has(.h-4.w-4) svg {
+  color: currentColor;
+  stroke: currentColor;
+  stroke-width: 2px;
+}
+
+/* Star icon in favorites should match its intended color */
+.gdyup-form .fill-yellow-500 {
+  fill: #eab308;
+  color: #eab308;
+  stroke: #eab308;
+}

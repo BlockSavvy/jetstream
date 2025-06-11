@@ -13,9 +13,9 @@ const jetSpecificLayouts: Record<number, {
   8: { rows: 2, seatsPerRow: 4, skipPositions: [] },
   9: { rows: 3, seatsPerRow: 3, skipPositions: [] },
   10: { 
-    rows: 3, 
-    seatsPerRow: 4, 
-    skipPositions: [[2, 2], [2, 3]]  // Skip the last two seats in the last row (C3, C4)
+    rows: 5, 
+    seatsPerRow: 2, 
+    skipPositions: []  // 5x2 layout for 10-passenger jets
   },
   12: { rows: 3, seatsPerRow: 4, skipPositions: [] },
   14: { rows: 4, seatsPerRow: 4, skipPositions: [[3, 2], [3, 3]] }, // Skip last two seats in last row
@@ -107,7 +107,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing jet_id parameter' }, { status: 400 });
   }
   
-  const supabase = createRouteHandlerClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ 
+    cookies: () => cookieStore
+  });
   
   try {
     // First try to get from jet_interiors table which has the most accurate seat info
@@ -155,8 +158,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Jet not found' }, { status: 404 });
     }
     
-    // Get seat capacity from jets table
-    const seatCapacity = jetData.seat_capacity || 10; // Default to 10 if not specified
+    // Get seat capacity from jets table - use capacity field if available
+    const seatCapacity = jetData.capacity || jetData.seat_capacity || 10; // Try different field names
     const seatLayout = calculateOptimalLayout(seatCapacity);
     
     return NextResponse.json({

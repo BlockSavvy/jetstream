@@ -6,49 +6,31 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Use singleton pattern to prevent multiple client instances
-let clientInstance: SupabaseClient | null = null;
+let supabaseClient: SupabaseClient | null = null;
 
-// Track auth state
-let authMemoryStore: Record<string, string> = {};
-
-// Create a more robust storage mechanism for browsers with restricted localStorage
+/**
+ * Storage wrapper that works across browsers with various storage limitations
+ * Handles localStorage access errors gracefully and provides fallbacks
+ */
 const createEnhancedStorage = () => {
   return {
     getItem: (key: string): string | null => {
       try {
-        // First try from memory cache (fastest)
-        if (authMemoryStore[key]) {
-          return authMemoryStore[key];
-        }
-        
-        // Then try localStorage (more persistent)
         if (typeof window !== 'undefined') {
+          // Try localStorage first (more persistent)
           try {
-            const value = localStorage.getItem(key);
-            if (value) {
-              // Update memory cache
-              authMemoryStore[key] = value;
-              return value;
-            }
+            return localStorage.getItem(key);
           } catch (error) {
             console.warn('Error getting from localStorage:', error);
           }
-        }
-        
-        // Fallback to sessionStorage
-        if (typeof window !== 'undefined') {
+          
+          // Fall back to sessionStorage
           try {
-            const value = sessionStorage.getItem(key);
-            if (value) {
-              // Update memory cache
-              authMemoryStore[key] = value;
-              return value;
-            }
+            return sessionStorage.getItem(key);
           } catch (error) {
             console.warn('Error getting from sessionStorage:', error);
           }
         }
-        
         return null;
       } catch (error) {
         console.error('Error in getItem:', error);
@@ -58,22 +40,16 @@ const createEnhancedStorage = () => {
     
     setItem: (key: string, value: string): void => {
       try {
-        // Always update memory cache first (fastest)
-        authMemoryStore[key] = value;
-        
-        // Then try to update localStorage for persistence
         if (typeof window !== 'undefined') {
+          // Try to set in localStorage first
           try {
             localStorage.setItem(key, value);
-            // Also store timestamp for debugging/tracking
-            localStorage.setItem(`${key}_timestamp`, Date.now().toString());
           } catch (error) {
             console.warn('Error setting localStorage:', error);
             
-            // If localStorage fails, try sessionStorage as fallback
+            // Fall back to sessionStorage
             try {
               sessionStorage.setItem(key, value);
-              sessionStorage.setItem(`${key}_timestamp`, Date.now().toString());
             } catch (sessionError) {
               console.warn('Error setting sessionStorage:', sessionError);
             }
@@ -86,22 +62,17 @@ const createEnhancedStorage = () => {
     
     removeItem: (key: string): void => {
       try {
-        // Remove from memory cache
-        delete authMemoryStore[key];
-        
-        // Remove from localStorage
         if (typeof window !== 'undefined') {
+          // Clear from localStorage
           try {
             localStorage.removeItem(key);
-            localStorage.removeItem(`${key}_timestamp`);
           } catch (error) {
             console.warn('Error removing from localStorage:', error);
           }
           
-          // Also remove from sessionStorage
+          // Also clear from sessionStorage
           try {
             sessionStorage.removeItem(key);
-            sessionStorage.removeItem(`${key}_timestamp`);
           } catch (error) {
             console.warn('Error removing from sessionStorage:', error);
           }
@@ -113,34 +84,35 @@ const createEnhancedStorage = () => {
   };
 };
 
-// Create and export the supabase client
-export const createClient = (): SupabaseClient => {
-  // Return existing instance if available to prevent multiple instances
-  if (clientInstance) {
-    return clientInstance;
+/**
+ * Returns a Supabase client for client-side usage
+ * Uses singleton pattern to prevent multiple instances
+ */
+export function getSupabaseClient(): SupabaseClient {
+  if (supabaseClient) {
+    return supabaseClient;
   }
-  
-  // Initialize localStorage with auth persistence settings
-  if (typeof window !== 'undefined') {
-    try {
-      // Set a flag to indicate long auth persistence preferences
-      localStorage.setItem('auth_persistence', 'long');
-      localStorage.setItem('auth_persistence_days', '30');
-    } catch (e) {
-      console.warn('Could not set auth persistence in localStorage:', e);
-    }
-  }
-  
-  // Create enhanced storage that works consistently across devices
-  const enhancedStorage = createEnhancedStorage();
-  
+
   // Detect mobile browsers to optimize auth settings
   const isMobile = typeof window !== 'undefined' && 
     (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-     window.innerWidth < 768);
+    window.innerWidth < 768);
+    
+  // Create enhanced storage that works consistently across devices
+  const enhancedStorage = createEnhancedStorage();
   
-  // Create a new instance
-  clientInstance = createSupabaseClient(SUPABASE_URL, SUPABASE_KEY, {
+  // Get the correct site URL - will be used for redirects in auth calls
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 
+    (typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz');
+  
+  console.log(`🔐 Initializing Supabase client with app URL: ${appUrl}`);
+  
+  // Store the app URL in a global variable so other modules can use it
+  if (typeof window !== 'undefined') {
+    (window as any).GDYUP_APP_URL = appUrl;
+  }
+  
+  supabaseClient = createSupabaseClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
       persistSession: true,
       storageKey: 'sb-vjhrmizwqhmafkxbmfwa-auth-token',
@@ -157,31 +129,11 @@ export const createClient = (): SupabaseClient => {
     }
   });
   
-  // Add event listener for auth state changes to maintain memory cache
-  if (typeof window !== 'undefined') {
-    clientInstance.auth.onAuthStateChange((event, session) => {
-      try {
-        if (session) {
-          // Update memory store with user ID for faster access
-          authMemoryStore['jetstream_user_id'] = session.user.id;
-          
-          // Also update localStorage for redundancy
-          try {
-            localStorage.setItem('jetstream_user_id', session.user.id);
-            localStorage.setItem('jetstream_user_email', session.user.email || '');
-            localStorage.setItem('jetstream_session_time', Date.now().toString());
-          } catch (e) {
-            console.warn('Error updating localStorage on auth change:', e);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // Clear memory store
-          authMemoryStore = {};
-        }
-      } catch (e) {
-        console.warn('Error handling auth state change:', e);
-      }
-    });
-  }
-  
-  return clientInstance;
-}; 
+  return supabaseClient;
+}
+
+/**
+ * Legacy function for compatibility with existing code
+ * @deprecated Use getSupabaseClient() instead
+ */
+export const createClient = getSupabaseClient; 

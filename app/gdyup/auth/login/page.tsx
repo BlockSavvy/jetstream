@@ -1,0 +1,61 @@
+'use client'
+
+import React, { Suspense } from 'react'
+import Link from 'next/link'
+import { Container } from '@/app/gdyup/components/container'
+import { ChevronLeft, Loader2 } from 'lucide-react'
+import { LoginForm } from '@/app/gdyup/components/onboarding/login-form'
+import { useGdyupTheme } from '../../hooks/useGdyupTheme'
+import { cn } from '@/lib/utils'
+import GdyupClientLayout from '../../components/GdyupClientLayout'
+
+export default function LoginPage() {
+  const { 
+    getThemedTextClasses, 
+    getThemedBackgroundClasses
+  } = useGdyupTheme();
+
+  return (
+    <GdyupClientLayout>
+      <Container className={cn(
+        "flex flex-col min-h-screen",
+        getThemedBackgroundClasses('secondary')
+      )}>
+        <div className="relative flex-grow flex flex-col justify-center items-center w-full py-6 px-4">
+          <div className="absolute top-4 left-4">
+            <Link
+              href="/gdyup"
+              className={cn("inline-flex items-center gap-2 text-sm font-medium", getThemedTextClasses('primary'))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </Link>
+          </div>
+          
+          <div className="w-full max-w-md mx-auto text-center mb-6">
+            <h1 className={cn("text-2xl md:text-3xl font-bold mb-2", getThemedTextClasses())}>
+              Welcome Back
+            </h1>
+            <p className={cn("text-sm md:text-base", getThemedTextClasses('muted'))}>
+              Sign in to your GDY·UP account
+            </p>
+          </div>
+          
+          <div className={cn(
+            "w-full max-w-md rounded-xl p-6 shadow-xl", 
+            getThemedBackgroundClasses('card'),
+            "border border-gdyup-border"
+          )}>
+            <Suspense fallback={
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className={cn("h-8 w-8 animate-spin", getThemedTextClasses('primary'))} />
+              </div>
+            }>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </div>
+      </Container>
+    </GdyupClientLayout>
+  )
+} 

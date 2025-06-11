@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { createClient } from "@/lib/supabase";
-import { useAuth } from "@/components/auth-provider";
+import { getSupabaseClient } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-provider";
 import { toast } from 'sonner';
+import { NostrProfile, NostrFeatureFlags } from "@/types/nostr";
 
 export type UserTravelPreferences = {
   id?: string;
@@ -76,6 +77,32 @@ export type UserProfile = {
     show_company?: boolean;
     show_social_links?: boolean;
   };
+  // Nostr-related fields
+  npub?: string | null;
+  nip05?: string | null;
+  nip05_verified?: boolean;
+  lud16?: string | null;
+  nostr_pubkey?: string | null;
+  nostr_relays?: string[];
+  nostr_settings?: {
+    enabled: boolean;
+    broadcast_offers: boolean;
+    receive_messages: boolean;
+    enable_zaps: boolean;
+    private_mode: boolean;
+    auto_connect: boolean;
+  };
+  nostr_signature?: string | null;
+  feature_flags?: NostrFeatureFlags & {
+    [key: string]: boolean;
+  };
+  // Bitcoin wallet fields
+  btcWalletAddress?: string | null;
+  lnurl?: string | null;
+  lightningWalletType?: 'custodial' | 'non-custodial';
+  theme?: string | null;
+  role?: string | null;
+  affiliation?: string | null;
 };
 
 /**
@@ -90,13 +117,15 @@ export function useUserProfile() {
   // Use refs to prevent excessive profile fetching
   const profileFetchAttempted = useRef(false);
   const isFetchingProfile = useRef(false);
+  const fetchAttempts = useRef(0);
+  const MAX_FETCH_ATTEMPTS = 3;
   
   /**
    * Fetch user profile from Supabase
    */
   const fetchUserProfile = useCallback(async (userId: string) => {
-    // If already fetching or already attempted, skip
-    if (isFetchingProfile.current || !userId) {
+    // If already fetching or too many attempts, skip
+    if (isFetchingProfile.current || !userId || fetchAttempts.current >= MAX_FETCH_ATTEMPTS) {
       return;
     }
     
@@ -104,24 +133,103 @@ export function useUserProfile() {
       isFetchingProfile.current = true;
       setLoading(true);
       setError(null);
+      fetchAttempts.current += 1;
       
       console.log('Fetching profile for user:', userId);
       
-      const supabase = createClient();
-      const { data, error } = await supabase
+      const supabase = getSupabaseClient();
+      const { data, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
         
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setError('Failed to load profile');
-        return;
+      if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
+        
+        // If profile doesn't exist, create it
+        if (fetchError.code === 'PGRST116' || (fetchError.message && fetchError.message.includes('not found'))) {
+          console.log('Profile not found, attempting to create one');
+          
+          try {
+            const { data: userData } = await supabase.auth.getUser();
+            const email = userData?.user?.email || '';
+            
+            // Extract first and last name from email
+            let firstName = 'User';
+            let lastName = 'Profile';
+            
+            if (email) {
+              const emailName = email.split('@')[0];
+              // Try to split on common separators
+              const nameParts = emailName.split(/[._-]/);
+              if (nameParts.length > 1) {
+                firstName = nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1);
+                lastName = nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1);
+              } else {
+                // Just use the email name as first name
+                firstName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+              }
+            }
+            
+            // Ensure first_name is never null
+            if (!firstName || firstName.trim() === '') {
+              firstName = 'User';
+            }
+            
+            // Ensure last_name is never null
+            if (!lastName || lastName.trim() === '') {
+              lastName = email ? email.split('@')[0] : 'Profile';
+            }
+            
+            console.log(`Creating profile with name: ${firstName} ${lastName}, email: ${email}`);
+            
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert([{ 
+                id: userId, 
+                email,
+                first_name: firstName,
+                last_name: lastName,
+                full_name: `${firstName} ${lastName}`.trim(),
+                // Required fields from schema
+                user_type: 'traveler',
+                verification_status: 'pending',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                // Onboarding fields
+                onboarding_completed: false,
+                onboarding_step: 'profile',
+                profile_visibility: 'public',
+                has_jet: false
+              }])
+              .select('*')
+              .single();
+            
+            if (createError) {
+              console.error('Error creating profile:', createError);
+              setError('Failed to create profile');
+            } else if (newProfile) {
+              console.log('Profile created successfully:', newProfile);
+              setProfile(newProfile as UserProfile);
+              profileFetchAttempted.current = true;
+              return;
+            }
+          } catch (createErr) {
+            console.error('Error in profile creation:', createErr);
+            setError('Failed to create profile');
+          }
+        } else {
+          setError('Failed to load profile');
+        }
+      } else if (data) {
+        console.log('Profile fetched successfully:', data);
+        setProfile(data as UserProfile);
+        profileFetchAttempted.current = true;
+      } else {
+        console.log('No profile data found');
+        setError('No profile found');
       }
-      
-      setProfile(data as UserProfile);
-      profileFetchAttempted.current = true;
     } catch (err) {
       console.error('Unexpected error fetching profile:', err);
       setError('An unexpected error occurred');
@@ -142,7 +250,7 @@ export function useUserProfile() {
     
     try {
       setLoading(true);
-      const supabase = createClient();
+      const supabase = getSupabaseClient();
       
       // First, fetch the current profile to see what columns are available
       const { data: currentProfile, error: fetchError } = await supabase
@@ -217,21 +325,28 @@ export function useUserProfile() {
     if (user?.id) {
       // Reset the fetch attempted flag to force a new fetch
       profileFetchAttempted.current = false;
+      fetchAttempts.current = 0;
       fetchUserProfile(user.id);
     }
   }, [user, fetchUserProfile]);
   
   // Fetch profile on component mount or user change
   useEffect(() => {
-    if (user?.id && !profileFetchAttempted.current) {
+    // Only fetch if we have a userId and haven't attempted a fetch yet
+    if (user?.id && !profileFetchAttempted.current && !isFetchingProfile.current) {
+      console.log('Initial profile fetch for userId:', user.id);
       fetchUserProfile(user.id);
     } else if (!user) {
       // Reset profile when user logs out
       setProfile(null);
       setLoading(false);
       profileFetchAttempted.current = false;
+      fetchAttempts.current = 0;
     }
-  }, [user, fetchUserProfile]);
+    
+    // Don't add fetchUserProfile to the dependency array to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
   
   return {
     profile,

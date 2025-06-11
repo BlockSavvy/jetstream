@@ -9,8 +9,10 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const transactionId = searchParams.get('transactionId');
     const offerId = searchParams.get('offerId');
-    const format = searchParams.get('format') || 'html'; // html, pdf, wallet
-    const isTestMode = searchParams.get('test') === 'true' || transactionId?.startsWith('test-');
+    const format = searchParams.get('format') || 'html'; // html, pdf, wallet, qr
+    const isTestMode = searchParams.get('test') === 'true' || 
+                      transactionId?.startsWith('test-') || 
+                      process.env.NODE_ENV === 'development'; // Always treat as test mode in development
     
     if (!transactionId && !offerId) {
       return NextResponse.json({ error: 'Missing required parameter: transactionId or offerId' }, { status: 400 });
@@ -20,12 +22,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     
-    // For test transactions, we'll bypass auth checks
+    // For test transactions or development, we'll bypass auth checks
     if (!isTestMode && !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // For test transactions, return a mock boarding pass
+    // For test transactions or development mode, return a mock boarding pass
     if (isTestMode) {
       console.log('Generating test boarding pass');
       
@@ -35,6 +37,26 @@ export async function GET(request: NextRequest) {
           success: true,
           message: 'Test boarding pass generated for Apple Wallet',
           walletUrl: `/api/jetshare/appleWallet?id=${transactionId || offerId}&test=true&timestamp=${Date.now()}`,
+          boardingPass: {
+            id: transactionId || `test-boardingpass-${Date.now()}`,
+            flightNumber: 'JS1234',
+            departureLocation: 'New York (JFK)',
+            arrivalLocation: 'Los Angeles (LAX)',
+            departureTime: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+            arrivalTime: new Date(Date.now() + 86400000 + 21600000).toISOString(), // Tomorrow + 6 hours
+            passengerName: user?.email || 'Test Passenger',
+            gate: 'A12',
+            seat: '1A',
+            boardingTime: new Date(Date.now() + 86400000 - 3600000).toISOString(), // 1 hour before departure
+            status: 'CONFIRMED'
+          }
+        });
+      } else if (format === 'qr') {
+        // Return a URL for QR code display
+        return NextResponse.json({
+          success: true,
+          message: 'Test Nostr QR code generated successfully',
+          qrUrl: `/api/jetshare/mockBoardingPass?id=${transactionId || offerId}&test=true&format=qr&timestamp=${Date.now()}`,
           boardingPass: {
             id: transactionId || `test-boardingpass-${Date.now()}`,
             flightNumber: 'JS1234',
@@ -181,6 +203,14 @@ export async function GET(request: NextRequest) {
         success: true,
         message: 'Boarding pass generated for Apple Wallet',
         walletUrl: `/api/jetshare/appleWallet?id=${transactionData?.id || offerData.id}&timestamp=${Date.now()}`,
+        boardingPass
+      });
+    } else if (format === 'qr') {
+      // Return a URL for QR code display for Nostr
+      return NextResponse.json({
+        success: true,
+        message: 'Nostr QR code generated successfully',
+        qrUrl: `/api/jetshare/mockBoardingPass?id=${transactionData?.id || offerData.id}&format=qr&timestamp=${Date.now()}`,
         boardingPass
       });
     } else {

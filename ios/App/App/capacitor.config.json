@@ -1,0 +1,53 @@
+{
+	"appId": "app.gdyup.xyz",
+	"appName": "GDY·UP",
+	"webDir": "out",
+	"server": {
+		"url": "http://localhost:3000/gdyup",
+		"cleartext": true
+	},
+	"ios": {
+		"contentInset": "always",
+		"allowsLinkPreview": false,
+		"scrollEnabled": true,
+		"preferredContentMode": "mobile",
+		"handleApplicationNotifications": false,
+		"limitsNavigationsToAppBoundDomains": false,
+		"backgroundColor": "#000000",
+		"overrideUserAgent": "GDY-UP iOS App",
+		"appendUserAgent": "GDY-UP iOS",
+		"scheme": "http"
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 0,
+			"backgroundColor": "#000000",
+			"showSpinner": false,
+			"androidSplashResourceName": "splash",
+			"androidScaleType": "CENTER_CROP",
+			"iosSpinnerStyle": "small",
+			"splashFullScreen": true,
+			"splashImmersive": true,
+			"launchAutoHide": true
+		},
+		"StatusBar": {
+			"style": "dark",
+			"backgroundColor": "#000000",
+			"overlaysWebView": false
+		},
+		"Keyboard": {
+			"resize": "native",
+			"style": "dark",
+			"resizeOnFullScreen": true
+		},
+		"Haptics": {},
+		"Share": {}
+	},
+	"packageClassList": [
+		"HapticsPlugin",
+		"KeyboardPlugin",
+		"SharePlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}

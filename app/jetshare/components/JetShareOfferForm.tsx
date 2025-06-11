@@ -298,16 +298,62 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     const fetchAirports = async () => {
       try {
         setIsLoadingAirports(true);
-        const response = await fetch('/api/airports');
-        if (!response.ok) {
-          throw new Error('Failed to fetch airports');
+        
+        // First attempt with credentials
+        console.log('Attempting to fetch airports with credentials...');
+        const timestamp = new Date().getTime();
+        try {
+          const response = await fetch(`/api/airports?t=${timestamp}`, {
+            method: 'GET',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            },
+            credentials: 'include' // Include cookies
+          });
+          
+          // If we got a successful response, process it
+          if (response.ok) {
+            const data = await response.json();
+            setAirports(data);
+            console.log(`Loaded ${data.length} airports for autocomplete`);
+            return; // Exit early on success
+          } else if (response.status === 401) {
+            // If unauthorized, try the fallback approach
+            console.log('Auth error (401), trying alternative fetch for airports...');
+            // Continue to fallback attempt below
+          } else {
+            // For other error status codes
+            throw new Error(`Failed to fetch airports: ${response.status} ${response.statusText}`);
+          }
+        } catch (credentialError) {
+          console.error('Error in credentials fetch for airports:', credentialError);
+          // Continue to fallback attempt
         }
-        const data = await response.json();
-        setAirports(data);
-        console.log(`Loaded ${data.length} airports for autocomplete`);
+        
+        // Second attempt without credentials if the first failed
+        console.log('Trying direct fetch without auth for airports...');
+        const fallbackResponse = await fetch(`/api/airports?t=${timestamp + 1}`, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Content-Type': 'application/json',
+          },
+          // No credentials included
+        });
+        
+        if (!fallbackResponse.ok) {
+          throw new Error(`Fallback fetch failed: ${fallbackResponse.status}`);
+        }
+        
+        const fallbackData = await fallbackResponse.json();
+        setAirports(fallbackData);
+        console.log(`Loaded ${fallbackData.length} airports for autocomplete (fallback)`);
       } catch (error) {
         console.error('Error fetching airports:', error);
         // We'll fall back to the popular airports list if this fails
+        toast.error('Could not load airports list. Using popular airports instead.');
       } finally {
         setIsLoadingAirports(false);
       }
@@ -440,7 +486,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   const visualizerRef = useRef<JetSeatVisualizerRef>(null);
 
   // Add jet image paths state
-  const [jetImagePath, setJetImagePath] = useState<string>('/images/jets/gulfstream-g550.jpg');
+  const [jetImagePath, setJetImagePath] = useState<string>('/images/jets/gulfstream/g550.jpg');
   const [jetInteriorPath, setJetInteriorPath] = useState<string>('/images/jets/interior/interior1.jpg');
   const [showInteriorImage, setShowInteriorImage] = useState<boolean>(false);
   const [selectedTab, setSelectedTab] = useState<string>("specs");
@@ -878,17 +924,16 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 console.log('Found jet image in database:', data.jet.image_url);
                 setJetImagePath(data.jet.image_url);
               } else {
-                // Fallback to model-based path if no image in database
-                const modelForPath = value.toLowerCase().replace(/\s+/g, '-');
-                console.log(`No image in DB, using fallback: /images/jets/${modelForPath}.jpg`);
-                setJetImagePath(`/images/jets/${modelForPath}.jpg`);
+                // Use the placeholder image as fallback
+                console.log('No image in DB, using placeholder image');
+                setJetImagePath('/images/placeholder-jet.jpg');
               }
             })
             .catch(err => {
               console.error('Error fetching jet details:', err);
-              // Fallback on error
-              const modelForPath = value.toLowerCase().replace(/\s+/g, '-');
-              setJetImagePath(`/images/jets/${modelForPath}.jpg`);
+              // Use the placeholder image as fallback
+              console.log('Error fetching jet details, using placeholder image');
+              setJetImagePath('/images/placeholder-jet.jpg');
             });
         }
         
@@ -902,6 +947,7 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               
               // Update form with accurate seat count
               form.setValue('total_seats', data.seats);
+              console.log(`[DEBUG] Updated form total_seats to ${data.seats} from API`);
               
               // Update available seats to 50% by default
               form.setValue('available_seats', Math.floor(data.seats / 2));
@@ -936,6 +982,8 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 : 10;
               
               form.setValue('total_seats', validSeatCapacity);
+              console.log(`[DEBUG] Using fallback seat capacity: ${validSeatCapacity}`);
+              
               form.setValue('available_seats', Math.floor(validSeatCapacity / 2));
               
               // Calculate optimal layout with empty skipPositions
@@ -971,10 +1019,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
               setTimeout(() => {
                 if (visualizerRef.current) {
                   try {
-                    visualizerRef.current.openVisualizer();
-                    
-                    // Force synchronization with the form's total seats value
+                    // Force sync with current form values before opening
                     const currentTotalSeats = form.getValues('total_seats');
+                    console.log(`[DEBUG] Opening visualizer with current form total_seats: ${currentTotalSeats}`);
+                    
+                    // Open visualizer
+                    visualizerRef.current.openVisualizer();
                     
                     // Notify about seat configuration being ready
                     toast.success(`Seat layout ready - ${currentTotalSeats} total seats available`);
@@ -1228,10 +1278,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
     form.setValue('seat_split_configuration', oldFormatConfig);
     
     // Update the share ratio based on the seat selection percentage
-    const newRatio = config.selectionPercentage > 0 ? config.selectionPercentage : shareRatio;
+    const newRatio = config.selectionPercentage > 0 ? config.selectionPercentage : 
+      // Calculate ratio based on selected seats if percentage not provided
+      (config.totalSeats > 0 ? Math.round((config.selectedSeats.length / config.totalSeats) * 100) : shareRatio);
     
     if (newRatio !== shareRatio) {
-      console.log(`Updating share ratio from ${shareRatio} to ${newRatio}`);
+      console.log(`Updating share ratio from ${shareRatio} to ${newRatio} based on seat selection`);
       setShareRatio(newRatio);
       
       // Update the form's requested share amount based on the new ratio
@@ -1254,36 +1306,55 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
   
   // Function to update seat selection based on ratio
   const updateSeatSelectionByRatio = (ratio: number) => {
-    if (!visualizerRef.current || !totalSeats) return;
+    if (!visualizerRef.current || !form.getValues('total_seats')) return;
 
     // Get layout info from visualizer
     const layoutInfo = visualizerRef.current.getLayoutInfo();
     if (!layoutInfo || !layoutInfo.totalSeats) return;
 
+    console.log(`Updating seat selection based on ratio: ${ratio}%, totalSeats: ${layoutInfo.totalSeats}`);
+
     // Calculate how many seats should be selected based on ratio
     const totalSeatsCount = layoutInfo.totalSeats;
     const targetSeatCount = Math.max(0, Math.min(
       totalSeatsCount, 
-      Math.round((ratio / 100) * totalSeatsCount)
+      Math.ceil((ratio / 100) * totalSeatsCount) // Use Math.ceil to favor the creator for odd seats
     ));
 
-    // Get all possible seat IDs
+    console.log(`Target seat count: ${targetSeatCount} out of ${totalSeatsCount}`);
+
+    // Get all possible seat IDs based on the layout
     const allSeatIds: string[] = [];
     for (let row = 0; row < layoutInfo.rows; row++) {
       for (let col = 0; col < layoutInfo.seatsPerRow; col++) {
         const rowLetter = String.fromCharCode(65 + row); // A, B, C, etc.
-        allSeatIds.push(`${rowLetter}${col + 1}`);
+        const seatId = `${rowLetter}${col + 1}`;
+        allSeatIds.push(seatId);
       }
     }
 
-    // Take the first N seats (could be improved to select specific sections)
-    const seatsToSelect = allSeatIds.slice(0, targetSeatCount);
+    // Limit to the actual total seats
+    const validSeatIds = allSeatIds.slice(0, totalSeatsCount);
+
+    // Get seats from the front rows first (favor seats A1, A2, etc.)
+    const seatsToSelect = validSeatIds.slice(0, targetSeatCount);
+    
+    console.log(`Selected seats: ${seatsToSelect.join(', ')}`);
     
     // Update the visualizer
     visualizerRef.current.selectSeats(seatsToSelect);
     
-    // Log what happened
-    console.log(`Updated selection to ${seatsToSelect.length} seats based on ratio ${ratio}%`);
+    // Create configuration for update
+    const config: SeatConfiguration = {
+      jet_id: selectedJetId,
+      selectedSeats: seatsToSelect,
+      totalSeats: totalSeatsCount,
+      totalSelected: seatsToSelect.length,
+      selectionPercentage: ratio
+    };
+    
+    // Update split configuration
+    handleSplitConfigurationChange(config);
   };
   
   // Fix the seat visualization initialization by adding initial configuration
@@ -1611,12 +1682,12 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                         /* Exterior image - shown when specs tab is active */
                         <div className="w-full h-full">
                           <img 
-                            src={jetImagePath || "/images/jets/gulfstream-g550.jpg"}
+                            src={jetImagePath || "/images/jets/gulfstream/g550.jpg"}
                             alt={form.getValues('aircraft_model') || "Jet exterior"}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               console.error("Error loading exterior image:", e.currentTarget.src);
-                              e.currentTarget.src = "/images/jets/gulfstream-g550.jpg";
+                              e.currentTarget.src = "/images/placeholder-jet.jpg";
                             }}
                           />
                           <div className="absolute top-3 right-3">
@@ -2036,6 +2107,52 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                 </div>
                 
                 <div className="p-1">
+                  {(() => {
+                    const formTotalSeats = form.getValues('total_seats');
+                    console.log(`[DEBUG] About to render JetSeatVisualizer with ${formTotalSeats} seats`, { 
+                      selectedJet: form.getValues('aircraft_model'),
+                      optimalLayout
+                    });
+                    
+                    // Create a responsive optimal layout based on the exact seat count
+                    const createOptimalLayoutForSeats = (seatCount: number) => {
+                      // Optimize for common jet layouts
+                      let rows, seatsPerRow;
+                      
+                      if (seatCount <= 4) {
+                        rows = 2; 
+                        seatsPerRow = 2;
+                      } else if (seatCount <= 6) {
+                        rows = 2;
+                        seatsPerRow = 3;
+                      } else if (seatCount <= 9) {
+                        rows = 3;
+                        seatsPerRow = 3;
+                      } else if (seatCount <= 12) {
+                        rows = 3;
+                        seatsPerRow = 4;
+                      } else if (seatCount <= 16) {
+                        rows = 4;
+                        seatsPerRow = 4;
+                      } else {
+                        // For larger configurations
+                        rows = Math.ceil(seatCount / 4);
+                        seatsPerRow = 4;
+                      }
+                      
+                      return {
+                        rows,
+                        seatsPerRow,
+                        layoutType: 'custom' as const,
+                        totalSeats: seatCount,
+                        seatMap: {
+                          skipPositions: []
+                        }
+                      };
+                    };
+                    
+                    return null;
+                  })()}
                   <JetSeatVisualizer 
                     ref={visualizerRef}
                     jet_id={selectedJetId}
@@ -2051,15 +2168,47 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     showControls={false} // Hide default controls for cleaner UI
                     showLegend={false} // Hide the built-in legend since we have our own in the header
                     showSummary={false} // Hide the top-right selection summary
-                    customLayout={optimalLayout ? {
-                      rows: optimalLayout.rows,
-                      seatsPerRow: optimalLayout.seatsPerRow,
+                    customLayout={{
+                      rows: (() => {
+                        const totalSeats = form.getValues('total_seats') || 0;
+                        const aircraftModel = form.getValues('aircraft_model') || '';
+                        
+                        // Special case for Gulfstream G280 which has 10 seats
+                        if (totalSeats === 10 || aircraftModel === 'Gulfstream G280') {
+                          console.log('[DEBUG] Using special layout for Gulfstream G280: 5 rows x 2 seats');
+                          return 5; // 5 rows for G280
+                        }
+                        
+                        if (totalSeats <= 4) return 2;
+                        if (totalSeats <= 6) return 2;
+                        if (totalSeats <= 9) return 3;
+                        if (totalSeats <= 12) return 3;
+                        if (totalSeats <= 16) return 4;
+                        return Math.ceil(totalSeats / 4);
+                      })(),
+                      seatsPerRow: (() => {
+                        const totalSeats = form.getValues('total_seats') || 0;
+                        const aircraftModel = form.getValues('aircraft_model') || '';
+                        
+                        // Special case for Gulfstream G280 which has 10 seats
+                        if (totalSeats === 10 || aircraftModel === 'Gulfstream G280') {
+                          console.log('[DEBUG] Using special layout for Gulfstream G280: 5 rows x 2 seats');
+                          return 2; // 2 seats per row for G280
+                        }
+                        
+                        if (totalSeats <= 4) return 2;
+                        if (totalSeats <= 6) return 3;
+                        if (totalSeats <= 9) return 3;
+                        if (totalSeats <= 12) return 4;
+                        if (totalSeats <= 16) return 4;
+                        return 4;
+                      })(),
                       layoutType: 'custom',
-                      totalSeats: optimalLayout.totalSeats,
+                      totalSeats: form.getValues('total_seats'),
                       seatMap: {
-                        skipPositions: optimalLayout.skipPositions || []
+                        skipPositions: []
                       }
-                    } : undefined}
+                    }}
                     forceExactLayout={true} // Force the visualizer to use exactly the seats we specify
                   />
                 </div>
@@ -2134,6 +2283,10 @@ export default function JetShareOfferForm({ airportsList = [] as Airport[], edit
                     const newAvailableSeats = Math.max(1, Math.round((newRatio / 100) * totalSeatsVal));
                     form.setValue('available_seats', newAvailableSeats, { shouldValidate: true });
                     
+                    // Set the share ratio state
+                    setShareRatio(newRatio);
+                    
+                    // Update seat selection based on the new ratio
                     if (visualizerRef.current && showSeatVisualizer) {
                       updateSeatSelectionByRatio(newRatio);
                     }

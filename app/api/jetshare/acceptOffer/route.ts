@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         data: {
           guest_checkout: true,
           offer_id,
-          redirect_url: `/jetshare/payment/${offer_id}?t=${Date.now()}&from=guest&flow=listing_to_payment`
+          redirect_url: `/gdyup/payment/${offer_id}?t=${Date.now()}&from=guest&flow=listing_to_payment`
         }
       });
       
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       message: 'Offer accepted successfully',
       data: {
         offer: updatedOffer,
-        redirect_url: `/jetshare/payment/${offer_id}?t=${timestamp}&from=accept`,
+        redirect_url: `/gdyup/payment/${offer_id}?t=${timestamp}&from=accept`,
       }
     });
     

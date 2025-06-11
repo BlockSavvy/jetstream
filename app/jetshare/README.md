@@ -83,7 +83,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 npm run dev
 ```
 
-Access JetShare at: <http://localhost:3000/jetshare>
+Access JetShare at: <https://gdyup.xyz/jetshare>
 
 ## Debugging & Troubleshooting
 

@@ -40,6 +40,7 @@ Run the following SQL scripts in your Supabase SQL editor:
 ### Embedding Worker (`scripts/embedding-worker.ts`)
 
 The worker:
+
 - Processes records that need embeddings (NULL embedding field)
 - Handles multiple tables (jetshare_offers, flights, airports, jets)
 - Processes in priority order with configurable batch sizes
@@ -58,6 +59,7 @@ Each entity table (jetshare_offers, flights, airports, jets) has:
 ### Dimension Handling
 
 The system handles dimension mismatches between:
+
 - Cohere API (1024-dimensional embeddings)
 - Database requirement (1536-dimensional vectors)
 
@@ -77,11 +79,13 @@ The embedding worker supports these command-line options:
 To test the embedding system:
 
 1. Run the seed script to create test data:
+
    ```bash
    npx tsx scripts/seed-test-jetshare-offers.ts
    ```
 
 2. Run the embedding worker to generate embeddings:
+
    ```bash
    npx dotenv-cli -e .env.local -- npx tsx scripts/embedding-worker.ts --batch-size=30
    ```
@@ -132,4 +136,4 @@ Planned improvements:
 1. **Caching Layer**: Implement caching to reduce API calls
 2. **Webhook Support**: Add webhook notifications for embedding updates
 3. **Parallel Processing**: Enhance performance with parallel API calls
-4. **Monitoring Dashboard**: Add telemetry and monitoring 
+4. **Monitoring Dashboard**: Add telemetry and monitoring

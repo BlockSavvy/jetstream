@@ -16,11 +16,17 @@
 # misc
 .DS_Store
 *.pem
+# Exclude images except those in public folder
 *.png
 *.jpg
 *.jpeg
 *.gif
 *.svg
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.jpeg
+!public/**/*.gif
+!public/**/*.svg
 
 # debug
 npm-debug.log*
@@ -47,3 +53,8 @@ logs/
 # IDE
 .idea/
 .vscode/
+.cursor/
+.env.gdyup
+storybook-static/
+yarn.lock
+ios/App/App.xcworkspace/xcuserdata/

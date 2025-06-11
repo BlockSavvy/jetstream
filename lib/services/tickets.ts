@@ -226,8 +226,7 @@ export async function generateAndDeliverBoardingPasses(
             time: new Date(flight.departure_time).toLocaleTimeString(),
           };
           
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-            (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+          const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://gdyup.xyz';
           const boardingPassUrl = `${baseUrl}/flights/tickets/${ticket.id}`;
           
           await sendBoardingPassSMS(

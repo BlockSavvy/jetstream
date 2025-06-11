@@ -1,11 +1,11 @@
 // Define JetShare offer status types
-export type JetShareOfferStatus = 'open' | 'accepted' | 'completed';
+export type JetShareOfferStatus = 'open' | 'accepted' | 'completed' | 'paid' | 'accepted_but_unpaid' | 'available';
 
 // Define JetShare payment method types
-export type JetSharePaymentMethod = 'fiat' | 'crypto';
+export type JetSharePaymentMethod = 'fiat' | 'crypto' | 'stripe' | 'btcpay';
 
 // Define JetShare payment status types
-export type JetSharePaymentStatus = 'pending' | 'completed' | 'failed';
+export type JetSharePaymentStatus = 'pending' | 'paid' | 'completed' | 'failed' | 'expired';
 
 // Define JetShare offer type
 export interface JetShareOffer {
@@ -25,6 +25,10 @@ export interface JetShareOffer {
   available_seats?: number;
   created_at: string;
   updated_at: string;
+  payment_status?: JetSharePaymentStatus;
+  payment_method?: JetSharePaymentMethod;
+  payment_details?: any;
+  expires_at?: string;
   split_configuration?: {
     jetId: string;
     splitOrientation: 'horizontal' | 'vertical';
@@ -178,4 +182,16 @@ export interface CoinbaseCheckoutResponse {
   checkoutId: string;
   checkoutUrl: string;
   expiresAt: string;
+}
+
+// Define BTCPay Invoice response
+export interface BTCPayInvoiceResponse {
+  id: string;
+  storeId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  checkoutLink: string;
+  expiresAt: string;
+  metadata?: any;
 } 
