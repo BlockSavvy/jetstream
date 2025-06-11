@@ -1,8 +1,8 @@
 'use client';
 
-import * as React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { format, addDays, startOfWeek, addWeeks, isSameDay, isToday, isTomorrow, addMonths, subMonths } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Plane, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plane, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,10 +10,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Define props interface for serialization
 type DateChangeCallback = (date: Date | undefined) => void;
 
-interface ThemedDateTimePickerProps {
+interface EliteDateTimePickerProps {
   date: Date | undefined;
   setDate: DateChangeCallback;
-  label?: string;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -40,22 +39,21 @@ const timeSlots = [
 ];
 
 // Separate client component
-const ThemedDateTimePickerClient = ({
+const EliteDateTimePickerClient = ({
   date,
   setDate,
-  label = "Date and time",
   placeholder = "Select departure date & time",
   className,
   disabled = false,
-}: ThemedDateTimePickerProps) => {
+}: EliteDateTimePickerProps) => {
   const { getThemedTextClasses } = useGdyupTheme();
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [currentMonth, setCurrentMonth] = React.useState(new Date());
-  const [selectedTime, setSelectedTime] = React.useState('12:00');
-  const [step, setStep] = React.useState<'date' | 'time' | 'confirm'>('date');
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedTime, setSelectedTime] = useState('12:00');
+  const [step, setStep] = useState<'date' | 'time' | 'confirm'>('date');
 
   // Quick date selections
-  const quickDates = React.useMemo(() => {
+  const quickDates = useMemo(() => {
     const today = new Date();
     return [
       { label: 'Today', date: today, subtitle: format(today, 'MMM d') },
@@ -66,7 +64,7 @@ const ThemedDateTimePickerClient = ({
   }, []);
 
   // Generate calendar days
-  const generateCalendarDays = React.useCallback(() => {
+  const generateCalendarDays = useCallback(() => {
     const firstDay = startOfWeek(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1));
     const days = [];
     
@@ -453,6 +451,6 @@ const ThemedDateTimePickerClient = ({
 };
 
 // Define the exportable component
-export function ThemedDateTimePicker(props: ThemedDateTimePickerProps) {
-  return <ThemedDateTimePickerClient {...props} />;
-} 
+export function EliteDateTimePicker(props: EliteDateTimePickerProps) {
+  return <EliteDateTimePickerClient {...props} />;
+}

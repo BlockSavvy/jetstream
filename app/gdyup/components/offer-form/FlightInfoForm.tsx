@@ -8,7 +8,7 @@ import { format } from 'date-fns';
 import { FormNavigation } from './FormNavigation';
 import { ThemedIcon } from '../core/ThemedIcon';
 import { RiFlightTakeoffLine } from 'react-icons/ri';
-import { ThemedDateTimePicker } from '../ThemedDateTimePicker';
+import { EliteDateTimePicker } from '../EliteDateTimePicker';
 import LocationAutocomplete from '../LocationAutocomplete';
 import { Button } from '@/components/ui/button';
 
@@ -73,7 +73,7 @@ function InternalFlightInfoForm({
                   <FormLabel className={getThemedTextClasses()}>
                     Departure Date & Time
                   </FormLabel>
-                  <ThemedDateTimePicker
+                  <EliteDateTimePicker
                     date={field.value}
                     setDate={field.onChange}
                   />
