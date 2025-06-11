@@ -490,12 +490,12 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             <motion.div
               style={{
                 position: 'absolute' as const,
-                bottom: '140px', // Perfect positioning above concierge button
+                bottom: '120px', // Adjusted positioning
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 999999,
-                width: '200px',
-                height: '120px', // Semi-circle height
+                width: '160px', // Reduced width to fit screen
+                height: '100px', // Reduced height
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -516,12 +516,12 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '180px',
-                  height: '180px',
+                  width: '140px', // Reduced size
+                  height: '140px',
                   borderRadius: '50%',
                   background: `
                     conic-gradient(
-                      from 200deg,
+                      from 220deg,
                       transparent 0deg,
                       rgba(218, 255, 13, 0.1) 40deg,
                       rgba(218, 255, 13, 0.3) 80deg,
@@ -531,7 +531,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       transparent 200deg
                     )
                   `,
-                  filter: 'blur(8px)',
+                  filter: 'blur(6px)', // Reduced blur
                   zIndex: 1
                 }}
                 initial={{ rotate: -45, opacity: 0 }}
@@ -547,8 +547,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '160px',
-                  height: '160px',
+                  width: '120px', // Reduced size
+                  height: '120px',
                   zIndex: 2,
                   pointerEvents: 'none' as const
                 }}
@@ -558,21 +558,21 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 transition={{ duration: 1, delay: 0.2 }}
               >
                 <motion.path
-                  d="M 30 80 A 50 50 0 0 1 130 80"
+                  d="M 25 60 A 35 35 0 0 1 95 60" // Adjusted arc path for smaller size
                   fill="none"
                   stroke="rgba(218, 255, 13, 0.6)"
-                  strokeWidth="2"
+                  strokeWidth="1.5" // Thinner stroke
                   strokeLinecap="round"
-                  style={{ filter: 'drop-shadow(0 0 8px rgba(218, 255, 13, 0.4))' }}
+                  style={{ filter: 'drop-shadow(0 0 6px rgba(218, 255, 13, 0.4))' }}
                 />
               </motion.svg>
 
               {/* RADIAL MENU BUTTONS - PERFECT CIRCULAR POSITIONING */}
               {conciergeOptions.map((option, index) => {
-                // Calculate perfect circular positions
-                const radius = 70; // Distance from center
-                const startAngle = 210; // Start angle in degrees (bottom-left)
-                const arcSpan = 120; // Total arc span in degrees
+                // Calculate perfect circular positions - REDUCED RADIUS
+                const radius = 50; // Reduced from 70 to 50
+                const startAngle = 225; // Adjusted start angle for better centering
+                const arcSpan = 90; // Reduced arc span to keep within viewport
                 const angleStep = arcSpan / (conciergeOptions.length - 1);
                 const angle = startAngle + (index * angleStep);
                 const radian = (angle * Math.PI) / 180;
@@ -629,8 +629,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                     {/* Button Container with Glass Morphism */}
                     <motion.div
                       style={{
-                        width: '64px',
-                        height: '64px',
+                        width: '56px', // Slightly smaller buttons
+                        height: '56px',
                         borderRadius: '50%',
                         background: `
                           linear-gradient(135deg, 
@@ -642,8 +642,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                         WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
                         border: '2px solid rgba(0, 0, 0, 0.8)',
                         boxShadow: `
-                          0 12px 32px rgba(218, 255, 13, 0.4),
-                          0 6px 16px rgba(0, 0, 0, 0.3),
+                          0 8px 24px rgba(218, 255, 13, 0.4),
+                          0 4px 12px rgba(0, 0, 0, 0.3),
                           inset 0 1px 0 rgba(255, 255, 255, 0.4),
                           inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                         `,
@@ -656,20 +656,20 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                         overflow: 'hidden' as const
                       }}
                       whileHover={{ 
-                        scale: 1.15,
+                        scale: 1.1, // Reduced hover scale
                         boxShadow: `
-                          0 16px 40px rgba(218, 255, 13, 0.5),
-                          0 8px 20px rgba(0, 0, 0, 0.4),
+                          0 12px 32px rgba(218, 255, 13, 0.5),
+                          0 6px 16px rgba(0, 0, 0, 0.4),
                           inset 0 1px 0 rgba(255, 255, 255, 0.5),
                           inset 0 -1px 0 rgba(0, 0, 0, 0.3)
                         `,
-                        y: -4,
-                        rotate: 5
+                        y: -3, // Reduced hover movement
+                        rotate: 3 // Reduced rotation
                       }}
                       whileTap={{ 
                         scale: 0.95,
-                        y: -2,
-                        rotate: -2
+                        y: -1,
+                        rotate: -1
                       }}
                     >
                       {/* Animated Background Shine */}
@@ -698,7 +698,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       
                       {/* Icon */}
                       {React.createElement(option.icon, { 
-                        size: 24,
+                        size: 20, // Smaller icon
                         strokeWidth: 2.5,
                         color: '#000000',
                         style: { 
@@ -711,18 +711,18 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       <motion.div
                         style={{
                           position: 'absolute' as const,
-                          top: '-4px',
-                          left: '-4px',
-                          right: '-4px',
-                          bottom: '-4px',
+                          top: '-3px',
+                          left: '-3px',
+                          right: '-3px',
+                          bottom: '-3px',
                           borderRadius: '50%',
-                          border: '2px solid rgba(218, 255, 13, 0.6)',
+                          border: '1.5px solid rgba(218, 255, 13, 0.6)',
                           opacity: 0,
                           pointerEvents: 'none' as const
                         }}
                         animate={{ 
                           opacity: [0, 0.8, 0],
-                          scale: [1, 1.1, 1.2]
+                          scale: [1, 1.05, 1.1]
                         }}
                         transition={{ 
                           duration: 2,
@@ -737,18 +737,18 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                     <motion.div
                       style={{
                         position: 'absolute' as const,
-                        top: '75px',
+                        top: '65px', // Adjusted for smaller buttons
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        padding: '6px 12px',
+                        padding: '4px 8px', // Smaller padding
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         backdropFilter: 'blur(20px)',
                         WebkitBackdropFilter: 'blur(20px)',
-                        borderRadius: '12px',
+                        borderRadius: '8px', // Smaller radius
                         border: '1px solid rgba(218, 255, 13, 0.3)',
                         whiteSpace: 'nowrap' as const,
                         pointerEvents: 'none' as const,
-                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)' // Reduced shadow
                       }}
                       initial={{ opacity: 0, y: 10, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -759,11 +759,11 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       }}
                     >
                       <span style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.65rem', // Smaller text
                         fontWeight: '600',
                         color: '#FFFFFF',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                        letterSpacing: '0.3px'
+                        textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                        letterSpacing: '0.2px'
                       }}>
                         {option.label}
                       </span>
@@ -771,10 +771,10 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       {/* Label Arrow */}
                       <div style={{
                         position: 'absolute' as const,
-                        top: '-4px',
+                        top: '-3px', // Adjusted for smaller label
                         left: '50%',
-                        width: '8px',
-                        height: '8px',
+                        width: '6px', // Smaller arrow
+                        height: '6px',
                         backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         borderLeft: '1px solid rgba(218, 255, 13, 0.3)',
                         borderTop: '1px solid rgba(218, 255, 13, 0.3)',
@@ -792,8 +792,8 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                   top: '50%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '160px',
-                  height: '160px',
+                  width: '120px', // Reduced size
+                  height: '120px',
                   zIndex: 3,
                   pointerEvents: 'none' as const
                 }}
@@ -803,26 +803,26 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
                 {conciergeOptions.map((_, index) => {
-                  const radius = 70;
-                  const startAngle = 210;
-                  const arcSpan = 120;
+                  const radius = 50; // Match the button radius
+                  const startAngle = 225;
+                  const arcSpan = 90;
                   const angleStep = arcSpan / (conciergeOptions.length - 1);
                   const angle = startAngle + (index * angleStep);
                   const radian = (angle * Math.PI) / 180;
                   
-                  const x = 80 + Math.cos(radian) * radius;
-                  const y = 80 + Math.sin(radian) * radius;
+                  const x = 60 + Math.cos(radian) * radius; // Adjusted center point
+                  const y = 60 + Math.sin(radian) * radius;
                   
                   return (
                     <motion.line
                       key={index}
-                      x1="80"
-                      y1="80"
+                      x1="60" // Adjusted center
+                      y1="60"
                       x2={x}
                       y2={y}
                       stroke="rgba(218, 255, 13, 0.2)"
-                      strokeWidth="1"
-                      strokeDasharray="2,4"
+                      strokeWidth="0.8" // Thinner lines
+                      strokeDasharray="1,3" // Smaller dashes
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={{ pathLength: 1, opacity: 1 }}
                       exit={{ pathLength: 0, opacity: 0 }}
