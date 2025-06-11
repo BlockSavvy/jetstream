@@ -486,195 +486,355 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               onClick={() => setConciergeExpanded(false)} // Click outside to close
             />
             
+            {/* CIRCULAR RADIAL MENU - ABSOLUTE MASTERPIECE */}
             <motion.div
               style={{
                 position: 'absolute' as const,
-                bottom: '100px', // Perfect positioning above nav
+                bottom: '140px', // Perfect positioning above concierge button
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 999999,
+                width: '200px',
+                height: '120px', // Semi-circle height
                 display: 'flex',
-                flexDirection: 'column' as const,
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '20px',
-                backgroundColor: 'rgba(0, 0, 0, 0.85)', // Slightly more transparent
-                backdropFilter: 'blur(30px) saturate(1.8)', // Enhanced glassmorphism
-                WebkitBackdropFilter: 'blur(30px) saturate(1.8)',
-                borderRadius: '24px', // More rounded for 2025
-                border: '1px solid rgba(218, 255, 13, 0.4)',
-                boxShadow: `
-                  0 20px 60px rgba(0, 0, 0, 0.4),
-                  0 0 30px rgba(218, 255, 13, 0.2),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.1)
-                `, // Multi-layer premium shadows
-                minWidth: '240px',
-                // Premium glassmorphism effect
-                background: `
-                  linear-gradient(145deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%),
-                  linear-gradient(145deg, rgba(218, 255, 13, 0.05) 0%, rgba(218, 255, 13, 0.02) 100%)
-                `
+                pointerEvents: 'none' as const, // Allow clicks through the container
               }}
-              initial={{ opacity: 0, y: 40, scale: 0.7 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.3 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.3 }}
               transition={{ 
-                duration: 0.4, 
-                ease: [0.25, 0.46, 0.45, 0.94] // Premium cubic bezier
+                duration: 0.5, 
+                ease: [0.25, 0.46, 0.45, 0.94] 
               }}
             >
-              {/* Premium Panel Header */}
+              {/* Glowing Arc Background - PURE AESTHETIC MAGIC */}
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
                 style={{
-                  marginBottom: '16px',
-                  textAlign: 'center' as const
+                  position: 'absolute' as const,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '180px',
+                  height: '180px',
+                  borderRadius: '50%',
+                  background: `
+                    conic-gradient(
+                      from 200deg,
+                      transparent 0deg,
+                      rgba(218, 255, 13, 0.1) 40deg,
+                      rgba(218, 255, 13, 0.3) 80deg,
+                      rgba(218, 255, 13, 0.5) 100deg,
+                      rgba(218, 255, 13, 0.3) 120deg,
+                      rgba(218, 255, 13, 0.1) 160deg,
+                      transparent 200deg
+                    )
+                  `,
+                  filter: 'blur(8px)',
+                  zIndex: 1
                 }}
-              >
-                <span style={{
-                  fontSize: '1rem',
-                  fontWeight: '700',
-                  color: '#DAFF0D',
-                  letterSpacing: '1px',
-                  textShadow: '0 2px 8px rgba(0,0,0,0.8)',
-                  textTransform: 'uppercase' as const,
-                  background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>
-                  AI Concierge
-                </span>
-                <div style={{
-                  width: '40px',
-                  height: '2px',
-                  background: 'linear-gradient(90deg, transparent 0%, #DAFF0D 50%, transparent 100%)',
-                  margin: '8px auto 0',
-                  borderRadius: '1px'
-                }} />
-              </motion.div>
+                initial={{ rotate: -45, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 45, opacity: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
 
-              {/* Elite Button Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '16px', // More generous spacing
-                alignItems: 'center',
-                justifyItems: 'center',
-                marginBottom: '16px'
-              }}>
-                {conciergeOptions.map((option, index) => (
+              {/* Arc Border - STUNNING VISUAL GUIDE */}
+              <motion.svg
+                style={{
+                  position: 'absolute' as const,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '160px',
+                  height: '160px',
+                  zIndex: 2,
+                  pointerEvents: 'none' as const
+                }}
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                exit={{ pathLength: 0, opacity: 0 }}
+                transition={{ duration: 1, delay: 0.2 }}
+              >
+                <motion.path
+                  d="M 30 80 A 50 50 0 0 1 130 80"
+                  fill="none"
+                  stroke="rgba(218, 255, 13, 0.6)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  style={{ filter: 'drop-shadow(0 0 8px rgba(218, 255, 13, 0.4))' }}
+                />
+              </motion.svg>
+
+              {/* RADIAL MENU BUTTONS - PERFECT CIRCULAR POSITIONING */}
+              {conciergeOptions.map((option, index) => {
+                // Calculate perfect circular positions
+                const radius = 70; // Distance from center
+                const startAngle = 210; // Start angle in degrees (bottom-left)
+                const arcSpan = 120; // Total arc span in degrees
+                const angleStep = arcSpan / (conciergeOptions.length - 1);
+                const angle = startAngle + (index * angleStep);
+                const radian = (angle * Math.PI) / 180;
+                
+                // Perfect polar coordinate positioning
+                const x = Math.cos(radian) * radius;
+                const y = Math.sin(radian) * radius;
+                
+                return (
                   <motion.div
                     key={option.id}
-                    initial={{ opacity: 0, scale: 0.4, y: 30 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.4, y: 15 }}
-                    transition={{ 
-                      duration: 0.4, 
-                      delay: index * 0.1 + 0.2, 
-                      ease: [0.25, 0.46, 0.45, 0.94]
-                    }}
-                    style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column' as const, 
-                      alignItems: 'center',
+                    style={{
+                      position: 'absolute' as const,
+                      left: '50%',
+                      top: '50%',
+                      transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
+                      zIndex: 10,
+                      pointerEvents: 'auto' as const,
                       cursor: 'pointer'
                     }}
+                    initial={{ 
+                      opacity: 0, 
+                      scale: 0.2,
+                      x: 0,
+                      y: 0
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: 1,
+                      x: x,
+                      y: y
+                    }}
+                    exit={{ 
+                      opacity: 0, 
+                      scale: 0.2,
+                      x: 0,
+                      y: 0
+                    }}
+                    transition={{ 
+                      duration: 0.6, 
+                      delay: index * 0.15 + 0.3,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 20
+                    }}
                     onClick={() => {
-                      console.log('[MobileNavBar] Concierge option clicked:', option.id);
+                      console.log('[MobileNavBar] Radial option clicked:', option.id);
                       option.action();
                       setConciergeExpanded(false);
                       triggerHaptic('medium');
                     }}
                   >
+                    {/* Button Container with Glass Morphism */}
                     <motion.div
                       style={{
-                        width: '56px',
-                        height: '56px',
-                        borderRadius: '18px', // Perfect rounded square
-                        background: 'linear-gradient(135deg, #DAFF0D 0%, #B8E600 100%)',
-                        color: '#000000',
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        background: `
+                          linear-gradient(135deg, 
+                            rgba(218, 255, 13, 0.95) 0%, 
+                            rgba(184, 230, 0, 0.9) 100%
+                          )
+                        `,
+                        backdropFilter: 'blur(20px) saturate(1.5)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
                         border: '2px solid rgba(0, 0, 0, 0.8)',
                         boxShadow: `
-                          0 8px 24px rgba(218, 255, 13, 0.3),
-                          0 4px 12px rgba(0, 0, 0, 0.3),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.3)
+                          0 12px 32px rgba(218, 255, 13, 0.4),
+                          0 6px 16px rgba(0, 0, 0, 0.3),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                          inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                         `,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
                         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        marginBottom: '10px',
-                        position: 'relative' as const
+                        position: 'relative' as const,
+                        overflow: 'hidden' as const
                       }}
                       whileHover={{ 
-                        scale: 1.05,
+                        scale: 1.15,
                         boxShadow: `
-                          0 12px 30px rgba(218, 255, 13, 0.4),
-                          0 6px 16px rgba(0, 0, 0, 0.3),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.4)
+                          0 16px 40px rgba(218, 255, 13, 0.5),
+                          0 8px 20px rgba(0, 0, 0, 0.4),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                          inset 0 -1px 0 rgba(0, 0, 0, 0.3)
                         `,
-                        y: -2
+                        y: -4,
+                        rotate: 5
                       }}
                       whileTap={{ 
                         scale: 0.95,
-                        y: 0
+                        y: -2,
+                        rotate: -2
                       }}
                     >
+                      {/* Animated Background Shine */}
+                      <motion.div
+                        style={{
+                          position: 'absolute' as const,
+                          top: '-50%',
+                          left: '-50%',
+                          width: '200%',
+                          height: '200%',
+                          background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)',
+                          transform: 'rotate(-45deg)',
+                          opacity: 0
+                        }}
+                        animate={{ 
+                          opacity: [0, 1, 0],
+                          x: ['-100%', '100%']
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          delay: index * 0.5 + 1,
+                          repeat: Infinity,
+                          repeatDelay: 3
+                        }}
+                      />
+                      
+                      {/* Icon */}
                       {React.createElement(option.icon, { 
-                        size: 22,
+                        size: 24,
                         strokeWidth: 2.5,
-                        color: '#000000'
+                        color: '#000000',
+                        style: { 
+                          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                          zIndex: 2
+                        }
                       })}
+                      
+                      {/* Subtle pulse ring */}
+                      <motion.div
+                        style={{
+                          position: 'absolute' as const,
+                          top: '-4px',
+                          left: '-4px',
+                          right: '-4px',
+                          bottom: '-4px',
+                          borderRadius: '50%',
+                          border: '2px solid rgba(218, 255, 13, 0.6)',
+                          opacity: 0,
+                          pointerEvents: 'none' as const
+                        }}
+                        animate={{ 
+                          opacity: [0, 0.8, 0],
+                          scale: [1, 1.1, 1.2]
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          delay: index * 0.3 + 0.5,
+                          repeat: Infinity,
+                          repeatDelay: 4
+                        }}
+                      />
                     </motion.div>
                     
-                    <motion.span
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: index * 0.1 + 0.4 }}
+                    {/* Floating Label with Perfect Positioning */}
+                    <motion.div
                       style={{
-                        fontSize: '0.7rem',
-                        fontWeight: '600',
-                        textAlign: 'center' as const,
-                        color: '#FFFFFF',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                        maxWidth: '60px',
-                        lineHeight: '1.2',
-                        letterSpacing: '0.3px'
+                        position: 'absolute' as const,
+                        top: '75px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        padding: '6px 12px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(218, 255, 13, 0.3)',
+                        whiteSpace: 'nowrap' as const,
+                        pointerEvents: 'none' as const,
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)'
+                      }}
+                      initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 5, scale: 0.8 }}
+                      transition={{ 
+                        duration: 0.4,
+                        delay: index * 0.1 + 0.7 
                       }}
                     >
-                      {option.label}
-                    </motion.span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: '#FFFFFF',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                        letterSpacing: '0.3px'
+                      }}>
+                        {option.label}
+                      </span>
+                      
+                      {/* Label Arrow */}
+                      <div style={{
+                        position: 'absolute' as const,
+                        top: '-4px',
+                        left: '50%',
+                        width: '8px',
+                        height: '8px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                        borderLeft: '1px solid rgba(218, 255, 13, 0.3)',
+                        borderTop: '1px solid rgba(218, 255, 13, 0.3)',
+                        transform: 'translateX(-50%) rotate(45deg)'
+                      }} />
+                    </motion.div>
                   </motion.div>
-                ))}
-              </div>
+                );
+              })}
 
-              {/* Premium Panel Footer */}
-              <motion.div
+              {/* Central Connection Lines - STUNNING VISUAL EFFECT */}
+              <motion.svg
+                style={{
+                  position: 'absolute' as const,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  width: '160px',
+                  height: '160px',
+                  zIndex: 3,
+                  pointerEvents: 'none' as const
+                }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ delay: 0.6 }}
-                style={{
-                  textAlign: 'center' as const,
-                  paddingTop: '8px',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.1)'
-                }}
+                transition={{ duration: 0.8, delay: 0.6 }}
               >
-                <span style={{
-                  fontSize: '0.65rem',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  fontStyle: 'italic',
-                  letterSpacing: '0.2px'
-                }}>
-                  Tap outside to close
-                </span>
-              </motion.div>
+                {conciergeOptions.map((_, index) => {
+                  const radius = 70;
+                  const startAngle = 210;
+                  const arcSpan = 120;
+                  const angleStep = arcSpan / (conciergeOptions.length - 1);
+                  const angle = startAngle + (index * angleStep);
+                  const radian = (angle * Math.PI) / 180;
+                  
+                  const x = 80 + Math.cos(radian) * radius;
+                  const y = 80 + Math.sin(radian) * radius;
+                  
+                  return (
+                    <motion.line
+                      key={index}
+                      x1="80"
+                      y1="80"
+                      x2={x}
+                      y2={y}
+                      stroke="rgba(218, 255, 13, 0.2)"
+                      strokeWidth="1"
+                      strokeDasharray="2,4"
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      exit={{ pathLength: 0, opacity: 0 }}
+                      transition={{ 
+                        duration: 0.6,
+                        delay: index * 0.2 + 0.8,
+                        ease: "easeOut"
+                      }}
+                    />
+                  );
+                })}
+              </motion.svg>
             </motion.div>
           </>
         )}
