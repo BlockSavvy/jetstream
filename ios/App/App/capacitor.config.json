@@ -3,7 +3,7 @@
 	"appName": "GDY·UP",
 	"webDir": "out",
 	"server": {
-		"url": "https://gdyup.xyz/gdyup",
+		"url": "http://localhost:3000/gdyup",
 		"cleartext": true
 	},
 	"ios": {
@@ -16,7 +16,7 @@
 		"backgroundColor": "#000000",
 		"overrideUserAgent": "GDY-UP iOS App",
 		"appendUserAgent": "GDY-UP iOS",
-		"scheme": "https"
+		"scheme": "http"
 	},
 	"plugins": {
 		"SplashScreen": {

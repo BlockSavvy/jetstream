@@ -152,6 +152,10 @@ const isGdyupRoute = (path: string): boolean => {
   return path.startsWith('/gdyup') || 
          path.startsWith('/api/gdyup') || 
          path.startsWith('/api/jetshare') || // Shared API
+         path.startsWith('/api/flights') ||   // 🚀 CRITICAL: GDYUP needs flights API
+         path.startsWith('/api/airports') ||  // 🚀 CRITICAL: GDYUP needs airports API
+         path.startsWith('/api/auth') ||      // 🚀 CRITICAL: GDYUP needs auth API
+         path.startsWith('/api/nostr') ||     // 🚀 GDYUP uses Nostr
          path === '/' ||
          !!path.match(/\.(jpg|jpeg|png|gif|svg|ico|css|js)$/);
 };
@@ -159,13 +163,21 @@ const isGdyupRoute = (path: string): boolean => {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   
-  // CRITICAL FIX: Always bypass middleware for airports and jets API requests
+  // 🚀 CRITICAL FIX: Always bypass middleware for essential API requests
   if (pathname === '/api/airports' || 
       pathname.startsWith('/api/airports?') ||
+      pathname.startsWith('/api/airports/') ||
+      pathname === '/api/flights' ||
+      pathname.startsWith('/api/flights?') ||
+      pathname.startsWith('/api/flights/') ||
       pathname.startsWith('/api/jets/') ||
       pathname === '/api/gdyup/jets' ||
-      pathname.startsWith('/api/gdyup/jets/')) {
+      pathname.startsWith('/api/gdyup/jets/') ||
+      pathname.startsWith('/api/gdyup/dashboard') ||
+      pathname.startsWith('/api/auth/') ||
+      pathname.startsWith('/api/nostr/')) {
     // Return immediately, allowing direct access to the API route
+    console.log(`🚀 BYPASSING MIDDLEWARE for critical API: ${pathname}`);
     return NextResponse.next();
   }
   

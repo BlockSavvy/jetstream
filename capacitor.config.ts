@@ -4,9 +4,9 @@ const config: CapacitorConfig = {
   appId: 'app.gdyup.xyz',
   appName: 'GDY·UP',
   webDir: 'out',
-  // Use remote server with our mobile nav fixes
+  // 🚀 DEVELOPMENT MODE: Use local server with working APIs
   server: {
-    url: 'https://gdyup.xyz/gdyup',
+    url: 'http://localhost:3000/gdyup',
     cleartext: true
   },
   ios: {
@@ -19,7 +19,7 @@ const config: CapacitorConfig = {
     backgroundColor: '#000000',
     overrideUserAgent: 'GDY-UP iOS App',
     appendUserAgent: 'GDY-UP iOS',
-    scheme: 'https'
+    scheme: 'http' // Changed from https to http for local development
   },
   plugins: {
     SplashScreen: {
