@@ -747,12 +747,12 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
   }
   
   return (
-    <div className="flex-1 max-w-screen-md mx-auto" data-component="JetShareOfferForm">
+    <div className="flex-1 max-w-screen-md mx-auto min-h-screen" data-component="JetShareOfferForm">
       {/* Dev theme switcher */}
       <ThemeSwitcher />
       
-      {/* Main form section */}
-      <div className="pb-32">
+      {/* Main form section with proper scrolling */}
+      <div className="pb-[180px] min-h-screen">
         {renderCurrentSection()}
       </div>
       

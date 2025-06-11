@@ -61,14 +61,16 @@ export function FormNavigation({
   
   return (
     <div className={cn(
-      "fixed left-0 right-0 w-full px-4 py-2 bg-black/90 backdrop-blur-md border-t border-gdyup-border z-[100]",
-      // Position above mobile nav bar (mobile nav is about 80px high with safe area)
-      "bottom-20 md:bottom-4",
+      "fixed left-0 right-0 w-full z-[100]",
+      // iOS-style button positioning with proper safe area handling
+      "bottom-0 pb-[calc(80px+env(safe-area-inset-bottom,0px))]",
+      "bg-black/95 backdrop-blur-xl border-t border-gdyup-border/50",
+      "px-4 pt-4 pb-4",
       className
     )}>
       <div className="max-w-screen-md mx-auto">
-        {/* Navigation buttons with step indicators between them */}
-        <div className="flex justify-between items-center">
+        {/* iOS-style form navigation */}
+        <div className="flex items-center justify-between gap-4">
           {/* Back button - disabled if it's the first step */}
           <Button
             type="button"
@@ -79,26 +81,31 @@ export function FormNavigation({
               }
             }}
             disabled={isFirstStep}
+            variant="outline"
             className={cn(
-              "w-32 md:w-36 h-11 rounded-md font-medium text-contrast-light",
-              isFirstStep ? "opacity-50 cursor-not-allowed" : "",
-              getThemedButtonClasses()
+              "flex-1 max-w-[140px] h-12 rounded-xl font-semibold",
+              "border-2 border-gdyup-border bg-transparent text-gdyup-text",
+              "hover:bg-gdyup-text/10 transition-all duration-200",
+              isFirstStep ? "opacity-30 cursor-not-allowed" : "opacity-100",
+              "flex items-center justify-center gap-2"
             )}
           >
             <ThemedIcon icon={ChevronLeft} size={20} className="mr-1" />
             {backLabel}
           </Button>
           
-          {/* Step indicators */}
-          <div className="flex justify-center">
+          {/* Elite step indicators */}
+          <div className="flex items-center justify-center gap-2">
             {Array.from({ length: totalSteps }).map((_, index) => (
               <div
                 key={index}
                 className={cn(
-                  "w-2 h-2 mx-1 rounded-full",
+                  "transition-all duration-300 rounded-full",
                   index === currentStep 
-                    ? getThemedBackgroundClasses('primary')
-                    : "bg-gray-600"
+                    ? "w-8 h-2 bg-gdyup-primary shadow-sm" 
+                    : index < currentStep
+                    ? "w-2 h-2 bg-gdyup-primary/60"
+                    : "w-2 h-2 bg-gdyup-border"
                 )}
               />
             ))}
@@ -115,9 +122,12 @@ export function FormNavigation({
               }}
               disabled={isSubmitting}
               className={cn(
-                "w-32 md:w-36 h-11 rounded-md font-medium text-contrast-light",
+                "flex-1 max-w-[140px] h-12 rounded-xl font-semibold",
+                "bg-gdyup-primary text-gdyup-button-text border-0",
+                "hover:brightness-110 active:scale-95 transition-all duration-200",
+                "shadow-lg shadow-gdyup-primary/25",
                 isSubmitting ? "opacity-70 cursor-not-allowed" : "",
-                getThemedButtonClasses()
+                "flex items-center justify-center gap-2"
               )}
             >
               {isSubmitting ? (
@@ -141,8 +151,11 @@ export function FormNavigation({
                 onNext?.();
               }}
               className={cn(
-                "w-32 md:w-36 h-11 rounded-md font-medium text-contrast-light",
-                getThemedButtonClasses()
+                "flex-1 max-w-[140px] h-12 rounded-xl font-semibold",
+                "bg-gdyup-primary text-gdyup-button-text border-0",
+                "hover:brightness-110 active:scale-95 transition-all duration-200",
+                "shadow-lg shadow-gdyup-primary/25",
+                "flex items-center justify-center gap-2"
               )}
             >
               {nextLabel}

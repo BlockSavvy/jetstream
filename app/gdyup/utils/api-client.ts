@@ -8,11 +8,19 @@ const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capaci
 
 // API base URL configuration
 const getApiBaseUrl = (): string => {
-  if (isDevelopment) {
-    return 'http://localhost:3000';
+  // Always use the remote server for real data
+  // This ensures we never use fallback data and always get live database data
+  if (isCapacitorApp) {
+    // In Capacitor app, always use remote server
+    return 'https://gdyup.xyz';
   }
   
-  // In production (native app), use the remote server
+  if (isDevelopment) {
+    // In web development, still use remote server to get real data
+    return 'https://gdyup.xyz';
+  }
+  
+  // In production web, use remote server
   return 'https://gdyup.xyz';
 };
 
@@ -125,13 +133,18 @@ export const apiClient = {
     return [];
   },
   
-  // Helper method to get data with automatic fallback
+  // Helper method to get data with automatic fallback - ONLY use fallback as last resort
   async getAirportsWithFallback() {
     try {
       const airports = await this.getAirports();
-      return Array.isArray(airports) ? airports : this.getFallbackAirports();
+      if (Array.isArray(airports) && airports.length > 0) {
+        console.log(`[API Client] Successfully loaded ${airports.length} airports from API`);
+        return airports;
+      }
+      throw new Error('No airports returned from API');
     } catch (error) {
-      console.warn('[API Client] Using fallback airports due to API error:', error);
+      console.error('[API Client] Failed to load airports from API:', error);
+      console.warn('[API Client] Using fallback airports as last resort');
       return this.getFallbackAirports();
     }
   },
@@ -139,9 +152,14 @@ export const apiClient = {
   async getFlightsWithFallback() {
     try {
       const flights = await this.getFlights();
-      return Array.isArray(flights) ? flights : this.getFallbackFlights();
+      if (Array.isArray(flights)) {
+        console.log(`[API Client] Successfully loaded ${flights.length} flights from API`);
+        return flights;
+      }
+      throw new Error('No flights returned from API');
     } catch (error) {
-      console.warn('[API Client] Using fallback flights due to API error:', error);
+      console.error('[API Client] Failed to load flights from API:', error);
+      console.warn('[API Client] Using fallback flights as last resort');
       return this.getFallbackFlights();
     }
   }
