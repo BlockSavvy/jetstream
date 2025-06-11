@@ -511,15 +511,15 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
               onClick={() => setConciergeExpanded(false)} // Click outside to close
             />
             
-            {/* 🎯 PERFECT RADIAL MENU - ANCHORED TO CONCIERGE BUTTON */}
+            {/* 🎯 PERFECTLY CENTERED RADIAL MENU */}
             <motion.div
               style={{
                 position: 'fixed' as const,
-                left: `${conciergeButtonPosition.x}px`, // Exact button X position
-                top: `${conciergeButtonPosition.y}px`,  // Exact button Y position
-                transform: 'translate(-50%, -50%)', // Center on button
+                left: '50%', // Dead center of screen horizontally
+                top: `${conciergeButtonPosition.y - 5}px`, // Slightly above button center
+                transform: 'translateX(-50%)', // Perfect horizontal centering
                 zIndex: 999999,
-                width: '1px', // Minimal container - just an anchor point
+                width: '1px', // Minimal anchor point
                 height: '1px',
                 pointerEvents: 'none' as const,
               }}
@@ -533,15 +533,15 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             >
               {/* 🎯 PERFECTLY POSITIONED RADIAL BUTTONS */}
               {conciergeOptions.map((option, index) => {
-                // 🎯 ABSOLUTELY PERFECT CENTERING
-                const RADIUS = 100; // Perfect distance for integrated buttons
-                const angles = [150, 90, 30]; // Symmetric 60° spacing from center
+                // 🎯 FINAL PERFECT POSITIONING
+                const RADIUS = 110; // Optimal distance for 80px buttons
+                const angles = [150, 90, 30]; // Perfect 60° symmetric spacing
                 const angle = angles[index];
                 const radian = (angle * Math.PI) / 180;
                 
-                // Calculate exact position relative to button center
+                // Calculate exact position from screen center
                 const x = Math.cos(radian) * RADIUS;
-                const y = -Math.sin(radian) * RADIUS - 10; // More upward clearance
+                const y = -Math.sin(radian) * RADIUS - 15; // Perfect clearance above nav
                 
 
                 
@@ -584,50 +584,55 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       triggerHaptic('medium');
                     }}
                   >
-                    {/* 💎 INTEGRATED BUTTON WITH TEXT & ICON */}
+                    {/* 🎨 REFINED ELEGANT BUTTON */}
                     <motion.div
                       style={{
-                        width: '74px', // Wider to accommodate text
-                        height: '74px', // Taller for better text layout
+                        width: '80px', // Slightly larger for better proportions
+                        height: '80px', 
                         borderRadius: '50%',
                         background: `
-                          linear-gradient(135deg, 
-                            #DAFF0D 0%, 
-                            #B8E600 100%
+                          radial-gradient(circle at 30% 30%, 
+                            rgba(218, 255, 13, 0.95) 0%, 
+                            rgba(184, 230, 0, 0.9) 50%,
+                            rgba(150, 200, 0, 0.85) 100%
                           )
                         `,
-                        border: '3px solid rgba(0, 0, 0, 0.9)',
+                        backdropFilter: 'blur(20px) saturate(1.2)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+                        border: '2px solid rgba(0, 0, 0, 0.7)',
                         boxShadow: `
-                          0 6px 20px rgba(218, 255, 13, 0.5),
-                          0 3px 10px rgba(0, 0, 0, 0.4),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.5)
+                          0 8px 25px rgba(218, 255, 13, 0.3),
+                          0 4px 12px rgba(0, 0, 0, 0.2),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                          inset 0 -1px 0 rgba(0, 0, 0, 0.1)
                         `,
                         display: 'flex',
                         flexDirection: 'column' as const,
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         position: 'relative' as const,
                         overflow: 'hidden' as const,
-                        filter: 'brightness(1.05)',
-                        gap: '2px'
+                        gap: '3px'
                       }}
                       whileHover={{ 
-                        scale: 1.15,
+                        scale: 1.12,
                         boxShadow: `
-                          0 8px 28px rgba(218, 255, 13, 0.7),
-                          0 4px 14px rgba(0, 0, 0, 0.5),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.6)
+                          0 12px 32px rgba(218, 255, 13, 0.4),
+                          0 6px 16px rgba(0, 0, 0, 0.3),
+                          inset 0 2px 0 rgba(255, 255, 255, 0.7),
+                          inset 0 -1px 0 rgba(0, 0, 0, 0.15)
                         `,
-                        y: -4,
-                        filter: 'brightness(1.2)',
-                        rotate: index === 1 ? 0 : (index === 0 ? -8 : 8) // Subtle rotation
+                        y: -6,
+                        filter: 'brightness(1.15) saturate(1.1)',
+                        rotate: index === 1 ? 0 : (index === 0 ? -4 : 4) // Gentle rotation
                       }}
                       whileTap={{ 
-                        scale: 0.92,
-                        y: -2,
-                        filter: 'brightness(0.9)'
+                        scale: 0.95,
+                        y: -3,
+                        filter: 'brightness(0.95) saturate(0.9)',
+                        transition: { duration: 0.1 }
                       }}
                     >
                       {/* Animated Background Shine */}
@@ -654,32 +659,31 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                         }}
                       />
                       
-                      {/* Icon */}
+                      {/* Enhanced Icon */}
                       {React.createElement(option.icon, { 
-                        size: 20,
-                        strokeWidth: 2.5,
+                        size: 24,
+                        strokeWidth: 2.2,
                         color: '#000000',
                         style: { 
-                          filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))',
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))',
                           zIndex: 2,
-                          marginBottom: '1px'
+                          opacity: 0.9
                         }
                       })}
                       
-                      {/* Integrated Text Label */}
+                      {/* Enhanced Text Label */}
                       <span style={{
-                        fontSize: '0.5rem',
-                        fontWeight: '600',
+                        fontSize: '0.55rem',
+                        fontWeight: '700',
                         color: '#000000',
-                        letterSpacing: '0.2px',
+                        letterSpacing: '0.5px',
                         textAlign: 'center' as const,
-                        lineHeight: '1',
-                        textShadow: '0 1px 1px rgba(255,255,255,0.3)',
+                        lineHeight: '1.1',
+                        textShadow: '0 1px 2px rgba(255,255,255,0.4), 0 0 8px rgba(255,255,255,0.2)',
                         zIndex: 2,
-                        maxWidth: '60px',
-                        overflow: 'hidden' as const,
-                        textOverflow: 'ellipsis' as const,
-                        whiteSpace: 'nowrap' as const
+                        maxWidth: '70px',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        opacity: 0.95
                       }}>
                         {option.label.toUpperCase()}
                       </span>
