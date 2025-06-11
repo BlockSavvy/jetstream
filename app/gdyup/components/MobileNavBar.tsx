@@ -113,6 +113,11 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     setMounted(true);
     console.log('[MobileNavBar] 🚀 BULLETPROOF NAV - Component mounted, will render to body portal');
     
+    // Get initial button position after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      updateConciergeButtonPosition();
+    }, 100);
+    
     // Detect Capacitor
     const capacitorDetected = !!(window as any).Capacitor;
     setIsCapacitor(capacitorDetected);
@@ -233,7 +238,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       setConciergeButtonPosition({ x: centerX, y: centerY });
-      console.log('[MobileNavBar] Concierge button position:', { x: centerX, y: centerY });
+      console.log('[MobileNavBar] Concierge button position:', { x: centerX, y: centerY, rect });
     }
   };
 
@@ -242,9 +247,11 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
     console.log('[MobileNavBar] Concierge button clicked - toggling radial menu');
     triggerHaptic('medium');
     
-    // Update button position before showing menu
-    updateConciergeButtonPosition();
-    setConciergeExpanded(!conciergeExpanded);
+    // Force a layout calculation and get fresh button position
+    requestAnimationFrame(() => {
+      updateConciergeButtonPosition();
+      setConciergeExpanded(!conciergeExpanded);
+    });
   };
 
   // Handle nav item clicks with haptic feedback
@@ -485,7 +492,7 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             {/* Premium backdrop overlay */}
             <motion.div
               style={{
-                position: 'absolute' as const,
+                position: 'fixed' as const,
                 top: '0',
                 left: '0',
                 right: '0',
@@ -505,13 +512,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             {/* CIRCULAR RADIAL MENU - POSITIONED RELATIVE TO ACTUAL BUTTON */}
             <motion.div
               style={{
-                position: 'absolute' as const,
-                left: `${conciergeButtonPosition.x}px`, // Use actual button X position
-                top: `${conciergeButtonPosition.y - 140}px`, // Position above button
-                transform: 'translateX(-50%)', // Center on the button
+                position: 'fixed' as const, // Use fixed positioning for more reliable coordinates
+                left: '50%', // Center horizontally on screen
+                top: `${conciergeButtonPosition.y - 160}px`, // Position above button with more clearance
+                transform: 'translateX(-50%)', // Center on the screen
                 zIndex: 999999,
-                width: '240px',
-                height: '140px',
+                width: '300px', // Slightly wider for better spacing
+                height: '160px', // Taller for better spacing
                 display: 'flex',
                 alignItems: 'flex-end',
                 justifyContent: 'center',
