@@ -53,14 +53,14 @@ interface BTCWalletSectionProps {
   setIsEditing: (value: boolean) => void;
 }
 
-// FullBTC wallet component
+// Elite BTC wallet component with perfect contrast
 const BTCWalletSection = ({ 
   profile, 
   handleUpdate,
   isEditing,
   setIsEditing
 }: BTCWalletSectionProps) => {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const [walletValue, setWalletValue] = useState(profile?.btcWalletAddress || '');
   const [lnurlValue, setLnurlValue] = useState(profile?.lnurl || '');
   const [walletType, setWalletType] = useState(profile?.lightningWalletType || 'non-custodial');
@@ -80,23 +80,29 @@ const BTCWalletSection = ({
     toast.success('Wallet information updated');
   };
   
-  // Show wallet form if editing
+  // Elite editing form with perfect contrast
   if (isEditing) {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Bitcoin Wallet Address</label>
+          <label className={cn("text-sm font-medium", getThemedTextClasses())}>
+            Bitcoin Wallet Address
+          </label>
           <div className="flex">
             <input 
               type="text" 
               value={walletValue} 
               onChange={(e) => setWalletValue(e.target.value)}
               placeholder="Enter BTC wallet address" 
-              className="flex-1 p-2 rounded-l-md bg-gray-800 border border-gray-700 text-white"
+              className={cn(
+                "flex-1 p-3 rounded-l-md border border-r-0 focus:outline-none focus:ring-2 focus:ring-gdyup-primary",
+                "bg-gdyup-bg-dark border-gdyup-border",
+                getThemedTextClasses()
+              )}
             />
             <Button 
               onClick={() => handleCopy(walletValue, 'Address')}
-              className="rounded-l-none rounded-r-md bg-gray-700"
+              className={cn("rounded-l-none rounded-r-md", getThemedButtonClasses('secondary'))}
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -104,18 +110,24 @@ const BTCWalletSection = ({
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Lightning Address (LNURL)</label>
+          <label className={cn("text-sm font-medium", getThemedTextClasses())}>
+            Lightning Address (LNURL)
+          </label>
           <div className="flex">
             <input 
               type="text" 
               value={lnurlValue} 
               onChange={(e) => setLnurlValue(e.target.value)}
               placeholder="you@domain.com or lnurl..." 
-              className="flex-1 p-2 rounded-l-md bg-gray-800 border border-gray-700 text-white"
+              className={cn(
+                "flex-1 p-3 rounded-l-md border border-r-0 focus:outline-none focus:ring-2 focus:ring-gdyup-primary",
+                "bg-gdyup-bg-dark border-gdyup-border",
+                getThemedTextClasses()
+              )}
             />
             <Button 
               onClick={() => handleCopy(lnurlValue, 'LNURL')}
-              className="rounded-l-none rounded-r-md bg-gray-700"
+              className={cn("rounded-l-none rounded-r-md", getThemedButtonClasses('secondary'))}
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -123,7 +135,9 @@ const BTCWalletSection = ({
         </div>
         
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Wallet Type</label>
+          <label className={cn("text-sm font-medium", getThemedTextClasses())}>
+            Wallet Type
+          </label>
           <div className="flex space-x-2">
             <Button 
               variant={walletType === 'non-custodial' ? 'default' : 'outline'} 
@@ -143,10 +157,17 @@ const BTCWalletSection = ({
         </div>
         
         <div className="flex space-x-2 pt-4">
-          <Button variant="outline" onClick={() => setIsEditing(false)} className="flex-1">
+          <Button 
+            variant="outline" 
+            onClick={() => setIsEditing(false)} 
+            className="flex-1 border-gdyup-border"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} className="flex-1">
+          <Button 
+            onClick={handleSave} 
+            className={cn("flex-1", getThemedButtonClasses('primary'))}
+          >
             Save Changes
           </Button>
         </div>
@@ -154,16 +175,18 @@ const BTCWalletSection = ({
     );
   }
   
-  // View mode
+  // Elite view mode with perfect contrast
   return (
     <div className="space-y-4">
       {profile?.btcWalletAddress ? (
         <>
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <span className="text-sm font-medium text-gray-300">BTC Wallet</span>
+              <span className={cn("text-sm font-medium", getThemedTextClasses())}>
+                BTC Wallet
+              </span>
               <div className="flex items-center">
-                <span className="font-mono text-sm text-white truncate max-w-[200px]">
+                <span className={cn("font-mono text-sm truncate max-w-[200px]", getThemedTextClasses())}>
                   {profile.btcWalletAddress.slice(0, 10)}...{profile.btcWalletAddress.slice(-5)}
                 </span>
                 <Button 
@@ -176,23 +199,20 @@ const BTCWalletSection = ({
                 </Button>
               </div>
             </div>
-            <Badge className={
-              getThemeClasses({
-                base: "",
-                default: "bg-green-900 text-green-100",
-                luxury: "bg-blue-900 text-blue-100",
-                bitcoin: "bg-amber-900 text-amber-100",
-              })
-            }>
+            <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
               {profile.lightningWalletType === 'custodial' ? 'Custodial' : 'Self-Custodial'}
             </Badge>
           </div>
           
           {profile.lnurl && (
             <div className="space-y-1">
-              <span className="text-sm font-medium text-gray-300">Lightning Address</span>
+              <span className={cn("text-sm font-medium", getThemedTextClasses())}>
+                Lightning Address
+              </span>
               <div className="flex items-center">
-                <span className="font-mono text-sm text-white">{profile.lnurl}</span>
+                <span className={cn("font-mono text-sm", getThemedTextClasses())}>
+                  {profile.lnurl}
+                </span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -208,7 +228,7 @@ const BTCWalletSection = ({
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full mt-2" 
+            className="w-full mt-2 border-gdyup-border" 
             onClick={() => setIsEditing(true)}
           >
             <Edit className="h-4 w-4 mr-2" />
@@ -217,17 +237,19 @@ const BTCWalletSection = ({
         </>
       ) : (
         <div className="text-center space-y-3 py-4">
-          <div className="rounded-full bg-gray-800 h-16 w-16 flex items-center justify-center mx-auto">
-            <Wallet className="h-8 w-8 text-gray-400" />
+          <div className="rounded-full bg-gdyup-bg-dark h-16 w-16 flex items-center justify-center mx-auto border border-gdyup-border">
+            <Wallet className={cn("h-8 w-8", getThemedTextClasses('muted'))} />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-white">No Wallet Connected</h3>
-            <p className="text-sm text-gray-400 mt-1">
+            <h3 className={cn("text-lg font-medium", getThemedTextClasses())}>
+              No Wallet Connected
+            </h3>
+            <p className={cn("text-sm mt-1", getThemedTextClasses('muted'))}>
               Connect a Bitcoin wallet to enable payments and zaps
             </p>
           </div>
           <Button 
-            className="mt-2" 
+            className={cn("mt-2", getThemedButtonClasses('primary'))}
             onClick={() => setIsEditing(true)}
           >
             Connect Wallet
@@ -244,9 +266,9 @@ interface NostrSectionProps {
   handleUpdate: (updates: Partial<ExtendedUserProfile>) => Promise<void>;
 }
 
-// Nostr Identity section
+// Elite Nostr Identity section with perfect contrast
 const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const { 
     isConnected, 
     isEnabled, 
@@ -270,12 +292,21 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
   return (
     <div className="space-y-4">
       {showVerifier && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4 text-white">Verify Nostr Identity</h2>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={cn(
+            "rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto border",
+            getThemedBackgroundClasses('card')
+          )}>
+            <h2 className={cn("text-xl font-bold mb-4", getThemedTextClasses())}>
+              Verify Nostr Identity
+            </h2>
             <NostrIdentityVerifier onComplete={handleCompleteVerification} />
             <div className="mt-4 flex justify-end">
-              <Button variant="outline" onClick={() => setShowVerifier(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowVerifier(false)}
+                className="border-gdyup-border"
+              >
                 Cancel
               </Button>
             </div>
@@ -287,9 +318,11 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
         <div className="space-y-4">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-sm font-medium text-gray-300">Nostr Identity</span>
+              <span className={cn("text-sm font-medium", getThemedTextClasses())}>
+                Nostr Identity
+              </span>
               <div className="flex items-center">
-                <span className="font-mono text-sm text-white truncate max-w-[200px]">
+                <span className={cn("font-mono text-sm truncate max-w-[200px]", getThemedTextClasses())}>
                   {pubkey.slice(0, 10)}...{pubkey.slice(-5)}
                 </span>
                 <Button 
@@ -311,9 +344,13 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
           
           {nip05 && (
             <div className="space-y-1">
-              <span className="text-sm font-medium text-gray-300">NIP-05 Identifier</span>
+              <span className={cn("text-sm font-medium", getThemedTextClasses())}>
+                NIP-05 Identifier
+              </span>
               <div className="flex items-center">
-                <span className="text-sm text-white">{nip05}</span>
+                <span className={cn("text-sm", getThemedTextClasses())}>
+                  {nip05}
+                </span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -331,6 +368,7 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
               variant={isConnected ? "destructive" : "outline"}
               size="sm"
               onClick={isConnected ? disconnect : connect}
+              className={!isConnected ? "border-gdyup-border" : ""}
             >
               {isConnected ? 'Disconnect Relays' : 'Connect Relays'}
             </Button>
@@ -339,6 +377,7 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
               variant="outline" 
               size="sm"
               onClick={() => setShowVerifier(true)}
+              className="border-gdyup-border"
             >
               {nip05 ? 'Update NIP-05' : 'Verify NIP-05'}
             </Button>
@@ -347,6 +386,7 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
               variant="outline" 
               size="sm"
               onClick={() => handleCopy(`nostr:${pubkey}`, 'Nostr URI')}
+              className="border-gdyup-border"
             >
               <QrCode className="h-3.5 w-3.5 mr-1" />
               Copy Nostr URI
@@ -355,17 +395,19 @@ const NostrSection = ({ profile, handleUpdate }: NostrSectionProps) => {
         </div>
       ) : (
         <div className="text-center space-y-3 py-4">
-          <div className="rounded-full bg-gray-800 h-16 w-16 flex items-center justify-center mx-auto">
-            <MessageSquare className="h-8 w-8 text-gray-400" />
+          <div className="rounded-full bg-gdyup-bg-dark h-16 w-16 flex items-center justify-center mx-auto border border-gdyup-border">
+            <MessageSquare className={cn("h-8 w-8", getThemedTextClasses('muted'))} />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-white">No Nostr Identity</h3>
-            <p className="text-sm text-gray-400 mt-1">
+            <h3 className={cn("text-lg font-medium", getThemedTextClasses())}>
+              No Nostr Identity
+            </h3>
+            <p className={cn("text-sm mt-1", getThemedTextClasses('muted'))}>
               Connect your Nostr pubkey to enable messaging and zaps
             </p>
           </div>
           <Button 
-            className="mt-2" 
+            className={cn("mt-2", getThemedButtonClasses('primary'))}
             onClick={() => setShowVerifier(true)}
           >
             Connect Nostr Identity
@@ -389,7 +431,7 @@ function ProfilePageContent() {
   const { user, loading: authLoading } = useAuth();
   const { profile: originalProfile, loading: profileLoading, updateProfile, refreshProfile } = useUserProfile();
   const router = useRouter();
-  const { getThemeClasses } = useGdyupTheme();
+  const { getThemedTextClasses, getThemedButtonClasses, getThemedBackgroundClasses } = useGdyupTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [walletEditing, setWalletEditing] = useState(false);
   
@@ -429,19 +471,19 @@ function ProfilePageContent() {
     }
   };
   
-  // Show loading state while checking auth and profile
+  // Elite loading state with perfect contrast
   if (authLoading || profileLoading || !profile || !isProfileComplete) {
     return (
-      <Container className="flex flex-col min-h-screen bg-gray-900">
+      <Container className="flex flex-col min-h-screen">
         <div className="flex-grow flex flex-col justify-center items-center py-10">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-          <p className="text-gray-400">Loading your profile...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-gdyup-primary mb-4" />
+          <p className={getThemedTextClasses('muted')}>Loading your profile...</p>
         </div>
       </Container>
     );
   }
   
-  // If profile exists and is complete, show profile page
+  // Elite profile page with perfect contrast
   return (
     <Container className="flex flex-col min-h-screen">
         <div className="py-6">
@@ -450,78 +492,44 @@ function ProfilePageContent() {
               variant="ghost" 
               size="sm" 
               onClick={() => router.push('/gdyup/dashboard')}
-              className={getThemeClasses({
-                base: "mr-4",
-                default: "text-gray-400 hover:text-white",
-                luxury: "text-blue-400 hover:text-blue-100",
-                bitcoin: "text-pink-400 hover:text-pink-100"
-              })}
+              className="mr-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <h1 className={getThemeClasses({
-              base: "text-2xl font-bold",
-              default: "text-white",
-              luxury: "text-blue-50",
-              bitcoin: "text-pink-50"
-            })}>Your Profile</h1>
+            <h1 className={cn("text-2xl font-bold", getThemedTextClasses())}>
+              Profile
+            </h1>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Profile Summary Card */}
-            <Card className={getThemeClasses({
-              base: "overflow-hidden",
-              default: "bg-gray-900 border-gray-800",
-              luxury: "bg-blue-900 border-blue-800",
-              bitcoin: "bg-pink-900 border-pink-800",
-            })}>
+            {/* Elite Profile Summary Card */}
+            <Card className={cn("overflow-hidden", getThemedBackgroundClasses('card'))}>
               <CardHeader className="pb-2">
-                <CardTitle className={getThemeClasses({
-                  base: "",
-                  default: "text-white",
-                  luxury: "text-blue-50",
-                  bitcoin: "text-pink-50"
-                })}>Profile</CardTitle>
-                <CardDescription className={getThemeClasses({
-                  base: "",
-                  default: "text-gray-400",
-                  luxury: "text-blue-400",
-                  bitcoin: "text-pink-400"
-                })}>Your personal information</CardDescription>
+                <CardTitle className={getThemedTextClasses()}>
+                  Profile
+                </CardTitle>
+                <CardDescription className={getThemedTextClasses('muted')}>
+                  Your personal information
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20 border-2 border-primary">
+                  <Avatar className="h-20 w-20 border-2 border-gdyup-primary">
                     <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary/20 text-primary text-lg">
+                    <AvatarFallback className="bg-gdyup-primary/20 text-gdyup-primary text-lg">
                       {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className={getThemeClasses({
-                      base: "text-xl font-semibold",
-                      default: "text-white",
-                      luxury: "text-blue-50",
-                      bitcoin: "text-pink-50"
-                    })}>
+                    <h3 className={cn("text-xl font-semibold", getThemedTextClasses())}>
                       {profile.first_name} {profile.last_name}
                     </h3>
-                    <p className={getThemeClasses({
-                      base: "text-sm",
-                      default: "text-gray-400",
-                      luxury: "text-blue-400",
-                      bitcoin: "text-pink-400"
-                    })}>
+                    <p className={cn("text-sm", getThemedTextClasses('muted'))}>
                       {profile.email}
                     </p>
                     {profile.role && (
-                      <p className={getThemeClasses({
-                        base: "text-sm mt-1",
-                        default: "text-gray-300",
-                        luxury: "text-blue-300",
-                        bitcoin: "text-pink-300"
-                      })}>
+                      <p className={cn("text-sm mt-1", getThemedTextClasses('secondary'))}>
                         {profile.role}
                         {profile.affiliation && ` · ${profile.affiliation}`}
                       </p>
@@ -530,12 +538,11 @@ function ProfilePageContent() {
                 </div>
                 
                 {profile.bio && (
-                  <div className={getThemeClasses({
-                    base: "text-sm mt-4 p-3 rounded-md",
-                    default: "bg-black/30 text-gray-300",
-                    luxury: "bg-blue-950/50 text-blue-300",
-                    bitcoin: "bg-pink-950/50 text-pink-300"
-                  })}>
+                  <div className={cn(
+                    "text-sm mt-4 p-3 rounded-md border",
+                    "bg-gdyup-bg-dark/50 border-gdyup-border",
+                    getThemedTextClasses()
+                  )}>
                     {profile.bio}
                   </div>
                 )}
@@ -543,7 +550,7 @@ function ProfilePageContent() {
                 <Button
                   variant="outline" 
                   size="sm" 
-                  className="w-full mt-2" 
+                  className="w-full mt-2 border-gdyup-border" 
                   onClick={() => router.push('/gdyup/auth/profile-setup?isProfileEdit=true')}
                 >
                   <Edit className="h-4 w-4 mr-2" />
@@ -552,24 +559,14 @@ function ProfilePageContent() {
               </CardContent>
             </Card>
             
-            {/* Wallet and Nostr Tabs */}
+            {/* Elite Wallet and Nostr Tabs */}
             <Card className={cn(
               "col-span-1 lg:col-span-2",
-              getThemeClasses({
-                base: "",
-                default: "bg-gray-900 border-gray-800",
-                luxury: "bg-blue-900 border-blue-800",
-                bitcoin: "bg-pink-900 border-pink-800",
-              })
+              getThemedBackgroundClasses('card')
             )}>
               <CardHeader className="pb-0">
                 <Tabs defaultValue="wallet" className="w-full">
-                  <TabsList className={getThemeClasses({
-                    base: "grid w-full grid-cols-2",
-                    default: "bg-gray-800",
-                    luxury: "bg-blue-800",
-                    bitcoin: "bg-pink-800",
-                  })}>
+                  <TabsList className="grid w-full grid-cols-2 bg-gdyup-bg-dark">
                     <TabsTrigger value="wallet" className="text-sm">
                       <Wallet className="h-4 w-4 mr-2" />
                       Wallet
@@ -599,123 +596,83 @@ function ProfilePageContent() {
               </CardHeader>
             </Card>
             
-            {/* Status and Settings Card */}
+            {/* Elite Status and Settings Card */}
             <Card className={cn(
               "col-span-1 lg:col-span-3",
-              getThemeClasses({
-                base: "",
-                default: "bg-gray-900 border-gray-800",
-                luxury: "bg-blue-900 border-blue-800",
-                bitcoin: "bg-pink-900 border-pink-800",
-              })
+              getThemedBackgroundClasses('card')
             )}>
               <CardHeader className="pb-2">
-                <CardTitle className={getThemeClasses({
-                  base: "",
-                  default: "text-white",
-                  luxury: "text-blue-50",
-                  bitcoin: "text-pink-50"
-                })}>Account Status</CardTitle>
-                <CardDescription className={getThemeClasses({
-                  base: "",
-                  default: "text-gray-400",
-                  luxury: "text-blue-400",
-                  bitcoin: "text-pink-400"
-                })}>Integration status for your GDY·UP account</CardDescription>
+                <CardTitle className={getThemedTextClasses()}>
+                  Account Status
+                </CardTitle>
+                <CardDescription className={getThemedTextClasses('muted')}>
+                  Integration status for your GDY·UP account
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className={getThemeClasses({
-                    base: "p-4 rounded-lg border flex items-center gap-3",
-                    default: "bg-gray-800/50 border-gray-700",
-                    luxury: "bg-blue-800/50 border-blue-700",
-                    bitcoin: "bg-pink-800/50 border-pink-700",
-                  })}>
-                    <div className={getThemeClasses({
-                      base: "rounded-full p-2",
-                      default: profile?.btcWalletAddress ? "bg-green-900/20 text-green-500" : "bg-yellow-900/20 text-yellow-500",
-                      luxury: profile?.btcWalletAddress ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                      bitcoin: profile?.btcWalletAddress ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                    })}>
-                      {profile?.btcWalletAddress ? <CheckCircle className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+                  <div className={cn(
+                    "p-4 rounded-lg border flex items-center gap-3",
+                    "bg-gdyup-bg-dark/50 border-gdyup-border"
+                  )}>
+                    <div className={cn(
+                      "rounded-full p-2",
+                      profile?.btcWalletAddress 
+                        ? "bg-green-500/20 text-green-400" 
+                        : "bg-yellow-500/20 text-yellow-400"
+                    )}>
+                      {profile?.btcWalletAddress ? 
+                        <CheckCircle className="h-6 w-6" /> : 
+                        <AlertCircle className="h-6 w-6" />
+                      }
                     </div>
                     <div>
-                      <p className={getThemeClasses({
-                        base: "font-medium",
-                        default: "text-white",
-                        luxury: "text-blue-50",
-                        bitcoin: "text-pink-50",
-                      })}>Wallet Status</p>
-                      <p className={getThemeClasses({
-                        base: "text-sm",
-                        default: "text-gray-400",
-                        luxury: "text-blue-400",
-                        bitcoin: "text-pink-400",
-                      })}>
+                      <p className={cn("font-medium", getThemedTextClasses())}>
+                        Wallet Status
+                      </p>
+                      <p className={cn("text-sm", getThemedTextClasses('muted'))}>
                         {profile?.btcWalletAddress ? 'Connected' : 'Not Connected'}
                       </p>
                     </div>
                   </div>
                   
-                  <div className={getThemeClasses({
-                    base: "p-4 rounded-lg border flex items-center gap-3",
-                    default: "bg-gray-800/50 border-gray-700",
-                    luxury: "bg-blue-800/50 border-blue-700",
-                    bitcoin: "bg-pink-800/50 border-pink-700",
-                  })}>
-                    <div className={getThemeClasses({
-                      base: "rounded-full p-2",
-                      default: profile?.nostr_pubkey ? "bg-green-900/20 text-green-500" : "bg-yellow-900/20 text-yellow-500",
-                      luxury: profile?.nostr_pubkey ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                      bitcoin: profile?.nostr_pubkey ? "bg-green-900/20 text-green-400" : "bg-yellow-900/20 text-yellow-400",
-                    })}>
-                      {profile?.nostr_pubkey ? <CheckCircle className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+                  <div className={cn(
+                    "p-4 rounded-lg border flex items-center gap-3",
+                    "bg-gdyup-bg-dark/50 border-gdyup-border"
+                  )}>
+                    <div className={cn(
+                      "rounded-full p-2",
+                      profile?.nostr_pubkey 
+                        ? "bg-green-500/20 text-green-400" 
+                        : "bg-yellow-500/20 text-yellow-400"
+                    )}>
+                      {profile?.nostr_pubkey ? 
+                        <CheckCircle className="h-6 w-6" /> : 
+                        <AlertCircle className="h-6 w-6" />
+                      }
                     </div>
                     <div>
-                      <p className={getThemeClasses({
-                        base: "font-medium",
-                        default: "text-white",
-                        luxury: "text-blue-50",
-                        bitcoin: "text-pink-50",
-                      })}>Nostr Status</p>
-                      <p className={getThemeClasses({
-                        base: "text-sm",
-                        default: "text-gray-400",
-                        luxury: "text-blue-400",
-                        bitcoin: "text-pink-400",
-                      })}>
+                      <p className={cn("font-medium", getThemedTextClasses())}>
+                        Nostr Status
+                      </p>
+                      <p className={cn("text-sm", getThemedTextClasses('muted'))}>
                         {profile?.nostr_pubkey ? (profile?.nip05 ? 'Verified' : 'Connected') : 'Not Connected'}
                       </p>
                     </div>
                   </div>
                   
-                  <div className={getThemeClasses({
-                    base: "p-4 rounded-lg border flex items-center gap-3",
-                    default: "bg-gray-800/50 border-gray-700",
-                    luxury: "bg-blue-800/50 border-blue-700",
-                    bitcoin: "bg-pink-800/50 border-pink-700",
-                  })}>
-                    <div className={getThemeClasses({
-                      base: "rounded-full p-2",
-                      default: "bg-primary/20 text-primary",
-                      luxury: "bg-primary/20 text-primary",
-                      bitcoin: "bg-primary/20 text-primary",
-                    })}>
+                  <div className={cn(
+                    "p-4 rounded-lg border flex items-center gap-3",
+                    "bg-gdyup-bg-dark/50 border-gdyup-border"
+                  )}>
+                    <div className="rounded-full p-2 bg-gdyup-primary/20 text-gdyup-primary">
                       <Settings className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className={getThemeClasses({
-                        base: "font-medium",
-                        default: "text-white",
-                        luxury: "text-blue-50",
-                        bitcoin: "text-pink-50",
-                      })}>Theme</p>
-                      <p className={getThemeClasses({
-                        base: "text-sm",
-                        default: "text-gray-400",
-                        luxury: "text-blue-400",
-                        bitcoin: "text-pink-400",
-                      })}>
+                      <p className={cn("font-medium", getThemedTextClasses())}>
+                        Theme
+                      </p>
+                      <p className={cn("text-sm", getThemedTextClasses('muted'))}>
                         {profile?.theme || 'Default Theme'}
                       </p>
                     </div>
@@ -727,4 +684,4 @@ function ProfilePageContent() {
         </div>
       </Container>
     );
-  } 
+  }

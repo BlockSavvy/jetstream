@@ -47,7 +47,6 @@ interface ConciergeAction {
 
 interface EliteAIConciergeProp {
   isOpen: boolean;
-  onClose: () => void;
   initialMode?: 'chat' | 'voice' | 'prompts';
 }
 
@@ -96,7 +95,10 @@ const SMART_PROMPTS = [
   }
 ];
 
-export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat' }: EliteAIConciergeProp) {
+export default function EliteAIConcierge({ 
+  isOpen, 
+  initialMode = 'chat' 
+}: EliteAIConciergeProp) {
   const [mode, setMode] = useState<'chat' | 'voice' | 'prompts'>(initialMode);
   const [messages, setMessages] = useState<ConciergeMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -110,6 +112,13 @@ export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat'
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const speechRecognition = useRef<any>(null);
+
+  // Handle closing via custom events
+  const handleClose = () => {
+    // Dispatch a custom event to close the concierge
+    const closeEvent = new CustomEvent('gdyup-close-concierge');
+    document.dispatchEvent(closeEvent);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -270,7 +279,7 @@ export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat'
         type: 'wallet',
         action: () => {
           router.push('/gdyup/dashboard');
-          onClose();
+          handleClose();
         }
       });
     }
@@ -282,7 +291,7 @@ export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat'
         type: 'navigation',
         action: () => {
           router.push('/gdyup/list');
-          onClose();
+          handleClose();
         }
       });
     }
@@ -294,7 +303,7 @@ export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat'
         type: 'navigation',
         action: () => {
           router.push('/gdyup/browse');
-          onClose();
+          handleClose();
         }
       });
     }
@@ -317,7 +326,7 @@ export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat'
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={handleClose}
       />
       
       {/* Concierge Panel */}
@@ -376,7 +385,7 @@ export default function EliteAIConcierge({ isOpen, onClose, initialMode = 'chat'
             <Button
               size="sm"
               variant="ghost"
-              onClick={onClose}
+              onClick={handleClose}
               className="h-8 w-8 p-0"
             >
               <X className="h-4 w-4" />

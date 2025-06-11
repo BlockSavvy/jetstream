@@ -21,7 +21,8 @@ import {
   Plus,
   TrendingUp,
   Users,
-  Activity
+  Activity,
+  LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemedIcon } from './core/ThemedIcon';
@@ -31,7 +32,7 @@ interface QuickAction {
   id: string;
   title: string;
   description: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   color: string;
   action: () => void;
   badge?: string;
