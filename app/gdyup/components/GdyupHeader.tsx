@@ -252,9 +252,12 @@ export default function GdyupHeader() {
                 );
               })}
               
-              {/* Theme Switcher visible in header */}
-              <div className="flex items-center justify-center px-2 relative">
-                <GdyupThemeSwitcher showLabels={false} alignDropdown="end" sideOffset={8} />
+              {/* DEVELOPER THEME SWITCHER - ALWAYS VISIBLE */}
+              <div className="flex items-center justify-center px-3 py-2 relative bg-white/10 backdrop-blur-xl rounded-xl border border-white/20">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-medium text-white/80 uppercase tracking-wide">THEME:</div>
+                  <GdyupThemeSwitcher showLabels={true} alignDropdown="end" sideOffset={8} />
+                </div>
               </div>
               
               {/* Theme Debug Button */}

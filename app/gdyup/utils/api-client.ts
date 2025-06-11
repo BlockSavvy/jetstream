@@ -6,6 +6,10 @@
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capacitor;
 
+// ELITE DATABASE CLIENT - REAL DATA ONLY, NO FALLBACKS!
+const BASE_URL = 'https://gdyup.xyz'; // ALWAYS use production server
+const FORCE_REAL_DATA = true; // Never use fallbacks
+
 // API base URL configuration
 const getApiBaseUrl = (): string => {
   // Always use the remote server for real data
@@ -86,15 +90,221 @@ export const apiClient = {
     }
   },
   
-  // Specific API methods
-  async getAirports() {
-    return this.get('/api/airports');
+  // REAL DATABASE ONLY - Get airports from live database
+  async getAirports(query?: string) {
+    try {
+      console.log('[API Client] 🚀 LOADING REAL AIRPORTS FROM DATABASE');
+      
+      const url = query 
+        ? `${BASE_URL}/api/airports?query=${encodeURIComponent(query)}&limit=100&t=${Date.now()}`
+        : `${BASE_URL}/api/airports?limit=100&t=${Date.now()}`;
+      
+      console.log('[API Client] Real database URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        next: { revalidate: 0 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Airport API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('Database returned no airports - this is unacceptable!');
+      }
+
+      console.log(`[API Client] ✅ SUCCESS: Loaded ${data.length} real airports from database`);
+      return data;
+    } catch (error) {
+      console.error('[API Client] 🚨 CRITICAL ERROR: Cannot load real airports:', error);
+      
+      if (FORCE_REAL_DATA) {
+        throw new Error('REAL DATA REQUIRED - No fallbacks allowed in production app');
+      }
+      
+      // This should never be reached with FORCE_REAL_DATA = true
+      return [];
+    }
   },
-  
+
+  // REAL DATABASE ONLY - Get flights from live database  
   async getFlights() {
-    return this.get('/api/flights');
+    try {
+      console.log('[API Client] 🚀 LOADING REAL FLIGHTS FROM DATABASE');
+      
+      const url = `${BASE_URL}/api/flights?t=${Date.now()}`;
+      console.log('[API Client] Real flights URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        next: { revalidate: 0 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Flights API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('Database returned no flights - this is unacceptable!');
+      }
+
+      console.log(`[API Client] ✅ SUCCESS: Loaded ${data.length} real flights from database`);
+      return data;
+    } catch (error) {
+      console.error('[API Client] 🚨 CRITICAL ERROR: Cannot load real flights:', error);
+      
+      if (FORCE_REAL_DATA) {
+        throw new Error('REAL DATA REQUIRED - No fallbacks allowed in production app');
+      }
+      
+      return [];
+    }
+  },
+
+  // REAL DATABASE ONLY - Get offers from live database
+  async getOffers() {
+    try {
+      console.log('[API Client] 🚀 LOADING REAL OFFERS FROM DATABASE');
+      
+      const url = `${BASE_URL}/api/jetshare/getOffers?t=${Date.now()}`;
+      console.log('[API Client] Real offers URL:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        next: { revalidate: 0 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Offers API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Handle different response formats
+      const offers = data.offers || data.data || data;
+      
+      if (!Array.isArray(offers)) {
+        throw new Error('Database returned invalid offers format');
+      }
+
+      console.log(`[API Client] ✅ SUCCESS: Loaded ${offers.length} real offers from database`);
+      return offers;
+    } catch (error) {
+      console.error('[API Client] 🚨 CRITICAL ERROR: Cannot load real offers:', error);
+      
+      if (FORCE_REAL_DATA) {
+        throw new Error('REAL DATA REQUIRED - No fallbacks allowed in production app');
+      }
+      
+      return [];
+    }
+  },
+
+  // PREMIUM DATABASE SEARCH - Advanced airport search
+  async searchAirports(query: string, limit: number = 50) {
+    if (!query || query.length < 2) {
+      return [];
+    }
+
+    try {
+      console.log(`[API Client] 🔍 SEARCHING REAL AIRPORTS: "${query}"`);
+      
+      const url = `${BASE_URL}/api/airports?query=${encodeURIComponent(query)}&limit=${limit}&t=${Date.now()}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        next: { revalidate: 0 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Airport search error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid search response format');
+      }
+
+      console.log(`[API Client] ✅ SEARCH SUCCESS: Found ${data.length} airports for "${query}"`);
+      return data;
+    } catch (error) {
+      console.error(`[API Client] 🚨 SEARCH ERROR for "${query}":`, error);
+      
+      if (FORCE_REAL_DATA) {
+        throw error;
+      }
+      
+      return [];
+    }
+  },
+
+  // ELITE DASHBOARD STATS - Real-time database analytics
+  async getDashboardStats() {
+    try {
+      console.log('[API Client] 📊 LOADING REAL DASHBOARD STATS');
+      
+      const url = `${BASE_URL}/api/gdyup/dashboard?t=${Date.now()}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        next: { revalidate: 0 }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Dashboard API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[API Client] ✅ DASHBOARD SUCCESS: Real stats loaded');
+      return data;
+    } catch (error) {
+      console.error('[API Client] 🚨 DASHBOARD ERROR:', error);
+      
+      if (FORCE_REAL_DATA) {
+        throw error;
+      }
+      
+      return {
+        totalListings: 0,
+        activeBookings: 0,
+        totalEarnings: 0,
+        flightHours: 0
+      };
+    }
   },
   
+  // Specific API methods
   async getJets(userId?: string) {
     const params = userId ? `?userId=${userId}` : '';
     return this.get(`/api/jets${params}`);
@@ -103,66 +313,6 @@ export const apiClient = {
   async createOffer(offerData: any) {
     return this.post('/api/jetshare/createOffer', offerData);
   },
-  
-  async getOffers() {
-    return this.get('/api/jetshare/getOffers');
-  },
-  
-  // Fallback data for when API calls fail
-  getFallbackAirports() {
-    return [
-      { code: 'KTEB', name: 'Teterboro Airport', city: 'Teterboro', country: 'USA' },
-      { code: 'KLAX', name: 'Los Angeles International', city: 'Los Angeles', country: 'USA' },
-      { code: 'KJFK', name: 'John F. Kennedy International', city: 'New York', country: 'USA' },
-      { code: 'KMIA', name: 'Miami International', city: 'Miami', country: 'USA' },
-      { code: 'KSFO', name: 'San Francisco International', city: 'San Francisco', country: 'USA' },
-      { code: 'KLAS', name: 'Harry Reid International', city: 'Las Vegas', country: 'USA' },
-      { code: 'KORD', name: 'O\'Hare International', city: 'Chicago', country: 'USA' },
-      { code: 'KATL', name: 'Hartsfield-Jackson Atlanta International', city: 'Atlanta', country: 'USA' },
-      { code: 'KDEN', name: 'Denver International', city: 'Denver', country: 'USA' },
-      { code: 'KSEA', name: 'Seattle-Tacoma International', city: 'Seattle', country: 'USA' },
-      { code: 'EGLL', name: 'London Heathrow', city: 'London', country: 'UK' },
-      { code: 'LFPB', name: 'Paris Le Bourget', city: 'Paris', country: 'France' },
-      { code: 'OMDB', name: 'Dubai International', city: 'Dubai', country: 'UAE' },
-      { code: 'RJTT', name: 'Tokyo Haneda', city: 'Tokyo', country: 'Japan' },
-      { code: 'YSSY', name: 'Sydney Kingsford Smith', city: 'Sydney', country: 'Australia' }
-    ];
-  },
-  
-  getFallbackFlights() {
-    return [];
-  },
-  
-  // Helper method to get data with automatic fallback - ONLY use fallback as last resort
-  async getAirportsWithFallback() {
-    try {
-      const airports = await this.getAirports();
-      if (Array.isArray(airports) && airports.length > 0) {
-        console.log(`[API Client] Successfully loaded ${airports.length} airports from API`);
-        return airports;
-      }
-      throw new Error('No airports returned from API');
-    } catch (error) {
-      console.error('[API Client] Failed to load airports from API:', error);
-      console.warn('[API Client] Using fallback airports as last resort');
-      return this.getFallbackAirports();
-    }
-  },
-  
-  async getFlightsWithFallback() {
-    try {
-      const flights = await this.getFlights();
-      if (Array.isArray(flights)) {
-        console.log(`[API Client] Successfully loaded ${flights.length} flights from API`);
-        return flights;
-      }
-      throw new Error('No flights returned from API');
-    } catch (error) {
-      console.error('[API Client] Failed to load flights from API:', error);
-      console.warn('[API Client] Using fallback flights as last resort');
-      return this.getFallbackFlights();
-    }
-  }
 };
 
 export default apiClient; 

@@ -25,12 +25,12 @@
   --gdyup-secondary: #FF4B47;
   --gdyup-secondary-rgb: 255, 75, 71;
   --gdyup-bg-dark: #000000;
-  --gdyup-bg-card: #121212;
-  --gdyup-border: #2a2a2a;
-  --gdyup-text: #FFFFFF;
-  --gdyup-text-medium: #E0E0E0;
-  --gdyup-text-subtle: #A0A0A0;
-  --gdyup-button-text: #000000; /* Text on primary button */
+  --gdyup-bg-card: #1A1A1A; /* Lighter for better contrast */
+  --gdyup-border: #333333; /* Lighter for better visibility */
+  --gdyup-text: #FFFFFF; /* Pure white for maximum contrast */
+  --gdyup-text-medium: #E8E8E8; /* Very light for good contrast */
+  --gdyup-text-subtle: #B0B0B0; /* Light enough to be visible */
+  --gdyup-button-text: #000000; /* Black text on bright lime button */
 
   /* Theme-specific button styles if they differ beyond just primary color */
   --gdyup-button-bg: var(--gdyup-primary);
@@ -48,62 +48,140 @@
 
 /* Luxury Black Theme (gdyup-theme-luxury) */
 .gdyup-theme-luxury {
-  /* Primary color is crimson red for Luxury Black theme */
-  --gdyup-primary: #DC143C !important;
-  --gdyup-primary-hover: #B91C3C !important;
-  --gdyup-primary-rgb: 220, 20, 60 !important;
-  --gdyup-secondary: #8B0000; /* Dark Red */
-  --gdyup-secondary-rgb: 139, 0, 0;
-  --gdyup-bg-dark: #000000; /* Jet Black */
-  --gdyup-bg-card: #1A1A1A; /* Gunmetal Gray */
-  --gdyup-border: #333333;
-  --gdyup-text: #E0E0E0; /* Jet Silver */
-  --gdyup-text-medium: #CCCCCC; /* Ash Gray */
-  --gdyup-text-subtle: #999999;
-  --gdyup-button-text: #FFFFFF !important; /* Text on primary button MUST be white to contrast with dark crimson */
+  --gdyup-primary: #DC143C; /* Crimson Red */
+  --gdyup-primary-hover: #B91C3C; /* Darker crimson on hover */
+  --gdyup-primary-rgb: 220, 20, 60;
+  --gdyup-secondary: #FF6B6B; /* Softer red secondary */
+  --gdyup-secondary-rgb: 255, 107, 107;
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #1A1A1A; /* Lighter for better contrast */
+  --gdyup-border: #333333; /* Lighter for better visibility */
+  --gdyup-text: #FFFFFF; /* Pure white for maximum contrast */
+  --gdyup-text-medium: #E8E8E8; /* Very light for good contrast */
+  --gdyup-text-subtle: #B0B0B0; /* Light enough to be visible */
+  --gdyup-button-text: #FFFFFF; /* White text on crimson button */
 
+  /* Luxury theme button styles */
   --gdyup-button-bg: var(--gdyup-primary);
   --gdyup-button-hover-bg: var(--gdyup-primary-hover);
-  --gdyup-button-active-bg: #A0001C !important;
+  --gdyup-button-active-bg: #A91C3C; /* Even darker for active */
   
-  /* Additional theme-specific variables */
+  /* Additional luxury theme variables */
   --gdyup-icon-shadow: rgba(var(--gdyup-primary-rgb), 0.4);
   --gdyup-concierge-bg: var(--gdyup-primary);
   --gdyup-concierge-text: var(--gdyup-button-text);
   --gdyup-nav-active-bg: var(--gdyup-primary);
   --gdyup-nav-active-text: var(--gdyup-button-text);
   --gdyup-nav-hover-border: rgba(var(--gdyup-primary-rgb), 0.6);
-  --gdyup-carbon-texture: url('/carbonfibertexture.png');
 }
 
-/* Bitcoin Theme - SATOSHI ORANGE (gdyup-theme-bitcoin) */
+/* Bitcoin Orange Theme (gdyup-theme-bitcoin) */
 .gdyup-theme-bitcoin {
-  /* Primary color is SATOSHI ORANGE for Bitcoin theme */
-  --gdyup-primary: #FF6B00 !important; /* SATOSHI ORANGE */
-  --gdyup-primary-hover: #E85D00 !important;
-  --gdyup-primary-rgb: 255, 107, 0 !important;
-  --gdyup-secondary: #F7931A; /* Classic Bitcoin Gold */
-  --gdyup-secondary-rgb: 247, 147, 26;
-  --gdyup-bg-dark: #121212; /* Midnight Charcoal */
-  --gdyup-bg-card: #2D2D2D; /* Block Gray */
-  --gdyup-border: #3A3A3A;
-  --gdyup-text: #FDFDFD; /* Lightning White */
-  --gdyup-text-medium: #E5E5E5;
-  --gdyup-text-subtle: #B8B8B8;
-  --gdyup-button-text: #000000 !important; /* Text on primary button MUST be dark to contrast with satoshi orange */
+  --gdyup-primary: #FF6B00; /* Bitcoin Orange */
+  --gdyup-primary-hover: #E55A00; /* Darker orange on hover */
+  --gdyup-primary-rgb: 255, 107, 0;
+  --gdyup-secondary: #FFB347; /* Softer orange secondary */
+  --gdyup-secondary-rgb: 255, 179, 71;
+  --gdyup-bg-dark: #000000;
+  --gdyup-bg-card: #1A1A1A; /* Lighter for better contrast */
+  --gdyup-border: #333333; /* Lighter for better visibility */
+  --gdyup-text: #FFFFFF; /* Pure white for maximum contrast */
+  --gdyup-text-medium: #E8E8E8; /* Very light for good contrast */
+  --gdyup-text-subtle: #B0B0B0; /* Light enough to be visible */
+  --gdyup-button-text: #000000; /* Black text on bright orange button */
 
+  /* Bitcoin theme button styles */
   --gdyup-button-bg: var(--gdyup-primary);
   --gdyup-button-hover-bg: var(--gdyup-primary-hover);
-  --gdyup-button-active-bg: #D68000; /* Darker bitcoin orange for active */
+  --gdyup-button-active-bg: #CC4800; /* Even darker for active */
   
-  /* Additional theme-specific variables */
+  /* Additional bitcoin theme variables */
   --gdyup-icon-shadow: rgba(var(--gdyup-primary-rgb), 0.4);
   --gdyup-concierge-bg: var(--gdyup-primary);
   --gdyup-concierge-text: var(--gdyup-button-text);
   --gdyup-nav-active-bg: var(--gdyup-primary);
   --gdyup-nav-active-text: var(--gdyup-button-text);
   --gdyup-nav-hover-border: rgba(var(--gdyup-primary-rgb), 0.6);
-  --gdyup-accent-color: #B87333; /* Proof Copper for accents */
+}
+
+/* FORCE ALL TEXT TO BE VISIBLE - NO BLACK ON BLACK! */
+.gdyup-app,
+.gdyup-app *,
+[class*="gdyup"] {
+  /* Force text visibility across all themes */
+  color: var(--gdyup-text) !important;
+}
+
+/* Override specific problematic classes */
+.gdyup-app input,
+.gdyup-app textarea,
+.gdyup-app select,
+.gdyup-app label,
+.gdyup-app p,
+.gdyup-app span,
+.gdyup-app div,
+.gdyup-app h1,
+.gdyup-app h2,
+.gdyup-app h3,
+.gdyup-app h4,
+.gdyup-app h5,
+.gdyup-app h6 {
+  color: var(--gdyup-text) !important;
+  background-color: transparent !important;
+}
+
+/* Form elements with proper styling */
+.gdyup-app input,
+.gdyup-app textarea,
+.gdyup-app select {
+  background-color: var(--gdyup-bg-card) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Placeholder text visibility */
+.gdyup-app input::placeholder,
+.gdyup-app textarea::placeholder {
+  color: var(--gdyup-text-subtle) !important;
+  opacity: 0.7 !important;
+}
+
+/* Button text override */
+.gdyup-app .gdyup-button,
+.gdyup-app button[class*="gdyup"] {
+  background-color: var(--gdyup-button-bg) !important;
+  color: var(--gdyup-button-text) !important;
+}
+
+.gdyup-app .gdyup-button:hover,
+.gdyup-app button[class*="gdyup"]:hover {
+  background-color: var(--gdyup-button-hover-bg) !important;
+}
+
+/* Ensure dropdown menus are visible */
+.gdyup-app [role="menu"],
+.gdyup-app [role="listbox"],
+.gdyup-app .dropdown-content,
+.gdyup-app [class*="Select"],
+.gdyup-app [class*="Dropdown"] {
+  background-color: var(--gdyup-bg-card) !important;
+  border: 1px solid var(--gdyup-border) !important;
+  color: var(--gdyup-text) !important;
+}
+
+/* Dropdown items */
+.gdyup-app [role="menuitem"],
+.gdyup-app [role="option"],
+.gdyup-app .dropdown-item {
+  color: var(--gdyup-text) !important;
+  background-color: transparent !important;
+}
+
+.gdyup-app [role="menuitem"]:hover,
+.gdyup-app [role="option"]:hover,
+.gdyup-app .dropdown-item:hover {
+  background-color: rgba(var(--gdyup-primary-rgb), 0.1) !important;
+  color: var(--gdyup-text) !important;
 }
 
 /* ============================================================== */

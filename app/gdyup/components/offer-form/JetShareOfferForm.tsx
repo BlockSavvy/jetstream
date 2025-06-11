@@ -13,6 +13,8 @@ import { ThemedIcon } from '../core/ThemedIcon';
 import { FormNavigation } from './FormNavigation';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/lib/auth-provider';
+import { EliteLocationFields, EliteDateTimeField, ElitePassengerField } from '../EliteFormFields';
+import { EliteDateTimePicker } from '../EliteDateTimePicker';
 
 // Import the subcomponents with updated type interfaces
 import { FlightInfoForm, FlightInfoFormValues } from './FlightInfoForm';
@@ -456,7 +458,7 @@ export default function JetShareOfferForm({ offerId, initialData, airports = [] 
       
       // Use the new API client with automatic fallback
       const { apiClient } = await import('../../utils/api-client');
-      const airportsData = await apiClient.getAirportsWithFallback();
+      const airportsData = await apiClient.getAirports();
       
       console.log(`[JetShareOfferForm] Loaded ${airportsData.length} airports`);
       setLoadedAirports(airportsData);
