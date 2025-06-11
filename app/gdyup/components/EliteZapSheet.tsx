@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, X, ChevronDown, Sparkles, Copy, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,13 +10,13 @@ import { toast } from 'sonner';
 
 interface EliteZapSheetProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: (() => void) | undefined;
   recipientPubkey: string;
   recipientName?: string;
   recipientNip05?: string;
   defaultAmount?: number;
-  context?: string; // e.g., "flight_share", "message_tip"
-  onZapComplete?: (zapId: string, amount: number) => void;
+  context?: string; // e.g., "flight_share", "message_tip"  
+  onZapComplete?: ((zapId: string, amount: number) => void) | undefined;
 }
 
 const PRESET_AMOUNTS = [1000, 5000, 10000, 21000, 50000, 100000];
@@ -131,7 +131,7 @@ export default function EliteZapSheet({
         triggerHaptic('heavy');
         toast.success(`⚡ Zapped ${formatSats(selectedAmount)} sats!`);
         onZapComplete?.(zapId, selectedAmount);
-        onClose();
+        onClose?.();
       } else {
         throw new Error('Failed to create zap request');
       }
@@ -154,6 +154,10 @@ export default function EliteZapSheet({
     }
   };
 
+  const handleClose = useCallback(() => {
+    onClose?.();
+  }, [onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -164,7 +168,7 @@ export default function EliteZapSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-            onClick={onClose}
+            onClick={handleClose}
           />
 
           {/* Zap Sheet */}
@@ -197,7 +201,7 @@ export default function EliteZapSheet({
                 </div>
               </div>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="p-2 rounded-full bg-gdyup-text-subtle/10 hover:bg-gdyup-text-subtle/20 transition-colors"
               >
                 <X size={20} className="text-gdyup-text-subtle" />
