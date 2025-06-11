@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Plus, Calendar, User, Sparkles, MessageSquareText, Mic, InfoIcon } from 'lucide-react';
+import { Search, Plus, Calendar, User, Sparkles, MessageSquareText, Mic, InfoIcon, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGdyupTheme } from '../hooks/useGdyupTheme';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,17 +24,17 @@ const navItems: NavItem[] = [
     isActive: (pathname) => pathname.startsWith('/gdyup/browse')
   },
   {
+    href: '/gdyup/dashboard',
+    icon: LayoutDashboard,
+    label: 'Dashboard',
+    isActive: (pathname) => pathname.startsWith('/gdyup/dashboard')
+  },
+  // Center space for concierge button
+  {
     href: '/gdyup/list',
     icon: Plus,
     label: 'List',
     isActive: (pathname) => pathname.startsWith('/gdyup/list')
-  },
-  // Center space for concierge button
-  {
-    href: '/gdyup/flights',
-    icon: Calendar,
-    label: 'Flights',
-    isActive: (pathname) => pathname.startsWith('/gdyup/flights')
   },
   {
     href: '/gdyup/profile',
