@@ -238,18 +238,13 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
       setConciergeButtonPosition({ x: centerX, y: centerY });
-      console.log('[MobileNavBar] 🎯 BUTTON POSITION:', { 
-        centerX, 
-        centerY, 
-        screenWidth: window.innerWidth,
-        screenHeight: window.innerHeight 
-      });
+      // Button position detected and ready for radial menu
     }
   };
 
   // Function to open concierge with haptic feedback
   const handleConciergeClick = () => {
-    console.log('[MobileNavBar] 🚀 CONCIERGE CLICKED');
+    // Concierge button activated
     triggerHaptic('medium');
     
     if (conciergeExpanded) {
@@ -538,19 +533,17 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
             >
               {/* 🎯 PERFECTLY POSITIONED RADIAL BUTTONS */}
               {conciergeOptions.map((option, index) => {
-                // SIMPLE & PRECISE: 3 buttons in 120° arc above center
-                const RADIUS = 100; // Distance from center
-                const angles = [150, 90, 30]; // Perfect 60° spacing: left, top, right
+                // 🎯 FINAL PERFECT POSITIONING
+                const RADIUS = 95; // Slightly tighter for better visual balance
+                const angles = [145, 90, 35]; // Tweaked for perfect visual centering
                 const angle = angles[index];
                 const radian = (angle * Math.PI) / 180;
                 
                 // Calculate exact position relative to button center
                 const x = Math.cos(radian) * RADIUS;
-                const y = -Math.sin(radian) * RADIUS; // Negative Y = upward
+                const y = -Math.sin(radian) * RADIUS - 5; // Slight upward adjustment
                 
-                console.log(`[MobileNavBar] 🎯 Button ${index} (${option.label}):`, { 
-                  angle, x: x.toFixed(1), y: y.toFixed(1) 
-                });
+
                 
                 return (
                   <motion.div
@@ -591,49 +584,48 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       triggerHaptic('medium');
                     }}
                   >
-                    {/* Button Container with Glass Morphism */}
+                    {/* 💎 PERFECT RADIAL BUTTON */}
                     <motion.div
                       style={{
-                        width: '60px',
-                        height: '60px',
+                        width: '56px', // Slightly smaller for better proportion
+                        height: '56px',
                         borderRadius: '50%',
                         background: `
                           linear-gradient(135deg, 
-                            rgba(218, 255, 13, 0.95) 0%, 
-                            rgba(184, 230, 0, 0.9) 100%
+                            #DAFF0D 0%, 
+                            #B8E600 100%
                           )
                         `,
-                        backdropFilter: 'blur(20px) saturate(1.5)',
-                        WebkitBackdropFilter: 'blur(20px) saturate(1.5)',
-                        border: '2px solid rgba(0, 0, 0, 0.8)',
+                        border: '2.5px solid rgba(0, 0, 0, 0.9)',
                         boxShadow: `
-                          0 8px 24px rgba(218, 255, 13, 0.4),
-                          0 4px 12px rgba(0, 0, 0, 0.3),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.4),
-                          inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                          0 6px 20px rgba(218, 255, 13, 0.5),
+                          0 3px 10px rgba(0, 0, 0, 0.4),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.5)
                         `,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         position: 'relative' as const,
-                        overflow: 'hidden' as const
+                        overflow: 'hidden' as const,
+                        filter: 'brightness(1.05)'
                       }}
                       whileHover={{ 
-                        scale: 1.1,
+                        scale: 1.15,
                         boxShadow: `
-                          0 12px 32px rgba(218, 255, 13, 0.5),
-                          0 6px 16px rgba(0, 0, 0, 0.4),
-                          inset 0 1px 0 rgba(255, 255, 255, 0.5),
-                          inset 0 -1px 0 rgba(0, 0, 0, 0.3)
+                          0 8px 28px rgba(218, 255, 13, 0.7),
+                          0 4px 14px rgba(0, 0, 0, 0.5),
+                          inset 0 1px 0 rgba(255, 255, 255, 0.6)
                         `,
-                        y: -3,
-                        rotate: index === 1 ? 0 : (index === 0 ? -5 : 5) // Center stays, sides rotate
+                        y: -4,
+                        filter: 'brightness(1.2)',
+                        rotate: index === 1 ? 0 : (index === 0 ? -8 : 8) // Subtle rotation
                       }}
                       whileTap={{ 
-                        scale: 0.95,
-                        y: -1
+                        scale: 0.92,
+                        y: -2,
+                        filter: 'brightness(0.9)'
                       }}
                     >
                       {/* Animated Background Shine */}
@@ -697,36 +689,44 @@ export default function MobileNavBar({ className }: MobileNavBarProps) {
                       />
                     </motion.div>
                     
-                    {/* 🏷️ Clean Label */}
+                    {/* ✨ ELITE FLOATING LABEL */}
                     <motion.div
                       style={{
                         position: 'absolute' as const,
-                        top: '-50px', // Position above button
+                        top: '-42px', // Closer to button
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        padding: '6px 10px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(218, 255, 13, 0.4)',
+                        padding: '3px 8px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        borderRadius: '6px',
+                        border: '1px solid rgba(218, 255, 13, 0.6)',
                         whiteSpace: 'nowrap' as const,
                         pointerEvents: 'none' as const,
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)'
                       }}
-                      initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 5, scale: 0.8 }}
+                      initial={{ opacity: 0, y: 8, scale: 0.7 }}
+                      animate={{ 
+                        opacity: 0.95, 
+                        y: 0, 
+                        scale: 1 
+                      }}
+                      exit={{ opacity: 0, y: 3, scale: 0.7 }}
                       transition={{ 
-                        duration: 0.3,
-                        delay: index * 0.1 + 0.2 
+                        duration: 0.4,
+                        delay: index * 0.08 + 0.4,
+                        ease: [0.25, 0.46, 0.45, 0.94]
                       }}
                     >
                       <span style={{
-                        fontSize: '0.7rem',
-                        fontWeight: '600',
-                        color: '#FFFFFF',
-                        letterSpacing: '0.1px'
+                        fontSize: '0.6rem',
+                        fontWeight: '500',
+                        color: '#DAFF0D',
+                        letterSpacing: '0.3px',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                       }}>
-                        {option.label}
+                        {option.label.toUpperCase()}
                       </span>
                     </motion.div>
                   </motion.div>
